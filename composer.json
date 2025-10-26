@@ -9,6 +9,8 @@
         "php": "^8.2",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "predis/predis": "^3.2",
+        "spatie/laravel-permission": "^6.21",
         "stancl/tenancy": "^3.9"
     },
     "require-dev": {

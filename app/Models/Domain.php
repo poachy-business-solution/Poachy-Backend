@@ -11,9 +11,11 @@ class Domain extends BaseDomain
 {
     use HasFactory;
 
+    protected $connection = 'central';
+    protected $table = 'domains';
+
     public function tenant()
     {
         return $this->belongsTo(config('tenancy.tenant_model'));
     }
-
 }

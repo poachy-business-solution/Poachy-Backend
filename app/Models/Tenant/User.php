@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Tenant;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -12,12 +12,12 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
-    protected $connection = 'central';
-
     protected $fillable = [
         'name',
         'email',
         'password',
+        'phone',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -30,18 +30,24 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
     // Helper methods
 
-    public function isAdmin(): bool
+    public function isOwner(): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasRole('owner');
     }
 
-    public function isCustomer(): bool
+    public function isManager(): bool
     {
-        return $this->hasRole('customer');
+        return $this->hasRole('manager');
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->hasRole('cashier');
     }
 }

@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Seed central database
+        $this->call([
+            BusinessTypeSeeder::class,
+            SubscriptionPlanSeeder::class,
+            TenantSeeder::class,
+            CentralRolesPermissionsSeeder::class,
         ]);
+
+        // seed tenant database using php artisan tenant:seed
     }
 }

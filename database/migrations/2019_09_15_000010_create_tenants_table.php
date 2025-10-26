@@ -12,16 +12,16 @@ class CreateTenantsTable extends Migration
      * Run the migrations.
      *
      * @return void
-     */
+    */
     public function up(): void
     {
-        Schema::create('tenants', function (Blueprint $table) {
-            $table->string('id')->primary();
-
-            // your custom columns may go here
-
-            $table->timestamps();
+        Schema::connection('central')->create('tenants', function (Blueprint $table) {
+            $table->string('id')->primary(); // UUID
+            
+            // Stancl Tenancy uses this for flexible data storage
             $table->json('data')->nullable();
+            
+            $table->timestamps();
         });
     }
 
@@ -32,6 +32,6 @@ class CreateTenantsTable extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenants');
+        Schema::connection('central')->dropIfExists('tenants');
     }
 }
