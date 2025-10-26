@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,7 +23,5 @@ class DatabaseSeeder extends Seeder
             TenantSeeder::class,
             CentralRolesPermissionsSeeder::class,
         ]);
-
-        // seed tenant database using php artisan tenant:seed
     }
 }
