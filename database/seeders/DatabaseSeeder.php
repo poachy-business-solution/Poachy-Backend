@@ -23,5 +23,7 @@ class DatabaseSeeder extends Seeder
             TenantSeeder::class,
             CentralRolesPermissionsSeeder::class,
         ]);
+
+        // seed tenant database using php artisan tenant:seed
     }
 }
