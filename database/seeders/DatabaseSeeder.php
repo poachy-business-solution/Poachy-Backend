@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             BusinessTypeSeeder::class,
             SubscriptionPlanSeeder::class,
-            TenantSeeder::class,
             CentralRolesPermissionsSeeder::class,
+            TenantSeeder::class,
         ]);
 
         // seed tenant database using php artisan tenant:seed

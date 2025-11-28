@@ -132,20 +132,20 @@ class TenancyServiceProvider extends ServiceProvider
         // ========================================
         // Spatie Permission Cache Isolation
         // ========================================
-        
+
         // When tenant is initialized, set tenant-specific cache key
         Event::listen(Events\TenancyInitialized::class, function (Events\TenancyInitialized $event) {
             $permissionRegistrar = app(PermissionRegistrar::class);
-            
+
             // Set unique cache key for this tenant
             $permissionRegistrar->cacheKey = sprintf(
                 'spatie.permission.cache.tenant.%s',
                 $event->tenancy->tenant->getTenantKey()
             );
-            
+
             // Clear any cached permissions for this tenant
             $permissionRegistrar->forgetCachedPermissions();
-            
+
             Log::debug('Tenant permissions cache initialized', [
                 'tenant_id' => $event->tenancy->tenant->getTenantKey(),
                 'cache_key' => $permissionRegistrar->cacheKey,
@@ -155,20 +155,20 @@ class TenancyServiceProvider extends ServiceProvider
         // When tenant context ends, reset to default cache key
         Event::listen(Events\TenancyEnded::class, function (Events\TenancyEnded $event) {
             $permissionRegistrar = app(PermissionRegistrar::class);
-            
+
             // Reset to default cache key
             $permissionRegistrar->cacheKey = 'spatie.permission.cache';
-            
+
             // Clear cached permissions
             $permissionRegistrar->forgetCachedPermissions();
-            
+
             Log::debug('Tenant permissions cache reset to default');
         });
 
         // ========================================
         // Additional Tenant Events (Optional)
         // ========================================
-        
+
         // Log when tenant is created
         Event::listen(Events\TenantCreated::class, function (Events\TenantCreated $event) {
             Log::info('New tenant created', [
@@ -197,7 +197,6 @@ class TenancyServiceProvider extends ServiceProvider
                 'tenant_id' => $event->tenant->id,
             ]);
         });
-
     }
 
     protected function mapRoutes()

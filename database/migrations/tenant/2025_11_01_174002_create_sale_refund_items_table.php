@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('sale_refund_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('refund_id')->constrained('sale_refunds')->onDelete('set null');
+            $table->foreignId('refund_id')->constrained('sale_refunds')->onDelete('restrict');
             $table->foreignId('sale_item_id')->constrained('sale_items')->onDelete('restrict');
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
             $table->decimal('quantity_refunded', 15, 4); // In original sale UOM
             $table->decimal('quantity_refunded_in_base_uom', 15, 4); // For inventory restoration
             $table->decimal('refund_amount', 15, 2);
             $table->timestamps();
-            
+
             $table->index(['refund_id']);
             $table->index(['sale_item_id']);
         });

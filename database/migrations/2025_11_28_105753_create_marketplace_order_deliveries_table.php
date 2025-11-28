@@ -54,7 +54,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['delivery_status', 'estimated_delivery_time']);
+            $table->index(['delivery_status', 'estimated_delivery_time'], 'idx_status_delivery');
             $table->index('tracking_number');
         });
     }

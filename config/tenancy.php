@@ -16,7 +16,7 @@ return [
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
-    
+
     'central_domains' => explode(',', env('CENTRAL_DOMAINS', 'localhost')),
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
@@ -199,7 +199,7 @@ return [
      * Parameters used by the tenants:seed command.
      */
     'seeder_parameters' => [
-        '--class' => 'DatabaseSeeder', // root seeder class
+        '--class' => \Database\Seeders\TenantDatabaseSeeder::class,
         // '--force' => true, // This needs to be true to seed tenant databases in production
     ],
 ];

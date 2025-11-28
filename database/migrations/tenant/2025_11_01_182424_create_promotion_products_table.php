@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->onDelete('cascade');
             $table->timestamps();
-            
-            $table->unique(['promotion_id', 'product_id', 'product_variant_id']);
+
+            $table->unique(['promotion_id', 'product_id', 'product_variant_id'], 'idx_prom_prod_unique');
             $table->index(['product_id', 'product_variant_id']);
         });
     }

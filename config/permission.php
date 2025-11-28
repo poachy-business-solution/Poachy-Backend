@@ -2,6 +2,8 @@
 
 return [
 
+    'connection' => 'central',
+
     'models' => [
 
         /*

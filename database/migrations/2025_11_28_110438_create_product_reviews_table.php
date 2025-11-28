@@ -46,7 +46,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['marketplace_product_id', 'customer_id', 'order_id']);
+            $table->unique(['marketplace_product_id', 'customer_id', 'order_id'], 'customer_order_product_unique');
 
             $table->index(['marketplace_product_id', 'status']);
             $table->index(['customer_id', 'created_at']);

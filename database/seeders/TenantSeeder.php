@@ -39,11 +39,11 @@ class TenantSeeder extends Seeder
             'business_type_id' => $electronicsCat->business_type_id,
             'business_category_id' => $electronicsCat->id,
             'business_email' => 'info@techhaven.poachy.com',
-            'business_phone' => '+254712345678',            
+            'business_phone' => '+254712345678',
             'contact_person' => 'John Kamau',
             'address' => 'Kimathi Street Plaza, Ground Floor',
             'city' => 'Nairobi',
-            'county' => 'Nairobi',                           
+            'county' => 'Nairobi',
             'status' => 'active',
             'is_verified' => true,
             'verified_at' => now()->subDays(15),
@@ -96,7 +96,7 @@ class TenantSeeder extends Seeder
         ]);
 
         Domain::create([
-            'domain' => 'techhaven.localhost', // For local development
+            'domain' => 'techhaven.test', // For local development
             'tenant_id' => $tenant1->id,
         ]);
 

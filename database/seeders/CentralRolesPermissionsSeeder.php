@@ -16,7 +16,7 @@ class CentralRolesPermissionsSeeder extends Seeder
     {
         // Set connection
         config(['permission.connection' => 'central']);
-        
+
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -27,30 +27,30 @@ class CentralRolesPermissionsSeeder extends Seeder
             'approve-businesses',
             'suspend-businesses',
             'view-businesses',
-            
+
             // Category Management
             'manage-categories',
             'manage-business-types',
-            
+
             // Subscription Management
             'manage-subscriptions',
             'view-subscriptions',
-            
+
             // User Management
             'manage-users',
             'view-users',
-            
+
             // Order Management
             'manage-orders',
             'view-orders',
-            
+
             // Reports & Analytics
             'view-analytics',
             'view-reports',
-            
+
             // System Settings
             'manage-settings',
-            
+
             // Marketplace
             'browse-marketplace',
             'place-orders',
@@ -68,13 +68,13 @@ class CentralRolesPermissionsSeeder extends Seeder
         $this->command->info('✓ Created ' . count($permissions) . ' permissions');
 
         // Create Roles and Assign Permissions
-        
+
         // 1. ADMIN ROLE
         $admin = Role::create([
             'name' => 'admin',
             'guard_name' => 'web',
         ]);
-        
+
         $admin->givePermissionTo([
             'manage-businesses',
             'approve-businesses',
@@ -92,7 +92,7 @@ class CentralRolesPermissionsSeeder extends Seeder
             'view-reports',
             'manage-settings',
         ]);
-        
+
         $this->command->info('✓ Created role: Admin (Full system access)');
 
         // 2. CUSTOMER ROLE
@@ -100,14 +100,14 @@ class CentralRolesPermissionsSeeder extends Seeder
             'name' => 'customer',
             'guard_name' => 'web',
         ]);
-        
+
         $customer->givePermissionTo([
             'browse-marketplace',
             'place-orders',
             'review-products',
             'manage-wishlist',
         ]);
-        
+
         $this->command->info('✓ Created role: Customer (Marketplace user)');
 
         // 3. SUPPORT ROLE
@@ -115,7 +115,7 @@ class CentralRolesPermissionsSeeder extends Seeder
             'name' => 'support',
             'guard_name' => 'web',
         ]);
-        
+
         $support->givePermissionTo([
             'view-businesses',
             'view-subscriptions',
@@ -123,7 +123,7 @@ class CentralRolesPermissionsSeeder extends Seeder
             'manage-orders',
             'view-orders',
         ]);
-        
+
         $this->command->info('✓ Created role: Support (Customer service)');
 
         $this->command->info("\n✓ Central roles and permissions seeded successfully!");
