@@ -69,7 +69,7 @@ return [
 
     'prefix' => env(
         'HORIZON_PREFIX',
-        Str::slug(env('APP_NAME', 'poachy'), '_').'_horizon:'
+        Str::slug(env('APP_NAME', 'poachy'), '_') . '_horizon:'
     ),
 
     /*
@@ -203,7 +203,7 @@ return [
     'defaults' => [
         // CRITICAL PRIORITY - Orders, stock alerts, payment confirmations
         'sync-critical' => [
-            'connection' => 'horizon',
+            'connection' => 'redis',
             'queue' => ['sync-critical'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
@@ -213,13 +213,13 @@ return [
             'memory' => 256,
             'tries' => 3,
             'timeout' => 30,
-            'nice' => -10, // Highest OS priority
+            'nice' => 0, // Highest OS priority
             'backoff' => [5, 10, 30],
         ],
-        
+
         // HIGH PRIORITY - Product updates, inventory sync
         'sync-high' => [
-            'connection' => 'horizon',
+            'connection' => 'redis',
             'queue' => ['sync-high'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
@@ -232,10 +232,10 @@ return [
             'nice' => 0,
             'backoff' => [10, 30, 60],
         ],
-        
+
         // NORMAL PRIORITY - Standard syncs
         'sync-normal' => [
-            'connection' => 'horizon',
+            'connection' => 'redis',
             'queue' => ['sync-normal'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
@@ -245,13 +245,13 @@ return [
             'memory' => 256,
             'tries' => 3,
             'timeout' => 120,
-            'nice' => 5,
+            'nice' => 0,
             'backoff' => [30, 60, 120],
         ],
-        
+
         // LOW PRIORITY - Bulk operations
         'sync-low' => [
-            'connection' => 'horizon',
+            'connection' => 'redis',
             'queue' => ['sync-low'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'size',
@@ -261,13 +261,13 @@ return [
             'memory' => 256,
             'tries' => 2,
             'timeout' => 300,
-            'nice' => 10,
+            'nice' => 0,
             'backoff' => [60, 120],
         ],
-        
+
         // DEFAULT QUEUE - General app jobs
         'default-worker' => [
-            'connection' => 'horizon',
+            'connection' => 'redis',
             'queue' => ['default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
