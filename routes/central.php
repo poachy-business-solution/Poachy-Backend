@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
+use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,5 +40,17 @@ Route::prefix('v1/central')
                 Route::post('/create', [AuthController::class, 'createAdmin']);
                 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
             });
+        });
+
+        // Tenant management
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/tenants/search', [TenantController::class, 'search']);
+            Route::apiResource('tenants', TenantController::class)->except(['update']);
+            Route::patch('/tenants/{tenant_id}/metadata', [TenantController::class, 'updateMetadata']);
+
+            // Domain management
+            Route::post('/tenants/{tenant_id}/domains', [TenantController::class, 'addDomain']);
+            Route::put('/domains/{domain_id}', [TenantController::class, 'updateDomain']);
+            Route::delete('/domains/{domain_id}', [TenantController::class, 'deleteDomain']);
         });
     });

@@ -7,7 +7,6 @@ use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Predis\Command\Redis\SUBSTR;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant implements TenantWithDatabase
@@ -19,14 +18,14 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     protected $fillable = [
         'data',
-    ];   
-    
+    ];
+
     protected $casts = [
         'data' => 'array',
     ];
 
     // Relationships
-    
+
     public function domains()
     {
         return $this->hasMany(config('tenancy.domain_model'), 'tenant_id', 'id');
@@ -45,10 +44,9 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function activeSubscription()
     {
         return $this->hasOne(BusinessSubscription::class, 'tenant_id', 'id')
-                    ->where('status', 'active')
-                    ->latest('start_date');
+            ->where('status', 'active')
+            ->latest('start_date');
     }
-
 
     // Tenancy Methods
 
@@ -61,7 +59,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         $prefix = config('tenancy.database.prefix', 'poachy_tenant_');
         $suffix = config('tenancy.database.suffix', '');
-        
+
         return $prefix . $this->getTenantKey() . $suffix;
     }
 
@@ -76,7 +74,4 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         return $this->activeSubscription()->exists();
     }
-
-    // Boot
-
 }

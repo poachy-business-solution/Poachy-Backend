@@ -747,6 +747,722 @@
                     }
                 ]
             }
+        },
+        "/api/v1/central/tenants": {
+            "get": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "List All Tenants",
+                "description": "Get paginated list of all tenants with their domains and business details.",
+                "operationId": "listTenants",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenants retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenants retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TenantResource"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 75
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Create New Tenant",
+                "description": "Create a new tenant with domain(s). This will create the tenant database and assign domain(s).",
+                "operationId": "createTenant",
+                "requestBody": {
+                    "description": "Tenant creation data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "domain"
+                                ],
+                                "properties": {
+                                    "domain": {
+                                        "description": "Primary domain for the tenant",
+                                        "type": "string",
+                                        "example": "merchant1.poachy.com"
+                                    },
+                                    "additional_domains": {
+                                        "description": "Optional additional domains",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "merchant1.example.com"
+                                        }
+                                    },
+                                    "tenant_name": {
+                                        "description": "Optional tenant identifier name",
+                                        "type": "string",
+                                        "example": "Merchant Store 1"
+                                    },
+                                    "notes": {
+                                        "description": "Optional notes about the tenant",
+                                        "type": "string",
+                                        "example": "Premium merchant account"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tenant created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin role required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "domain": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "This domain is already assigned to another tenant."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/tenants/{tenant_id}": {
+            "get": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Get Tenant Details",
+                "description": "Get detailed information about a specific tenant including domains and business details.",
+                "operationId": "getTenant",
+                "parameters": [
+                    {
+                        "name": "tenant_id",
+                        "in": "path",
+                        "description": "Tenant UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenant details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant retrieved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Resource not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Delete Tenant",
+                "description": "Delete a tenant and all associated data including database. This action is irreversible.",
+                "operationId": "deleteTenant",
+                "parameters": [
+                    {
+                        "name": "tenant_id",
+                        "in": "path",
+                        "description": "Tenant UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenant deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/tenants/search": {
+            "get": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Search Tenants",
+                "description": "Search tenants by domain name or business name.",
+                "operationId": "searchTenants",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "merchant"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Search results retrieved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/tenants/{tenant_id}/domains": {
+            "post": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Add Domain to Tenant",
+                "description": "Add an additional domain to an existing tenant.",
+                "operationId": "addDomainToTenant",
+                "parameters": [
+                    {
+                        "name": "tenant_id",
+                        "in": "path",
+                        "description": "Tenant UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "domain"
+                                ],
+                                "properties": {
+                                    "domain": {
+                                        "type": "string",
+                                        "example": "merchant1-new.poachy.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Domain added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Domain added successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DomainResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Domain already exists"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/domains/{domain_id}": {
+            "put": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Update Domain",
+                "description": "Update an existing domain name.",
+                "operationId": "updateDomain",
+                "parameters": [
+                    {
+                        "name": "domain_id",
+                        "in": "path",
+                        "description": "Domain ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "domain"
+                                ],
+                                "properties": {
+                                    "domain": {
+                                        "type": "string",
+                                        "example": "merchant1-updated.poachy.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Domain updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Domain updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DomainResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Domain not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Delete Domain",
+                "description": "Delete a domain. Cannot delete the last domain of a tenant.",
+                "operationId": "deleteDomain",
+                "parameters": [
+                    {
+                        "name": "domain_id",
+                        "in": "path",
+                        "description": "Domain ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Domain deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Domain deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot delete last domain",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cannot delete the last domain. A tenant must have at least one domain."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Domain not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/tenants/{tenant_id}/metadata": {
+            "patch": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Update Tenant Metadata",
+                "description": "Update tenant metadata (name, notes, etc.).",
+                "operationId": "updateTenantMetadata",
+                "parameters": [
+                    {
+                        "name": "tenant_id",
+                        "in": "path",
+                        "description": "Tenant UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tenant_name": {
+                                        "type": "string",
+                                        "example": "Updated Merchant Name"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Updated notes"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tenant metadata updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant metadata updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TenantResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -806,6 +1522,122 @@
                     }
                 },
                 "type": "object"
+            },
+            "BusinessDetailResource": {
+                "title": "Business Detail Resource",
+                "description": "Business detail resource representation (to be completed later)",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "business_name": {
+                        "type": "string",
+                        "example": "My Store",
+                        "nullable": true
+                    },
+                    "business_email": {
+                        "type": "string",
+                        "example": "store@example.com",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    }
+                },
+                "type": "object"
+            },
+            "DomainResource": {
+                "title": "Domain Resource",
+                "description": "Domain resource representation",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "domain": {
+                        "type": "string",
+                        "example": "merchant.poachy.com"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "9d8e4f2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "TenantResource": {
+                "title": "Tenant Resource",
+                "description": "Tenant resource representation",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "9d8e4f2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a"
+                    },
+                    "database_name": {
+                        "type": "string",
+                        "example": "poachy_tenant_9d8e4f2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a"
+                    },
+                    "domains": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DomainResource"
+                        }
+                    },
+                    "business_detail": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/BusinessDetailResource"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "properties": {
+                            "tenant_name": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "notes": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "has_active_subscription": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -823,6 +1655,10 @@
         {
             "name": "Admin Management",
             "description": "Admin user management endpoints"
+        },
+        {
+            "name": "Tenant Management",
+            "description": "Tenant and domain management endpoints"
         },
         {
             "name": "Central DB Admin Authentication",

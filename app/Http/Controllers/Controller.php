@@ -39,6 +39,12 @@ namespace App\Http\Controllers;
  *     name="Admin Management",
  *     description="Admin user management endpoints"
  * )
+ *
+ *
+ * @OA\Tag(
+ *     name="Tenant Management",
+ *     description="Tenant and domain management endpoints"
+ * )
  */
 abstract class Controller
 {
