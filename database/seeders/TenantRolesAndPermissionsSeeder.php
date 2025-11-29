@@ -23,40 +23,40 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'manage-products',
             'view-products',
             'delete-products',
-            
+
             // Inventory Management
             'manage-inventory',
             'view-inventory',
             'adjust-stock',
             'transfer-stock',
-            
+
             // Sales Management
             'create-sales',
             'view-sales',
             'process-refunds',
             'apply-discounts',
-            
+
             // Customer Management
             'manage-customers',
             'view-customers',
-            
+
             // Expense Management
             'manage-expenses',
             'view-expenses',
-            
+
             // Employee Management
             'manage-employees',
             'view-employees',
-            
+
             // Reports
             'view-sales-reports',
             'view-inventory-reports',
             'view-financial-reports',
-            
+
             // Settings
             'manage-store-settings',
             'manage-locations',
-            
+
             // Suppliers
             'manage-suppliers',
             'view-suppliers',
@@ -65,30 +65,30 @@ class TenantRolesAndPermissionsSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::create([
                 'name' => $permission,
-                'guard_name' => 'web',
+                'guard_name' => 'tenant',
             ]);
         }
 
         $this->command->info('✓ Created ' . count($permissions) . ' permissions');
 
         // Create Roles and Assign Permissions
-        
+
         // 1. OWNER ROLE (Full access)
         $owner = Role::create([
             'name' => 'owner',
-            'guard_name' => 'web',
+            'guard_name' => 'tenant',
         ]);
-        
+
         $owner->givePermissionTo(Permission::all()); // All permissions
-        
+
         $this->command->info('✓ Created role: Owner (Full access)');
 
         // 2. MANAGER ROLE
         $manager = Role::create([
             'name' => 'manager',
-            'guard_name' => 'web',
+            'guard_name' => 'tenant',
         ]);
-        
+
         $manager->givePermissionTo([
             'manage-products',
             'view-products',
@@ -111,15 +111,15 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'manage-suppliers',
             'view-suppliers',
         ]);
-        
+
         $this->command->info('✓ Created role: Manager (Store management)');
 
         // 3. CASHIER ROLE
         $cashier = Role::create([
             'name' => 'cashier',
-            'guard_name' => 'web',
+            'guard_name' => 'tenant',
         ]);
-        
+
         $cashier->givePermissionTo([
             'view-products',
             'view-inventory',
@@ -129,7 +129,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'manage-customers',
             'apply-discounts',
         ]);
-        
+
         $this->command->info('✓ Created role: Cashier (POS operations)');
 
         $this->command->info("\n✓ Tenant roles and permissions seeded successfully!");

@@ -16,10 +16,13 @@ class User extends Authenticatable
     protected $connection = 'central';
     protected $table = 'users';
 
+    public const USER_TYPES = ['customer', 'admin', 'vendor'];
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'user_type',
     ];
 
     protected $hidden = [

@@ -61,7 +61,7 @@ class CentralRolesPermissionsSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::create([
                 'name' => $permission,
-                'guard_name' => 'web',
+                'guard_name' => 'central',
             ]);
         }
 
@@ -72,7 +72,7 @@ class CentralRolesPermissionsSeeder extends Seeder
         // 1. ADMIN ROLE
         $admin = Role::create([
             'name' => 'admin',
-            'guard_name' => 'web',
+            'guard_name' => 'central',
         ]);
 
         $admin->givePermissionTo([
@@ -98,7 +98,7 @@ class CentralRolesPermissionsSeeder extends Seeder
         // 2. CUSTOMER ROLE
         $customer = Role::create([
             'name' => 'customer',
-            'guard_name' => 'web',
+            'guard_name' => 'central',
         ]);
 
         $customer->givePermissionTo([
@@ -113,7 +113,7 @@ class CentralRolesPermissionsSeeder extends Seeder
         // 3. SUPPORT ROLE
         $support = Role::create([
             'name' => 'support',
-            'guard_name' => 'web',
+            'guard_name' => 'central',
         ]);
 
         $support->givePermissionTo([
