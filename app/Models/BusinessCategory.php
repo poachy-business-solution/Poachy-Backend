@@ -29,12 +29,12 @@ class BusinessCategory extends Model
 
     public function businessType()
     {
-        return $this->belongsTo(BusinessType::class);
+        return $this->belongsTo(BusinessType::class, 'business_type_id');
     }
 
-    public function businesses()
+    public function businessDetails()
     {
-        return $this->hasMany(BusinessDetail::class);
+        return $this->hasMany(BusinessDetail::class, 'business_category_id');
     }
 
     // Scopes

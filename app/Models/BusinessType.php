@@ -27,7 +27,7 @@ class BusinessType extends Model
 
     public function categories()
     {
-        return $this->hasMany(BusinessCategory::class);
+        return $this->hasMany(BusinessCategory::class, 'business_type_id');
     }
 
     public function activeCategories()
@@ -35,9 +35,9 @@ class BusinessType extends Model
         return $this->categories()->where('is_active', true);
     }
 
-    public function businesses()
+    public function businessDetails()
     {
-        return $this->hasMany(BusinessDetail::class);
+        return $this->hasMany(BusinessDetail::class, 'business_type_id');
     }
 
     // Scopes

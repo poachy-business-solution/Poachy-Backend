@@ -13,6 +13,8 @@ class BusinessDetail extends Model
     protected $connection = 'central';
     protected $table = 'business_details';
 
+    public const BUSINESS_STATUS = ['active', 'inactive', 'suspended', 'pending'];
+
     protected $fillable = [
         'tenant_id',
         'business_name',
@@ -108,20 +110,8 @@ class BusinessDetail extends Model
         ]);
     }
 
-    public function updateRating(float $newRating): bool
-    {
-        $totalRating = ($this->rating * $this->rating_count) + $newRating;
-        $newCount = $this->rating_count + 1;
-        $avgRating = $totalRating / $newCount;
-
-        return $this->update([
-            'rating' => round($avgRating, 2),
-            'rating_count' => $newCount,
-        ]);
-    }
-
     // Scopes
-    
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -153,4 +143,3 @@ class BusinessDetail extends Model
         return $query;
     }
 }
-

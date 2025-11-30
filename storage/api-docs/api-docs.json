@@ -748,6 +748,284 @@
                 ]
             }
         },
+        "/api/v1/central/business-details/pending": {
+            "get": {
+                "tags": [
+                    "Business Review"
+                ],
+                "summary": "Get pending business details",
+                "description": "Admin retrieves all business details awaiting approval",
+                "operationId": "5abfd6c2121bbf5f00785f0699763711",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending business details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pending business details retrieved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/business-details": {
+            "get": {
+                "tags": [
+                    "Business Review"
+                ],
+                "summary": "Get all business details",
+                "description": "Admin retrieves all business details with optional filters",
+                "operationId": "7424ea45fdc56c069f4e7d77f558d915",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "active",
+                                "inactive",
+                                "suspended"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "business_type_id",
+                        "in": "query",
+                        "description": "Filter by business type",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_verified",
+                        "in": "query",
+                        "description": "Filter by verification status",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "description": "Filter by city",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Business details retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/business-details/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Business Review"
+                ],
+                "summary": "Approve business details",
+                "description": "Admin approves a business details submission",
+                "operationId": "4594bc797545f7ba9f11ef3db7ebb55b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Business detail ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Approved after review"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business details approved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business details approved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessDetailResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Business details not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/business-details/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Business Review"
+                ],
+                "summary": "Reject business details",
+                "description": "Admin rejects a business details submission",
+                "operationId": "1cb3be35a5d2a00ebda7a2ddc6119cad",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Business detail ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Missing required documents"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business details rejected successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business details rejected successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Business details not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/central/tenants": {
             "get": {
                 "tags": [
@@ -1463,6 +1741,1377 @@
                     }
                 ]
             }
+        },
+        "/api/v1/central/tenants/{tenantId}/users": {
+            "post": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Create initial tenant user",
+                "description": "Admin creates the first user for a tenant (stored in tenant's database)",
+                "operationId": "1b484232885690672d1f4a99a9b8a29f",
+                "parameters": [
+                    {
+                        "name": "tenantId",
+                        "in": "path",
+                        "description": "Tenant UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "phone"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@merchant.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+254712345678"
+                                    },
+                                    "send_credentials": {
+                                        "description": "Send credentials via email",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tenant user created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant user created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@merchant.com"
+                                                },
+                                                "credentials_sent": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Tenant not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/auth/login": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Tenant user login",
+                "description": "Login as a tenant user with email and password",
+                "operationId": "00581efee69fffcf7ec85bd0600f853a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@merchant.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "SecurePass123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "type": "object"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "1|abc123..."
+                                                },
+                                                "tenant": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid"
+                                                        },
+                                                        "domains": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "has_business_details": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/v1/tenant/auth/me": {
+            "get": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Get current tenant user",
+                "description": "Get authenticated tenant user details",
+                "operationId": "47a0cb363cf863722edf72be5dab3345",
+                "responses": {
+                    "200": {
+                        "description": "User details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User details retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/auth/logout": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Tenant user logout",
+                "description": "Logout tenant user and revoke token",
+                "operationId": "62d3f2f325681115875ea73430ba64a6",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout successful"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/auth/update-password": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Update password",
+                "description": "Update tenant user password (requires current password)",
+                "operationId": "c55cfc7b5029131aa446829420cecc07",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "OldPassword123!"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password updated successfully. Please login again."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error - incorrect current password or weak new password"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details": {
+            "get": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Get business details",
+                "description": "Get current tenant's business details submission",
+                "operationId": "5090d9b12d4e259b176943f5ddcfe7c5",
+                "responses": {
+                    "200": {
+                        "description": "Business details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business details retrieved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessDetailResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Business details not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Submit business details for approval",
+                "description": "Tenant submits comprehensive business details including logo, banner, and operational information for admin approval (stored in central DB)",
+                "operationId": "5c6610bc0e6821338d7a162982333bad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "business_name",
+                                    "business_type_id",
+                                    "business_category_id",
+                                    "business_phone"
+                                ],
+                                "properties": {
+                                    "business_name": {
+                                        "description": "Official business name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Tech Haven Electronics"
+                                    },
+                                    "business_description": {
+                                        "description": "Brief description of the business",
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "example": "Leading electronics retailer offering the latest gadgets, computers, and accessories with competitive prices and excellent customer service."
+                                    },
+                                    "business_logo": {
+                                        "description": "Business logo image (JPEG, PNG, JPG, WEBP - Max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "business_banner": {
+                                        "description": "Business banner image (JPEG, PNG, JPG, WEBP - Max 5MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "business_type_id": {
+                                        "description": "ID from business_types table",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "business_category_id": {
+                                        "description": "ID from business_categories table",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "business_email": {
+                                        "description": "Business contact email",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255,
+                                        "example": "info@techhaven.co.ke"
+                                    },
+                                    "business_phone": {
+                                        "description": "Business contact phone number",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "+254712345678"
+                                    },
+                                    "contact_person": {
+                                        "description": "Primary contact person name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "John Doe"
+                                    },
+                                    "address": {
+                                        "description": "Physical business address",
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Westlands Mall, Ground Floor, Shop G12"
+                                    },
+                                    "city": {
+                                        "description": "City where business is located",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Nairobi"
+                                    },
+                                    "county": {
+                                        "description": "County/region where business is located",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Nairobi"
+                                    },
+                                    "operating_hours": {
+                                        "description": "Weekly operating hours with open/close times in HH:MM format",
+                                        "type": "object",
+                                        "example": {
+                                            "monday": {
+                                                "open": "08:00",
+                                                "close": "20:00"
+                                            },
+                                            "tuesday": {
+                                                "open": "08:00",
+                                                "close": "20:00"
+                                            },
+                                            "wednesday": {
+                                                "open": "08:00",
+                                                "close": "20:00"
+                                            },
+                                            "thursday": {
+                                                "open": "08:00",
+                                                "close": "20:00"
+                                            },
+                                            "friday": {
+                                                "open": "08:00",
+                                                "close": "20:00"
+                                            },
+                                            "saturday": {
+                                                "open": "09:00",
+                                                "close": "18:00"
+                                            },
+                                            "sunday": {
+                                                "open": "10:00",
+                                                "close": "16:00"
+                                            }
+                                        }
+                                    },
+                                    "delivery_info": {
+                                        "description": "Delivery service information",
+                                        "type": "object",
+                                        "example": {
+                                            "available": true,
+                                            "areas": [
+                                                "Nairobi",
+                                                "Kiambu",
+                                                "Machakos",
+                                                "Kajiado"
+                                            ],
+                                            "fee": 200,
+                                            "free_delivery_threshold": 5000
+                                        }
+                                    },
+                                    "settings": {
+                                        "description": "Business settings and preferences",
+                                        "type": "object",
+                                        "example": {
+                                            "currency": "KES",
+                                            "payment_methods": [
+                                                "cash",
+                                                "mpesa",
+                                                "card",
+                                                "bank_transfer"
+                                            ]
+                                        }
+                                    },
+                                    "social_media": {
+                                        "description": "Social media handles and links",
+                                        "type": "object",
+                                        "example": {
+                                            "facebook": "https://facebook.com/techhaven",
+                                            "instagram": "@techhaven_ke",
+                                            "twitter": "@TechHavenKE",
+                                            "whatsapp": "+254712345678"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Business details submitted successfully and awaiting admin approval",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business details submitted successfully. Awaiting admin approval."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "business_name": {
+                                                    "type": "string",
+                                                    "example": "Tech Haven Electronics"
+                                                },
+                                                "business_description": {
+                                                    "type": "string",
+                                                    "example": "Leading electronics retailer offering the latest gadgets, computers, and accessories with competitive prices and excellent customer service."
+                                                },
+                                                "business_logo": {
+                                                    "description": "Full URL to uploaded logo",
+                                                    "type": "string",
+                                                    "format": "url",
+                                                    "example": "http://techhaven.localhost/tenancy/assets/storage/business/logos/kXFKctcSe15MG22BBeRy92dqX9im9QAOouXYEsVa.jpg"
+                                                },
+                                                "business_banner": {
+                                                    "description": "Full URL to uploaded banner",
+                                                    "type": "string",
+                                                    "format": "url",
+                                                    "example": "http://techhaven.localhost/tenancy/assets/storage/business/banners/nP5ALnff2HDgfVF8ePkOJ7qlFjoVZP4HPLlNJCpp.jpg"
+                                                },
+                                                "business_type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Retail & Consumer Goods"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "retail-consumer-goods"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "business_category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Electronics Shop"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "electronics-shop"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "business_email": {
+                                                    "type": "string",
+                                                    "example": "info@techhaven.co.ke"
+                                                },
+                                                "business_phone": {
+                                                    "type": "string",
+                                                    "example": "+254712345678"
+                                                },
+                                                "contact_person": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "Westlands Mall, Ground Floor, Shop G12"
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "example": "Nairobi"
+                                                },
+                                                "county": {
+                                                    "type": "string",
+                                                    "example": "Nairobi"
+                                                },
+                                                "operating_hours": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "monday": {
+                                                            "open": "08:00",
+                                                            "close": "20:00"
+                                                        },
+                                                        "tuesday": {
+                                                            "open": "08:00",
+                                                            "close": "20:00"
+                                                        },
+                                                        "wednesday": {
+                                                            "open": "08:00",
+                                                            "close": "20:00"
+                                                        },
+                                                        "thursday": {
+                                                            "open": "08:00",
+                                                            "close": "20:00"
+                                                        },
+                                                        "friday": {
+                                                            "open": "08:00",
+                                                            "close": "20:00"
+                                                        },
+                                                        "saturday": {
+                                                            "open": "09:00",
+                                                            "close": "18:00"
+                                                        },
+                                                        "sunday": {
+                                                            "open": "10:00",
+                                                            "close": "16:00"
+                                                        }
+                                                    }
+                                                },
+                                                "delivery_info": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "available": "1",
+                                                        "areas": [
+                                                            "Nairobi",
+                                                            "Kiambu",
+                                                            "Machakos",
+                                                            "Kajiado"
+                                                        ],
+                                                        "fee": "200",
+                                                        "free_delivery_threshold": "5000"
+                                                    }
+                                                },
+                                                "settings": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "currency": "KES",
+                                                        "payment_methods": [
+                                                            "cash",
+                                                            "mpesa",
+                                                            "card",
+                                                            "bank_transfer"
+                                                        ]
+                                                    }
+                                                },
+                                                "social_media": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "facebook": "https://facebook.com/techhaven",
+                                                        "instagram": "@techhaven_ke",
+                                                        "twitter": "@TechHavenKE",
+                                                        "whatsapp": "+254712345678"
+                                                    }
+                                                },
+                                                "rating": {
+                                                    "description": "Average rating (0-5)",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 0
+                                                },
+                                                "rating_count": {
+                                                    "description": "Total number of ratings",
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "is_verified": {
+                                                    "description": "Whether business is verified",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "status": {
+                                                    "description": "Approval status",
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "pending",
+                                                        "approved",
+                                                        "rejected"
+                                                    ],
+                                                    "example": "pending"
+                                                },
+                                                "onboarded_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-30T14:36:22.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-30T14:36:22.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-30T14:36:22.921904Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "34ef50b6-abc8-4235-9f38-0a359d5cbb76"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Business details already submitted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business details already submitted. Please contact admin for updates."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid or missing required fields",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "business_name": [
+                                                    "The business name field is required."
+                                                ],
+                                                "business_logo": [
+                                                    "The business logo must be an image.",
+                                                    "The business logo must not exceed 2MB."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-types": {
+            "get": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Get business types with categories",
+                "description": "Get all active business types with their categories for business details form",
+                "operationId": "a6fbdb4bd3a6c127fa9b5732ebb16d6d",
+                "responses": {
+                    "200": {
+                        "description": "Business types retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business types retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Retail & Consumer Goods"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "retail-consumer-goods"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "categories": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "slug": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-types/{typeId}/categories": {
+            "get": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Get categories for business type",
+                "description": "Get all active categories for a specific business type",
+                "operationId": "5c36c5bfc97c19af544bd640387578a5",
+                "parameters": [
+                    {
+                        "name": "typeId",
+                        "in": "path",
+                        "description": "Business Type ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categories retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/users": {
+            "get": {
+                "tags": [
+                    "Tenant User Management"
+                ],
+                "summary": "Get all tenant users",
+                "description": "Get all users in this tenant (owner/manager only)",
+                "operationId": "2bf668b47231427d00e4b371cfbf500e",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Owner/Manager only"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant User Management"
+                ],
+                "summary": "Create new user",
+                "description": "Create new user with auto-generated password sent via email (owner/manager only)",
+                "operationId": "0ee190c77a5fb684eacd5340f745bd63",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jane@merchant.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+254723456789"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "owner",
+                                            "manager",
+                                            "cashier"
+                                        ],
+                                        "example": "cashier"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully. Credentials sent to email."
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Owner/Manager only"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/users/{userId}": {
+            "delete": {
+                "tags": [
+                    "Tenant User Management"
+                ],
+                "summary": "Delete user",
+                "description": "Delete user (owner only, cannot delete yourself or last owner)",
+                "operationId": "777760488f3835da853307b3ab981ef6",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully"
+                    },
+                    "400": {
+                        "description": "Cannot delete yourself or last owner"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Owner only"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant User Management"
+                ],
+                "summary": "Update user",
+                "description": "Update user details (owner/manager only)",
+                "operationId": "8db4cb257e7fed4f22aed8b2f4d246e3",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Updated"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "jane.updated@merchant.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+254723456789"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/users/{userId}/assign-role": {
+            "post": {
+                "tags": [
+                    "Tenant User Management"
+                ],
+                "summary": "Assign role to user",
+                "description": "Assign or change user role (owner only)",
+                "operationId": "0ea4be757e19807da17e27d6632dcc5b",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "role"
+                                ],
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "owner",
+                                            "manager",
+                                            "cashier"
+                                        ],
+                                        "example": "manager"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role assigned successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Owner only"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/roles": {
+            "get": {
+                "tags": [
+                    "Tenant User Management"
+                ],
+                "summary": "Get available roles",
+                "description": "Get all roles with their permissions",
+                "operationId": "0e70e06b08da1199d2a1a2bb7266c314",
+                "responses": {
+                    "200": {
+                        "description": "Roles retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Roles retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "owner"
+                                                    },
+                                                    "permissions_count": {
+                                                        "type": "integer",
+                                                        "example": 35
+                                                    },
+                                                    "permissions": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1525,7 +3174,7 @@
             },
             "BusinessDetailResource": {
                 "title": "Business Detail Resource",
-                "description": "Business detail resource representation (to be completed later)",
+                "description": "Business detail resource representation",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -1537,17 +3186,96 @@
                     },
                     "business_name": {
                         "type": "string",
-                        "example": "My Store",
+                        "example": "Tech Haven Electronics"
+                    },
+                    "business_description": {
+                        "type": "string",
                         "nullable": true
+                    },
+                    "business_logo": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_banner": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_type": {
+                        "type": "object"
+                    },
+                    "business_category": {
+                        "type": "object"
                     },
                     "business_email": {
                         "type": "string",
-                        "example": "store@example.com",
+                        "nullable": true
+                    },
+                    "business_phone": {
+                        "type": "string"
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "county": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "operating_hours": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "delivery_info": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "settings": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "social_media": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "rating": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "rating_count": {
+                        "type": "integer"
+                    },
+                    "is_verified": {
+                        "type": "boolean"
+                    },
+                    "verified_at": {
+                        "type": "string",
+                        "format": "date-time",
                         "nullable": true
                     },
                     "status": {
                         "type": "string",
                         "example": "pending"
+                    },
+                    "onboarded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -1663,6 +3391,22 @@
         {
             "name": "Central DB Admin Authentication",
             "description": "Central DB Admin Authentication"
+        },
+        {
+            "name": "Business Review",
+            "description": "Business Review"
+        },
+        {
+            "name": "Tenant Authentication",
+            "description": "Tenant Authentication"
+        },
+        {
+            "name": "Tenant Business Details",
+            "description": "Tenant Business Details"
+        },
+        {
+            "name": "Tenant User Management",
+            "description": "Tenant User Management"
         }
     ],
     "security": [

@@ -5,18 +5,21 @@ namespace App\Http\Controllers\Api\Central\Admin\Tenant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Tenant\AddDomainRequest;
 use App\Http\Requests\Central\Tenant\CreateTenantRequest;
+use App\Http\Requests\Central\Tenant\CreateTenantUserRequest;
 use App\Http\Requests\Central\Tenant\UpdateDomainRequest;
 use App\Http\Resources\Central\Admin\Tenant\DomainResource;
 use App\Http\Resources\Central\Admin\Tenant\TenantResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Admin\Tenant\TenantService;
+use App\Services\Central\Admin\Tenant\TenantUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TenantController extends Controller
 {
     public function __construct(
-        private readonly TenantService $tenantService
+        private readonly TenantService $tenantService,
+        private readonly TenantUserService $tenantUserService
     ) {}
 
     /**
@@ -542,5 +545,67 @@ class TenantController extends Controller
         $this->tenantService->deleteTenant($tenantId);
 
         return ApiResponse::success('Tenant deleted successfully');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/central/tenants/{tenantId}/users",
+     *     summary="Create initial tenant user",
+     *     description="Admin creates the first user for a tenant (stored in tenant's database)",
+     *     tags={"Tenant Management"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="tenantId",
+     *         in="path",
+     *         required=true,
+     *         description="Tenant UUID",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "email", "phone"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@merchant.com"),
+     *             @OA\Property(property="phone", type="string", example="+254712345678"),
+     *             @OA\Property(property="send_credentials", type="boolean", example=true, description="Send credentials via email")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Tenant user created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Tenant user created successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@merchant.com"),
+     *                 @OA\Property(property="credentials_sent", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Admin only"),
+     *     @OA\Response(response=404, description="Tenant not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function createTenantUser(CreateTenantUserRequest $request, string $tenantId)
+    {
+        $user = $this->tenantUserService->createTenantUser(
+            $tenantId,
+            $request->validated()
+        );
+
+        return ApiResponse::created(
+            'Tenant user created successfully',
+            [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'credentials_sent' => $request->input('send_credentials', true),
+            ]
+        );
     }
 }

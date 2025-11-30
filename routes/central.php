@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
+use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,10 +48,19 @@ Route::prefix('v1/central')
             Route::get('/tenants/search', [TenantController::class, 'search']);
             Route::apiResource('tenants', TenantController::class)->except(['update']);
             Route::patch('/tenants/{tenant_id}/metadata', [TenantController::class, 'updateMetadata']);
+            Route::post('/tenants/{tenantId}/users', [TenantController::class, 'createTenantUser']);
 
             // Domain management
             Route::post('/tenants/{tenant_id}/domains', [TenantController::class, 'addDomain']);
             Route::put('/domains/{domain_id}', [TenantController::class, 'updateDomain']);
             Route::delete('/domains/{domain_id}', [TenantController::class, 'deleteDomain']);
+        });
+
+        // Business Details Review
+        Route::prefix('business-details')->group(function () {
+            Route::get('/', [BusinessReviewController::class, 'index']);
+            Route::get('/pending', [BusinessReviewController::class, 'pending']);
+            Route::post('/{id}/approve', [BusinessReviewController::class, 'approve']);
+            Route::post('/{id}/reject', [BusinessReviewController::class, 'reject']);
         });
     });

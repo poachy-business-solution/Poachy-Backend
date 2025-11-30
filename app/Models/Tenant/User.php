@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'is_active',
+        'last_login_at', // add field
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -50,5 +52,15 @@ class User extends Authenticatable
     public function isCashier(): bool
     {
         return $this->hasRole('cashier');
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active === true;
+    }
+
+    public function updateLastLogin(): void
+    {
+        $this->update(['last_login_at' => now()]);
     }
 }

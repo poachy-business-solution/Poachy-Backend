@@ -20,9 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/central.php'));
 
 
-            // Register tenant routes (will be added later)
-            // Route::middleware(['api', 'tenant'])
-            //     ->group(base_path('routes/tenant.php'));
+            // Register tenant routes with tenancy middleware
+            Route::prefix('api')
+                ->middleware(['api', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, \Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains::class])
+                ->group(base_path('routes/tenant.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
