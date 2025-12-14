@@ -21,7 +21,7 @@ class ReviewBusinessDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'notes' => ['nullable', 'string', 'max:500'],
+            //
         ];
     }
 }

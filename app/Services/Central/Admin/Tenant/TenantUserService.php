@@ -37,6 +37,9 @@ class TenantUserService
                 'is_active' => true,
             ]);
 
+            // Assign 'owner' role to first tenant user
+            $user->assignRole('owner');
+
             // Send credentials email (always send since password is auto-generated)
             if ($data['send_credentials'] ?? true) {
                 $primaryDomain = $tenant->domains()->first();

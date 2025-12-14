@@ -62,5 +62,6 @@ Route::prefix('v1/central')
             Route::get('/pending', [BusinessReviewController::class, 'pending']);
             Route::post('/{id}/approve', [BusinessReviewController::class, 'approve']);
             Route::post('/{id}/reject', [BusinessReviewController::class, 'reject']);
+            Route::post('/{id}/verify', [BusinessReviewController::class, 'verify']);
         });
     });

@@ -88,7 +88,7 @@ class BusinessDetail extends Model
     {
         return $this->update([
             'status' => 'active',
-            'onboarded_at' => $this->onboarded_at ?? now(),
+            'onboarded_at' => now(),
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Central\Admin\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Business\ReviewBusinessDetailsRequest;
+use App\Http\Requests\Central\Business\VerifyBusinessRequest;
 use App\Http\Resources\Central\Admin\Tenant\BusinessDetailResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Business\BusinessDetailsService;
@@ -136,11 +137,6 @@ class BusinessReviewController extends Controller
      *         description="Business detail ID",
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="notes", type="string", example="Approved after review")
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Business details approved successfully",
@@ -155,12 +151,9 @@ class BusinessReviewController extends Controller
      *     @OA\Response(response=404, description="Business details not found")
      * )
      */
-    public function approve(int $id, ReviewBusinessDetailsRequest $request): JsonResponse
+    public function approve(int $id): JsonResponse
     {
-        $businessDetail = $this->businessDetailsService->approve(
-            $id,
-            $request->validated('notes')
-        );
+        $businessDetail = $this->businessDetailsService->approve($id);
 
         return ApiResponse::success(
             'Business details approved successfully',
@@ -208,5 +201,58 @@ class BusinessReviewController extends Controller
         );
 
         return ApiResponse::success('Business details rejected successfully');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/central/business-details/{id}/verify",
+     *     summary="Verify/unverify business",
+     *     description="Admin adds or removes verification badge from business",
+     *     tags={"Business Review"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Business detail ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"is_verified"},
+     *             @OA\Property(property="is_verified", type="boolean", example=true, description="true to verify, false to unverify"),
+     *             @OA\Property(property="notes", type="string", example="Verified after documentation review")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Business verification updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Business verification updated successfully"),
+     *             @OA\Property(property="data", ref="#/components/schemas/BusinessDetailResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Admin only"),
+     *     @OA\Response(response=404, description="Business details not found")
+     * )
+     */
+    public function verify(int $id, VerifyBusinessRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->verify(
+            $id,
+            $request->validated('is_verified'),
+        );
+
+        $message = $request->validated('is_verified')
+            ? 'Business verified successfully'
+            : 'Business verification removed';
+
+        return ApiResponse::success(
+            $message,
+            new BusinessDetailResource($businessDetail)
+        );
     }
 }

@@ -4,6 +4,13 @@ namespace App\Http\Controllers\Api\Tenant\Business;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Business\SubmitBusinessDetailsRequest;
+use App\Http\Requests\Tenant\Business\UpdateDeliveryInfoRequest;
+use App\Http\Requests\Tenant\Business\UpdateLocationRequest;
+use App\Http\Requests\Tenant\Business\UpdateMediaRequest;
+use App\Http\Requests\Tenant\Business\UpdateOperatingHoursRequest;
+use App\Http\Requests\Tenant\Business\UpdateProfileRequest;
+use App\Http\Requests\Tenant\Business\UpdateSettingsRequest;
+use App\Http\Requests\Tenant\Business\UpdateSocialMediaRequest;
 use App\Http\Resources\Central\Admin\Tenant\BusinessDetailResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Business\BusinessDetailsService;
@@ -262,6 +269,494 @@ class BusinessDetailsController extends Controller
 
         return ApiResponse::success(
             'Business details retrieved successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/business-details/profile",
+     *     summary="Update business profile",
+     *     description="Update business name, description, email, phone, and contact person",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             required={"business_name", "business_phone"},
+     *             @OA\Property(property="business_name", type="string", example="Tech Haven Electronics"),
+     *             @OA\Property(property="business_description", type="string", example="Leading electronics retailer"),
+     *             @OA\Property(property="business_email", type="string", format="email", example="info@techhaven.com"),
+     *             @OA\Property(property="business_phone", type="string", example="+254712345678"),
+     *             @OA\Property(property="contact_person", type="string", example="John Doe")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Business profile updated successfully"
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateProfile(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Business profile updated successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/tenant/business-details/media",
+     *     summary="Update business media",
+     *     description="Update business logo and banner images",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="business_logo", type="string", format="binary", description="Logo image (max 2MB)"),
+     *                 @OA\Property(property="business_banner", type="string", format="binary", description="Banner image (max 5MB)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Business media updated successfully"
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function updateMedia(UpdateMediaRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateMedia(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Business media updated successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/business-details/location",
+     *     summary="Update business location",
+     *     description="Update business address, city, and county",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             required={"address", "city", "county"},
+     *             @OA\Property(property="address", type="string", example="123 Kimathi Street, Nairobi CBD"),
+     *             @OA\Property(property="city", type="string", example="Nairobi"),
+     *             @OA\Property(property="county", type="string", example="Nairobi")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Business location updated successfully"
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function updateLocation(UpdateLocationRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateLocation(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Business location updated successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/business-details/operating-hours",
+     *     summary="Update operating hours",
+     *     description="Update business operating hours for specific days. Only provided days will be updated, other days remain unchanged. You can update all days at once or just specific days.",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="operating_hours",
+     *                 type="object",
+     *                 description="Operating hours object containing day(s) to update",
+     *                 example={
+     *                     "monday": {"open": "08:00", "close": "20:00"},
+     *                     "friday": {"open": "08:00", "close": "18:00"},
+     *                     "sunday": {"closed": true}
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_all_days",
+     *                 type="object",
+     *                 description="Example: Update all days at once",
+     *                 example={
+     *                     "operating_hours": {
+     *                         "monday": {"open": "08:00", "close": "20:00"},
+     *                         "tuesday": {"open": "08:00", "close": "20:00"},
+     *                         "wednesday": {"open": "08:00", "close": "20:00"},
+     *                         "thursday": {"open": "08:00", "close": "20:00"},
+     *                         "friday": {"open": "08:00", "close": "20:00"},
+     *                         "saturday": {"open": "09:00", "close": "18:00"},
+     *                         "sunday": {"closed": true}
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_partial",
+     *                 type="object",
+     *                 description="Example: Update only specific days",
+     *                 example={
+     *                     "operating_hours": {
+     *                         "saturday": {"open": "10:00", "close": "16:00"},
+     *                         "sunday": {"open": "10:00", "close": "14:00"}
+     *                     }
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Operating hours updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Operating hours updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 description="Updated business details"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={
+     *                     "operating_hours.monday.open": {"Opening time must be in HH:MM format (e.g., 08:00)."}
+     *                 }
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function updateOperatingHours(UpdateOperatingHoursRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateOperatingHours(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Operating hours updated successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/business-details/delivery-info",
+     *     summary="Update delivery information",
+     *     description="Update delivery settings. Only provided fields will be updated, other fields remain unchanged. You can update all fields at once or just specific fields.",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="delivery_info",
+     *                 type="object",
+     *                 description="Delivery information object containing field(s) to update"
+     *             ),
+     *             @OA\Property(
+     *                 property="example_all_fields",
+     *                 type="object",
+     *                 description="Example: Update all fields",
+     *                 example={
+     *                     "delivery_info": {
+     *                         "available": true,
+     *                         "areas": {"Nairobi", "Kiambu", "Machakos"},
+     *                         "fee": 200,
+     *                         "free_delivery_threshold": 5000,
+     *                         "estimated_time": "1-3 business days"
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_partial",
+     *                 type="object",
+     *                 description="Example: Update only specific fields",
+     *                 example={
+     *                     "delivery_info": {
+     *                         "fee": 250,
+     *                         "free_delivery_threshold": 6000
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_disable",
+     *                 type="object",
+     *                 description="Example: Disable delivery",
+     *                 example={
+     *                     "delivery_info": {
+     *                         "available": false
+     *                     }
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Delivery information updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Delivery information updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 description="Updated business details"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={
+     *                     "delivery_info.fee": {"Delivery fee must be a number."}
+     *                 }
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function updateDeliveryInfo(UpdateDeliveryInfoRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateDeliveryInfo(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Delivery information updated successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/business-details/settings",
+     *     summary="Update business settings",
+     *     description="Update business settings. Only provided fields will be updated, other fields remain unchanged. You can update all fields at once or just specific fields.",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 description="Settings object containing field(s) to update"
+     *             ),
+     *             @OA\Property(
+     *                 property="example_all_fields",
+     *                 type="object",
+     *                 description="Example: Update all fields",
+     *                 example={
+     *                     "settings": {
+     *                         "currency": "KES",
+     *                         "tax_rate": 16,
+     *                         "enable_online_store": true,
+     *                         "enable_marketplace": true,
+     *                         "payment_methods": {"cash", "mpesa", "card"}
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_partial",
+     *                 type="object",
+     *                 description="Example: Update only specific fields",
+     *                 example={
+     *                     "settings": {
+     *                         "tax_rate": 18,
+     *                         "payment_methods": {"cash", "mpesa", "card", "bank_transfer"}
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_single_field",
+     *                 type="object",
+     *                 description="Example: Update a single field",
+     *                 example={
+     *                     "settings": {
+     *                         "enable_online_store": false
+     *                     }
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Business settings updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Business settings updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 description="Updated business details"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={
+     *                     "settings.currency": {"Currency must be a 3-letter code (e.g., KES, USD)."}
+     *                 }
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function updateSettings(UpdateSettingsRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateSettings(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Business settings updated successfully',
+            new BusinessDetailResource($businessDetail)
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/business-details/social-media",
+     *     summary="Update social media links",
+     *     description="Update social media links. Only provided fields will be updated, other fields remain unchanged. You can update all links at once or just specific links.",
+     *     tags={"Tenant Business Details"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="social_media",
+     *                 type="object",
+     *                 description="Social media object containing link(s) to update"
+     *             ),
+     *             @OA\Property(
+     *                 property="example_all_fields",
+     *                 type="object",
+     *                 description="Example: Update all social media links",
+     *                 example={
+     *                     "social_media": {
+     *                         "facebook": "https://facebook.com/techhaven",
+     *                         "instagram": "@techhaven_ke",
+     *                         "twitter": "@TechHavenKE",
+     *                         "whatsapp": "+254712345678"
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_partial",
+     *                 type="object",
+     *                 description="Example: Update only specific links",
+     *                 example={
+     *                     "social_media": {
+     *                         "instagram": "@techhaven_official",
+     *                         "twitter": "@TechHaven_KE"
+     *                     }
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="example_single_link",
+     *                 type="object",
+     *                 description="Example: Update a single link",
+     *                 example={
+     *                     "social_media": {
+     *                         "whatsapp": "+254700000000"
+     *                     }
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Social media links updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Social media links updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 description="Updated business details"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={
+     *                     "social_media.facebook": {"Facebook must be a valid URL."}
+     *                 }
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function updateSocialMedia(UpdateSocialMediaRequest $request): JsonResponse
+    {
+        $businessDetail = $this->businessDetailsService->updateSocialMedia(
+            tenant()->id,
+            $request->validated()
+        );
+
+        return ApiResponse::success(
+            'Social media links updated successfully',
             new BusinessDetailResource($businessDetail)
         );
     }

@@ -898,21 +898,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "notes": {
-                                        "type": "string",
-                                        "example": "Approved after review"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Business details approved successfully",
@@ -1002,6 +987,90 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Business details rejected successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Business details not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/business-details/{id}/verify": {
+            "post": {
+                "tags": [
+                    "Business Review"
+                ],
+                "summary": "Verify/unverify business",
+                "description": "Admin adds or removes verification badge from business",
+                "operationId": "0aa0e76565e802b632fa3c9df8473d71",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Business detail ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_verified"
+                                ],
+                                "properties": {
+                                    "is_verified": {
+                                        "description": "true to verify, false to unverify",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Verified after documentation review"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business verification updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business verification updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessDetailResource"
                                         }
                                     },
                                     "type": "object"
@@ -1864,8 +1933,8 @@
                 "tags": [
                     "Tenant Authentication"
                 ],
-                "summary": "Tenant user login",
-                "description": "Login as a tenant user with email and password",
+                "summary": "Tenant user login (Step 1 - Initiate)",
+                "description": "Verify credentials and send OTP to email (2FA)",
                 "operationId": "00581efee69fffcf7ec85bd0600f853a",
                 "requestBody": {
                     "required": true,
@@ -1880,12 +1949,89 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "john@merchant.com"
+                                        "example": "owner@merchant.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "SecurePass123!"
+                                        "example": "Password123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Verification code sent to your email"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "owner@merchant.com"
+                                                },
+                                                "requires_password_change": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "next_step": {
+                                                    "type": "string",
+                                                    "example": "verify_otp"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/v1/tenant/auth/verify-otp": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Verify OTP (Step 2 - Complete Login)",
+                "description": "Verify OTP and receive authentication token",
+                "operationId": "44de5a07de5b280b4379a53ecec27b78",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "owner@merchant.com"
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "1234567"
                                     }
                                 },
                                 "type": "object"
@@ -1914,25 +2060,9 @@
                                                     "type": "object"
                                                 },
                                                 "token": {
-                                                    "type": "string",
-                                                    "example": "1|abc123..."
+                                                    "type": "string"
                                                 },
                                                 "tenant": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "format": "uuid"
-                                                        },
-                                                        "domains": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "has_business_details": {
-                                                            "type": "boolean"
-                                                        }
-                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -1945,7 +2075,101 @@
                         }
                     },
                     "422": {
-                        "description": "Invalid credentials"
+                        "description": "Invalid or expired OTP"
+                    }
+                }
+            }
+        },
+        "/api/v1/tenant/auth/resend-otp": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Resend OTP",
+                "description": "Resend verification code to email",
+                "operationId": "9d8516a5fb97e612c1068c3c74929132",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "owner@merchant.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP resent successfully"
+                    },
+                    "422": {
+                        "description": "User not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/tenant/auth/change-password": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Change password (First-time login)",
+                "description": "Change temporary password to permanent one (for first-time users)",
+                "operationId": "4080617d25a04b95e9b84608bd69eeda",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "owner@merchant.com"
+                                    },
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "TempPassword123!"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "MyNewPassword123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "MyNewPassword123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -2653,6 +2877,663 @@
                 ]
             }
         },
+        "/api/v1/tenant/business-details/profile": {
+            "patch": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update business profile",
+                "description": "Update business name, description, email, phone, and contact person",
+                "operationId": "db2228f7cd645ba78c6b559c03d94482",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "business_name",
+                                    "business_phone"
+                                ],
+                                "properties": {
+                                    "business_name": {
+                                        "type": "string",
+                                        "example": "Tech Haven Electronics"
+                                    },
+                                    "business_description": {
+                                        "type": "string",
+                                        "example": "Leading electronics retailer"
+                                    },
+                                    "business_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "info@techhaven.com"
+                                    },
+                                    "business_phone": {
+                                        "type": "string",
+                                        "example": "+254712345678"
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business profile updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/media": {
+            "post": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update business media",
+                "description": "Update business logo and banner images",
+                "operationId": "228fff2f68ebaba72d9538c32ab53aad",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "business_logo": {
+                                        "description": "Logo image (max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "business_banner": {
+                                        "description": "Banner image (max 5MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business media updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/location": {
+            "patch": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update business location",
+                "description": "Update business address, city, and county",
+                "operationId": "d9955d0d162e770f2961ab1b49de9ded",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "address",
+                                    "city",
+                                    "county"
+                                ],
+                                "properties": {
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Kimathi Street, Nairobi CBD"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "Nairobi"
+                                    },
+                                    "county": {
+                                        "type": "string",
+                                        "example": "Nairobi"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business location updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/operating-hours": {
+            "patch": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update operating hours",
+                "description": "Update business operating hours for specific days. Only provided days will be updated, other days remain unchanged. You can update all days at once or just specific days.",
+                "operationId": "8fad33b92c7fb69818289ce0d4667108",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "operating_hours": {
+                                        "description": "Operating hours object containing day(s) to update",
+                                        "type": "object",
+                                        "example": {
+                                            "monday": {
+                                                "open": "08:00",
+                                                "close": "20:00"
+                                            },
+                                            "friday": {
+                                                "open": "08:00",
+                                                "close": "18:00"
+                                            },
+                                            "sunday": {
+                                                "closed": true
+                                            }
+                                        }
+                                    },
+                                    "example_all_days": {
+                                        "description": "Example: Update all days at once",
+                                        "type": "object",
+                                        "example": {
+                                            "operating_hours": {
+                                                "monday": {
+                                                    "open": "08:00",
+                                                    "close": "20:00"
+                                                },
+                                                "tuesday": {
+                                                    "open": "08:00",
+                                                    "close": "20:00"
+                                                },
+                                                "wednesday": {
+                                                    "open": "08:00",
+                                                    "close": "20:00"
+                                                },
+                                                "thursday": {
+                                                    "open": "08:00",
+                                                    "close": "20:00"
+                                                },
+                                                "friday": {
+                                                    "open": "08:00",
+                                                    "close": "20:00"
+                                                },
+                                                "saturday": {
+                                                    "open": "09:00",
+                                                    "close": "18:00"
+                                                },
+                                                "sunday": {
+                                                    "closed": true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "example_partial": {
+                                        "description": "Example: Update only specific days",
+                                        "type": "object",
+                                        "example": {
+                                            "operating_hours": {
+                                                "saturday": {
+                                                    "open": "10:00",
+                                                    "close": "16:00"
+                                                },
+                                                "sunday": {
+                                                    "open": "10:00",
+                                                    "close": "14:00"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Operating hours updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operating hours updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Updated business details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "operating_hours.monday.open": [
+                                                    "Opening time must be in HH:MM format (e.g., 08:00)."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/delivery-info": {
+            "patch": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update delivery information",
+                "description": "Update delivery settings. Only provided fields will be updated, other fields remain unchanged. You can update all fields at once or just specific fields.",
+                "operationId": "96382f8256e75be63a9a5aafee4e6f33",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "delivery_info": {
+                                        "description": "Delivery information object containing field(s) to update",
+                                        "type": "object"
+                                    },
+                                    "example_all_fields": {
+                                        "description": "Example: Update all fields",
+                                        "type": "object",
+                                        "example": {
+                                            "delivery_info": {
+                                                "available": true,
+                                                "areas": [
+                                                    "Nairobi",
+                                                    "Kiambu",
+                                                    "Machakos"
+                                                ],
+                                                "fee": 200,
+                                                "free_delivery_threshold": 5000,
+                                                "estimated_time": "1-3 business days"
+                                            }
+                                        }
+                                    },
+                                    "example_partial": {
+                                        "description": "Example: Update only specific fields",
+                                        "type": "object",
+                                        "example": {
+                                            "delivery_info": {
+                                                "fee": 250,
+                                                "free_delivery_threshold": 6000
+                                            }
+                                        }
+                                    },
+                                    "example_disable": {
+                                        "description": "Example: Disable delivery",
+                                        "type": "object",
+                                        "example": {
+                                            "delivery_info": {
+                                                "available": false
+                                            }
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Delivery information updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Delivery information updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Updated business details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "delivery_info.fee": [
+                                                    "Delivery fee must be a number."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/settings": {
+            "patch": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update business settings",
+                "description": "Update business settings. Only provided fields will be updated, other fields remain unchanged. You can update all fields at once or just specific fields.",
+                "operationId": "bfaeca21ce51e114cf90375cffcd6c8b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "settings": {
+                                        "description": "Settings object containing field(s) to update",
+                                        "type": "object"
+                                    },
+                                    "example_all_fields": {
+                                        "description": "Example: Update all fields",
+                                        "type": "object",
+                                        "example": {
+                                            "settings": {
+                                                "currency": "KES",
+                                                "tax_rate": 16,
+                                                "enable_online_store": true,
+                                                "enable_marketplace": true,
+                                                "payment_methods": [
+                                                    "cash",
+                                                    "mpesa",
+                                                    "card"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "example_partial": {
+                                        "description": "Example: Update only specific fields",
+                                        "type": "object",
+                                        "example": {
+                                            "settings": {
+                                                "tax_rate": 18,
+                                                "payment_methods": [
+                                                    "cash",
+                                                    "mpesa",
+                                                    "card",
+                                                    "bank_transfer"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "example_single_field": {
+                                        "description": "Example: Update a single field",
+                                        "type": "object",
+                                        "example": {
+                                            "settings": {
+                                                "enable_online_store": false
+                                            }
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Business settings updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business settings updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Updated business details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "settings.currency": [
+                                                    "Currency must be a 3-letter code (e.g., KES, USD)."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/social-media": {
+            "patch": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Update social media links",
+                "description": "Update social media links. Only provided fields will be updated, other fields remain unchanged. You can update all links at once or just specific links.",
+                "operationId": "226fae68d4fdbacd099a91e422ce8d39",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "social_media": {
+                                        "description": "Social media object containing link(s) to update",
+                                        "type": "object"
+                                    },
+                                    "example_all_fields": {
+                                        "description": "Example: Update all social media links",
+                                        "type": "object",
+                                        "example": {
+                                            "social_media": {
+                                                "facebook": "https://facebook.com/techhaven",
+                                                "instagram": "@techhaven_ke",
+                                                "twitter": "@TechHavenKE",
+                                                "whatsapp": "+254712345678"
+                                            }
+                                        }
+                                    },
+                                    "example_partial": {
+                                        "description": "Example: Update only specific links",
+                                        "type": "object",
+                                        "example": {
+                                            "social_media": {
+                                                "instagram": "@techhaven_official",
+                                                "twitter": "@TechHaven_KE"
+                                            }
+                                        }
+                                    },
+                                    "example_single_link": {
+                                        "description": "Example: Update a single link",
+                                        "type": "object",
+                                        "example": {
+                                            "social_media": {
+                                                "whatsapp": "+254700000000"
+                                            }
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Social media links updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Social media links updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Updated business details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "social_media.facebook": [
+                                                    "Facebook must be a valid URL."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/business-types": {
             "get": {
                 "tags": [
@@ -2758,6 +3639,77 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/access/status": {
+            "get": {
+                "tags": [
+                    "Tenant Access"
+                ],
+                "summary": "Check tenant access status",
+                "description": "Check if current tenant has valid access (business status, subscription)",
+                "operationId": "edfcad9ee09453fa145404ee9bc3babb",
+                "responses": {
+                    "200": {
+                        "description": "Access status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "allowed": {
+                                                    "type": "boolean"
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "details": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/subscription/info": {
+            "get": {
+                "tags": [
+                    "Tenant Access"
+                ],
+                "summary": "Get subscription information",
+                "description": "Get current tenant subscription details",
+                "operationId": "b8e9721f31b0f7eeca4d0085e6fa7e12",
+                "responses": {
+                    "200": {
+                        "description": "Subscription info retrieved"
                     }
                 },
                 "security": [
@@ -3403,6 +4355,10 @@
         {
             "name": "Tenant Business Details",
             "description": "Tenant Business Details"
+        },
+        {
+            "name": "Tenant Access",
+            "description": "Tenant Access"
         },
         {
             "name": "Tenant User Management",
