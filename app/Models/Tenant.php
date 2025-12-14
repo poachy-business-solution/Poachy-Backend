@@ -44,7 +44,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function activeSubscription()
     {
         return $this->hasOne(BusinessSubscription::class, 'tenant_id', 'id')
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'trial'])
             ->latest('start_date');
     }
 

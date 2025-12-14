@@ -102,7 +102,7 @@ class TenantAccessService
     {
         $subscription = BusinessSubscription::on('central')
             ->where('tenant_id', $tenantId)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'trial'])
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -142,7 +142,9 @@ class TenantAccessService
                     'type' => 'trial',
                     'plan' => $subscription->plan->name ?? 'Unknown',
                     'trial_ends_at' => $subscription->trial_ends_at?->toDateTimeString(),
-                    'days_remaining' => $subscription->trial_ends_at ? now()->diffInDays($subscription->trial_ends_at, false) : null,
+                    'days_remaining' => $subscription->trial_ends_at
+                        ? (int) now()->diffInDays($subscription->trial_ends_at, false)
+                        : null,
                 ],
             ];
         }
@@ -171,7 +173,9 @@ class TenantAccessService
                 'plan_slug' => $subscription->plan->slug ?? null,
                 'start_date' => $subscription->start_date?->toDateString(),
                 'end_date' => $subscription->end_date?->toDateString(),
-                'days_remaining' => $subscription->end_date ? now()->diffInDays($subscription->end_date, false) : null,
+                'days_remaining' => $subscription->end_date
+                    ? (int) now()->diffInDays($subscription->end_date, false)
+                    : null,
                 'auto_renew' => $subscription->auto_renew,
             ],
         ];
@@ -205,7 +209,7 @@ class TenantAccessService
     {
         $subscription = BusinessSubscription::on('central')
             ->where('tenant_id', $tenantId)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'trial'])
             ->with('plan')
             ->orderBy('created_at', 'desc')
             ->first();

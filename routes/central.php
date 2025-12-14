@@ -59,6 +59,10 @@ Route::prefix('v1/central')
             Route::post('/tenants/{tenant_id}/domains', [TenantController::class, 'addDomain']);
             Route::put('/domains/{domain_id}', [TenantController::class, 'updateDomain']);
             Route::delete('/domains/{domain_id}', [TenantController::class, 'deleteDomain']);
+
+            // subscription period management
+            Route::post('/tenants/{tenant_id}/trial-period', [TenantController::class, 'startTrialPeriod']);
+            Route::get('/tenants/{tenant_id}/subscriptions', [TenantController::class, 'subscriptions']);
         });
 
         // Business Details Review

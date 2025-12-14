@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Tenant\AddDomainRequest;
 use App\Http\Requests\Central\Tenant\CreateTenantRequest;
 use App\Http\Requests\Central\Tenant\CreateTenantUserRequest;
+use App\Http\Requests\Central\Tenant\StartTrialPeriodRequest;
 use App\Http\Requests\Central\Tenant\UpdateDomainRequest;
 use App\Http\Resources\Central\Admin\Tenant\DomainResource;
 use App\Http\Resources\Central\Admin\Tenant\TenantResource;
+use App\Http\Resources\Central\Tenant\BusinessSubscriptionResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Admin\Tenant\TenantService;
 use App\Services\Central\Admin\Tenant\TenantUserService;
@@ -607,5 +609,418 @@ class TenantController extends Controller
                 'credentials_sent' => $request->input('send_credentials', true),
             ]
         );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/central/tenants/{tenant_id}/trial-period",
+     *     summary="Start trial period for tenant",
+     *     description="Initiates a trial period for a specific tenant. The tenant must not have an existing active trial period. This creates a subscription with trial status.",
+     *     tags={"Subscription Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="tenant_id",
+     *         in="path",
+     *         description="The UUID of the tenant to start trial for",
+     *         required=true,
+     *         @OA\Schema(type="string", format="uuid"),
+     *         example="bbab2597-e1ae-466b-a071-83033841d2ed"
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Trial period end date",
+     *         @OA\JsonContent(
+     *             required={"trial_ends_at"},
+     *             @OA\Property(
+     *                 property="trial_ends_at",
+     *                 type="string",
+     *                 format="date",
+     *                 description="The date when the trial period should end (YYYY-MM-DD format). Must be a future date.",
+     *                 example="2026-01-31"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Trial period started successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trial period started successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="subscription_id", type="integer", example=1, description="The ID of the created subscription"),
+     *                 @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed", description="The tenant's UUID"),
+     *                 @OA\Property(property="plan", type="string", example="Free", description="The subscription plan name"),
+     *                 @OA\Property(property="status", type="string", example="trial", description="The subscription status"),
+     *                 @OA\Property(property="is_trial", type="boolean", example=true, description="Indicates if this is a trial subscription"),
+     *                 @OA\Property(property="start_date", type="string", format="date", example="2025-12-14", description="The trial start date"),
+     *                 @OA\Property(property="trial_ends_at", type="string", format="date", example="2026-01-31", description="The trial end date")
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2025-12-14T14:56:41.329429Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="cd8684f5-42fa-4436-bcaf-5a4159731908"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *             ),
+     *             example={
+     *                 "success": true,
+     *                 "message": "Trial period started successfully",
+     *                 "data": {
+     *                     "subscription_id": 1,
+     *                     "tenant_id": "bbab2597-e1ae-466b-a071-83033841d2ed",
+     *                     "plan": "Free",
+     *                     "status": "trial",
+     *                     "is_trial": true,
+     *                     "start_date": "2025-12-14",
+     *                     "trial_ends_at": "2026-01-31"
+     *                 },
+     *                 "meta": {
+     *                     "timestamp": "2025-12-14T14:56:41.329429Z",
+     *                     "request_id": "cd8684f5-42fa-4436-bcaf-5a4159731908",
+     *                     "tenant_id": null,
+     *                     "tenant_name": null
+     *                 }
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request - Trial period cannot be started",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Failed to start trial period"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="error",
+     *                     type="string",
+     *                     example="Tenant already has an active trial period."
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2025-12-14T14:57:35.756555Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="02f0df0d-5da8-49d0-8bab-1257294b12b8"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *             ),
+     *             example={
+     *                 "success": false,
+     *                 "message": "Failed to start trial period",
+     *                 "errors": {
+     *                     "error": "Tenant already has an active trial period."
+     *                 },
+     *                 "meta": {
+     *                     "timestamp": "2025-12-14T14:57:35.756555Z",
+     *                     "request_id": "02f0df0d-5da8-49d0-8bab-1257294b12b8",
+     *                     "tenant_id": null,
+     *                     "tenant_name": null
+     *                 }
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized - Authentication required"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Tenant not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Tenant not found"),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="trial_ends_at",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The trial ends at field is required.")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true)
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function startTrialPeriod(string $tenantId, StartTrialPeriodRequest $request): JsonResponse
+    {
+        try {
+            $subscription = $this->tenantService->startTrialPeriod(
+                $tenantId,
+                $request->validated('trial_ends_at')
+            );
+
+            return ApiResponse::success(
+                message: 'Trial period started successfully',
+                data: [
+                    'subscription_id' => $subscription->id,
+                    'tenant_id' => $subscription->tenant_id,
+                    'plan' => $subscription->plan->name,
+                    'status' => $subscription->status,
+                    'is_trial' => $subscription->is_trial,
+                    'start_date' => $subscription->start_date->toDateString(),
+                    'trial_ends_at' => $subscription->trial_ends_at->toDateString(),
+                ]
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error(
+                message: 'Failed to start trial period',
+                errors: ['error' => $e->getMessage()],
+                status: 400
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/central/tenants/{tenant_id}/subscriptions",
+     *     summary="Get tenant subscriptions",
+     *     description="Retrieves all subscription records for a specific tenant, including active, trial, expired, and cancelled subscriptions. Returns detailed information about each subscription period, payment details, and status.",
+     *     tags={"Subscription Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tenant subscriptions retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Tenant subscriptions retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1, description="Subscription record ID"),
+     *                     @OA\Property(
+     *                         property="subscription",
+     *                         type="object",
+     *                         description="Subscription plan information",
+     *                         @OA\Property(property="plan_id", type="integer", example=1, description="The ID of the subscription plan"),
+     *                         @OA\Property(property="plan_name", type="string", example="Free", description="The name of the subscription plan"),
+     *                         @OA\Property(property="plan_slug", type="string", example="free", description="The slug of the subscription plan")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="period",
+     *                         type="object",
+     *                         description="Subscription period details",
+     *                         @OA\Property(property="start_date", type="string", format="date", example="2025-12-14", description="Subscription start date"),
+     *                         @OA\Property(property="end_date", type="string", format="date", nullable=true, example=null, description="Subscription end date (null for lifetime or ongoing subscriptions)"),
+     *                         @OA\Property(property="duration_days", type="integer", nullable=true, example=null, description="Duration of subscription in days (null for lifetime)")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="payment",
+     *                         type="object",
+     *                         description="Payment information",
+     *                         @OA\Property(property="amount_paid", type="number", format="float", example=0, description="Amount paid for this subscription"),
+     *                         @OA\Property(property="currency", type="string", example="KES", description="Currency code"),
+     *                         @OA\Property(property="payment_method", type="string", nullable=true, example=null, description="Payment method used (e.g., mpesa, card, bank_transfer)"),
+     *                         @OA\Property(property="payment_reference", type="string", nullable=true, example=null, description="Payment transaction reference"),
+     *                         @OA\Property(property="payment_date", type="string", format="date-time", nullable=true, example=null, description="Date when payment was made")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="status",
+     *                         type="object",
+     *                         description="Subscription status information",
+     *                         @OA\Property(property="current_status", type="string", example="trial", description="Current subscription status", enum={"active", "trial", "expired", "cancelled"}),
+     *                         @OA\Property(property="is_active", type="boolean", example=false, description="Whether the subscription is currently active"),
+     *                         @OA\Property(property="is_expired", type="boolean", example=false, description="Whether the subscription has expired"),
+     *                         @OA\Property(property="auto_renew", type="boolean", example=false, description="Whether auto-renewal is enabled")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="trial",
+     *                         type="object",
+     *                         description="Trial period information",
+     *                         @OA\Property(property="is_trial", type="boolean", example=true, description="Whether this is a trial subscription"),
+     *                         @OA\Property(property="trial_ends_at", type="string", format="date", nullable=true, example="2026-01-31", description="Trial end date"),
+     *                         @OA\Property(property="is_in_trial", type="boolean", example=true, description="Whether currently in trial period"),
+     *                         @OA\Property(property="trial_days_remaining", type="integer", nullable=true, example=47, description="Days remaining in trial period")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="cancellation",
+     *                         type="object",
+     *                         description="Cancellation details",
+     *                         @OA\Property(property="cancelled_at", type="string", format="date-time", nullable=true, example=null, description="Date when subscription was cancelled"),
+     *                         @OA\Property(property="cancellation_reason", type="string", nullable=true, example=null, description="Reason for cancellation"),
+     *                         @OA\Property(property="is_cancelled", type="boolean", example=false, description="Whether the subscription has been cancelled")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="metadata",
+     *                         type="object",
+     *                         description="Record metadata",
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-12-14T15:24:50.000000Z", description="Record creation timestamp"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-12-14T15:24:50.000000Z", description="Record last update timestamp")
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2025-12-14T16:08:12.415262Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="50dbb46f-cf80-4aa6-9553-1b4ce72f6da7"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *             ),
+     *             example={
+     *                 "success": true,
+     *                 "message": "Tenant subscriptions retrieved successfully",
+     *                 "data": {
+     *                     {
+     *                         "id": 1,
+     *                         "subscription": {
+     *                             "plan_id": 1,
+     *                             "plan_name": "Free",
+     *                             "plan_slug": "free"
+     *                         },
+     *                         "period": {
+     *                             "start_date": "2025-12-14",
+     *                             "end_date": null,
+     *                             "duration_days": null
+     *                         },
+     *                         "payment": {
+     *                             "amount_paid": 0,
+     *                             "currency": "KES",
+     *                             "payment_method": null,
+     *                             "payment_reference": null,
+     *                             "payment_date": null
+     *                         },
+     *                         "status": {
+     *                             "current_status": "trial",
+     *                             "is_active": false,
+     *                             "is_expired": false,
+     *                             "auto_renew": false
+     *                         },
+     *                         "trial": {
+     *                             "is_trial": true,
+     *                             "trial_ends_at": "2026-01-31",
+     *                             "is_in_trial": true,
+     *                             "trial_days_remaining": 47
+     *                         },
+     *                         "cancellation": {
+     *                             "cancelled_at": null,
+     *                             "cancellation_reason": null,
+     *                             "is_cancelled": false
+     *                         },
+     *                         "metadata": {
+     *                             "created_at": "2025-12-14T15:24:50.000000Z",
+     *                             "updated_at": "2025-12-14T15:24:50.000000Z"
+     *                         }
+     *                     },
+     *                     {
+     *                         "id": 2,
+     *                         "subscription": {
+     *                             "plan_id": 2,
+     *                             "plan_name": "Basic",
+     *                             "plan_slug": "basic"
+     *                         },
+     *                         "period": {
+     *                             "start_date": "2025-11-01",
+     *                             "end_date": "2025-12-01",
+     *                             "duration_days": 30
+     *                         },
+     *                         "payment": {
+     *                             "amount_paid": 2500,
+     *                             "currency": "KES",
+     *                             "payment_method": "mpesa",
+     *                             "payment_reference": "RK12345678",
+     *                             "payment_date": "2025-11-01T10:30:00.000000Z"
+     *                         },
+     *                         "status": {
+     *                             "current_status": "expired",
+     *                             "is_active": false,
+     *                             "is_expired": true,
+     *                             "auto_renew": true
+     *                         },
+     *                         "trial": {
+     *                             "is_trial": false,
+     *                             "trial_ends_at": null,
+     *                             "is_in_trial": false,
+     *                             "trial_days_remaining": null
+     *                         },
+     *                         "cancellation": {
+     *                             "cancelled_at": null,
+     *                             "cancellation_reason": null,
+     *                             "is_cancelled": false
+     *                         },
+     *                         "metadata": {
+     *                             "created_at": "2025-11-01T10:30:00.000000Z",
+     *                             "updated_at": "2025-12-01T10:30:00.000000Z"
+     *                         }
+     *                     }
+     *                 },
+     *                 "meta": {
+     *                     "timestamp": "2025-12-14T16:08:12.415262Z",
+     *                     "request_id": "50dbb46f-cf80-4aa6-9553-1b4ce72f6da7",
+     *                     "tenant_id": null,
+     *                     "tenant_name": null
+     *                 }
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized - Authentication required"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Tenant not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Tenant not found"),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true)
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function subscriptions(string $tenantId): JsonResponse
+    {
+        try {
+            $subscriptions = $this->tenantService->getTenantSubscriptions($tenantId);
+
+            return ApiResponse::success(
+                message: 'Tenant subscriptions retrieved successfully',
+                data: BusinessSubscriptionResource::collection($subscriptions)
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error(
+                message: 'Failed to retrieve tenant subscriptions',
+                errors: ['error' => $e->getMessage()],
+                status: 400
+            );
+        }
     }
 }

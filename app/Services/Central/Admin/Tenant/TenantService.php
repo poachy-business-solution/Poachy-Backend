@@ -2,8 +2,12 @@
 
 namespace App\Services\Central\Admin\Tenant;
 
+use App\Models\BusinessSubscription;
 use App\Models\Domain;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Services\Tenant\TenantAccessService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -215,5 +219,79 @@ class TenantService
             })
             ->latest()
             ->paginate($perPage);
+    }
+
+
+    /**
+     * Start a trial period for a tenant.
+     */
+    public function startTrialPeriod(string $tenantId, string $trialEndsAt): BusinessSubscription
+    {
+        return DB::connection('central')->transaction(function () use ($tenantId, $trialEndsAt) {
+            // Verify tenant exists
+            $tenant = Tenant::find($tenantId);
+            if (!$tenant) {
+                throw new \Exception("Tenant not found with ID: {$tenantId}");
+            }
+
+            // Get the Free subscription plan
+            $freePlan = SubscriptionPlan::where('slug', 'free')
+                ->where('is_active', true)
+                ->first();
+
+            if (!$freePlan) {
+                throw new \Exception("Free subscription plan not found.");
+            }
+
+            // Check if tenant already has an active trial
+            $existingTrial = BusinessSubscription::where('tenant_id', $tenantId)
+                ->where('is_trial', true)
+                ->where('status', 'trial')
+                ->where('trial_ends_at', '>=', now())
+                ->first();
+
+            if ($existingTrial) {
+                throw new \Exception("Tenant already has an active trial period.");
+            }
+
+            // Create trial subscription
+            $subscription = BusinessSubscription::create([
+                'tenant_id' => $tenantId,
+                'subscription_plan_id' => $freePlan->id,
+                'start_date' => now()->toDateString(),
+                'end_date' => null,
+                'amount_paid' => 0.00,
+                'currency' => 'KES',
+                'payment_method' => null,
+                'payment_reference' => null,
+                'payment_date' => null,
+                'status' => 'trial',
+                'auto_renew' => false,
+                'is_trial' => true,
+                'trial_ends_at' => Carbon::parse($trialEndsAt)->toDateString(),
+            ]);
+
+            // Clear tenant access cache after successful trial creation
+            app(TenantAccessService::class)->clearTenantAccessCache($tenantId);
+
+            return $subscription;
+        });
+    }
+
+    /**
+     * Get all subscriptions for a tenant.
+     */
+    public function getTenantSubscriptions(string $tenantId)
+    {
+        // Verify tenant exists
+        $tenant = Tenant::find($tenantId);
+        if (!$tenant) {
+            throw new \Exception("Tenant not found with ID: {$tenantId}");
+        }
+
+        return BusinessSubscription::where('tenant_id', $tenantId)
+            ->with('plan')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }

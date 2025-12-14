@@ -22,7 +22,7 @@ class BusinessSubscription extends Model
         'payment_method',
         'payment_reference',
         'payment_date',
-        'status',
+        'status', // active, cancelled, expired, trial, pending
         'auto_renew',
         'is_trial',
         'trial_ends_at',
@@ -57,8 +57,8 @@ class BusinessSubscription extends Model
     // Status Methods
     public function isActive(): bool
     {
-        return $this->status === 'active' && 
-               ($this->end_date === null || now()->lte($this->end_date));
+        return $this->status === 'active' &&
+            ($this->end_date === null || now()->lte($this->end_date));
     }
 
     public function isExpired(): bool
@@ -68,9 +68,9 @@ class BusinessSubscription extends Model
 
     public function isInTrial(): bool
     {
-        return $this->is_trial && 
-               $this->trial_ends_at && 
-               now()->lte($this->trial_ends_at);
+        return $this->is_trial &&
+            $this->trial_ends_at &&
+            now()->lte($this->trial_ends_at);
     }
 
     public function activate(): bool
@@ -102,10 +102,10 @@ class BusinessSubscription extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active')
-                     ->where(function($q) {
-                         $q->whereNull('end_date')
-                           ->orWhere('end_date', '>=', now());
-                     });
+            ->where(function ($q) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            });
     }
 
     public function scopeExpired($query)
