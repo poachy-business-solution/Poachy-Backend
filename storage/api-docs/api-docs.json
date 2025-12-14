@@ -1928,6 +1928,997 @@
                 ]
             }
         },
+        "/api/v1/central/subscription-plans": {
+            "get": {
+                "tags": [
+                    "Subscription Plans"
+                ],
+                "summary": "Get all subscription plans",
+                "description": "Retrieves a list of all available subscription plans with optional filtering and sorting. This endpoint is public and does not require authentication.",
+                "operationId": "1b7cbbf061705859cfd17356f6eea573",
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "description": "Filter by featured status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Minimum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        },
+                        "example": 2500
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Maximum price filter (must be greater than min_price)",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        },
+                        "example": 10000
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "price",
+                                "name",
+                                "created_at",
+                                "billing_cycle_days"
+                            ]
+                        },
+                        "example": "price"
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        },
+                        "example": "asc"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription plans retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plans retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Free"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "free"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Perfect for getting started with basic POS features"
+                                                    },
+                                                    "pricing": {
+                                                        "properties": {
+                                                            "price": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0
+                                                            },
+                                                            "currency": {
+                                                                "type": "string",
+                                                                "example": "KES"
+                                                            },
+                                                            "billing_cycle_days": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "billing_cycle_display": {
+                                                                "type": "string",
+                                                                "example": "Lifetime"
+                                                            },
+                                                            "is_free": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "features": {
+                                                        "properties": {
+                                                            "support": {
+                                                                "type": "string",
+                                                                "example": "community"
+                                                            },
+                                                            "max_users": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "max_products": {
+                                                                "type": "integer",
+                                                                "example": 50
+                                                            },
+                                                            "max_locations": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "enable_reports": {
+                                                                "type": "string",
+                                                                "example": "basic"
+                                                            },
+                                                            "barcode_scanning": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "enable_analytics": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "enable_ecommerce": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "enable_marketplace": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "inventory_tracking": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "customer_management": {
+                                                                "type": "string",
+                                                                "example": "basic"
+                                                            },
+                                                            "transaction_fee_percent": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0
+                                                            },
+                                                            "max_transactions_per_month": {
+                                                                "type": "integer",
+                                                                "example": 100
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "feature_highlights": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "category": {
+                                                                    "type": "string",
+                                                                    "example": "Products"
+                                                                },
+                                                                "value": {
+                                                                    "example": 50,
+                                                                    "oneOf": [
+                                                                        {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        {
+                                                                            "type": "string"
+                                                                        },
+                                                                        {
+                                                                            "type": "boolean"
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                "display": {
+                                                                    "type": "string",
+                                                                    "example": "Up to 50 Products"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "status": {
+                                                        "properties": {
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_featured": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "popularity": {
+                                                        "properties": {
+                                                            "active_subscriptions_count": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "is_popular": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "metadata": {
+                                                        "properties": {
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-11-28T11:32:15.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-11-28T11:32:15.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-14T13:46:46.229192Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "fb822aaf-d31d-4358-9230-4cafed16445f"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Subscription plans retrieved successfully",
+                                    "data": [
+                                        {
+                                            "id": 1,
+                                            "name": "Free",
+                                            "slug": "free",
+                                            "description": "Perfect for getting started with basic POS features",
+                                            "pricing": {
+                                                "price": 0,
+                                                "currency": "KES",
+                                                "billing_cycle_days": 0,
+                                                "billing_cycle_display": "Lifetime",
+                                                "is_free": true
+                                            },
+                                            "features": {
+                                                "support": "community",
+                                                "max_users": 2,
+                                                "max_products": 50,
+                                                "max_locations": 1,
+                                                "enable_reports": "basic",
+                                                "barcode_scanning": false,
+                                                "enable_analytics": false,
+                                                "enable_ecommerce": false,
+                                                "enable_marketplace": false,
+                                                "inventory_tracking": true,
+                                                "customer_management": "basic",
+                                                "transaction_fee_percent": 0,
+                                                "max_transactions_per_month": 100
+                                            },
+                                            "feature_highlights": [
+                                                {
+                                                    "category": "Products",
+                                                    "value": 50,
+                                                    "display": "Up to 50 Products"
+                                                },
+                                                {
+                                                    "category": "Users",
+                                                    "value": 2,
+                                                    "display": "Up to 2 Users"
+                                                },
+                                                {
+                                                    "category": "Locations",
+                                                    "value": 1,
+                                                    "display": "1 Store Location"
+                                                },
+                                                {
+                                                    "category": "Transactions",
+                                                    "value": 100,
+                                                    "display": "100 Transactions/Month"
+                                                },
+                                                {
+                                                    "category": "Support",
+                                                    "value": "community",
+                                                    "display": "Community Support"
+                                                },
+                                                {
+                                                    "category": "Transaction Fee",
+                                                    "value": 0,
+                                                    "display": "No Transaction Fees"
+                                                }
+                                            ],
+                                            "status": {
+                                                "is_active": true,
+                                                "is_featured": false
+                                            },
+                                            "popularity": {
+                                                "active_subscriptions_count": 0,
+                                                "is_popular": false
+                                            },
+                                            "metadata": {
+                                                "created_at": "2025-11-28T11:32:15.000000Z",
+                                                "updated_at": "2025-11-28T11:32:15.000000Z"
+                                            }
+                                        },
+                                        {
+                                            "id": 2,
+                                            "name": "Basic",
+                                            "slug": "basic",
+                                            "description": "Essential features for growing businesses",
+                                            "pricing": {
+                                                "price": 2500,
+                                                "currency": "KES",
+                                                "billing_cycle_days": 30,
+                                                "billing_cycle_display": "Monthly",
+                                                "is_free": false
+                                            },
+                                            "features": {
+                                                "support": "email",
+                                                "max_users": 5,
+                                                "max_products": 500,
+                                                "max_locations": 2,
+                                                "enable_reports": "standard",
+                                                "loyalty_program": false,
+                                                "barcode_scanning": true,
+                                                "enable_analytics": "basic",
+                                                "enable_ecommerce": true,
+                                                "enable_marketplace": true,
+                                                "inventory_tracking": true,
+                                                "customer_management": "standard",
+                                                "transaction_fee_percent": 2,
+                                                "max_transactions_per_month": 1000
+                                            },
+                                            "feature_highlights": [
+                                                {
+                                                    "category": "Products",
+                                                    "value": 500,
+                                                    "display": "Up to 500 Products"
+                                                },
+                                                {
+                                                    "category": "Users",
+                                                    "value": 5,
+                                                    "display": "Up to 5 Users"
+                                                },
+                                                {
+                                                    "category": "E-commerce",
+                                                    "value": true,
+                                                    "display": "Online Store Enabled"
+                                                },
+                                                {
+                                                    "category": "Marketplace",
+                                                    "value": true,
+                                                    "display": "Marketplace Access"
+                                                }
+                                            ],
+                                            "status": {
+                                                "is_active": true,
+                                                "is_featured": true
+                                            },
+                                            "popularity": {
+                                                "active_subscriptions_count": 0,
+                                                "is_popular": true
+                                            },
+                                            "metadata": {
+                                                "created_at": "2025-11-28T11:32:15.000000Z",
+                                                "updated_at": "2025-11-28T11:32:15.000000Z"
+                                            }
+                                        },
+                                        {
+                                            "id": 4,
+                                            "name": "Enterprise",
+                                            "slug": "enterprise",
+                                            "description": "Complete solution for large-scale operations",
+                                            "pricing": {
+                                                "price": 15000,
+                                                "currency": "KES",
+                                                "billing_cycle_days": 30,
+                                                "billing_cycle_display": "Monthly",
+                                                "is_free": false
+                                            },
+                                            "features": {
+                                                "support": "dedicated",
+                                                "max_users": "unlimited",
+                                                "api_access": true,
+                                                "white_label": true,
+                                                "max_products": "unlimited",
+                                                "max_locations": "unlimited",
+                                                "enable_reports": "custom",
+                                                "multi_currency": true,
+                                                "loyalty_program": true,
+                                                "barcode_scanning": true,
+                                                "enable_analytics": "enterprise",
+                                                "enable_ecommerce": true,
+                                                "enable_marketplace": true,
+                                                "custom_integrations": true,
+                                                "transaction_fee_percent": 1,
+                                                "max_transactions_per_month": "unlimited"
+                                            },
+                                            "feature_highlights": [
+                                                {
+                                                    "category": "Products",
+                                                    "value": "unlimited",
+                                                    "display": "Unlimited Products"
+                                                },
+                                                {
+                                                    "category": "Users",
+                                                    "value": "unlimited",
+                                                    "display": "Unlimited Users"
+                                                },
+                                                {
+                                                    "category": "Locations",
+                                                    "value": "unlimited",
+                                                    "display": "Unlimited Locations"
+                                                }
+                                            ],
+                                            "status": {
+                                                "is_active": true,
+                                                "is_featured": false
+                                            },
+                                            "popularity": {
+                                                "active_subscriptions_count": 0,
+                                                "is_popular": false
+                                            },
+                                            "metadata": {
+                                                "created_at": "2025-11-28T11:32:15.000000Z",
+                                                "updated_at": "2025-11-28T11:32:15.000000Z"
+                                            }
+                                        }
+                                    ],
+                                    "meta": {
+                                        "timestamp": "2025-12-14T13:46:46.229192Z",
+                                        "request_id": "fb822aaf-d31d-4358-9230-4cafed16445f",
+                                        "tenant_id": null,
+                                        "tenant_name": null
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "max_price": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The max price must be greater than min price."
+                                                    }
+                                                },
+                                                "sort_by": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected sort by is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/central/subscription-plans/{slug}": {
+            "get": {
+                "tags": [
+                    "Subscription Plans"
+                ],
+                "summary": "Get subscription plan by slug",
+                "description": "Retrieves detailed information about a specific subscription plan using its slug identifier. This endpoint is public and does not require authentication.",
+                "operationId": "6f211656b0b0eb6761cfce23fc3d7c5e",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "The unique slug identifier of the subscription plan (e.g., 'free', 'basic', 'premium', 'enterprise')",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "basic"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription plan retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Basic"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "basic"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Essential features for growing businesses"
+                                                },
+                                                "pricing": {
+                                                    "properties": {
+                                                        "price": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 2500
+                                                        },
+                                                        "currency": {
+                                                            "type": "string",
+                                                            "example": "KES"
+                                                        },
+                                                        "billing_cycle_days": {
+                                                            "type": "integer",
+                                                            "example": 30
+                                                        },
+                                                        "billing_cycle_display": {
+                                                            "type": "string",
+                                                            "example": "Monthly"
+                                                        },
+                                                        "is_free": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "features": {
+                                                    "properties": {
+                                                        "support": {
+                                                            "type": "string",
+                                                            "example": "email"
+                                                        },
+                                                        "max_users": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "max_products": {
+                                                            "type": "integer",
+                                                            "example": 500
+                                                        },
+                                                        "max_locations": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "enable_reports": {
+                                                            "type": "string",
+                                                            "example": "standard"
+                                                        },
+                                                        "loyalty_program": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "barcode_scanning": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "enable_analytics": {
+                                                            "type": "string",
+                                                            "example": "basic"
+                                                        },
+                                                        "enable_ecommerce": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "enable_marketplace": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "inventory_tracking": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "customer_management": {
+                                                            "type": "string",
+                                                            "example": "standard"
+                                                        },
+                                                        "transaction_fee_percent": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 2
+                                                        },
+                                                        "max_transactions_per_month": {
+                                                            "type": "integer",
+                                                            "example": 1000
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "feature_highlights": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "Products"
+                                                            },
+                                                            "value": {
+                                                                "example": 500,
+                                                                "oneOf": [
+                                                                    {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    {
+                                                                        "type": "string"
+                                                                    },
+                                                                    {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "display": {
+                                                                "type": "string",
+                                                                "example": "Up to 500 Products"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "status": {
+                                                    "properties": {
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_featured": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "popularity": {
+                                                    "properties": {
+                                                        "active_subscriptions_count": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        },
+                                                        "is_popular": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "metadata": {
+                                                    "properties": {
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-11-28T11:32:15.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-11-28T11:32:15.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-14T14:02:20.429314Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "14d6899d-247a-4ac8-bd28-c7cdacc9bf6e"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Subscription plan retrieved successfully",
+                                    "data": {
+                                        "id": 2,
+                                        "name": "Basic",
+                                        "slug": "basic",
+                                        "description": "Essential features for growing businesses",
+                                        "pricing": {
+                                            "price": 2500,
+                                            "currency": "KES",
+                                            "billing_cycle_days": 30,
+                                            "billing_cycle_display": "Monthly",
+                                            "is_free": false
+                                        },
+                                        "features": {
+                                            "support": "email",
+                                            "max_users": 5,
+                                            "max_products": 500,
+                                            "max_locations": 2,
+                                            "enable_reports": "standard",
+                                            "loyalty_program": false,
+                                            "barcode_scanning": true,
+                                            "enable_analytics": "basic",
+                                            "enable_ecommerce": true,
+                                            "enable_marketplace": true,
+                                            "inventory_tracking": true,
+                                            "customer_management": "standard",
+                                            "transaction_fee_percent": 2,
+                                            "max_transactions_per_month": 1000
+                                        },
+                                        "feature_highlights": [
+                                            {
+                                                "category": "Products",
+                                                "value": 500,
+                                                "display": "Up to 500 Products"
+                                            },
+                                            {
+                                                "category": "Users",
+                                                "value": 5,
+                                                "display": "Up to 5 Users"
+                                            },
+                                            {
+                                                "category": "Locations",
+                                                "value": 2,
+                                                "display": "2 Store Locations"
+                                            },
+                                            {
+                                                "category": "Transactions",
+                                                "value": 1000,
+                                                "display": "1,000 Transactions/Month"
+                                            },
+                                            {
+                                                "category": "E-commerce",
+                                                "value": true,
+                                                "display": "Online Store Enabled"
+                                            },
+                                            {
+                                                "category": "Marketplace",
+                                                "value": true,
+                                                "display": "Marketplace Access"
+                                            },
+                                            {
+                                                "category": "Analytics",
+                                                "value": "basic",
+                                                "display": "Basic Analytics"
+                                            },
+                                            {
+                                                "category": "Support",
+                                                "value": "email",
+                                                "display": "Email Support"
+                                            },
+                                            {
+                                                "category": "Transaction Fee",
+                                                "value": 2,
+                                                "display": "2% Transaction Fee"
+                                            }
+                                        ],
+                                        "status": {
+                                            "is_active": true,
+                                            "is_featured": true
+                                        },
+                                        "popularity": {
+                                            "active_subscriptions_count": 0,
+                                            "is_popular": true
+                                        },
+                                        "metadata": {
+                                            "created_at": "2025-11-28T11:32:15.000000Z",
+                                            "updated_at": "2025-11-28T11:32:15.000000Z"
+                                        }
+                                    },
+                                    "meta": {
+                                        "timestamp": "2025-12-14T14:02:20.429314Z",
+                                        "request_id": "14d6899d-247a-4ac8-bd28-c7cdacc9bf6e",
+                                        "tenant_id": null,
+                                        "tenant_name": null
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription plan not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan not found"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "No subscription plan found with name: test"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-14T14:04:28.800380Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "ecbce224-d1a8-448d-80c0-d20194b1fcc7"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Subscription plan not found",
+                                    "errors": {
+                                        "slug": "No subscription plan found with name: test"
+                                    },
+                                    "meta": {
+                                        "timestamp": "2025-12-14T14:04:28.800380Z",
+                                        "request_id": "ecbce224-d1a8-448d-80c0-d20194b1fcc7",
+                                        "tenant_id": null,
+                                        "tenant_name": null
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/tenant/auth/login": {
             "post": {
                 "tags": [
@@ -4347,6 +5338,10 @@
         {
             "name": "Business Review",
             "description": "Business Review"
+        },
+        {
+            "name": "Subscription Plans",
+            "description": "Subscription Plans"
         },
         {
             "name": "Tenant Authentication",

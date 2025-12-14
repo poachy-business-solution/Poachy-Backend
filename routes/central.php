@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
+use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,10 @@ Route::prefix('v1/central')->group(function () {
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
         Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
     });
+
+    // Subscription plans
+    Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
+    Route::get('/subscription-plans/{slug}', [SubscriptionPlanController::class, 'show']);
 });
 
 // Protected routes (requires authentication)
