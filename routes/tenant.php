@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
+use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
@@ -50,6 +51,17 @@ Route::prefix('v1/tenant')
             Route::patch('/{id}/deactivate', [StoreController::class, 'deactivate']);
             Route::post('/{id}/assign-manager', [StoreController::class, 'assignManager']);
             Route::delete('/{id}/remove-manager', [StoreController::class, 'removeManager']);
+        });
+
+        // Product Categories Management
+        Route::prefix('categories')->name('categories.')->group(function () {
+            Route::get('/', [ProductCategoryController::class, 'index'])->name('index');
+            Route::post('/', [ProductCategoryController::class, 'store'])->name('store');
+            Route::get('/{category}', [ProductCategoryController::class, 'show'])->name('show');
+            Route::patch('/{category}', [ProductCategoryController::class, 'update'])->name('update');
+            Route::patch('/{category}/activate', [ProductCategoryController::class, 'activate'])->name('activate');
+            Route::patch('/{category}/deactivate', [ProductCategoryController::class, 'deactivate'])->name('deactivate');
+            Route::delete('/{category}', [ProductCategoryController::class, 'destroy'])->name('destroy');
         });
 
         // User Management (Owner/Manager only)

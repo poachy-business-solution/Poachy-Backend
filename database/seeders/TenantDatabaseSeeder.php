@@ -14,6 +14,7 @@ class TenantDatabaseSeeder extends Seeder
         // Seed tenant database
         $this->call([
             TenantRolesAndPermissionsSeeder::class,
+            ProductCategorySeeder::class,
         ]);
     }
 }

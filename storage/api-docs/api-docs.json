@@ -5360,6 +5360,1176 @@
                 ]
             }
         },
+        "/api/v1/tenant/categories": {
+            "get": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Get all categories",
+                "description": "Retrieves a list of categories with optional filtering and relationship loading. Can return paginated or non-paginated results.",
+                "operationId": "ed4e321b6ecbca8236b0f6fd87a79fc8",
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "description": "Filter by parent category ID. Use 'null' for root categories",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search categories by name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Electronics"
+                    },
+                    {
+                        "name": "with_children",
+                        "in": "query",
+                        "description": "Include child categories",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "with_parent",
+                        "in": "query",
+                        "description": "Include parent category",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "with_products",
+                        "in": "query",
+                        "description": "Include products in each category",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "paginate",
+                        "in": "query",
+                        "description": "Enable pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categories retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categories retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Electronics"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "electronics"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Electronic devices and accessories"
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "integer",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "display_order": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_root": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-15T20:02:13.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-15T20:02:13.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:28:59.613555Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "2bc70037-ad4b-4d57-ba4e-08c43bc6fc7e"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Categories retrieved successfully",
+                                    "data": [
+                                        {
+                                            "id": 1,
+                                            "name": "Electronics",
+                                            "slug": "electronics",
+                                            "description": "Electronic devices and accessories",
+                                            "parent_id": null,
+                                            "display_order": 1,
+                                            "is_active": true,
+                                            "is_root": true,
+                                            "created_at": "2025-12-15T20:02:13.000000Z",
+                                            "updated_at": "2025-12-15T20:02:13.000000Z"
+                                        },
+                                        {
+                                            "id": 4,
+                                            "name": "Mobile Phones",
+                                            "slug": "mobile-phones",
+                                            "description": "Smartphones and feature phones",
+                                            "parent_id": 1,
+                                            "display_order": 1,
+                                            "is_active": true,
+                                            "is_root": false,
+                                            "created_at": "2025-12-15T20:06:48.000000Z",
+                                            "updated_at": "2025-12-15T20:06:48.000000Z"
+                                        },
+                                        {
+                                            "id": 2,
+                                            "name": "Groceries",
+                                            "slug": "groceries",
+                                            "description": "Everyday food items and household consumables.",
+                                            "parent_id": null,
+                                            "display_order": 2,
+                                            "is_active": true,
+                                            "is_root": true,
+                                            "created_at": "2025-12-15T20:03:38.000000Z",
+                                            "updated_at": "2025-12-15T20:03:38.000000Z"
+                                        },
+                                        {
+                                            "id": 3,
+                                            "name": "Fashion",
+                                            "slug": "fashion",
+                                            "description": "Clothing, footwear, and wearable accessories..",
+                                            "parent_id": null,
+                                            "display_order": 3,
+                                            "is_active": true,
+                                            "is_root": true,
+                                            "created_at": "2025-12-15T20:04:45.000000Z",
+                                            "updated_at": "2025-12-15T20:04:45.000000Z"
+                                        }
+                                    ],
+                                    "meta": {
+                                        "timestamp": "2025-12-15T20:28:59.613555Z",
+                                        "request_id": "2bc70037-ad4b-4d57-ba4e-08c43bc6fc7e",
+                                        "tenant_id": "bbab2597-e1ae-466b-a071-83033841d2ed",
+                                        "tenant_name": null
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Create a new category",
+                "description": "Creates a new product category. Can be a root category or a subcategory by providing parent_id. Slug is auto-generated if not provided.",
+                "operationId": "d47660fbb090f844c2831248a01b58c8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Category name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Fashion"
+                                    },
+                                    "slug": {
+                                        "description": "Optional category slug. Auto-generated if not provided",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "fashion"
+                                    },
+                                    "description": {
+                                        "description": "Optional category description",
+                                        "type": "string",
+                                        "example": "Clothing, footwear, and wearable accessories.."
+                                    },
+                                    "parent_id": {
+                                        "description": "Optional parent category ID for subcategories",
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "display_order": {
+                                        "description": "Optional display order (default: 0)",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "is_active": {
+                                        "description": "Optional active status (default: true)",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Fashion"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "fashion"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Clothing, footwear, and wearable accessories.."
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_root": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:04:45.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:04:45.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:04:45.392573Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e5331aaa-f818-4c0d-ad48-facf299a0048"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Category created successfully",
+                                    "data": {
+                                        "id": 3,
+                                        "name": "Fashion",
+                                        "slug": "fashion",
+                                        "description": "Clothing, footwear, and wearable accessories..",
+                                        "parent_id": null,
+                                        "display_order": 3,
+                                        "is_active": true,
+                                        "is_root": true,
+                                        "created_at": "2025-12-15T20:04:45.000000Z",
+                                        "updated_at": "2025-12-15T20:04:45.000000Z"
+                                    },
+                                    "meta": {
+                                        "timestamp": "2025-12-15T20:04:45.392573Z",
+                                        "request_id": "e5331aaa-f818-4c0d-ad48-facf299a0048",
+                                        "tenant_id": "bbab2597-e1ae-466b-a071-83033841d2ed",
+                                        "tenant_name": null
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Get category by ID",
+                "description": "Retrieves detailed information about a specific category including its parent, children, and associated products.",
+                "operationId": "863aceb4f62fca55b580c4e7faa20a36",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Electronics"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "electronics"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Electronic devices and accessories"
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "parent": {
+                                                    "type": "object",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "children": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Mobile Phones"
+                                                            },
+                                                            "slug": {
+                                                                "type": "string",
+                                                                "example": "mobile-phones"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Smartphones and feature phones"
+                                                            },
+                                                            "parent_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "display_order": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_root": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-15T20:06:48.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-15T20:06:48.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "products": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "product_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "has_children": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_root": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:02:13.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:02:13.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:12:31.919229Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "8acc2e00-6d2c-4d99-9028-83273d1566c1"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Delete category",
+                "description": "Permanently deletes a category. The category must not have any child categories or associated products.",
+                "operationId": "e218761b4a36d093bae8a928d893a52c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 6
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category deleted successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:57:15.272763Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "19e089f3-061d-4bbe-9730-64cf53e90532"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "400": {
+                        "description": "Cannot delete category with child categories or products"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Update category",
+                "description": "Updates category details. Only provided fields will be updated, other fields remain unchanged.",
+                "operationId": "67d0a367059c956b131d38e002941b3b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "description": "Category details to update (all fields are optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "Category name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "updated electronics"
+                                    },
+                                    "slug": {
+                                        "description": "Category slug",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "updated-electronics"
+                                    },
+                                    "description": {
+                                        "description": "Category description",
+                                        "type": "string",
+                                        "example": "Updated description"
+                                    },
+                                    "parent_id": {
+                                        "description": "Parent category ID",
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "display_order": {
+                                        "description": "Display order",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_active": {
+                                        "description": "Active status",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "updated electronics"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "electronics"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Electronic devices and accessories"
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_root": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:02:13.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:54:01.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:54:01.580591Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "284c2c77-538b-4370-9724-73fca6a5b1c3"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/categories/{id}/activate": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Activate category",
+                "description": "Activates a category, making it visible and available for use.",
+                "operationId": "5048a14a63ec6c590a038daf8531fe60",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category activated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category activated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Electronics"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "electronics"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Electronic devices and accessories"
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_root": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:02:13.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:02:13.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:40:23.744177Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "42499a36-79ec-4c66-8916-6458aab57b92"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/categories/{id}/deactivate": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Categories"
+                ],
+                "summary": "Deactivate category",
+                "description": "Deactivates a category, making it hidden and unavailable for use.",
+                "operationId": "292c64dd60a7c939541f7a16bba82c8a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deactivated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category deactivated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Electronics"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "electronics"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Electronic devices and accessories"
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_root": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:02:13.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:45:28.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T20:45:28.099680Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "8c5271cb-05c8-4f66-b7ca-5ac8b5e9338f"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/stores": {
             "get": {
                 "tags": [
@@ -7783,6 +8953,10 @@
         {
             "name": "Tenant Business Details",
             "description": "Tenant Business Details"
+        },
+        {
+            "name": "Tenant Product Categories",
+            "description": "Tenant Product Categories"
         },
         {
             "name": "Tenant Store Management",
