@@ -5360,6 +5360,1718 @@
                 ]
             }
         },
+        "/api/v1/tenant/stores": {
+            "get": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Get all stores",
+                "description": "Retrieves a paginated list of stores with optional filtering and sorting capabilities.",
+                "operationId": "3cce02295e53ca68acbf9f902cbaef2c",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name, code, city, or region",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Nairobi"
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "is_main_store",
+                        "in": "query",
+                        "description": "Filter by main store flag",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": false
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "description": "Filter by city",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Nairobi"
+                    },
+                    {
+                        "name": "region",
+                        "in": "query",
+                        "description": "Filter by region",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Central"
+                    },
+                    {
+                        "name": "manager_id",
+                        "in": "query",
+                        "description": "Filter by manager ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 5
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Field to sort by",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "name"
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order (asc/desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        },
+                        "example": "asc"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stores retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Stores retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "STR-2025-74622"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Branch Store - Mombasa"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Mombasa branch location"
+                                                            },
+                                                            "address": {
+                                                                "type": "string",
+                                                                "example": "Moi Avenue, Mombasa"
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "example": "Mombasa"
+                                                            },
+                                                            "region": {
+                                                                "type": "string",
+                                                                "example": "Coast"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string",
+                                                                "example": "+254723456789"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "mombasa@store.com"
+                                                            },
+                                                            "is_main_store": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "status_label": {
+                                                                "type": "string",
+                                                                "example": "Active"
+                                                            },
+                                                            "store_type_label": {
+                                                                "type": "string",
+                                                                "example": "Main Store"
+                                                            },
+                                                            "manager": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 6
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Jane Doe"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "example": "jane@techhaven.com"
+                                                                    },
+                                                                    "phone": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-14T19:48:13.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-14T19:48:13.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "from": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "to": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "links": {
+                                                    "properties": {
+                                                        "first": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "last": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "prev": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "next": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "from": {
+                                                            "type": "integer"
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "path": {
+                                                            "type": "string"
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "to": {
+                                                            "type": "integer"
+                                                        },
+                                                        "total": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T06:22:56.658593Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "c014d802-30b1-4657-85a5-dba9ceeb9008"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Create a new store",
+                "description": "Creates a new store with the provided details. The store will be automatically assigned a unique code.",
+                "operationId": "d7575787aeefd01805e3c914f94cde1b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "address"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Store name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Branch Store - Mombasa"
+                                    },
+                                    "description": {
+                                        "description": "Store description",
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "example": "Mombasa branch location"
+                                    },
+                                    "address": {
+                                        "description": "Store address",
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Moi Avenue, Mombasa"
+                                    },
+                                    "city": {
+                                        "description": "City name",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Mombasa"
+                                    },
+                                    "region": {
+                                        "description": "Region name",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Coast"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number (Kenyan format)",
+                                        "type": "string",
+                                        "example": "+254723456789"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255,
+                                        "example": "mombasa@store.com"
+                                    },
+                                    "is_main_store": {
+                                        "description": "Whether this is the main store",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "is_active": {
+                                        "description": "Whether the store is active",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "manager_id": {
+                                        "description": "Manager user ID (must have manager/owner role)",
+                                        "type": "integer",
+                                        "example": 6
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Store created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Stores retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "STR-2025-08954"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Branch Store - Nairobi"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Nairobi branch location"
+                                                            },
+                                                            "address": {
+                                                                "type": "string",
+                                                                "example": "Moi Avenue, Nairobi"
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "example": "Nairobi"
+                                                            },
+                                                            "region": {
+                                                                "type": "string",
+                                                                "example": "Nairobi"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string",
+                                                                "example": "+254700000000"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "info.nairobi@store.com"
+                                                            },
+                                                            "is_main_store": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "status_label": {
+                                                                "type": "string",
+                                                                "example": "Active"
+                                                            },
+                                                            "store_type_label": {
+                                                                "type": "string",
+                                                                "example": "Branch"
+                                                            },
+                                                            "manager": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "John Doe"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "example": "john@techhaven.com"
+                                                                    },
+                                                                    "phone": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-15T18:08:51.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-15T18:08:51.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "from": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "to": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "links": {
+                                                    "properties": {
+                                                        "first": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "last": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "prev": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "next": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "from": {
+                                                            "type": "integer"
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "path": {
+                                                            "type": "string"
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "to": {
+                                                            "type": "integer"
+                                                        },
+                                                        "total": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:09:03.166622Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "0451ad6e-a779-4b20-9930-b830a1e97268"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Store name is required."
+                                                    }
+                                                },
+                                                "address": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Store address is required."
+                                                    }
+                                                },
+                                                "phone": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Phone number must be a valid Kenyan phone number."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Get store by ID",
+                "description": "Retrieves detailed information about a specific store including manager, creator, and updater information.",
+                "operationId": "cc243d83b5efdf4cbb0118f251f7d384",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Store retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "STR-2025-74622"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Branch Store - Mombasa"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Mombasa branch location"
+                                                        },
+                                                        "address": {
+                                                            "type": "string",
+                                                            "example": "Moi Avenue, Mombasa"
+                                                        },
+                                                        "city": {
+                                                            "type": "string",
+                                                            "example": "Mombasa"
+                                                        },
+                                                        "region": {
+                                                            "type": "string",
+                                                            "example": "Coast"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+254723456789"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "mombasa@store.com"
+                                                        },
+                                                        "is_main_store": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "status_label": {
+                                                            "type": "string",
+                                                            "example": "Active"
+                                                        },
+                                                        "store_type_label": {
+                                                            "type": "string",
+                                                            "example": "Main Store"
+                                                        },
+                                                        "manager": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 6
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Jane Doe"
+                                                                },
+                                                                "email": {
+                                                                    "type": "string",
+                                                                    "example": "jane@techhaven.com"
+                                                                },
+                                                                "phone": {
+                                                                    "type": "string",
+                                                                    "example": "+254712345678"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "creator": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "John Doe"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "updater": {
+                                                            "type": "object",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-14T19:48:13.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-14T19:48:13.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T17:52:25.512790Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "3fad300b-f516-4f33-901e-cd832c59425f"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}/details": {
+            "patch": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Update store details",
+                "description": "Update only specific store details. Only provided fields will be updated, other fields remain unchanged.",
+                "operationId": "eca369132d2d525225e54cadf699ac3d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "description": "Store details to update (all fields are optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "Store name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Updated Store Name"
+                                    },
+                                    "description": {
+                                        "description": "Store description",
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "example": "Updated description"
+                                    },
+                                    "address": {
+                                        "description": "Store address",
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "New Address Street"
+                                    },
+                                    "city": {
+                                        "description": "City",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Mombasa"
+                                    },
+                                    "region": {
+                                        "description": "Region",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Coast"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number",
+                                        "type": "string",
+                                        "example": "+254723456789"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255,
+                                        "example": "updated@store.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Store details updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store details updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "STR-2025-74622"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Branch Store - Mombasa"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Mombasa branch location"
+                                                        },
+                                                        "address": {
+                                                            "type": "string",
+                                                            "example": "Gedi, Kwale"
+                                                        },
+                                                        "city": {
+                                                            "type": "string",
+                                                            "example": "Mombasa"
+                                                        },
+                                                        "region": {
+                                                            "type": "string",
+                                                            "example": "Coast"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+254723456789"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "info@store.com"
+                                                        },
+                                                        "is_main_store": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "status_label": {
+                                                            "type": "string",
+                                                            "example": "Active"
+                                                        },
+                                                        "store_type_label": {
+                                                            "type": "string",
+                                                            "example": "Main Store"
+                                                        },
+                                                        "manager": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 6
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Jane Doe"
+                                                                },
+                                                                "email": {
+                                                                    "type": "string",
+                                                                    "example": "jane@techhaven.com"
+                                                                },
+                                                                "phone": {
+                                                                    "type": "string",
+                                                                    "example": "+254712345678"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "creator": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "John Doe"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "updater": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "John Doe"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-14T19:48:13.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-15T17:56:09.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T17:56:10.029469Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "cb536a57-4b17-45e7-bd37-046d3bacedd9"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}/set-main": {
+            "patch": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Set store as main store",
+                "description": "Sets the store as the main store. Any existing main store will be automatically unset.",
+                "operationId": "464905d27a5114d523aab22fa4a5a84b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Store set as main store successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store set as main store successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:14:36.843324Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "64448bab-a857-4eb2-a7eb-5dec7809dd00"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}/activate": {
+            "patch": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Activate store",
+                "description": "Activates a store, making it available for use.",
+                "operationId": "51a2ab597ad01db9de486f67220ddffa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Store activated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store activated successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:04:53.610068Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "56667e93-fc96-4de7-879e-5d7a32f86e20"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}/deactivate": {
+            "patch": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Deactivate store",
+                "description": "Deactivates a store. Cannot deactivate if it's the only active store.",
+                "operationId": "59501ac71c1fbd45ddc960b01122dbf6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Store deactivated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store deactivated successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:14:00.973348Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "839aeb2c-33d4-4560-a83c-4b6f0930d681"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot deactivate the only active store",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cannot deactivate the only active store. At least one store must remain active."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:05:51.629133Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "b8f20bf6-b4d3-4812-af4b-a4140efc2e23"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}/assign-manager": {
+            "post": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Assign manager to store",
+                "description": "Assigns a manager to the store. The user must have manager or owner role.",
+                "operationId": "f429789c39e843c360deeefc595a195b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "manager_id"
+                                ],
+                                "properties": {
+                                    "manager_id": {
+                                        "description": "Manager user ID (must have manager or owner role)",
+                                        "type": "integer",
+                                        "example": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Manager assigned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Manager assigned successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:00:44.427010Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "8d87973a-b7e0-42e5-85ce-15ea2a7fad4d"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "manager_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected manager must be a user with manager or owner role."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T17:59:14.010373Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "fd988fc7-d478-4b10-a508-d327404dcd00"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{id}/remove-manager": {
+            "delete": {
+                "tags": [
+                    "Tenant Store Management"
+                ],
+                "summary": "Remove manager from store",
+                "description": "Removes the assigned manager from the store.",
+                "operationId": "55ecc8d60b11927c57bb9319420a790f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Store ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "manager_id"
+                                ],
+                                "properties": {
+                                    "manager_id": {
+                                        "description": "Manager user ID to remove",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Manager removed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Manager removed successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T18:02:43.037830Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "3b7abe10-3c70-4c7b-a00f-4816c7c0d0e8"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Store not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/access/status": {
             "get": {
                 "tags": [
@@ -6071,6 +7783,10 @@
         {
             "name": "Tenant Business Details",
             "description": "Tenant Business Details"
+        },
+        {
+            "name": "Tenant Store Management",
+            "description": "Tenant Store Management"
         },
         {
             "name": "Tenant Access",

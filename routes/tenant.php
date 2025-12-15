@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
+use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,19 @@ Route::prefix('v1/tenant')->group(function () {
 Route::prefix('v1/tenant')
     ->middleware(['auth:tenant', 'tenant.access'])
     ->group(function () {
+
+        // Store Management
+        Route::prefix('stores')->group(function () {
+            Route::get('/', [StoreController::class, 'index']);
+            Route::post('/', [StoreController::class, 'store']);
+            Route::get('/{id}', [StoreController::class, 'show']);
+            Route::patch('/{id}/details', [StoreController::class, 'updateDetails']);
+            Route::patch('/{id}/set-main', [StoreController::class, 'setAsMain']);
+            Route::patch('/{id}/activate', [StoreController::class, 'activate']);
+            Route::patch('/{id}/deactivate', [StoreController::class, 'deactivate']);
+            Route::post('/{id}/assign-manager', [StoreController::class, 'assignManager']);
+            Route::delete('/{id}/remove-manager', [StoreController::class, 'removeManager']);
+        });
 
         // User Management (Owner/Manager only)
         Route::middleware(['role:owner|manager,tenant'])->group(function () {

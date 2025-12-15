@@ -19,7 +19,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'is_active',
-        'last_login_at', // add field
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -35,6 +35,21 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    public function managedStores()
+    {
+        return $this->hasMany(Store::class, 'manager_id');
+    }
+
+    public function createdStores()
+    {
+        return $this->hasMany(Store::class, 'created_by');
+    }
+
+    public function updatedStores()
+    {
+        return $this->hasMany(Store::class, 'updated_by');
     }
 
     // Helper methods
@@ -62,5 +77,10 @@ class User extends Authenticatable
     public function updateLastLogin(): void
     {
         $this->update(['last_login_at' => now()]);
+    }
+
+    public function canManageStores(): bool
+    {
+        return $this->hasAnyRole(['owner', 'manager']);
     }
 }
