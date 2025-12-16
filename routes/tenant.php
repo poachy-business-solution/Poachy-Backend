@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
+use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
@@ -54,14 +55,27 @@ Route::prefix('v1/tenant')
         });
 
         // Product Categories Management
-        Route::prefix('categories')->name('categories.')->group(function () {
-            Route::get('/', [ProductCategoryController::class, 'index'])->name('index');
-            Route::post('/', [ProductCategoryController::class, 'store'])->name('store');
-            Route::get('/{category}', [ProductCategoryController::class, 'show'])->name('show');
-            Route::patch('/{category}', [ProductCategoryController::class, 'update'])->name('update');
-            Route::patch('/{category}/activate', [ProductCategoryController::class, 'activate'])->name('activate');
-            Route::patch('/{category}/deactivate', [ProductCategoryController::class, 'deactivate'])->name('deactivate');
-            Route::delete('/{category}', [ProductCategoryController::class, 'destroy'])->name('destroy');
+        Route::prefix('categories')->group(function () {
+            Route::get('/', [ProductCategoryController::class, 'index']);
+            Route::post('/', [ProductCategoryController::class, 'store']);
+            Route::get('/{category}', [ProductCategoryController::class, 'show']);
+            Route::patch('/{category}', [ProductCategoryController::class, 'update']);
+            Route::patch('/{category}/activate', [ProductCategoryController::class, 'activate']);
+            Route::patch('/{category}/deactivate', [ProductCategoryController::class, 'deactivate']);
+            Route::delete('/{category}', [ProductCategoryController::class, 'destroy']);
+        });
+
+        // Product Brands Management
+        Route::prefix('brands')->group(function () {
+            Route::get('/', [ProductBrandController::class, 'index']);
+            Route::get('/{brand}', [ProductBrandController::class, 'show']);
+            Route::post('/', [ProductBrandController::class, 'store']);
+            Route::patch('/{brand}/activate', [ProductBrandController::class, 'activate']);
+            Route::patch('/{brand}/deactivate', [ProductBrandController::class, 'deactivate']);
+            Route::patch('/{brand}/feature', [ProductBrandController::class, 'feature']);
+            Route::patch('/{brand}/unfeature', [ProductBrandController::class, 'unfeature']);
+            Route::post('/{brand}/logo', [ProductBrandController::class, 'updateLogo']);
+            Route::delete('/{brand}', [ProductBrandController::class, 'destroy']);
         });
 
         // User Management (Owner/Manager only)

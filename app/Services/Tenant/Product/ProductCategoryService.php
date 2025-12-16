@@ -85,7 +85,7 @@ class ProductCategoryService
      */
     public function createCategory(array $data): ProductCategory
     {
-        return DB::connection('tenant')->transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             // Generate slug if not provided
             if (empty($data['slug'])) {
                 $data['slug'] = $this->generateUniqueSlug($data['name']);
@@ -118,7 +118,7 @@ class ProductCategoryService
      */
     public function updateCategory(int $id, array $data): ProductCategory
     {
-        return DB::connection('tenant')->transaction(function () use ($id, $data) {
+        return DB::transaction(function () use ($id, $data) {
             $category = $this->repository->findById($id);
 
             if (!$category) {
@@ -167,7 +167,7 @@ class ProductCategoryService
      */
     public function activateCategory(int $id): ProductCategory
     {
-        return DB::connection('tenant')->transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $category = $this->repository->findById($id);
 
             if (!$category) {
@@ -209,7 +209,7 @@ class ProductCategoryService
      */
     public function deleteCategory(int $id): bool
     {
-        return DB::connection('tenant')->transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $category = $this->repository->findById($id);
 
             if (!$category) {
