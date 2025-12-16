@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
+use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +77,15 @@ Route::prefix('v1/tenant')
             Route::patch('/{brand}/unfeature', [ProductBrandController::class, 'unfeature']);
             Route::post('/{brand}/logo', [ProductBrandController::class, 'updateLogo']);
             Route::delete('/{brand}', [ProductBrandController::class, 'destroy']);
+        });
+
+        // Tax Rates Management
+        Route::prefix('tax-rates')->group(function () {
+            Route::get('/', [TaxRateController::class, 'index']);
+            Route::post('/', [TaxRateController::class, 'store']);
+            Route::patch('/{taxRate}/toggle-active', [TaxRateController::class, 'toggleActive']);
+            Route::patch('/{taxRate}/toggle-default', [TaxRateController::class, 'toggleDefault']);
+            Route::patch('/{taxRate}/effective-until', [TaxRateController::class, 'updateEffectiveUntil']);
         });
 
         // User Management (Owner/Manager only)

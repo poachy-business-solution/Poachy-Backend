@@ -9298,6 +9298,717 @@
                 ]
             }
         },
+        "/api/v1/tenant/tax-rates": {
+            "get": {
+                "tags": [
+                    "Tenant Tax Rates"
+                ],
+                "summary": "Get all tax rates",
+                "description": "Retrieves a list of tax rates with optional filtering and pagination capabilities.",
+                "operationId": "59e752e63fb524118ffdfb2775e45146",
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "paginate",
+                        "in": "query",
+                        "description": "Enable pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": false
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tax rates retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tax rates retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "tax_name": {
+                                                        "type": "string",
+                                                        "example": "VAT"
+                                                    },
+                                                    "rate": {
+                                                        "type": "string",
+                                                        "example": "16.00"
+                                                    },
+                                                    "effective_from": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2025-12-17"
+                                                    },
+                                                    "effective_until": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_default": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_currently_effective": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-16T14:08:27.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-16T14:08:33.622349Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "a661fa5d-7e39-4778-96bc-c25ee53496a5"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Tax Rates"
+                ],
+                "summary": "Create a new tax rate",
+                "description": "Creates a new tax rate. Cannot create a duplicate tax rate for the same name and effective date. If is_default is true, any existing default tax rate will be unset.",
+                "operationId": "d69d33b2379daea48e2d5e6fb0f6e669",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tax_name",
+                                    "rate",
+                                    "effective_from"
+                                ],
+                                "properties": {
+                                    "tax_name": {
+                                        "description": "Tax name (e.g., VAT, GST, Sales Tax)",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "VAT"
+                                    },
+                                    "rate": {
+                                        "description": "Tax rate percentage (0-100)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "maximum": 100,
+                                        "minimum": 0,
+                                        "example": 16
+                                    },
+                                    "effective_from": {
+                                        "description": "Date when this tax rate becomes effective (YYYY-MM-DD)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-12-17"
+                                    },
+                                    "effective_until": {
+                                        "description": "Optional end date for this tax rate (YYYY-MM-DD)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "description": "Whether the tax rate is active (default: true)",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_default": {
+                                        "description": "Whether this is the default tax rate (default: false)",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tax rate created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tax rate created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "tax_name": {
+                                                    "type": "string",
+                                                    "example": "VAT"
+                                                },
+                                                "rate": {
+                                                    "type": "string",
+                                                    "example": "16.00"
+                                                },
+                                                "effective_from": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-12-17"
+                                                },
+                                                "effective_until": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_currently_effective": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-16T14:08:27.433666Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bf7f6296-f5cf-4add-9a9e-a2627ba0d518"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Failed to create - Duplicate tax rate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to create tax rate: A tax rate VAT already exists for the date 2025-12-17."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-16T14:17:50.679521Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "7e7c389d-6c4d-4aae-ad7a-6a26c5de0ea4"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tax-rates/{id}/toggle-active": {
+            "patch": {
+                "tags": [
+                    "Tenant Tax Rates"
+                ],
+                "summary": "Toggle tax rate active status",
+                "description": "Toggles the active status of a tax rate. If currently active, it will be deactivated and vice versa.",
+                "operationId": "d3712be56061b6ee9ad9d22657449568",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tax Rate ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tax rate status toggled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Tax rate deactivated successfully"
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "timestamp": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-16T14:21:32.577226Z"
+                                                        },
+                                                        "request_id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "a5a5ee76-0bb9-4539-9487-17af76c77064"
+                                                        },
+                                                        "tenant_id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                        },
+                                                        "tenant_name": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Tax rate activated successfully"
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "timestamp": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-16T14:21:59.708304Z"
+                                                        },
+                                                        "request_id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "22e3e3cd-a78e-4474-9ac8-88fa98115f89"
+                                                        },
+                                                        "tenant_id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                        },
+                                                        "tenant_name": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Tax rate not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tax-rates/{id}/toggle-default": {
+            "patch": {
+                "tags": [
+                    "Tenant Tax Rates"
+                ],
+                "summary": "Toggle tax rate default status",
+                "description": "Toggles the default status of a tax rate. Cannot remove default status if this is the only default tax rate. When setting a new default, any existing default will be automatically unset.",
+                "operationId": "1a5b42c1b09a3172c30a3e7ca33e75cc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tax Rate ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tax rate default status toggled successfully"
+                    },
+                    "400": {
+                        "description": "Cannot remove default status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cannot remove default status. At least one tax rate must be default"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-16T14:24:05.199361Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "ef6c5d63-a611-43b6-8568-bdacc119051e"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Tax rate not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tax-rates/{id}/effective-until": {
+            "patch": {
+                "tags": [
+                    "Tenant Tax Rates"
+                ],
+                "summary": "Update tax rate effective until date",
+                "description": "Updates the effective_until date for a tax rate. This defines when the tax rate expires.",
+                "operationId": "4234dafce735ce473cfff5a9cfc870ba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tax Rate ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "effective_until"
+                                ],
+                                "properties": {
+                                    "effective_until": {
+                                        "description": "Date when this tax rate expires (YYYY-MM-DD). Must be after effective_from date.",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-01-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Effective until date updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Effective until date updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "tax_name": {
+                                                    "type": "string",
+                                                    "example": "VAT"
+                                                },
+                                                "rate": {
+                                                    "type": "string",
+                                                    "example": "16.00"
+                                                },
+                                                "effective_from": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-12-17"
+                                                },
+                                                "effective_until": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2026-01-31"
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_currently_effective": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-16T14:08:27.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-16T14:26:33.559678Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "b960d082-7780-4f66-82ff-6b7a1b5328ad"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Tax rate not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid date or date before effective_from"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/access/status": {
             "get": {
                 "tags": [
@@ -10021,6 +10732,10 @@
         {
             "name": "Tenant Store Management",
             "description": "Tenant Store Management"
+        },
+        {
+            "name": "Tenant Tax Rates",
+            "description": "Tenant Tax Rates"
         },
         {
             "name": "Tenant Access",
