@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
+use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
+use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -99,6 +101,26 @@ Route::prefix('v1/tenant')
             Route::patch('/{supplier}/financial-details', [SupplierController::class, 'updateFinancialDetails']);
             Route::patch('/{supplier}/toggle-active', [SupplierController::class, 'toggleActive']);
         });
+
+        // Units of Measure Routes
+        Route::prefix('units-of-measure')->group(function () {
+            Route::get('/', [UnitOfMeasureController::class, 'index']);
+            Route::get('/{id}', [UnitOfMeasureController::class, 'show']);
+            Route::post('/', [UnitOfMeasureController::class, 'store']);
+            Route::patch('/{id}', [UnitOfMeasureController::class, 'update']);
+            Route::get('/{id}/conversion-options', [UnitOfMeasureController::class, 'conversionOptions']);
+            Route::post('/{id}/set-base-unit', [UnitOfMeasureController::class, 'setBaseUnit']);
+            Route::delete('/{id}/remove-base-unit', [UnitOfMeasureController::class, 'removeBaseUnit']);
+        });
+
+        // UOM Conversion Routes
+        Route::prefix('uom-conversions')->group(function () {
+            Route::post('/', [UomConversionController::class, 'store']);
+            Route::patch('/{id}', [UomConversionController::class, 'update']);
+            Route::delete('/{id}', [UomConversionController::class, 'destroy']);
+            Route::post('/convert', [UomConversionController::class, 'convert']);
+        });
+
 
         // User Management (Owner/Manager only)
         Route::middleware(['role:owner|manager,tenant'])->group(function () {
