@@ -9298,6 +9298,1515 @@
                 ]
             }
         },
+        "/api/v1/tenant/suppliers": {
+            "get": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Get all suppliers",
+                "description": "Retrieves a list of suppliers with optional filtering, searching, and pagination capabilities.",
+                "operationId": "c93c9a565b1fe3913a1baefa4994062d",
+                "parameters": [
+                    {
+                        "name": "supplier_type",
+                        "in": "query",
+                        "description": "Filter by supplier type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "manufacturer",
+                                "distributor",
+                                "wholesaler",
+                                "retailer"
+                            ]
+                        },
+                        "example": "wholesaler"
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search suppliers by name, contact person, email, or phone",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "TechPro"
+                    },
+                    {
+                        "name": "paginate",
+                        "in": "query",
+                        "description": "Enable pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 10
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Suppliers retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Suppliers retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "TechPro Manufacturing Ltd"
+                                                    },
+                                                    "supplier_type": {
+                                                        "type": "string",
+                                                        "example": "distributor"
+                                                    },
+                                                    "supplier_type_display": {
+                                                        "type": "string",
+                                                        "example": "Distributor"
+                                                    },
+                                                    "supplier_type_description": {
+                                                        "type": "string",
+                                                        "example": "Distributes products from manufacturers to retailers"
+                                                    },
+                                                    "contact_person": {
+                                                        "type": "string",
+                                                        "example": "John Doe Jr."
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "johnjr@techpro.com"
+                                                    },
+                                                    "phone": {
+                                                        "type": "string",
+                                                        "example": "+254712345679"
+                                                    },
+                                                    "address": {
+                                                        "type": "string",
+                                                        "example": "789 New Industrial Park, Nairobi, Kenya"
+                                                    },
+                                                    "registration_number": {
+                                                        "type": "string",
+                                                        "example": "PVT-2023-001234"
+                                                    },
+                                                    "credit_limit": {
+                                                        "type": "string",
+                                                        "example": "1000000.00"
+                                                    },
+                                                    "outstanding_balance": {
+                                                        "type": "string",
+                                                        "example": "0.00"
+                                                    },
+                                                    "payment_terms": {
+                                                        "type": "string",
+                                                        "example": "net_30"
+                                                    },
+                                                    "payment_terms_display": {
+                                                        "type": "string",
+                                                        "example": "Net 30 Days"
+                                                    },
+                                                    "payment_terms_description": {
+                                                        "type": "string",
+                                                        "example": "Payment due within 30 days of invoice date"
+                                                    },
+                                                    "payment_terms_days": {
+                                                        "type": "integer",
+                                                        "example": 30
+                                                    },
+                                                    "bank_account_details": {
+                                                        "properties": {
+                                                            "bank": {
+                                                                "type": "string",
+                                                                "example": "Equity Bank Kenya"
+                                                            },
+                                                            "branch": {
+                                                                "type": "string",
+                                                                "example": "Industrial Area Branch"
+                                                            },
+                                                            "account_name": {
+                                                                "type": "string",
+                                                                "example": "TechPro Manufacturing Ltd"
+                                                            },
+                                                            "account_number": {
+                                                                "type": "string",
+                                                                "example": "0123456789"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "rating": {
+                                                        "type": "string",
+                                                        "example": "0.00"
+                                                    },
+                                                    "total_orders": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "notes": {
+                                                        "type": "string",
+                                                        "example": "Expanded operations to include distribution services"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-19T11:55:47.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-19T12:04:39.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:13:17.262690Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "68328e34-03a3-48a6-b2fd-32ec0d92aa0a"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Create a new supplier",
+                "description": "Creates a new supplier with contact and business information. Default payment terms is 'cod' and credit limit is 0.00.",
+                "operationId": "fbc34fca9f9b90ed5074752e19a96c3e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "supplier_type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Supplier name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "TechPro Manufacturing Ltd"
+                                    },
+                                    "supplier_type": {
+                                        "description": "Supplier type",
+                                        "type": "string",
+                                        "enum": [
+                                            "manufacturer",
+                                            "distributor",
+                                            "wholesaler",
+                                            "retailer"
+                                        ],
+                                        "example": "manufacturer"
+                                    },
+                                    "contact_person": {
+                                        "description": "Contact person name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Mike Doe"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255,
+                                        "example": "mike.doe@techpro.com"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number (Kenyan format)",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "+254712345678"
+                                    },
+                                    "address": {
+                                        "description": "Physical address",
+                                        "type": "string",
+                                        "example": "123 Industrial Area, Nairobi, Kenya"
+                                    },
+                                    "registration_number": {
+                                        "description": "Business registration number",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "PVT-2023-001234"
+                                    },
+                                    "notes": {
+                                        "description": "Additional notes",
+                                        "type": "string",
+                                        "example": "Specializes in electronic components and hardware manufacturing"
+                                    },
+                                    "is_active": {
+                                        "description": "Active status (default: true)",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Supplier created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "TechPro Manufacturing Ltd"
+                                                },
+                                                "supplier_type": {
+                                                    "type": "string",
+                                                    "example": "manufacturer"
+                                                },
+                                                "supplier_type_display": {
+                                                    "type": "string",
+                                                    "example": "Manufacturer"
+                                                },
+                                                "supplier_type_description": {
+                                                    "type": "string",
+                                                    "example": "Produces or manufactures goods directly"
+                                                },
+                                                "contact_person": {
+                                                    "type": "string",
+                                                    "example": "Mike Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "mike.doe@techpro.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+254712345678"
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "123 Industrial Area, Nairobi, Kenya"
+                                                },
+                                                "registration_number": {
+                                                    "type": "string",
+                                                    "example": "PVT-2023-001234"
+                                                },
+                                                "credit_limit": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "outstanding_balance": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "payment_terms": {
+                                                    "type": "string",
+                                                    "example": "cod"
+                                                },
+                                                "payment_terms_display": {
+                                                    "type": "string",
+                                                    "example": "Cash on Delivery"
+                                                },
+                                                "payment_terms_description": {
+                                                    "type": "string",
+                                                    "example": "Payment due upon delivery of goods"
+                                                },
+                                                "payment_terms_days": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "bank_account_details": {
+                                                    "type": "object",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "rating": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Specializes in electronic components and hardware manufacturing"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:55:47.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:55:47.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:55:47.994820Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "13278c12-743d-4e06-b678-df8adf51a7ed"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "supplier_type": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected supplier type is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:58:04.631375Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "3cdbc869-64f9-4cc6-9670-a0e4d365f957"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/suppliers/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Get supplier by ID",
+                "description": "Retrieves detailed information about a specific supplier including products and product count.",
+                "operationId": "34ed6e67f15ddf626c588b1fd41d2c8c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Supplier ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supplier retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "TechPro Manufacturing Ltd"
+                                                },
+                                                "supplier_type": {
+                                                    "type": "string",
+                                                    "example": "distributor"
+                                                },
+                                                "supplier_type_display": {
+                                                    "type": "string",
+                                                    "example": "Distributor"
+                                                },
+                                                "supplier_type_description": {
+                                                    "type": "string",
+                                                    "example": "Distributes products from manufacturers to retailers"
+                                                },
+                                                "contact_person": {
+                                                    "type": "string",
+                                                    "example": "John Doe Jr."
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "johnjr@techpro.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+254712345679"
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "789 New Industrial Park, Nairobi, Kenya"
+                                                },
+                                                "registration_number": {
+                                                    "type": "string",
+                                                    "example": "PVT-2023-001234"
+                                                },
+                                                "credit_limit": {
+                                                    "type": "string",
+                                                    "example": "1000000.00"
+                                                },
+                                                "outstanding_balance": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "payment_terms": {
+                                                    "type": "string",
+                                                    "example": "net_30"
+                                                },
+                                                "payment_terms_display": {
+                                                    "type": "string",
+                                                    "example": "Net 30 Days"
+                                                },
+                                                "payment_terms_description": {
+                                                    "type": "string",
+                                                    "example": "Payment due within 30 days of invoice date"
+                                                },
+                                                "payment_terms_days": {
+                                                    "type": "integer",
+                                                    "example": 30
+                                                },
+                                                "bank_account_details": {
+                                                    "properties": {
+                                                        "bank": {
+                                                            "type": "string",
+                                                            "example": "Equity Bank Kenya"
+                                                        },
+                                                        "branch": {
+                                                            "type": "string",
+                                                            "example": "Industrial Area Branch"
+                                                        },
+                                                        "account_name": {
+                                                            "type": "string",
+                                                            "example": "TechPro Manufacturing Ltd"
+                                                        },
+                                                        "account_number": {
+                                                            "type": "string",
+                                                            "example": "0123456789"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "rating": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Expanded operations to include distribution services"
+                                                },
+                                                "products": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "product_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:55:47.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:04:39.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:10:59.736938Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "9aefc593-6d8d-4ca4-840d-60ed2a290e47"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/suppliers/{id}/personal-details": {
+            "patch": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Update supplier personal details",
+                "description": "Updates supplier contact and address information. Only provided fields will be updated.",
+                "operationId": "00fda4e4d8fdb2377fb350f97a854f1e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Supplier ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "description": "Personal details to update (all fields are optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "contact_person": {
+                                        "description": "Contact person name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "John Doe Jr."
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255,
+                                        "example": "johnjr@techpro.com"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "+254712345679"
+                                    },
+                                    "address": {
+                                        "description": "Physical address",
+                                        "type": "string",
+                                        "example": "789 New Industrial Park, Nairobi, Kenya"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Supplier personal details updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier personal details updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "TechPro Manufacturing Ltd"
+                                                },
+                                                "supplier_type": {
+                                                    "type": "string",
+                                                    "example": "manufacturer"
+                                                },
+                                                "supplier_type_display": {
+                                                    "type": "string",
+                                                    "example": "Manufacturer"
+                                                },
+                                                "supplier_type_description": {
+                                                    "type": "string",
+                                                    "example": "Produces or manufactures goods directly"
+                                                },
+                                                "contact_person": {
+                                                    "type": "string",
+                                                    "example": "John Doe Jr."
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "johnjr@techpro.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+254712345679"
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "789 New Industrial Park, Nairobi, Kenya"
+                                                },
+                                                "registration_number": {
+                                                    "type": "string",
+                                                    "example": "PVT-2023-001234"
+                                                },
+                                                "credit_limit": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "outstanding_balance": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "payment_terms": {
+                                                    "type": "string",
+                                                    "example": "cod"
+                                                },
+                                                "payment_terms_display": {
+                                                    "type": "string",
+                                                    "example": "Cash on Delivery"
+                                                },
+                                                "payment_terms_description": {
+                                                    "type": "string",
+                                                    "example": "Payment due upon delivery of goods"
+                                                },
+                                                "payment_terms_days": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "bank_account_details": {
+                                                    "type": "object",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "rating": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Specializes in electronic components and hardware manufacturing"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:55:47.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:01:50.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:01:50.057904Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "26610d12-7ef5-47bc-aad7-ddbac8768ec9"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/suppliers/{id}/financial-details": {
+            "patch": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Update supplier financial details",
+                "description": "Updates supplier credit limit, payment terms, and bank account details. Only provided fields will be updated.",
+                "operationId": "f165ab963826dad10c9f64959c001cf5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Supplier ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "description": "Financial details to update (all fields are optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "credit_limit": {
+                                        "description": "Credit limit (cannot be negative)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 1000000
+                                    },
+                                    "payment_terms": {
+                                        "description": "Payment terms",
+                                        "type": "string",
+                                        "enum": [
+                                            "cod",
+                                            "net_7",
+                                            "net_15",
+                                            "net_30",
+                                            "net_60",
+                                            "net_90"
+                                        ],
+                                        "example": "net_30"
+                                    },
+                                    "bank_account_details": {
+                                        "description": "Bank account information",
+                                        "properties": {
+                                            "bank": {
+                                                "description": "Bank name",
+                                                "type": "string",
+                                                "example": "Equity Bank Kenya"
+                                            },
+                                            "account_name": {
+                                                "description": "Account holder name",
+                                                "type": "string",
+                                                "example": "TechPro Manufacturing Ltd"
+                                            },
+                                            "account_number": {
+                                                "description": "Account number",
+                                                "type": "string",
+                                                "example": "0123456789"
+                                            },
+                                            "branch": {
+                                                "description": "Branch name",
+                                                "type": "string",
+                                                "example": "Industrial Area Branch"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Supplier financial details updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Supplier financial details updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "TechPro Manufacturing Ltd"
+                                                },
+                                                "supplier_type": {
+                                                    "type": "string",
+                                                    "example": "distributor"
+                                                },
+                                                "supplier_type_display": {
+                                                    "type": "string",
+                                                    "example": "Distributor"
+                                                },
+                                                "supplier_type_description": {
+                                                    "type": "string",
+                                                    "example": "Distributes products from manufacturers to retailers"
+                                                },
+                                                "contact_person": {
+                                                    "type": "string",
+                                                    "example": "John Doe Jr."
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "johnjr@techpro.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+254712345679"
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "789 New Industrial Park, Nairobi, Kenya"
+                                                },
+                                                "registration_number": {
+                                                    "type": "string",
+                                                    "example": "PVT-2023-001234"
+                                                },
+                                                "credit_limit": {
+                                                    "type": "string",
+                                                    "example": "1000000.00"
+                                                },
+                                                "outstanding_balance": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "payment_terms": {
+                                                    "type": "string",
+                                                    "example": "net_30"
+                                                },
+                                                "payment_terms_display": {
+                                                    "type": "string",
+                                                    "example": "Net 30 Days"
+                                                },
+                                                "payment_terms_description": {
+                                                    "type": "string",
+                                                    "example": "Payment due within 30 days of invoice date"
+                                                },
+                                                "payment_terms_days": {
+                                                    "type": "integer",
+                                                    "example": 30
+                                                },
+                                                "bank_account_details": {
+                                                    "properties": {
+                                                        "bank": {
+                                                            "type": "string",
+                                                            "example": "Equity Bank Kenya"
+                                                        },
+                                                        "branch": {
+                                                            "type": "string",
+                                                            "example": "Industrial Area Branch"
+                                                        },
+                                                        "account_name": {
+                                                            "type": "string",
+                                                            "example": "TechPro Manufacturing Ltd"
+                                                        },
+                                                        "account_number": {
+                                                            "type": "string",
+                                                            "example": "0123456789"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "rating": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Expanded operations to include distribution services"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T11:55:47.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:04:39.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-19T12:04:39.444972Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "5dd967d5-5ca5-417d-afd8-ee7a337b749b"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "oneOf": [
+                                                {
+                                                    "properties": {
+                                                        "payment_terms": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "example": "The selected payment terms is invalid."
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "credit_limit": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "example": "Credit limit cannot be negative"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/suppliers/{id}/toggle-active": {
+            "patch": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Toggle supplier active status",
+                "description": "Toggles the active status of a supplier. If currently active, it will be deactivated and vice versa.",
+                "operationId": "fa5b096d75268b20926a509d92e98404",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Supplier ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supplier status toggled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Supplier deactivated successfully"
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "timestamp": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T12:08:36.156061Z"
+                                                        },
+                                                        "request_id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "a5cdda12-1c6d-4407-be46-744054144abf"
+                                                        },
+                                                        "tenant_id": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                        },
+                                                        "tenant_name": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Supplier activated successfully"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Supplier not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/suppliers/supplier-options": {
+            "get": {
+                "tags": [
+                    "Tenant Suppliers"
+                ],
+                "summary": "Get supplier options",
+                "description": "Retrieves available options for supplier types and payment terms. Useful for populating form dropdowns.",
+                "operationId": "08556d2d672a79e98fbbe5c0862d1399",
+                "responses": {
+                    "200": {
+                        "description": "Supplier options retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "supplier_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "value": {
+                                                                "type": "string",
+                                                                "example": "manufacturer"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Manufacturer"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Produces or manufactures goods directly"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "example": [
+                                                        {
+                                                            "value": "manufacturer",
+                                                            "label": "Manufacturer",
+                                                            "description": "Produces or manufactures goods directly"
+                                                        },
+                                                        {
+                                                            "value": "distributor",
+                                                            "label": "Distributor",
+                                                            "description": "Distributes products from manufacturers to retailers"
+                                                        },
+                                                        {
+                                                            "value": "wholesaler",
+                                                            "label": "Wholesaler",
+                                                            "description": "Sells products in bulk to retailers or other businesses"
+                                                        },
+                                                        {
+                                                            "value": "retailer",
+                                                            "label": "Retailer",
+                                                            "description": "Sells products directly to consumers"
+                                                        }
+                                                    ]
+                                                },
+                                                "payment_terms": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "value": {
+                                                                "type": "string",
+                                                                "example": "cod"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Cash on Delivery"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Payment due upon delivery of goods"
+                                                            },
+                                                            "days": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "example": [
+                                                        {
+                                                            "value": "cod",
+                                                            "label": "Cash on Delivery",
+                                                            "description": "Payment due upon delivery of goods",
+                                                            "days": 0
+                                                        },
+                                                        {
+                                                            "value": "net_7",
+                                                            "label": "Net 7 Days",
+                                                            "description": "Payment due within 7 days of invoice date",
+                                                            "days": 7
+                                                        },
+                                                        {
+                                                            "value": "net_15",
+                                                            "label": "Net 15 Days",
+                                                            "description": "Payment due within 15 days of invoice date",
+                                                            "days": 15
+                                                        },
+                                                        {
+                                                            "value": "net_30",
+                                                            "label": "Net 30 Days",
+                                                            "description": "Payment due within 30 days of invoice date",
+                                                            "days": 30
+                                                        },
+                                                        {
+                                                            "value": "net_60",
+                                                            "label": "Net 60 Days",
+                                                            "description": "Payment due within 60 days of invoice date",
+                                                            "days": 60
+                                                        },
+                                                        {
+                                                            "value": "net_90",
+                                                            "label": "Net 90 Days",
+                                                            "description": "Payment due within 90 days of invoice date",
+                                                            "days": 90
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/tax-rates": {
             "get": {
                 "tags": [
@@ -10732,6 +12241,10 @@
         {
             "name": "Tenant Store Management",
             "description": "Tenant Store Management"
+        },
+        {
+            "name": "Tenant Suppliers",
+            "description": "Tenant Suppliers"
         },
         {
             "name": "Tenant Tax Rates",

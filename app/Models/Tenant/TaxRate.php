@@ -2,9 +2,12 @@
 
 namespace App\Models\Tenant;
 
+use App\Observers\Tenant\TaxRateObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy([TaxRateObserver::class])]
 class TaxRate extends Model
 {
     use HasFactory;

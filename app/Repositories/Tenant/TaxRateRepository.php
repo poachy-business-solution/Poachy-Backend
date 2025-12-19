@@ -81,7 +81,13 @@ class TaxRateRepository
      */
     public function unsetAllDefaults(): int
     {
-        return TaxRate::where('is_default', true)->update(['is_default' => false]);
+        $defaults = TaxRate::where('is_default', true)->get();
+
+        foreach ($defaults as $taxRate) {
+            $taxRate->update(['is_default' => false]);
+        }
+
+        return $defaults->count();
     }
 
     /**

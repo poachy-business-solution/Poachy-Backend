@@ -44,18 +44,28 @@ class TaxRateService
             );
         }
 
+        $shouldBeDefault = false;
+
+        // If is_default is explicitly provided and true, we need to unset existing defaults
+        if (isset($data['is_default']) && $data['is_default'] === true) {
+            $shouldBeDefault = true;
+        }
+        // If no default exists and is_default was not provided, this should be default
+        elseif (!isset($data['is_default']) && !$this->repository->hasDefault()) {
+            $shouldBeDefault = true;
+        }
+
+        // Unset existing defaults if this new rate should be default
+        if ($shouldBeDefault) {
+            $this->repository->unsetAllDefaults();
+        }
+
+        // Set the is_default flag
+        $data['is_default'] = $shouldBeDefault;
+
         return DB::transaction(function () use ($data) {
-            if (!$this->repository->hasDefault()) {
-                $data['is_default'] = true;
-            }
-
-            if (isset($data['is_default']) && $data['is_default'] === true) {
-                $this->repository->unsetAllDefaults();
-            }
-
             $taxRate = $this->repository->create($data);
             $this->clearCache();
-
             return $taxRate;
         });
     }
@@ -91,7 +101,6 @@ class TaxRateService
     {
         return DB::transaction(function () use ($id) {
             $taxRate = $this->repository->findById($id);
-
             if (!$taxRate) {
                 throw new \InvalidArgumentException('Tax rate not found');
             }
@@ -104,8 +113,10 @@ class TaxRateService
                 $this->repository->update($taxRate, ['is_default' => true]);
                 $message = 'Tax rate set as default successfully';
             } else {
-                // Cannot unset default if it's the only one
-                if ($this->repository->hasDefault() && $taxRate->is_default) {
+                // Check if there are other defaults before removing
+                $defaultCount = TaxRate::where('is_default', true)->count();
+
+                if ($defaultCount <= 1) {
                     throw new \InvalidArgumentException('Cannot remove default status. At least one tax rate must be default');
                 }
 

@@ -66,6 +66,11 @@ class Product extends Model
         return $this->belongsTo(ProductBrand::class, 'brand_id');
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
     // Scopes
 
     public function scopeActive($query)

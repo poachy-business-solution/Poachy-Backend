@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
+use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
@@ -86,6 +87,17 @@ Route::prefix('v1/tenant')
             Route::patch('/{taxRate}/toggle-active', [TaxRateController::class, 'toggleActive']);
             Route::patch('/{taxRate}/toggle-default', [TaxRateController::class, 'toggleDefault']);
             Route::patch('/{taxRate}/effective-until', [TaxRateController::class, 'updateEffectiveUntil']);
+        });
+
+        // Suppliers Routes
+        Route::prefix('suppliers')->group(function () {
+            Route::get('/', [SupplierController::class, 'index']);
+            Route::post('/', [SupplierController::class, 'store']);
+            Route::get('/supplier-options', [SupplierController::class, 'supplierOptions']);
+            Route::get('/{supplier}', [SupplierController::class, 'show']);
+            Route::patch('/{supplier}/personal-details', [SupplierController::class, 'updatePersonalDetails']);
+            Route::patch('/{supplier}/financial-details', [SupplierController::class, 'updateFinancialDetails']);
+            Route::patch('/{supplier}/toggle-active', [SupplierController::class, 'toggleActive']);
         });
 
         // User Management (Owner/Manager only)
