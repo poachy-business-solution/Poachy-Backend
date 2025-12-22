@@ -11892,6 +11892,1872 @@
                 ]
             }
         },
+        "/api/v1/tenant/products/{uuid}/uoms": {
+            "get": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Get all product UOMs",
+                "description": "Retrieves all Units of Measure (UOMs) configured for a specific product, including base UOM identification and conversion factors.",
+                "operationId": "2f3fa4baa408a71d58be89ee97d325db",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product UOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product UOMs retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "product": {
+                                                    "properties": {
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "TCL 55 4K UHD Smart LED TV"
+                                                        },
+                                                        "sku": {
+                                                            "type": "string",
+                                                            "example": "ELEC-DELL-56QT"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uoms": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "uom": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "pair"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Pair"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "example": "count"
+                                                                    },
+                                                                    "source_type": {
+                                                                        "type": "string",
+                                                                        "example": "system"
+                                                                    },
+                                                                    "source_type_label": {
+                                                                        "type": "string",
+                                                                        "example": "System Defined"
+                                                                    },
+                                                                    "is_base_unit": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_system": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_custom": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string",
+                                                                        "example": "Two pieces"
+                                                                    },
+                                                                    "display_name": {
+                                                                        "type": "string",
+                                                                        "example": "Pair (pair)"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2025-12-19T13:40:21.000000Z"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2025-12-19T16:12:20.000000Z"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "uom_id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "is_base_uom": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_purchase_uom": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_sales_uom": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_inventory_uom": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "conversion_to_base": {
+                                                                "type": "string",
+                                                                "example": "1.000000"
+                                                            },
+                                                            "conversion_description": {
+                                                                "type": "string",
+                                                                "example": "Base Unit"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "Pair (pair)"
+                                                            },
+                                                            "can_purchase": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "can_sell": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "can_track_inventory": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-22T13:13:04.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-22T13:13:04.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "description": "Total number of UOMs configured",
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "has_base_uom": {
+                                                    "description": "Whether a base UOM is configured",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:14:44.792928Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "f90165ea-9ec6-4246-987c-31e24754123a"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:14:44.792928Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "f90165ea-9ec6-4246-987c-31e24754123a"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Add UOM to product",
+                "description": "Adds a new Unit of Measure configuration to a product. Can be set as base UOM, purchase UOM, sales UOM, or inventory UOM with conversion factor.",
+                "operationId": "e9e7a3f514d135c4b9b89c29703c776f",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uom_id"
+                                ],
+                                "properties": {
+                                    "uom_id": {
+                                        "description": "Unit of Measure ID",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "is_base_uom": {
+                                        "description": "Set as base UOM (if true, conversion_to_base must be 1)",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_purchase_uom": {
+                                        "description": "Enable for purchase transactions",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_sales_uom": {
+                                        "description": "Enable for sales transactions",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_inventory_uom": {
+                                        "description": "Enable for inventory tracking",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "conversion_to_base": {
+                                        "description": "Conversion factor to base UOM (must be 1 for base UOM)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Product UOM created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product UOM created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "doz"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Dozen"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "12 pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Dozen (doz)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "is_base_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_purchase_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_sales_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_inventory_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "conversion_to_base": {
+                                                    "type": "string",
+                                                    "example": "1.000000"
+                                                },
+                                                "conversion_description": {
+                                                    "type": "string",
+                                                    "example": "Base Unit"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "Dozen (doz)"
+                                                },
+                                                "can_purchase": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "can_sell": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "can_track_inventory": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T12:49:49.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T12:49:49.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T12:49:49.238996Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "71477b45-af6c-4699-958b-374b9da02f54"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "uom_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The uom id field is required."
+                                                    }
+                                                },
+                                                "conversion_to_base": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Base UOM must have conversion factor of 1"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T12:49:49.238996Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "71477b45-af6c-4699-958b-374b9da02f54"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/uoms/{id}": {
+            "delete": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Delete product UOM",
+                "description": "Deletes a UOM configuration from a product. Cannot delete the base UOM - you must assign a different base UOM first before deleting the current one.",
+                "operationId": "0ddc28edde6754783bd0eb0a1a676930",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Product UOM ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product UOM deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product UOM deleted successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:26:10.193031Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "844c0e41-60a7-47f2-b67f-91dde3705764"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Cannot delete base UOM",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cannot delete the base UOM. Assign a different base UOM first."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:10:04.112936Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "297c483e-ea9c-43ae-be1b-b8ca3db36ca0"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product or Product UOM not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product UOM not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:26:10.193031Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "844c0e41-60a7-47f2-b67f-91dde3705764"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Update product UOM configuration",
+                "description": "Updates an existing UOM configuration for a product. Cannot change conversion factor of base UOM (must remain 1). All fields are optional.",
+                "operationId": "8189bd81866419cbb55c089e72693f7b",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Product UOM ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "description": "UOM configuration fields to update (all fields optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "uom_id": {
+                                        "description": "Change to different UOM",
+                                        "type": "integer",
+                                        "example": 20
+                                    },
+                                    "is_purchase_uom": {
+                                        "description": "Enable/disable for purchases",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_sales_uom": {
+                                        "description": "Enable/disable for sales",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "is_inventory_uom": {
+                                        "description": "Enable/disable for inventory",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "conversion_to_base": {
+                                        "description": "Conversion factor (cannot be changed for base UOM)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "example": 50
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Product UOM updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product UOM updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "doz"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Dozen"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "12 pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Dozen (doz)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "is_base_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_purchase_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_sales_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_inventory_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "conversion_to_base": {
+                                                    "type": "string",
+                                                    "example": "1.000000"
+                                                },
+                                                "conversion_description": {
+                                                    "type": "string",
+                                                    "example": "Base Unit"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "Dozen (doz)"
+                                                },
+                                                "can_purchase": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "can_sell": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "can_track_inventory": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T12:49:49.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:12:23.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:12:23.138674Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "f2bcf937-51dc-4582-a9c7-7dfa95f8b830"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product or Product UOM not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Cannot change base UOM conversion factor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "conversion_to_base": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Cannot change conversion factor of base UOM. It must always be 1"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:11:55.970774Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "f95c065f-30a8-4468-be3b-cb55c17979ad"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/uoms/base": {
+            "get": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Get product base UOM",
+                "description": "Retrieves the base Unit of Measure configured for a product. The base UOM has a conversion factor of 1 and is used as the reference for all other UOMs.",
+                "operationId": "9b376c9be1bb6c364ecaf97fd7dcd3d8",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Base UOM retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Base UOM retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pair"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pair"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Two pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Pair (pair)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T16:12:20.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "is_base_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_purchase_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_sales_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_inventory_uom": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "conversion_to_base": {
+                                                    "type": "string",
+                                                    "example": "1.000000"
+                                                },
+                                                "conversion_description": {
+                                                    "type": "string",
+                                                    "example": "Base Unit"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "Pair (pair)"
+                                                },
+                                                "can_purchase": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "can_sell": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "can_track_inventory": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:13:04.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:13:04.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:17:56.228335Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "96c1e386-361a-49dc-96ab-be3312d9c699"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found or no base UOM configured",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Base UOM not found for this product"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:17:56.228335Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "96c1e386-361a-49dc-96ab-be3312d9c699"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/uoms/purchase": {
+            "get": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Get product purchase UOMs",
+                "description": "Retrieves all Units of Measure that are enabled for purchase transactions for a specific product. These UOMs can be used when creating purchase orders.",
+                "operationId": "2982335ab43d7681b2e700a228fb6db3",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchase UOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Purchase UOMs retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "product_id": {
+                                                        "type": "integer",
+                                                        "example": 4
+                                                    },
+                                                    "uom": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "pair"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Pair"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "count"
+                                                            },
+                                                            "source_type": {
+                                                                "type": "string",
+                                                                "example": "system"
+                                                            },
+                                                            "source_type_label": {
+                                                                "type": "string",
+                                                                "example": "System Defined"
+                                                            },
+                                                            "is_base_unit": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_system": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_custom": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Two pieces"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "Pair (pair)"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-19T13:40:21.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-19T16:12:20.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "uom_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "is_base_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_purchase_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_sales_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_inventory_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "conversion_to_base": {
+                                                        "type": "string",
+                                                        "example": "1.000000"
+                                                    },
+                                                    "conversion_description": {
+                                                        "type": "string",
+                                                        "example": "Base Unit"
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string",
+                                                        "example": "Pair (pair)"
+                                                    },
+                                                    "can_purchase": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "can_sell": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "can_track_inventory": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-22T13:13:04.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-22T13:13:04.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:19:14.883223Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "6a2481d6-93fc-4a8c-b5bb-0843bdec1989"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:19:14.883223Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "6a2481d6-93fc-4a8c-b5bb-0843bdec1989"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/uoms/sales": {
+            "get": {
+                "tags": [
+                    "Tenant Product UOMs"
+                ],
+                "summary": "Get product sales UOMs",
+                "description": "Retrieves all Units of Measure that are enabled for sales transactions for a specific product. These UOMs can be used when creating sales orders and invoices.",
+                "operationId": "fda106ce110737de7b7be2b008b01fdd",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sales UOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Sales UOMs retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "product_id": {
+                                                        "type": "integer",
+                                                        "example": 4
+                                                    },
+                                                    "uom": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "pair"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Pair"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "count"
+                                                            },
+                                                            "source_type": {
+                                                                "type": "string",
+                                                                "example": "system"
+                                                            },
+                                                            "source_type_label": {
+                                                                "type": "string",
+                                                                "example": "System Defined"
+                                                            },
+                                                            "is_base_unit": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_system": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_custom": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Two pieces"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "Pair (pair)"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-19T13:40:21.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-19T16:12:20.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "uom_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "is_base_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_purchase_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_sales_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_inventory_uom": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "conversion_to_base": {
+                                                        "type": "string",
+                                                        "example": "1.000000"
+                                                    },
+                                                    "conversion_description": {
+                                                        "type": "string",
+                                                        "example": "Base Unit"
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string",
+                                                        "example": "Pair (pair)"
+                                                    },
+                                                    "can_purchase": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "can_sell": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "can_track_inventory": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-22T13:13:04.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-22T13:13:04.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:22:42.836084Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e14eaa12-8f37-4e9c-80d8-f3093ff0daad"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T13:22:42.836084Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e14eaa12-8f37-4e9c-80d8-f3093ff0daad"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/stores": {
             "get": {
                 "tags": [
@@ -20175,6 +22041,10 @@
         {
             "name": "Tenant Products",
             "description": "Tenant Products"
+        },
+        {
+            "name": "Tenant Product UOMs",
+            "description": "Tenant Product UOMs"
         },
         {
             "name": "Tenant Store Management",

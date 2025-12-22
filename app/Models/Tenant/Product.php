@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy([ProductObserver::class])]
 class Product extends Model
@@ -99,6 +100,17 @@ class Product extends Model
     public function baseUom(): BelongsTo
     {
         return $this->belongsTo(UnitOfMeasure::class, 'base_uom_id');
+    }
+
+    public function productUoms(): HasMany
+    {
+        return $this->hasMany(ProductUom::class, 'product_id');
+    }
+
+    public function activeProductUoms(): HasMany
+    {
+        return $this->productUoms()
+            ->whereHas('uom', fn($q) => $q->where('is_active', true));
     }
 
     // Scopes
@@ -196,5 +208,25 @@ class Product extends Model
     public function requiresSerialTracking(): bool
     {
         return $this->requires_serial_tracking === true;
+    }
+
+    public function getBaseProductUom(): ?ProductUom
+    {
+        return $this->productUoms()->where('is_base_uom', true)->first();
+    }
+
+    public function hasUomsConfigured(): bool
+    {
+        return $this->productUoms()->exists();
+    }
+
+    public function getPurchaseUoms()
+    {
+        return $this->productUoms()->where('is_purchase_uom', true)->get();
+    }
+
+    public function getSalesUoms()
+    {
+        return $this->productUoms()->where('is_sales_uom', true)->get();
     }
 }

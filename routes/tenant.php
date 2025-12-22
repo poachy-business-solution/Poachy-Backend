@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
+use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
@@ -142,7 +143,22 @@ Route::prefix('v1/tenant')
             Route::post('/{uuid}/images', [ProductController::class, 'addImages']);
             Route::post('/{uuid}/primary-image', [ProductController::class, 'updatePrimaryImage']);
             Route::delete('/{uuid}/images', [ProductController::class, 'removeImage']);
+
+            Route::prefix('{uuid}/uoms')->group(function () {
+
+                // Core CRUD
+                Route::get('/', [ProductUomController::class, 'index']);
+                Route::post('/', [ProductUomController::class, 'store']);
+                Route::patch('/{productUom}', [ProductUomController::class, 'update']);
+                Route::delete('/{productUomId}', [ProductUomController::class, 'destroy']);
+
+                // Special UOM queries
+                Route::get('/base', [ProductUomController::class, 'base']);
+                Route::get('/purchase', [ProductUomController::class, 'purchase']);
+                Route::get('/sales', [ProductUomController::class, 'sales']);
+            });
         });
+
 
 
         // User Management (Owner/Manager only)
