@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
+use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
@@ -119,6 +120,28 @@ Route::prefix('v1/tenant')
             Route::patch('/{id}', [UomConversionController::class, 'update']);
             Route::delete('/{id}', [UomConversionController::class, 'destroy']);
             Route::post('/convert', [UomConversionController::class, 'convert']);
+        });
+
+        Route::prefix('products')->group(function () {
+
+            // Core CRUD
+            Route::get('/', [ProductController::class, 'index']);
+            Route::post('/', [ProductController::class, 'store']);
+            Route::get('/{uuid}', [ProductController::class, 'show']);
+            Route::patch('/{uuid}', [ProductController::class, 'update']);
+
+            // Configuration Updates
+            Route::patch('/{uuid}/inventory', [ProductController::class, 'updateInventoryConfig']);
+            Route::patch('/{uuid}/online', [ProductController::class, 'updateOnlineConfig']);
+
+            // Status Toggles
+            Route::patch('/{uuid}/toggle-active', [ProductController::class, 'toggleActive']);
+            Route::patch('/{uuid}/toggle-featured', [ProductController::class, 'toggleFeatured']);
+
+            // Image Management
+            Route::post('/{uuid}/images', [ProductController::class, 'addImages']);
+            Route::post('/{uuid}/primary-image', [ProductController::class, 'updatePrimaryImage']);
+            Route::delete('/{uuid}/images', [ProductController::class, 'removeImage']);
         });
 
 

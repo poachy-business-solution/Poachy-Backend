@@ -4,6 +4,7 @@ namespace App\Http\Resources\Tenant\Product;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ProductMinimalResource extends JsonResource
 {
@@ -21,8 +22,17 @@ class ProductMinimalResource extends JsonResource
                 ? number_format((float) $this->base_selling_price, 2, '.', '')
                 : null,
             'stock_status' => $this->stock_status,
-            'primary_image' => $this->primary_image,
+            'primary_image' => $this->getPrimaryImageUrl(),
             'is_active' => $this->is_active,
         ];
+    }
+
+    protected function getPrimaryImageUrl(): ?string
+    {
+        if (!$this->primary_image) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->primary_image);
     }
 }

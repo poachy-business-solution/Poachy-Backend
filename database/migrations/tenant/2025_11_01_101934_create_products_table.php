@@ -35,7 +35,7 @@ return new class extends Migration
 
             // Pricing & Cost
             $table->decimal('base_selling_price', 15, 2)->default(0)->comment('Price per base UOM');
-            $table->foreignId('tax_rate_id')->constrained('tax_rates')->onDelete('restrict');
+            $table->foreignId('tax_rate_id')->nullable()->constrained('tax_rates')->onDelete('restrict');
 
             // Inventory & Logistics
             $table->foreignId('base_uom_id')->constrained('units_of_measure')->onDelete('restrict');
