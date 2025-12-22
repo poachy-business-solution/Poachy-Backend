@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
+use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
@@ -123,42 +124,45 @@ Route::prefix('v1/tenant')
             Route::post('/convert', [UomConversionController::class, 'convert']);
         });
 
+        // Products Routes
         Route::prefix('products')->group(function () {
-
-            // Core CRUD
             Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
             Route::get('/{uuid}', [ProductController::class, 'show']);
             Route::patch('/{uuid}', [ProductController::class, 'update']);
-
-            // Configuration Updates
             Route::patch('/{uuid}/inventory', [ProductController::class, 'updateInventoryConfig']);
             Route::patch('/{uuid}/online', [ProductController::class, 'updateOnlineConfig']);
-
-            // Status Toggles
             Route::patch('/{uuid}/toggle-active', [ProductController::class, 'toggleActive']);
             Route::patch('/{uuid}/toggle-featured', [ProductController::class, 'toggleFeatured']);
-
-            // Image Management
             Route::post('/{uuid}/images', [ProductController::class, 'addImages']);
             Route::post('/{uuid}/primary-image', [ProductController::class, 'updatePrimaryImage']);
             Route::delete('/{uuid}/images', [ProductController::class, 'removeImage']);
 
             Route::prefix('{uuid}/uoms')->group(function () {
-
-                // Core CRUD
                 Route::get('/', [ProductUomController::class, 'index']);
                 Route::post('/', [ProductUomController::class, 'store']);
                 Route::patch('/{productUom}', [ProductUomController::class, 'update']);
                 Route::delete('/{productUomId}', [ProductUomController::class, 'destroy']);
-
-                // Special UOM queries
                 Route::get('/base', [ProductUomController::class, 'base']);
                 Route::get('/purchase', [ProductUomController::class, 'purchase']);
                 Route::get('/sales', [ProductUomController::class, 'sales']);
             });
+
+            Route::prefix('{uuid}/variants')->group(function () {
+                Route::get('/', [ProductVariantController::class, 'index']);
+                Route::post('/', [ProductVariantController::class, 'store']);
+            });
         });
 
+        // Product variants Routes
+        Route::prefix('variants')->group(function () {
+            Route::get('/', [ProductVariantController::class, 'indexAll']);
+            Route::get('/{id}', [ProductVariantController::class, 'show']);
+            Route::patch('/{id}', [ProductVariantController::class, 'update']);
+            Route::delete('/{id}', [ProductVariantController::class, 'destroy']);
+            Route::patch('/{id}/toggle-active', [ProductVariantController::class, 'toggleActive']);
+            Route::patch('/{id}/inventory', [ProductVariantController::class, 'updateInventory']);
+        });
 
 
         // User Management (Owner/Manager only)

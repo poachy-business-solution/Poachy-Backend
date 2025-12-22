@@ -5,15 +5,15 @@ namespace App\Services\Tenant\Product;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBrand;
 use App\Models\Tenant\ProductCategory;
+use App\Models\Tenant\ProductVariant;
 use Illuminate\Support\Str;
 
 /**
  * SKU Generator Service
- * 
+ *
  * Generates unique, consistent SKUs following the pattern:
- * [CATEGORY][BRAND][UNIQUE] (8-12 characters)
- * 
- * Example: ELEC-SAMS-8A4D (Electronics, Samsung, unique ID)
+ * Products: [CATEGORY][BRAND][UNIQUE] (e.g., ELEC-SAMS-8A4D)
+ * Variants: [PRODUCT_SKU]-[VARIANT] (e.g., ELEC-SAMS-8A4D-V01)
  */
 class SkuGeneratorService
 {
@@ -30,6 +30,24 @@ class SkuGeneratorService
 
         // Ensure uniqueness
         return $this->ensureUniqueSku($sku);
+    }
+
+    /**
+     * Generate a unique SKU for a product variant
+     * Pattern: [PRODUCT_SKU]-[VARIANT_CODE]
+     * Example: ELEC-SAMS-8A4D-V01
+     */
+    public function generateVariantSku(Product $product, array $data): string
+    {
+        $productSku = $product->sku;
+
+        // Generate variant code from attributes or sequential number
+        $variantCode = $this->generateVariantCode($product, $data);
+
+        $sku = sprintf('%s-%s', $productSku, $variantCode);
+
+        // Ensure uniqueness
+        return $this->ensureUniqueVariantSku($sku);
     }
 
     /**
@@ -128,6 +146,12 @@ class SkuGeneratorService
         return preg_match('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/', $sku) === 1;
     }
 
+    public function isValidVariantFormat(string $sku): bool
+    {
+        // Pattern: PROD-PROD-PROD-VARIANT (product SKU + variant code)
+        return preg_match('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9V]{3,5}$/', $sku) === 1;
+    }
+
     /**
      * Parse SKU into components
      */
@@ -144,5 +168,100 @@ class SkuGeneratorService
             'brand_code' => $parts[1],
             'unique_code' => $parts[2],
         ];
+    }
+
+    public function parseVariantSku(string $sku): array
+    {
+        if (!$this->isValidVariantFormat($sku)) {
+            throw new \InvalidArgumentException('Invalid variant SKU format');
+        }
+
+        $parts = explode('-', $sku);
+
+        return [
+            'category_code' => $parts[0],
+            'brand_code' => $parts[1],
+            'unique_code' => $parts[2],
+            'variant_code' => $parts[3],
+            'product_sku' => sprintf('%s-%s-%s', $parts[0], $parts[1], $parts[2]),
+        ];
+    }
+
+    public function generateVariantCodeFromUom(string $uomName, float $quantity): string
+    {
+        // Clean and format quantity
+        $qty = number_format($quantity, 0);
+
+        // Extract unit abbreviation (first 1-2 chars)
+        $uomClean = Str::upper(Str::slug($uomName, ''));
+        $unit = Str::substr($uomClean, 0, 2);
+
+        return sprintf('%s%s', $qty, $unit);
+    }
+
+    private function generateVariantCode(Product $product, array $data): string
+    {
+        // Option 1: Use attributes to create meaningful code
+        if (!empty($data['attributes'])) {
+            return $this->generateCodeFromAttributes($data['attributes']);
+        }
+
+        // Option 2: Use sequential numbering (V01, V02, etc.)
+        return $this->generateSequentialVariantCode($product);
+    }
+
+    private function generateCodeFromAttributes(array $attributes): string
+    {
+        if (empty($attributes)) {
+            return 'V' . Str::upper(Str::random(2));
+        }
+
+        $code = '';
+
+        foreach ($attributes as $key => $value) {
+            // Take first 2 chars from each attribute value
+            $code .= Str::substr(Str::upper(Str::slug($value, '')), 0, 2);
+
+            if (strlen($code) >= 4) {
+                break;
+            }
+        }
+
+        // Ensure code is exactly 3 characters (V + 2 chars) or 4 characters
+        $code = Str::substr($code, 0, 3);
+        $code = Str::padRight($code, 3, 'X');
+
+        return 'V' . $code;
+    }
+
+    private function generateSequentialVariantCode(Product $product): string
+    {
+        $existingVariants = ProductVariant::where('product_id', $product->id)->count();
+        $nextNumber = $existingVariants + 1;
+
+        return sprintf('V%02d', $nextNumber); // V01, V02, V03...
+    }
+
+    private function ensureUniqueVariantSku(string $sku, int $attempts = 0): string
+    {
+        if ($attempts > 10) {
+            throw new \RuntimeException('Unable to generate unique variant SKU after 10 attempts');
+        }
+
+        $exists = ProductVariant::where('sku', $sku)->exists();
+
+        if (!$exists) {
+            return $sku;
+        }
+
+        // Append random suffix to variant code
+        $parts = explode('-', $sku);
+        $lastPart = array_pop($parts);
+        $lastPart .= Str::upper(Str::random(1));
+        $parts[] = $lastPart;
+
+        $newSku = implode('-', $parts);
+
+        return $this->ensureUniqueVariantSku($newSku, $attempts + 1);
     }
 }

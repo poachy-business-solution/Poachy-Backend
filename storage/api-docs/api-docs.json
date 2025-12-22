@@ -13758,6 +13758,2419 @@
                 ]
             }
         },
+        "/api/v1/tenant/products/{uuid}/variants": {
+            "get": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Get product variants",
+                "description": "Retrieves all variants for a specific product with filtering capabilities. Variants represent different configurations of the same product (e.g., different sizes, colors, specifications).",
+                "operationId": "504141cfadcfffad2aed100781c579ec",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term to filter variants by name or SKU",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "QLED"
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by stock status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "in_stock",
+                                "out_of_stock",
+                                "discontinued"
+                            ]
+                        },
+                        "example": "in_stock"
+                    },
+                    {
+                        "name": "attribute_key",
+                        "in": "query",
+                        "description": "Filter by attribute key (e.g., 'Panel Tech', 'Refresh Rate')",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Refresh Rate"
+                    },
+                    {
+                        "name": "attribute_value",
+                        "in": "query",
+                        "description": "Filter by attribute value (requires attribute_key)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "144 Hz"
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Field to sort by",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "created_at"
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort direction",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        },
+                        "example": "desc"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product variants retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product variants retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "product": {
+                                                    "properties": {
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "TCL 55 4K UHD Smart LED TV"
+                                                        },
+                                                        "sku": {
+                                                            "type": "string",
+                                                            "example": "ELEC-DELL-56QT"
+                                                        },
+                                                        "product_type": {
+                                                            "type": "string",
+                                                            "example": "variable"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "variants": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "product_name": {
+                                                                "type": "string",
+                                                                "example": "TCL 55 4K UHD Smart LED TV"
+                                                            },
+                                                            "product_sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-DELL-56QT"
+                                                            },
+                                                            "variant_name": {
+                                                                "type": "string",
+                                                                "example": "55C725-QLED"
+                                                            },
+                                                            "sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-DELL-56QT-V14Q"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "TCL 55 4K UHD Smart LED TV - 55C725-QLED"
+                                                            },
+                                                            "attributes": {
+                                                                "properties": {
+                                                                    "HDR": {
+                                                                        "type": "string",
+                                                                        "example": "10+"
+                                                                    },
+                                                                    "Design ID": {
+                                                                        "type": "string",
+                                                                        "example": "Slim bezel"
+                                                                    },
+                                                                    "Panel Tech": {
+                                                                        "type": "string",
+                                                                        "example": "QLED (Quantum-dot)"
+                                                                    },
+                                                                    "Refresh Rate": {
+                                                                        "type": "string",
+                                                                        "example": "144 Hz"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "uom_display": {
+                                                                "type": "string",
+                                                                "example": "1.0000 pair"
+                                                            },
+                                                            "quantity_in_base_uom": {
+                                                                "type": "string",
+                                                                "example": "1.0000"
+                                                            },
+                                                            "computed_price": {
+                                                                "type": "number",
+                                                                "example": 141499
+                                                            },
+                                                            "formatted_price": {
+                                                                "type": "string",
+                                                                "example": "KES 141,499.00"
+                                                            },
+                                                            "stock_status": {
+                                                                "type": "string",
+                                                                "example": "in_stock"
+                                                            },
+                                                            "stock_status_label": {
+                                                                "type": "string",
+                                                                "example": "In Stock"
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-22T18:17:37.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "description": "Total number of variants",
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:23:36.920137Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "8e94173c-b021-4a33-8193-d707a18b654a"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Create product variant",
+                "description": "Creates a new variant for a product. Variants represent different configurations (e.g., size, color, specifications) with their own SKU, pricing, and attributes. SKU is auto-generated if not provided.",
+                "operationId": "98be852960486fe1d8158cb31f9aea71",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "variant_name",
+                                    "uom_id",
+                                    "uom_quantity"
+                                ],
+                                "properties": {
+                                    "variant_name": {
+                                        "description": "Variant name/identifier",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "55C725-QLED"
+                                    },
+                                    "sku": {
+                                        "description": "Unique SKU (auto-generated if not provided)",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "ELEC-DELL-56QT-V14Q"
+                                    },
+                                    "attributes": {
+                                        "description": "Key-value pairs of variant attributes",
+                                        "type": "object",
+                                        "example": {
+                                            "Refresh Rate": "144 Hz",
+                                            "Panel Tech": "QLED (Quantum-dot)",
+                                            "Design ID": "Slim bezel",
+                                            "HDR": "10+"
+                                        }
+                                    },
+                                    "uom_id": {
+                                        "description": "Unit of Measure ID",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "uom_quantity": {
+                                        "description": "Quantity in the specified UOM",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.9999,
+                                        "minimum": 0.0001,
+                                        "example": 1
+                                    },
+                                    "quantity_in_base_uom": {
+                                        "description": "Equivalent quantity in base UOM (auto-calculated if not provided)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.9999,
+                                        "minimum": 0.0001,
+                                        "example": 1
+                                    },
+                                    "base_selling_price_adjustment": {
+                                        "description": "Price adjustment relative to base product price (+/-)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.99,
+                                        "minimum": -999999.99,
+                                        "example": 5500
+                                    },
+                                    "variant_price": {
+                                        "description": "Fixed variant price (overrides adjustment calculation)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 9999999999.99,
+                                        "minimum": 0,
+                                        "example": 141499
+                                    },
+                                    "is_active": {
+                                        "description": "Active status",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Product variant created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product variant created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "product": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "TCL 55 4K UHD Smart LED TV"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "tcl-55-4k-uhd-smart-led-tv"
+                                                        },
+                                                        "sku": {
+                                                            "type": "string",
+                                                            "example": "ELEC-DELL-56QT"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "variant_name": {
+                                                    "type": "string",
+                                                    "example": "55C725-QLED"
+                                                },
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "ELEC-DELL-56QT-V14Q"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "TCL 55 4K UHD Smart LED TV - 55C725-QLED"
+                                                },
+                                                "attributes": {
+                                                    "properties": {
+                                                        "Refresh Rate": {
+                                                            "type": "string",
+                                                            "example": "144 Hz"
+                                                        },
+                                                        "Panel Tech": {
+                                                            "type": "string",
+                                                            "example": "QLED (Quantum-dot)"
+                                                        },
+                                                        "Design ID": {
+                                                            "type": "string",
+                                                            "example": "Slim bezel"
+                                                        },
+                                                        "HDR": {
+                                                            "type": "string",
+                                                            "example": "10+"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pair"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pair"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Two pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Pair (pair)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T16:12:20.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "uom_quantity": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "quantity_in_base_uom": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "uom_display": {
+                                                    "type": "string",
+                                                    "example": "1.0000 pair"
+                                                },
+                                                "base_selling_price_adjustment": {
+                                                    "type": "string",
+                                                    "example": "5500.00"
+                                                },
+                                                "formatted_adjustment": {
+                                                    "type": "string",
+                                                    "example": "+KES 5,500.00"
+                                                },
+                                                "variant_price": {
+                                                    "type": "string",
+                                                    "example": "141499.00"
+                                                },
+                                                "computed_price": {
+                                                    "type": "number",
+                                                    "example": 141499
+                                                },
+                                                "formatted_variant_price": {
+                                                    "type": "string",
+                                                    "example": "KES 141,499.00"
+                                                },
+                                                "formatted_computed_price": {
+                                                    "type": "string",
+                                                    "example": "KES 141,499.00"
+                                                },
+                                                "stock_status": {
+                                                    "type": "string",
+                                                    "example": "in_stock"
+                                                },
+                                                "stock_status_label": {
+                                                    "type": "string",
+                                                    "example": "In Stock"
+                                                },
+                                                "reorder_level": {
+                                                    "type": "string",
+                                                    "example": "0.0000"
+                                                },
+                                                "shelf_life_days": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:17:37.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:17:37.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:17:37.779768Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "94cc411f-e553-498d-848d-421bac0aba8c"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "variant_name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The variant name field is required."
+                                                    }
+                                                },
+                                                "uom_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The uom id field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:17:37.779768Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "94cc411f-e553-498d-848d-421bac0aba8c"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/variants": {
+            "get": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Get all variants across products",
+                "description": "Retrieves a paginated list of all product variants across all products with filtering, search, and sorting capabilities. Returns up to 15 variants per page with a maximum of 100 per page.",
+                "operationId": "23b3cc75bba2d7f772a7f45b2a3116f0",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term to filter variants by name, SKU, or product name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "QLED"
+                    },
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "description": "Filter by product ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 4
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by stock status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "in_stock",
+                                "out_of_stock",
+                                "discontinued"
+                            ]
+                        },
+                        "example": "in_stock"
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    },
+                    {
+                        "name": "attribute_key",
+                        "in": "query",
+                        "description": "Filter by attribute key",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Panel Tech"
+                    },
+                    {
+                        "name": "attribute_value",
+                        "in": "query",
+                        "description": "Filter by attribute value (requires attribute_key)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "QLED (Quantum-dot)"
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Field to sort by",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "created_at"
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort direction",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        },
+                        "example": "desc"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (max 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100
+                        },
+                        "example": 15
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variants retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variants retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "variants": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "product_name": {
+                                                                "type": "string",
+                                                                "example": "TCL 55 4K UHD Smart LED TV"
+                                                            },
+                                                            "product_sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-DELL-56QT"
+                                                            },
+                                                            "variant_name": {
+                                                                "type": "string",
+                                                                "example": "55C725-QLED"
+                                                            },
+                                                            "sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-DELL-56QT-V14Q"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "TCL 55 4K UHD Smart LED TV - 55C725-QLED"
+                                                            },
+                                                            "attributes": {
+                                                                "properties": {
+                                                                    "HDR": {
+                                                                        "type": "string",
+                                                                        "example": "10+"
+                                                                    },
+                                                                    "Design ID": {
+                                                                        "type": "string",
+                                                                        "example": "Slim bezel"
+                                                                    },
+                                                                    "Panel Tech": {
+                                                                        "type": "string",
+                                                                        "example": "QLED (Quantum-dot)"
+                                                                    },
+                                                                    "Refresh Rate": {
+                                                                        "type": "string",
+                                                                        "example": "144 Hz"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "uom_display": {
+                                                                "type": "string",
+                                                                "example": "1.0000 pair"
+                                                            },
+                                                            "quantity_in_base_uom": {
+                                                                "type": "string",
+                                                                "example": "1.0000"
+                                                            },
+                                                            "computed_price": {
+                                                                "type": "number",
+                                                                "example": 141499
+                                                            },
+                                                            "formatted_price": {
+                                                                "type": "string",
+                                                                "example": "KES 141,499.00"
+                                                            },
+                                                            "stock_status": {
+                                                                "type": "string",
+                                                                "example": "in_stock"
+                                                            },
+                                                            "stock_status_label": {
+                                                                "type": "string",
+                                                                "example": "In Stock"
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-22T18:17:37.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "from": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "to": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:27:58.046660Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "9f144908-d630-458b-a3c6-74c56c88c158"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid query parameters"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/variants/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Get variant details",
+                "description": "Retrieves detailed information about a specific product variant including product details, UOM, pricing, attributes, and inventory settings.",
+                "operationId": "f38d9f14d9059b8f985ce74a99d89639",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variant retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "product": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "TCL 55 4K UHD Smart LED TV"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "tcl-55-4k-uhd-smart-led-tv"
+                                                        },
+                                                        "sku": {
+                                                            "type": "string",
+                                                            "example": "ELEC-DELL-56QT"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "variant_name": {
+                                                    "type": "string",
+                                                    "example": "55C725-GTV"
+                                                },
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "ELEC-DELL-56QT-V60D"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "TCL 55 4K UHD Smart LED TV - 55C725-GTV"
+                                                },
+                                                "attributes": {
+                                                    "properties": {
+                                                        "HDR": {
+                                                            "type": "string",
+                                                            "example": "10"
+                                                        },
+                                                        "Design ID": {
+                                                            "type": "string",
+                                                            "example": "Slim bezel"
+                                                        },
+                                                        "Panel Tech": {
+                                                            "type": "string",
+                                                            "example": "Direct-lit LED"
+                                                        },
+                                                        "Refresh Rate": {
+                                                            "type": "string",
+                                                            "example": "60 Hz"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pair"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pair"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Two pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Pair (pair)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T16:12:20.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "uom_quantity": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "quantity_in_base_uom": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "uom_display": {
+                                                    "type": "string",
+                                                    "example": "1.0000 pair"
+                                                },
+                                                "base_selling_price_adjustment": {
+                                                    "type": "string",
+                                                    "example": "0.00"
+                                                },
+                                                "formatted_adjustment": {
+                                                    "type": "string",
+                                                    "example": "KES 0.00"
+                                                },
+                                                "variant_price": {
+                                                    "type": "string",
+                                                    "example": "135999.00"
+                                                },
+                                                "computed_price": {
+                                                    "type": "number",
+                                                    "example": 135999
+                                                },
+                                                "formatted_variant_price": {
+                                                    "type": "string",
+                                                    "example": "KES 135,999.00"
+                                                },
+                                                "formatted_computed_price": {
+                                                    "type": "string",
+                                                    "example": "KES 135,999.00"
+                                                },
+                                                "stock_status": {
+                                                    "type": "string",
+                                                    "example": "in_stock"
+                                                },
+                                                "stock_status_label": {
+                                                    "type": "string",
+                                                    "example": "In Stock"
+                                                },
+                                                "reorder_level": {
+                                                    "type": "string",
+                                                    "example": "0.0000"
+                                                },
+                                                "shelf_life_days": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:15:42.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:15:42.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:33:36.552595Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "a84279ec-08b3-42cb-94b5-3a26f574d924"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Variant not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:33:36.552595Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "a84279ec-08b3-42cb-94b5-3a26f574d924"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Delete variant",
+                "description": "Permanently deletes a product variant. This action cannot be undone. The variant will be removed from inventory and all associated data will be deleted.",
+                "operationId": "0f6e000acbde24b9a9b2fd0bf03be349",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variant deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant deleted successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T20:10:11.339777Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "ce74b46d-8469-4e82-a33b-52d8323445d8"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Variant not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T20:10:11.339777Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "ce74b46d-8469-4e82-a33b-52d8323445d8"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Update variant",
+                "description": "Updates a product variant's basic information including name, SKU, attributes, and pricing. All fields are optional - only provided fields will be updated.",
+                "operationId": "f03ddff48c02fa725a2392b865034fc5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "description": "Variant fields to update (all fields optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "variant_name": {
+                                        "description": "Variant name/identifier",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "55C725-GAL"
+                                    },
+                                    "sku": {
+                                        "description": "Unique variant SKU",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "ELEC-DELL-56QT-V14Q"
+                                    },
+                                    "attributes": {
+                                        "description": "Key-value pairs of variant attributes",
+                                        "type": "object",
+                                        "example": {
+                                            "Refresh Rate": "144 Hz",
+                                            "Panel Tech": "QLED (Quantum-dot)"
+                                        },
+                                        "nullable": true
+                                    },
+                                    "base_selling_price_adjustment": {
+                                        "description": "Price adjustment relative to base product price",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.99,
+                                        "minimum": -999999.99,
+                                        "example": 16000
+                                    },
+                                    "variant_price": {
+                                        "description": "Fixed variant price (overrides adjustment)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 9999999999.99,
+                                        "minimum": 0,
+                                        "example": 151999,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Variant updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "product": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "TCL 55 4K UHD Smart LED TV"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "tcl-55-4k-uhd-smart-led-tv"
+                                                        },
+                                                        "sku": {
+                                                            "type": "string",
+                                                            "example": "ELEC-DELL-56QT"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "variant_name": {
+                                                    "type": "string",
+                                                    "example": "55C725-GAL"
+                                                },
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "ELEC-DELL-56QT-V14Q"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "TCL 55 4K UHD Smart LED TV - 55C725-GAL"
+                                                },
+                                                "attributes": {
+                                                    "properties": {
+                                                        "HDR": {
+                                                            "type": "string",
+                                                            "example": "10+"
+                                                        },
+                                                        "Design ID": {
+                                                            "type": "string",
+                                                            "example": "Slim bezel"
+                                                        },
+                                                        "Panel Tech": {
+                                                            "type": "string",
+                                                            "example": "QLED (Quantum-dot)"
+                                                        },
+                                                        "Refresh Rate": {
+                                                            "type": "string",
+                                                            "example": "144 Hz"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pair"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pair"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Two pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Pair (pair)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T16:12:20.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "uom_quantity": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "quantity_in_base_uom": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "uom_display": {
+                                                    "type": "string",
+                                                    "example": "1.0000 pair"
+                                                },
+                                                "base_selling_price_adjustment": {
+                                                    "type": "string",
+                                                    "example": "16000.00"
+                                                },
+                                                "formatted_adjustment": {
+                                                    "type": "string",
+                                                    "example": "+KES 16,000.00"
+                                                },
+                                                "variant_price": {
+                                                    "type": "string",
+                                                    "example": "151999.00"
+                                                },
+                                                "computed_price": {
+                                                    "type": "number",
+                                                    "example": 151999
+                                                },
+                                                "formatted_variant_price": {
+                                                    "type": "string",
+                                                    "example": "KES 151,999.00"
+                                                },
+                                                "formatted_computed_price": {
+                                                    "type": "string",
+                                                    "example": "KES 151,999.00"
+                                                },
+                                                "stock_status": {
+                                                    "type": "string",
+                                                    "example": "in_stock"
+                                                },
+                                                "stock_status_label": {
+                                                    "type": "string",
+                                                    "example": "In Stock"
+                                                },
+                                                "reorder_level": {
+                                                    "type": "string",
+                                                    "example": "0.0000"
+                                                },
+                                                "shelf_life_days": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:17:37.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:47:01.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:47:01.094532Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e3fa4ac5-5913-4855-bb38-46459428705d"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Variant not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "sku": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The sku has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:47:01.094532Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e3fa4ac5-5913-4855-bb38-46459428705d"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/variants/{id}/inventory": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Update variant inventory settings",
+                "description": "Updates inventory-related settings for a product variant including stock status, reorder level, and shelf life. All fields are optional.",
+                "operationId": "7a563187ff2e59a7b82631ed4c1d9de6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "description": "Inventory settings to update (all fields optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "stock_status": {
+                                        "description": "Current stock availability status",
+                                        "type": "string",
+                                        "enum": [
+                                            "in_stock",
+                                            "out_of_stock",
+                                            "discontinued"
+                                        ],
+                                        "example": "out_of_stock"
+                                    },
+                                    "reorder_level": {
+                                        "description": "Minimum stock level before reorder alert (in base UOM)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.9999,
+                                        "minimum": 0,
+                                        "example": 20
+                                    },
+                                    "shelf_life_days": {
+                                        "description": "Product shelf life in days (null for non-perishable items)",
+                                        "type": "integer",
+                                        "maximum": 3650,
+                                        "minimum": 0,
+                                        "example": 0,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Variant inventory details updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant inventory details updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "product": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "format": "uuid",
+                                                            "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "TCL 55 4K UHD Smart LED TV"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "tcl-55-4k-uhd-smart-led-tv"
+                                                        },
+                                                        "sku": {
+                                                            "type": "string",
+                                                            "example": "ELEC-DELL-56QT"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "variant_name": {
+                                                    "type": "string",
+                                                    "example": "55C725-GAL"
+                                                },
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "ELEC-DELL-56QT-V14Q"
+                                                },
+                                                "display_name": {
+                                                    "type": "string",
+                                                    "example": "TCL 55 4K UHD Smart LED TV - 55C725-GAL"
+                                                },
+                                                "attributes": {
+                                                    "properties": {
+                                                        "HDR": {
+                                                            "type": "string",
+                                                            "example": "10+"
+                                                        },
+                                                        "Design ID": {
+                                                            "type": "string",
+                                                            "example": "Slim bezel"
+                                                        },
+                                                        "Panel Tech": {
+                                                            "type": "string",
+                                                            "example": "QLED (Quantum-dot)"
+                                                        },
+                                                        "Refresh Rate": {
+                                                            "type": "string",
+                                                            "example": "144 Hz"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pair"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pair"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Two pieces"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Pair (pair)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T16:12:20.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uom_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "uom_quantity": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "quantity_in_base_uom": {
+                                                    "type": "string",
+                                                    "example": "1.0000"
+                                                },
+                                                "uom_display": {
+                                                    "type": "string",
+                                                    "example": "1.0000 pair"
+                                                },
+                                                "base_selling_price_adjustment": {
+                                                    "type": "string",
+                                                    "example": "16000.00"
+                                                },
+                                                "formatted_adjustment": {
+                                                    "type": "string",
+                                                    "example": "+KES 16,000.00"
+                                                },
+                                                "variant_price": {
+                                                    "type": "string",
+                                                    "example": "151999.00"
+                                                },
+                                                "computed_price": {
+                                                    "type": "number",
+                                                    "example": 151999
+                                                },
+                                                "formatted_variant_price": {
+                                                    "type": "string",
+                                                    "example": "KES 151,999.00"
+                                                },
+                                                "formatted_computed_price": {
+                                                    "type": "string",
+                                                    "example": "KES 151,999.00"
+                                                },
+                                                "stock_status": {
+                                                    "type": "string",
+                                                    "example": "out_of_stock"
+                                                },
+                                                "stock_status_label": {
+                                                    "type": "string",
+                                                    "example": "Out of Stock"
+                                                },
+                                                "reorder_level": {
+                                                    "type": "string",
+                                                    "example": "20.0000"
+                                                },
+                                                "shelf_life_days": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T18:17:37.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T19:41:07.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T19:41:07.639765Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "48bac098-8400-4cfc-a227-f1d7ec933b7e"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Variant not found"
+                    },
+                    "422": {
+                        "description": "Validation error - Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "stock_status": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected stock status is invalid."
+                                                    }
+                                                },
+                                                "reorder_level": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The reorder level must be at least 0."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T19:41:07.639765Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "48bac098-8400-4cfc-a227-f1d7ec933b7e"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/variants/{id}/toggle-active": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Toggle variant active status",
+                "description": "Toggles the active/inactive status of a product variant. Activates inactive variants and deactivates active variants. No request body required.",
+                "operationId": "e8f590899940661c8a28607160cb50c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variant status toggled successfully (activated)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant activated successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T20:09:36.284835Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "55957ed0-be42-4faa-acee-9eddc2c17134"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200 ": {
+                        "description": "Variant status toggled successfully (deactivated)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant deactivated successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T20:09:25.045376Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "34930745-f00c-42b9-a302-a0d3b6338593"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Variant not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant not found"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-22T20:09:25.045376Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "34930745-f00c-42b9-a302-a0d3b6338593"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/stores": {
             "get": {
                 "tags": [
@@ -22045,6 +24458,10 @@
         {
             "name": "Tenant Product UOMs",
             "description": "Tenant Product UOMs"
+        },
+        {
+            "name": "Tenant Product Variants",
+            "description": "Tenant Product Variants"
         },
         {
             "name": "Tenant Store Management",

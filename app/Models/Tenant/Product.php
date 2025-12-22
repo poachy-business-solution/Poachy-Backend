@@ -113,6 +113,16 @@ class Product extends Model
             ->whereHas('uom', fn($q) => $q->where('is_active', true));
     }
 
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'product_id');
+    }
+
+    public function activeVariants(): HasMany
+    {
+        return $this->variants()->where('is_active', true);
+    }
+
     // Scopes
 
     public function scopeActive($query)
@@ -228,5 +238,20 @@ class Product extends Model
     public function getSalesUoms()
     {
         return $this->productUoms()->where('is_sales_uom', true)->get();
+    }
+
+    public function hasVariants(): bool
+    {
+        return $this->variants()->exists();
+    }
+
+    public function getVariantCount(): int
+    {
+        return $this->variants()->count();
+    }
+
+    public function isVariable(): bool
+    {
+        return $this->product_type === ProductType::VARIABLE;
     }
 }
