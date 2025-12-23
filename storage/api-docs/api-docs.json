@@ -6416,6 +6416,2345 @@
                 ]
             }
         },
+        "/api/v1/tenant/bundles": {
+            "get": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Get all product bundles",
+                "description": "Retrieves a paginated list of all product bundles with their items, pricing, and availability information. Returns up to 15 bundles per page.",
+                "operationId": "1c6b36509aaaf785da125c3b384243ba",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        },
+                        "example": 15
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundles retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundles retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "bundles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "bundle_name": {
+                                                                "type": "string",
+                                                                "example": "Breakfast Combo"
+                                                            },
+                                                            "bundle_sku": {
+                                                                "type": "string",
+                                                                "example": "BNDL-GENR-BU8V"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Complete breakfast package for family"
+                                                            },
+                                                            "images": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "path": {
+                                                                            "type": "string",
+                                                                            "example": "bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
+                                                                        },
+                                                                        "url": {
+                                                                            "type": "string",
+                                                                            "example": "http://localhost/storage/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
+                                                                        },
+                                                                        "filename": {
+                                                                            "type": "string",
+                                                                            "example": "bundle_1_a54-extra_1766482359_0.jpg"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "image_count": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "base_uom": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "pcs"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Piece"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "example": "count"
+                                                                    },
+                                                                    "display_name": {
+                                                                        "type": "string",
+                                                                        "example": "Piece (pcs)"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "tax_rate": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "tax_name": {
+                                                                        "type": "string",
+                                                                        "example": "VAT"
+                                                                    },
+                                                                    "rate": {
+                                                                        "type": "string",
+                                                                        "example": "16.00"
+                                                                    },
+                                                                    "is_currently_effective": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "bundle_price": {
+                                                                "type": "string",
+                                                                "example": "450.00"
+                                                            },
+                                                            "calculated_individual_price": {
+                                                                "type": "string",
+                                                                "example": "45999.00"
+                                                            },
+                                                            "discount_amount": {
+                                                                "type": "string",
+                                                                "example": "45549.00"
+                                                            },
+                                                            "savings_percentage": {
+                                                                "type": "number",
+                                                                "example": 99.02
+                                                            },
+                                                            "formatted_bundle_price": {
+                                                                "type": "string",
+                                                                "example": "KES 450.00"
+                                                            },
+                                                            "formatted_discount": {
+                                                                "type": "string",
+                                                                "example": "KES 45,549.00"
+                                                            },
+                                                            "is_available_online": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "online_price": {
+                                                                "type": "string",
+                                                                "example": "420.00"
+                                                            },
+                                                            "formatted_online_price": {
+                                                                "type": "string",
+                                                                "example": "KES 420.00"
+                                                            },
+                                                            "online_description": {
+                                                                "type": "string",
+                                                                "example": "Order now and save KES 30!"
+                                                            },
+                                                            "items_count": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "has_minimum_items": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "all_items_active": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_available_for_sale": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-23T09:31:52.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-23T09:32:39.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T09:32:48.710687Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "6a2adbdc-575e-4b42-b78c-23209a72d7be"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Create a new product bundle",
+                "description": "Creates a new product bundle with optional items. Bundle price must be provided, and if items are included, at least 2 items are required.",
+                "operationId": "127b86d7b70171f630209059c0554c65",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bundle_name",
+                                    "base_uom_id",
+                                    "bundle_price",
+                                    "tax_rate_id"
+                                ],
+                                "properties": {
+                                    "bundle_name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Breakfast Combo"
+                                    },
+                                    "bundle_sku": {
+                                        "description": "Auto-generated if not provided",
+                                        "type": "string",
+                                        "maxLength": 30,
+                                        "example": "BNDL-BRKFST-001",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 5000,
+                                        "example": "Complete breakfast package for family",
+                                        "nullable": true
+                                    },
+                                    "base_uom_id": {
+                                        "description": "Base unit of measure ID (e.g., pieces)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "bundle_price": {
+                                        "description": "Bundle selling price (max: 9999999999.99)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "example": 450
+                                    },
+                                    "tax_rate_id": {
+                                        "description": "Tax rate ID to apply",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_available_online": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "online_price": {
+                                        "description": "Special online price (max: 9999999999.99)",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "example": 420,
+                                        "nullable": true
+                                    },
+                                    "online_description": {
+                                        "type": "string",
+                                        "maxLength": 5000,
+                                        "example": "Order now and save KES 30!",
+                                        "nullable": true
+                                    },
+                                    "items": {
+                                        "description": "Array of bundle items (minimum 2 items if provided)",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "uom_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "product_variant_id": {
+                                                    "description": "Specific variant ID or null for base product",
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "uom_id": {
+                                                    "description": "Unit of measure ID",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "description": "Quantity (min: 0.0001, max: 999999.9999)",
+                                                    "type": "number",
+                                                    "format": "decimal",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bundle created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "bundle_name": {
+                                                    "type": "string",
+                                                    "example": "Breakfast Combo"
+                                                },
+                                                "bundle_sku": {
+                                                    "type": "string",
+                                                    "example": "BNDL-GENR-BKMX"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Complete breakfast package for family"
+                                                },
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "image_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "primary_image": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "base_uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pcs"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Piece"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Piece (pcs)"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tax_rate": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "tax_name": {
+                                                            "type": "string",
+                                                            "example": "VAT"
+                                                        },
+                                                        "rate": {
+                                                            "type": "string",
+                                                            "example": "16.00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "bundle_price": {
+                                                    "type": "string",
+                                                    "example": "450.00"
+                                                },
+                                                "calculated_individual_price": {
+                                                    "type": "string",
+                                                    "example": "91998.00"
+                                                },
+                                                "discount_amount": {
+                                                    "type": "string",
+                                                    "example": "91548.00"
+                                                },
+                                                "savings_percentage": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 99.51
+                                                },
+                                                "formatted_bundle_price": {
+                                                    "type": "string",
+                                                    "example": "KES 450.00"
+                                                },
+                                                "formatted_discount": {
+                                                    "type": "string",
+                                                    "example": "KES 91,548.00"
+                                                },
+                                                "is_available_online": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "online_price": {
+                                                    "type": "string",
+                                                    "example": "420.00"
+                                                },
+                                                "formatted_online_price": {
+                                                    "type": "string",
+                                                    "example": "KES 420.00"
+                                                },
+                                                "online_description": {
+                                                    "type": "string",
+                                                    "example": "Order now and save KES 30!"
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "bundle_id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "product": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Samsung Galaxy A54 5G 128GB"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "ELEC-SAMS-VTFM"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "product_variant_id": {
+                                                                "type": "integer",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "Samsung Galaxy A54 5G 128GB"
+                                                            },
+                                                            "sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-SAMS-VTFM"
+                                                            },
+                                                            "is_using_variant": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "quantity": {
+                                                                "type": "string",
+                                                                "example": "2.0000"
+                                                            },
+                                                            "quantity_in_base_uom": {
+                                                                "type": "string",
+                                                                "example": "2.0000"
+                                                            },
+                                                            "uom_display": {
+                                                                "type": "string",
+                                                                "example": "2.0000 pcs"
+                                                            },
+                                                            "item_price": {
+                                                                "type": "number",
+                                                                "example": 45999
+                                                            },
+                                                            "total_price": {
+                                                                "type": "number",
+                                                                "example": 91998
+                                                            },
+                                                            "formatted_item_price": {
+                                                                "type": "string",
+                                                                "example": "KES 45,999.00"
+                                                            },
+                                                            "formatted_total_price": {
+                                                                "type": "string",
+                                                                "example": "KES 91,998.00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "items_count": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "has_minimum_items": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "all_items_active": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_available_for_sale": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T06:23:15.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T06:23:15.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "bundle_name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The bundle name field is required."
+                                                    }
+                                                },
+                                                "bundle_sku": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The bundle sku has already been taken."
+                                                    }
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The items must have at least 2 items."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - User lacks manage-products permission"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Get bundle details",
+                "description": "Retrieves complete information about a specific product bundle including all items, pricing details, images, and availability status.",
+                "operationId": "40304b68efcf94d780c636936cc6e39f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bundle ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "bundle_name": {
+                                                    "type": "string",
+                                                    "example": "Breakfast Combo"
+                                                },
+                                                "bundle_sku": {
+                                                    "type": "string",
+                                                    "example": "BNDL-GENR-BU8V"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Complete breakfast package for family"
+                                                },
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "path": {
+                                                                "type": "string",
+                                                                "example": "bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
+                                                            },
+                                                            "url": {
+                                                                "type": "string",
+                                                                "example": "http://localhost/storage/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
+                                                            },
+                                                            "filename": {
+                                                                "type": "string",
+                                                                "example": "bundle_1_a54-extra_1766482359_0.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "image_count": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "base_uom": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "pcs"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Piece"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "count"
+                                                        },
+                                                        "source_type": {
+                                                            "type": "string",
+                                                            "example": "system"
+                                                        },
+                                                        "source_type_label": {
+                                                            "type": "string",
+                                                            "example": "System Defined"
+                                                        },
+                                                        "is_base_unit": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_system": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_custom": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Single item"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Piece (pcs)"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T13:40:21.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T16:12:55.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tax_rate": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "tax_name": {
+                                                            "type": "string",
+                                                            "example": "VAT"
+                                                        },
+                                                        "rate": {
+                                                            "type": "string",
+                                                            "example": "16.00"
+                                                        },
+                                                        "effective_from": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "2025-12-01"
+                                                        },
+                                                        "effective_until": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_default": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_currently_effective": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-12-19T09:10:47.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "bundle_price": {
+                                                    "type": "string",
+                                                    "example": "450.00"
+                                                },
+                                                "calculated_individual_price": {
+                                                    "type": "string",
+                                                    "example": "45999.00"
+                                                },
+                                                "discount_amount": {
+                                                    "type": "string",
+                                                    "example": "45549.00"
+                                                },
+                                                "savings_percentage": {
+                                                    "type": "number",
+                                                    "example": 99.02
+                                                },
+                                                "formatted_bundle_price": {
+                                                    "type": "string",
+                                                    "example": "KES 450.00"
+                                                },
+                                                "formatted_discount": {
+                                                    "type": "string",
+                                                    "example": "KES 45,549.00"
+                                                },
+                                                "is_available_online": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "online_price": {
+                                                    "type": "string",
+                                                    "example": "420.00"
+                                                },
+                                                "formatted_online_price": {
+                                                    "type": "string",
+                                                    "example": "KES 420.00"
+                                                },
+                                                "online_description": {
+                                                    "type": "string",
+                                                    "example": "Order now and save KES 30!"
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "bundle_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "product": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Samsung Galaxy A54 5G 128GB"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "ELEC-SAMS-VTFM"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "product_variant_id": {
+                                                                "type": "integer",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "Samsung Galaxy A54 5G 128GB"
+                                                            },
+                                                            "sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-SAMS-VTFM"
+                                                            },
+                                                            "is_using_variant": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "uom": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "pcs"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Piece"
+                                                                    },
+                                                                    "display_name": {
+                                                                        "type": "string",
+                                                                        "example": "Piece (pcs)"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "quantity": {
+                                                                "type": "string",
+                                                                "example": "1.0000"
+                                                            },
+                                                            "quantity_in_base_uom": {
+                                                                "type": "string",
+                                                                "example": "1.0000"
+                                                            },
+                                                            "uom_display": {
+                                                                "type": "string",
+                                                                "example": "1.0000 pcs"
+                                                            },
+                                                            "item_price": {
+                                                                "type": "number",
+                                                                "example": 45999
+                                                            },
+                                                            "total_price": {
+                                                                "type": "number",
+                                                                "example": 45999
+                                                            },
+                                                            "formatted_item_price": {
+                                                                "type": "string",
+                                                                "example": "KES 45,999.00"
+                                                            },
+                                                            "formatted_total_price": {
+                                                                "type": "string",
+                                                                "example": "KES 45,999.00"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-23T09:31:52.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-23T09:31:52.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "items_count": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "has_minimum_items": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "all_items_active": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_available_for_sale": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T09:31:52.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T09:32:39.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T09:33:41.130897Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "91fe771c-2fe0-4bd4-8d05-feeb2d49f1e0"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing authentication token"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Delete bundle",
+                "description": "Permanently deletes a product bundle. This action cannot be undone.",
+                "operationId": "81295292a76427ec99d2aa8482c35c0a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bundle ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle deleted successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-23T09:29:25.568067Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "3fb945bd-1205-456d-b3a7-81c7c8b78c75"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Update bundle",
+                "description": "Updates basic bundle information including name, SKU, and descriptions. All fields are optional - only provided fields will be updated.",
+                "operationId": "363e8b4f36d911a4aa0845d2ccefdeac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bundle ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "description": "Bundle fields to update (all optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "bundle_name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Breakfast Combo"
+                                    },
+                                    "bundle_sku": {
+                                        "type": "string",
+                                        "maxLength": 30,
+                                        "example": "BNDL-GENR-BKMX"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 5000,
+                                        "example": "Complete breakfast package for family and friends"
+                                    },
+                                    "online_description": {
+                                        "type": "string",
+                                        "maxLength": 5000,
+                                        "example": "Order now and save!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bundle updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Complete bundle object with updated information (same structure as GET /bundles/{id})",
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    },
+                    "422": {
+                        "description": "Validation error - SKU already taken"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/items": {
+            "post": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Add item to bundle",
+                "description": "Adds a new product or product variant to an existing bundle. The bundle must maintain at least 2 items.",
+                "operationId": "598df98f50354b2d62b6a5ec27137ca7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bundle ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_id",
+                                    "uom_id",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "description": "Product ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_variant_id": {
+                                        "description": "Variant ID (null for base product)",
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "uom_id": {
+                                        "description": "Unit of Measure ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "quantity": {
+                                        "description": "Quantity",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.9999,
+                                        "minimum": 0.0001,
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Item added to bundle successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Item added to bundle successfully"
+                                        },
+                                        "data": {
+                                            "description": "Complete updated bundle object with new item included",
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{bundleId}/items/{itemId}": {
+            "delete": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Remove item from bundle",
+                "description": "Removes an item from a bundle. Bundle must maintain at least 2 items - returns 400 if removal would leave fewer than 2 items.",
+                "operationId": "5f1e6eead6cb6e7e2e82d8a05438ca4b",
+                "parameters": [
+                    {
+                        "name": "bundleId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item removed from bundle successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Item removed from bundle successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bundle must have at least 2 items",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle must have at least 2 items"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle or item not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Update bundle item",
+                "description": "Updates the quantity or UOM of an existing item in a bundle. All fields are optional.",
+                "operationId": "e91b01377793a80482132ff2a5bc63ce",
+                "parameters": [
+                    {
+                        "name": "bundleId",
+                        "in": "path",
+                        "description": "Bundle ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "Bundle Item ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "uom_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 999999.9999,
+                                        "minimum": 0.0001,
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bundle item updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle item updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Complete updated bundle object",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle or item not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/toggle-active": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Toggle bundle active status",
+                "description": "Toggles the active/inactive status of a bundle. No request body required.",
+                "operationId": "db933bb7fcdfdaeaf4ef63663bcd2c5b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle status toggled (activated)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle activated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200 ": {
+                        "description": "Bundle status toggled (deactivated)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle deactivated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/toggle-online": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Toggle bundle online availability",
+                "description": "Toggles whether the bundle is available on the online marketplace. No request body required.",
+                "operationId": "becfc8363fae6791f2d470b4445fa170",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle made available online",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle available online"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200 ": {
+                        "description": "Bundle removed from online",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle removed from online"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/pricing": {
+            "patch": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Update bundle pricing",
+                "description": "Updates the bundle price and optional online price.",
+                "operationId": "b400cd4e9002b102173cf8ad2d8813ed",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bundle_price"
+                                ],
+                                "properties": {
+                                    "bundle_price": {
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 9999999999.99,
+                                        "minimum": 0,
+                                        "example": 4800
+                                    },
+                                    "online_price": {
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "maximum": 9999999999.99,
+                                        "minimum": 0,
+                                        "example": 4500,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bundle pricing updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle pricing updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/images": {
+            "post": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Add bundle images",
+                "description": "Uploads images for a bundle. Accepts 1-5 images. Max 2MB per image. Supported formats: jpeg, jpg, png, webp.",
+                "operationId": "804558acba2f3c839b3f09b82e91073e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images"
+                                ],
+                                "properties": {
+                                    "images": {
+                                        "description": "Array of image files (min: 1, max: 5)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        },
+                                        "maxItems": 5,
+                                        "minItems": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Images added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Images added successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    },
+                    "422": {
+                        "description": "Validation error - invalid file type or size"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Remove bundle image",
+                "description": "Removes a specific image from a bundle by providing the image path.",
+                "operationId": "9edb609950bc85a954e49d23cf607f8d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image_path"
+                                ],
+                                "properties": {
+                                    "image_path": {
+                                        "description": "Path of the image to remove",
+                                        "type": "string",
+                                        "example": "bundles/images/bundle_2_a54_1766480358_0.jpg"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Image removed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Image removed successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle or image not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/breakdown": {
+            "get": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Get bundle price breakdown",
+                "description": "Retrieves a detailed breakdown of bundle items with individual prices, total, bundle price, and savings calculation.",
+                "operationId": "54ab1c088eb814a5763a0825904a31a5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle breakdown retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bundle breakdown retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Samsung Galaxy A54 5G 128GB"
+                                                            },
+                                                            "sku": {
+                                                                "type": "string",
+                                                                "example": "ELEC-SAMS-VTFM"
+                                                            },
+                                                            "quantity": {
+                                                                "type": "string",
+                                                                "example": "1.0000"
+                                                            },
+                                                            "uom": {
+                                                                "type": "string",
+                                                                "example": "pcs"
+                                                            },
+                                                            "unit_price": {
+                                                                "type": "number",
+                                                                "example": 45999
+                                                            },
+                                                            "total_price": {
+                                                                "type": "number",
+                                                                "example": 45999
+                                                            },
+                                                            "formatted_unit_price": {
+                                                                "type": "string",
+                                                                "example": "KES 45,999.00"
+                                                            },
+                                                            "formatted_total_price": {
+                                                                "type": "string",
+                                                                "example": "KES 45,999.00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "individual_total": {
+                                                    "type": "number",
+                                                    "example": 45999
+                                                },
+                                                "bundle_price": {
+                                                    "type": "string",
+                                                    "example": "4800.00"
+                                                },
+                                                "savings": {
+                                                    "type": "number",
+                                                    "example": 41199
+                                                },
+                                                "savings_percentage": {
+                                                    "type": "number",
+                                                    "example": 89.56
+                                                },
+                                                "formatted_individual_total": {
+                                                    "type": "string",
+                                                    "example": "KES 45,999.00"
+                                                },
+                                                "formatted_bundle_price": {
+                                                    "type": "string",
+                                                    "example": "KES 4,800.00"
+                                                },
+                                                "formatted_savings": {
+                                                    "type": "string",
+                                                    "example": "KES 41,199.00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/bundles/{id}/savings": {
+            "get": {
+                "tags": [
+                    "Tenant Product Bundles"
+                ],
+                "summary": "Calculate bundle savings",
+                "description": "Calculates and returns the savings amount and percentage for a bundle compared to individual item prices.",
+                "operationId": "4e8e028050a723b48cea800fa1f928de",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Savings calculated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Savings calculated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "individual_total": {
+                                                    "type": "string",
+                                                    "example": "45999.00"
+                                                },
+                                                "bundle_price": {
+                                                    "type": "string",
+                                                    "example": "4800.00"
+                                                },
+                                                "savings": {
+                                                    "type": "string",
+                                                    "example": "41199.00"
+                                                },
+                                                "savings_percentage": {
+                                                    "type": "number",
+                                                    "example": 89.56
+                                                },
+                                                "formatted_savings": {
+                                                    "type": "string",
+                                                    "example": "KES 41,199.00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/categories": {
             "get": {
                 "tags": [
@@ -24446,6 +26785,10 @@
         {
             "name": "Tenant Product Brands",
             "description": "Tenant Product Brands"
+        },
+        {
+            "name": "Tenant Product Bundles",
+            "description": "Tenant Product Bundles"
         },
         {
             "name": "Tenant Product Categories",

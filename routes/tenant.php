@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
+use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
@@ -162,6 +163,35 @@ Route::prefix('v1/tenant')
             Route::delete('/{id}', [ProductVariantController::class, 'destroy']);
             Route::patch('/{id}/toggle-active', [ProductVariantController::class, 'toggleActive']);
             Route::patch('/{id}/inventory', [ProductVariantController::class, 'updateInventory']);
+        });
+
+        // Product Bundles
+        Route::prefix('bundles')->group(function () {
+            Route::get('/', [ProductBundleController::class, 'index']);
+            Route::post('/', [ProductBundleController::class, 'store']);
+            Route::get('/{id}', [ProductBundleController::class, 'show']);
+            Route::patch('/{id}', [ProductBundleController::class, 'update']);
+            Route::delete('/{id}', [ProductBundleController::class, 'destroy']);
+
+            // Items
+            Route::post('/{id}/items', [ProductBundleController::class, 'addItem']);
+            Route::patch('/{id}/items/{itemId}', [ProductBundleController::class, 'updateItem']);
+            Route::delete('/{id}/items/{itemId}', [ProductBundleController::class, 'removeItem']);
+
+            // Status toggles
+            Route::patch('/{id}/toggle-active', [ProductBundleController::class, 'toggleActive']);
+            Route::patch('/{id}/toggle-online', [ProductBundleController::class, 'toggleOnline']);
+
+            // Pricing
+            Route::patch('/{id}/pricing', [ProductBundleController::class, 'updatePricing']);
+
+            // Images
+            Route::post('/{id}/images', [ProductBundleController::class, 'addImages']);
+            Route::delete('/{id}/images', [ProductBundleController::class, 'removeImage']);
+
+            // Utilities
+            Route::get('/{id}/savings', [ProductBundleController::class, 'calculateSavings']);
+            Route::get('/{id}/breakdown', [ProductBundleController::class, 'getBreakdown']);
         });
 
 

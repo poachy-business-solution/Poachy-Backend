@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
  * Generates unique, consistent SKUs following the pattern:
  * Products: [CATEGORY][BRAND][UNIQUE] (e.g., ELEC-SAMS-8A4D)
  * Variants: [PRODUCT_SKU]-[VARIANT] (e.g., ELEC-SAMS-8A4D-V01)
+ * Bundles: BNDL-[CATEGORY]-[UNIQUE] (e.g., BNDL-FOOD-B7F3)
  */
 class SkuGeneratorService
 {
@@ -48,6 +49,29 @@ class SkuGeneratorService
 
         // Ensure uniqueness
         return $this->ensureUniqueVariantSku($sku);
+    }
+
+    /**
+     * Generate a unique SKU for a product bundle
+     * Pattern: BNDL-[CATEGORY]-[UNIQUE]
+     * Example: BNDL-FOOD-B7F3
+     */
+    public function generateBundleSku(?int $categoryId = null, ?string $bundleName = null): string
+    {
+        $prefix = 'BNDL';
+
+        // If category provided, use category code, otherwise use generic
+        $categoryCode = $categoryId
+            ? $this->getCategoryCode($categoryId)
+            : 'GENR';
+
+        // Generate unique code
+        $uniqueCode = $this->generateUniqueBundleCode();
+
+        $sku = sprintf('%s-%s-%s', $prefix, $categoryCode, $uniqueCode);
+
+        // Ensure uniqueness
+        return $this->ensureUniqueBundleSku($sku);
     }
 
     /**
@@ -107,6 +131,22 @@ class SkuGeneratorService
     }
 
     /**
+     * Generate unique code for bundles (4 characters with B prefix)
+     */
+    private function generateUniqueBundleCode(): string
+    {
+        $characters = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+        $code = 'B'; // Bundle identifier
+
+        for ($i = 0; $i < 3; $i++) {
+            $code .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        return $code;
+    }
+
+
+    /**
      * Format SKU with hyphens: CAT-BRD-CODE
      */
     private function formatSku(string $category, string $brand, string $unique): string
@@ -138,6 +178,30 @@ class SkuGeneratorService
     }
 
     /**
+     * Ensure bundle SKU is unique
+     */
+    private function ensureUniqueBundleSku(string $sku, int $attempts = 0): string
+    {
+        if ($attempts > 10) {
+            throw new \RuntimeException('Unable to generate unique bundle SKU after 10 attempts');
+        }
+
+        $exists = \App\Models\Tenant\ProductBundle::where('bundle_sku', $sku)->exists();
+
+        if (!$exists) {
+            return $sku;
+        }
+
+        // Regenerate unique part
+        $parts = explode('-', $sku);
+        $parts[2] = $this->generateUniqueBundleCode();
+        $newSku = implode('-', $parts);
+
+        return $this->ensureUniqueBundleSku($newSku, $attempts + 1);
+    }
+
+
+    /**
      * Validate SKU format
      */
     public function isValidFormat(string $sku): bool
@@ -150,6 +214,12 @@ class SkuGeneratorService
     {
         // Pattern: PROD-PROD-PROD-VARIANT (product SKU + variant code)
         return preg_match('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9V]{3,5}$/', $sku) === 1;
+    }
+
+    public function isValidBundleFormat(string $sku): bool
+    {
+        // Pattern: BNDL-XXXX-BXXX
+        return preg_match('/^BNDL-[A-Z0-9]{4}-B[A-Z0-9]{3}$/', $sku) === 1;
     }
 
     /**
@@ -184,6 +254,21 @@ class SkuGeneratorService
             'unique_code' => $parts[2],
             'variant_code' => $parts[3],
             'product_sku' => sprintf('%s-%s-%s', $parts[0], $parts[1], $parts[2]),
+        ];
+    }
+
+    public function parseBundleSku(string $sku): array
+    {
+        if (!$this->isValidBundleFormat($sku)) {
+            throw new \InvalidArgumentException('Invalid bundle SKU format');
+        }
+
+        $parts = explode('-', $sku);
+
+        return [
+            'prefix' => $parts[0], // BNDL
+            'category_code' => $parts[1],
+            'unique_code' => $parts[2],
         ];
     }
 
