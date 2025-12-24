@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
+use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
+use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
@@ -206,6 +208,24 @@ Route::prefix('v1/tenant')
             Route::delete('{store?}/products/{product}', [StoreProductController::class, 'destroy']);
         });
 
+        // Inventory Management Routes
+        Route::prefix('inventory')->group(function () {
+            Route::get('/', [InventoryController::class, 'index']);
+            Route::post('/check-availability', [InventoryController::class, 'checkAvailability']);
+            Route::get('/low-stock/list', [InventoryController::class, 'getLowStock']);
+            Route::get('/out-of-stock/list', [InventoryController::class, 'getOutOfStock']);
+            Route::get('/value/calculate', [InventoryController::class, 'getInventoryValue']);
+            Route::get('/summary', [InventoryController::class, 'getSummary']);
+            Route::get('/{id}', [InventoryController::class, 'show']);
+            Route::get('/product/{productId}', [InventoryController::class, 'getProductInventory']);
+        });
+
+        Route::prefix('inventory-movements')->group(function () {
+            Route::get('/', [InventoryMovementController::class, 'index']);
+            Route::get('/{id}', [InventoryMovementController::class, 'show']);
+            Route::post('/adjustment', [InventoryMovementController::class, 'createAdjustment']);
+            Route::post('/damage', [InventoryMovementController::class, 'createDamage']);
+        });
 
         // User Management (Owner/Manager only)
         Route::middleware(['role:owner|manager,tenant'])->group(function () {

@@ -123,6 +123,19 @@ class Product extends Model
         return $this->variants()->where('is_active', true);
     }
 
+    public function inventories(): HasMany
+    {
+        return $this->hasMany(Inventory::class);
+    }
+
+    public function inventoryForStore(int $storeId): ?Inventory
+    {
+        return $this->inventories()
+            ->where('store_id', $storeId)
+            ->whereNull('product_variant_id')
+            ->first();
+    }
+
     // Scopes
 
     public function scopeActive($query)
@@ -253,5 +266,27 @@ class Product extends Model
     public function isVariable(): bool
     {
         return $this->product_type === ProductType::VARIABLE;
+    }
+
+    public function totalAvailableQuantity(): float
+    {
+        return $this->inventories()
+            ->whereNull('product_variant_id')
+            ->sum('quantity_available');
+    }
+
+    public function isAvailableInStore(int $storeId, float $quantity = 1): bool
+    {
+        $inventory = $this->inventoryForStore($storeId);
+        return $inventory && $inventory->hasStock($quantity);
+    }
+
+    public function storesInStock()
+    {
+        return $this->inventories()
+            ->with('store')
+            ->where('quantity_available', '>', 0)
+            ->get()
+            ->pluck('store');
     }
 }

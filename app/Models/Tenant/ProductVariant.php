@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy([ProductVariantObserver::class])]
@@ -62,6 +63,11 @@ class ProductVariant extends Model
     public function uom(): BelongsTo
     {
         return $this->belongsTo(UnitOfMeasure::class, 'uom_id');
+    }
+
+    public function inventories(): HasMany
+    {
+        return $this->hasMany(Inventory::class, 'product_variant_id');
     }
 
     // Scopes
@@ -232,5 +238,23 @@ class ProductVariant extends Model
         }
 
         return $baseQuantity / $this->quantity_in_base_uom;
+    }
+
+    public function inventoryForStore(int $storeId): ?Inventory
+    {
+        return $this->inventories()
+            ->where('store_id', $storeId)
+            ->first();
+    }
+
+    public function totalAvailableQuantity(): float
+    {
+        return $this->inventories()->sum('quantity_available');
+    }
+
+    public function isAvailableInStore(int $storeId, float $quantity = 1): bool
+    {
+        $inventory = $this->inventoryForStore($storeId);
+        return $inventory && $inventory->hasStock($quantity);
     }
 }

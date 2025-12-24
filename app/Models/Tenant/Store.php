@@ -6,8 +6,10 @@ use App\Observers\Tenant\StoreObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 #[ObservedBy([StoreObserver::class])]
 class Store extends Model
@@ -55,6 +57,12 @@ class Store extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function inventories(): HasMany
+    {
+        return $this->hasMany(Inventory::class);
+    }
+
 
     // ============================================
     // SCOPES
@@ -149,6 +157,55 @@ class Store extends Model
         }
 
         return $this->save();
+    }
+
+    public function lowStockProducts()
+    {
+        return $this->inventories()
+            ->with('product')
+            ->lowStock()
+            ->get()
+            ->map(function ($inventory) {
+                return [
+                    'inventory' => $inventory,
+                    'product' => $inventory->product,
+                    'quantity_available' => $inventory->quantity_available,
+                    'reorder_level' => $inventory->getEffectiveReorderLevel(),
+                ];
+            });
+    }
+
+    public function outOfStockProducts()
+    {
+        return $this->inventories()
+            ->with('product')
+            ->outOfStock()
+            ->get()
+            ->pluck('product');
+    }
+
+    public function totalInventoryValue(): float
+    {
+        // Simple calculation using base_selling_price
+        // For accurate COGS, implement with ProductBatch in Phase 7
+        return $this->inventories()
+            ->join('products', 'inventory.product_id', '=', 'products.id')
+            ->sum(DB::raw('inventory.quantity_on_hand * products.base_selling_price'));
+    }
+
+    public function getInventorySummary(): array
+    {
+        $inventories = $this->inventories()->with('product')->get();
+
+        return [
+            'total_products' => $inventories->count(),
+            'in_stock_count' => $inventories->where('quantity_available', '>', 0)->count(),
+            'low_stock_count' => $inventories->filter(fn($inv) => $inv->is_low_stock)->count(),
+            'out_of_stock_count' => $inventories->where('quantity_available', '<=', 0)->count(),
+            'total_quantity' => $inventories->sum('quantity_on_hand'),
+            'total_reserved' => $inventories->sum('quantity_reserved'),
+            'total_available' => $inventories->sum('quantity_available'),
+        ];
     }
 
     // ============================================
