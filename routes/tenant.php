@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
+use App\Http\Controllers\Api\Tenant\Store\StoreProductController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
@@ -192,6 +193,17 @@ Route::prefix('v1/tenant')
             // Utilities
             Route::get('/{id}/savings', [ProductBundleController::class, 'calculateSavings']);
             Route::get('/{id}/breakdown', [ProductBundleController::class, 'getBreakdown']);
+        });
+
+        // Store Products Routes
+        Route::prefix('stores')->group(function () {
+            Route::get('{store?}/products', [StoreProductController::class, 'index']);
+            Route::post('{store?}/products', [StoreProductController::class, 'store']);
+            Route::get('{store?}/products/stats', [StoreProductController::class, 'stats']);
+            Route::get('{store?}/products/{product}', [StoreProductController::class, 'show']);
+            Route::patch('{store?}/products/{product}', [StoreProductController::class, 'update']);
+            Route::patch('{store?}/products/{product}/availability', [StoreProductController::class, 'toggleAvailability']);
+            Route::delete('{store?}/products/{product}', [StoreProductController::class, 'destroy']);
         });
 
 

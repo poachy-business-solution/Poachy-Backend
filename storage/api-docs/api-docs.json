@@ -20222,6 +20222,1586 @@
                 ]
             }
         },
+        "/api/v1/tenant/stores/{store}/products": {
+            "get": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "List all products assigned to a store",
+                "description": "Retrieves a paginated list of all products assigned to a specific store with filtering, searching, and sorting. Returns both base products and variants as separate entries. Includes pricing, inventory, and variant information.",
+                "operationId": "listStoreProducts",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store - auto-detected)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "is_available",
+                        "in": "query",
+                        "description": "Filter by availability status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "has_price_override",
+                        "in": "query",
+                        "description": "Filter products with store-specific price overrides",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by product name or SKU (case-insensitive)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Samsung"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by product category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "description": "Filter by product brand ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field: product.name, product.sku, is_available, created_at, updated_at",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "product.name",
+                            "enum": [
+                                "product.name",
+                                "product.sku",
+                                "is_available",
+                                "created_at",
+                                "updated_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort direction",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "asc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Current page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Store products retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store products retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "store": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Branch Store - Mombasa"
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "STR-2025-74622"
+                                                                    },
+                                                                    "is_main_store": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "product": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 4
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "TCL 55 4K UHD Smart LED TV"
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string",
+                                                                        "example": "tcl-55-4k-uhd-smart-led-tv"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "ELEC-DELL-56QT"
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string",
+                                                                        "example": "Experience stunning 4K UHD picture quality..."
+                                                                    },
+                                                                    "product_type": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "simple",
+                                                                            "variable"
+                                                                        ],
+                                                                        "example": "variable"
+                                                                    },
+                                                                    "primary_image": {
+                                                                        "type": "string",
+                                                                        "example": "products/images/primary_a54.jpg"
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_available_online": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "category": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "integer",
+                                                                                "example": 1
+                                                                            },
+                                                                            "name": {
+                                                                                "type": "string",
+                                                                                "example": "Electronics"
+                                                                            },
+                                                                            "slug": {
+                                                                                "type": "string",
+                                                                                "example": "electronics"
+                                                                            }
+                                                                        },
+                                                                        "type": "object",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "brand": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "integer",
+                                                                                "example": 7
+                                                                            },
+                                                                            "name": {
+                                                                                "type": "string",
+                                                                                "example": "Dell"
+                                                                            },
+                                                                            "slug": {
+                                                                                "type": "string",
+                                                                                "example": "dell"
+                                                                            },
+                                                                            "logo_url": {
+                                                                                "type": "string",
+                                                                                "example": null,
+                                                                                "nullable": true
+                                                                            }
+                                                                        },
+                                                                        "type": "object",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "base_uom": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "integer",
+                                                                                "example": 2
+                                                                            },
+                                                                            "code": {
+                                                                                "type": "string",
+                                                                                "example": "pair"
+                                                                            },
+                                                                            "name": {
+                                                                                "type": "string",
+                                                                                "example": "Pair"
+                                                                            },
+                                                                            "type": {
+                                                                                "type": "string",
+                                                                                "example": "count"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "variant": {
+                                                                "description": "Only present if this is a variant assignment",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "variant_name": {
+                                                                        "type": "string",
+                                                                        "example": "55C725-GAL"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "ELEC-DELL-56QT-V14Q"
+                                                                    },
+                                                                    "attributes": {
+                                                                        "type": "object",
+                                                                        "example": {
+                                                                            "HDR": "10+",
+                                                                            "Panel Tech": "QLED",
+                                                                            "Refresh Rate": "144 Hz"
+                                                                        }
+                                                                    },
+                                                                    "uom_quantity": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 1
+                                                                    },
+                                                                    "quantity_in_base_uom": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 1
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "TCL 55 4K UHD Smart LED TV"
+                                                            },
+                                                            "is_base_product": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_variant": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "pricing": {
+                                                                "properties": {
+                                                                    "base_selling_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 135999
+                                                                    },
+                                                                    "store_selling_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 82000,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "effective_selling_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 82000
+                                                                    },
+                                                                    "is_price_overridden": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "currency": {
+                                                                        "type": "string",
+                                                                        "example": "KES"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "stock": {
+                                                                "properties": {
+                                                                    "product_reorder_level": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 10
+                                                                    },
+                                                                    "store_min_stock_level": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "effective_min_stock_level": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "is_stock_level_overridden": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "quantity_available": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 0
+                                                                    },
+                                                                    "stock_status": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "in_stock",
+                                                                            "low_stock",
+                                                                            "out_of_stock"
+                                                                        ],
+                                                                        "example": "out_of_stock"
+                                                                    },
+                                                                    "is_low_stock": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_out_of_stock": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "last_restock_date": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "is_available": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "has_variants": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-24T09:21:37.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-24T09:21:37.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "from": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "to": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-24T09:22:58.199012Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "9011998d-7cdf-4796-8b71-1acec43fd946"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Multiple stores or invalid store",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Multiple stores exist. Please specify store_id..."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve store products"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "Assign products to a store",
+                "description": "Assigns one or more products to a specific store with optional configuration. Supports automatic assignment of product variants and bundles. When auto_assign_variants is true, all active variants are automatically assigned.",
+                "operationId": "assignProductsToStore",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store - auto-detected)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Product assignment configuration",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_ids"
+                                ],
+                                "properties": {
+                                    "product_ids": {
+                                        "description": "Array of product IDs to assign (minimum 1)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            4
+                                        ]
+                                    },
+                                    "auto_assign_variants": {
+                                        "description": "Automatically assign all active variants of variable products",
+                                        "type": "boolean",
+                                        "default": true,
+                                        "example": true
+                                    },
+                                    "auto_assign_bundles": {
+                                        "description": "Automatically assign bundles containing these products",
+                                        "type": "boolean",
+                                        "default": false,
+                                        "example": false
+                                    },
+                                    "store_selling_price": {
+                                        "description": "Store-specific price override. If null, uses product's base selling price",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 82000,
+                                        "nullable": true
+                                    },
+                                    "min_stock_level": {
+                                        "description": "Store-specific minimum stock threshold. If 0, uses product's reorder level",
+                                        "type": "integer",
+                                        "default": 0,
+                                        "example": 5
+                                    },
+                                    "is_available": {
+                                        "description": "Initial availability status",
+                                        "type": "boolean",
+                                        "default": true,
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Products assigned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Products assigned to store successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "results": {
+                                                    "properties": {
+                                                        "assigned": {
+                                                            "description": "Product IDs newly assigned",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "integer"
+                                                            },
+                                                            "example": [
+                                                                1,
+                                                                2,
+                                                                4
+                                                            ]
+                                                        },
+                                                        "updated": {
+                                                            "description": "Product IDs that were already assigned and got updated",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "integer"
+                                                            },
+                                                            "example": []
+                                                        },
+                                                        "skipped": {
+                                                            "description": "Products that failed assignment with reasons",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "product_id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "reason": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "example": []
+                                                        },
+                                                        "variants_assigned": {
+                                                            "description": "Variants auto-assigned",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "variant_id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "variant_name": {
+                                                                        "type": "string",
+                                                                        "example": "55C725-GAL"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "ELEC-DELL-56QT-V14Q"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "bundles_assigned": {
+                                                            "description": "Bundles auto-assigned",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            },
+                                                            "example": []
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "summary": {
+                                                    "properties": {
+                                                        "assigned_count": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "updated_count": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        },
+                                                        "skipped_count": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        },
+                                                        "variants_assigned_count": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "bundles_assigned_count": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-24T07:44:07.667810Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "3a792d5d-90f0-41c4-9321-c2a032d7bbf1"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Multiple stores or invalid store",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Multiple stores exist. Please specify store_id..."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "product_ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "At least one product must be selected."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to assign products"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{store}/products/{product}": {
+            "get": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "Get a specific store product",
+                "description": "Retrieves detailed information about a specific product assigned to a store. Returns comprehensive product details, variant information (if applicable), pricing hierarchy, and inventory status. The product parameter is the store_products.id, not products.id.",
+                "operationId": "getStoreProduct",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Store product assignment ID (from store_products table, not products.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Store product retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store product retrieved successfully"
+                                        },
+                                        "data": {
+                                            "description": "Same structure as items in the list endpoint",
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Store product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store product not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid store",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store not found or inactive."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "Remove product from store",
+                "description": "Removes a product assignment from a store. This does not delete the product itself, only the assignment to this specific store. The product remains available in other stores and can be reassigned later.",
+                "operationId": "removeProductFromStore",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Store product assignment ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product removed from store successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product removed from store successfully"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-24T10:19:26.402549Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "71a9d79c-35a0-4630-afee-9f32e7bff13e"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Store product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store product not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid store",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store not found or inactive."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "Update store product configuration",
+                "description": "Updates store-specific settings for an assigned product. All fields are optional - only include what you want to change. Set store_selling_price to null to remove price override. Set min_stock_level to 0 to remove stock level override.",
+                "operationId": "updateStoreProduct",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Store product assignment ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Fields to update (all optional)",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "store_selling_price": {
+                                        "description": "Store-specific price. Set to null to use base price",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100000,
+                                        "nullable": true
+                                    },
+                                    "min_stock_level": {
+                                        "description": "Store-specific minimum stock. Set to 0 to use product reorder level",
+                                        "type": "integer",
+                                        "example": 10,
+                                        "nullable": true
+                                    },
+                                    "is_available": {
+                                        "description": "Availability in this store",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Store product updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store product updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Updated store product object (same structure as GET response)",
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-24T09:36:48.265778Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Store product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store product not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "store_selling_price": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Store selling price cannot be negative."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{store}/products/{product}/availability": {
+            "patch": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "Toggle product availability",
+                "description": "Updates the availability status of a product in a store. This is a convenience endpoint for quickly enabling/disabling products.",
+                "operationId": "toggleProductAvailability",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Store product assignment ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_available"
+                                ],
+                                "properties": {
+                                    "is_available": {
+                                        "description": "Availability status",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Availability toggled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product is now available"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-24T10:03:24.972829Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "47e20499-7ba6-41a9-b41b-c2434ddf4ee7"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Store product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store product not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "is_available": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The is available field must be true or false."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/stores/{store}/products/stats": {
+            "get": {
+                "tags": [
+                    "Tenant - Store Products"
+                ],
+                "summary": "Get store products statistics",
+                "description": "Retrieves statistical summary of products in a store including counts of total products, available/unavailable products, products with price overrides, and stock status counts.",
+                "operationId": "getStoreProductsStatistics",
+                "parameters": [
+                    {
+                        "name": "store",
+                        "in": "path",
+                        "description": "Store ID (optional if tenant has only one active store)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store products statistics retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_products": {
+                                                    "description": "Total number of products assigned to store",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "available_products": {
+                                                    "description": "Number of products marked as available",
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "unavailable_products": {
+                                                    "description": "Number of products marked as unavailable",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "price_overrides": {
+                                                    "description": "Number of products with store-specific pricing",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "low_stock_products": {
+                                                    "description": "Number of products below minimum stock level",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "out_of_stock_products": {
+                                                    "description": "Number of products with zero stock",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-24T10:21:58.396958Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "0a9cf7c0-25c8-46fe-96de-1652632a33e6"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid store",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Store not found or inactive."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve statistics"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/suppliers": {
             "get": {
                 "tags": [
@@ -26809,6 +28389,10 @@
         {
             "name": "Tenant Store Management",
             "description": "Tenant Store Management"
+        },
+        {
+            "name": "Tenant - Store Products",
+            "description": "Tenant - Store Products"
         },
         {
             "name": "Tenant Suppliers",
