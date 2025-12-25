@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
+use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
+use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
+use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
@@ -226,6 +229,38 @@ Route::prefix('v1/tenant')
             Route::post('/adjustment', [InventoryMovementController::class, 'createAdjustment']);
             Route::post('/damage', [InventoryMovementController::class, 'createDamage']);
         });
+
+        // Stock Transfers Routes
+        Route::prefix('transfers')->group(function () {
+            Route::get('/', [StockTransferController::class, 'index']);
+            Route::get('/pending/approvals', [StockTransferController::class, 'pendingApprovals']);
+            Route::get('/{id}', [StockTransferController::class, 'show']);
+            Route::post('/', [StockTransferController::class, 'store']);
+            Route::post('/{id}/approve', [StockTransferController::class, 'approve']);
+            Route::post('/{id}/send', [StockTransferController::class, 'send']);
+            Route::post('/{id}/receive', [StockTransferController::class, 'receive']);
+            Route::post('/{id}/cancel', [StockTransferController::class, 'cancel']);
+        });
+
+        Route::prefix('purchase-orders')->group(function () {
+            Route::get('/', [PurchaseOrderController::class, 'index']);
+            Route::get('/{id}', [PurchaseOrderController::class, 'show']);
+            Route::post('/', [PurchaseOrderController::class, 'store']);
+            Route::patch('/{id}', [PurchaseOrderController::class, 'update']);
+            Route::post('/{id}/send', [PurchaseOrderController::class, 'send']);
+            Route::post('/{id}/cancel', [PurchaseOrderController::class, 'cancel']);
+        });
+
+        // Product Batches Routes
+        Route::prefix('batches')->group(function () {
+            Route::get('/', [ProductBatchController::class, 'index']);
+            Route::post('/receive', [ProductBatchController::class, 'store']);
+            Route::get('/valuation/calculate', [ProductBatchController::class, 'valuation']);
+            Route::get('/cogs/calculate', [ProductBatchController::class, 'calculateCogs']);
+            Route::post('/expired/mark', [ProductBatchController::class, 'markExpired']);
+            Route::get('/{id}', [ProductBatchController::class, 'show']);
+        });
+
 
         // User Management (Owner/Manager only)
         Route::middleware(['role:owner|manager,tenant'])->group(function () {

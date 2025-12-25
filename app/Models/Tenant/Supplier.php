@@ -63,6 +63,17 @@ class Supplier extends Model
         return $this->hasMany(Product::class, 'supplier_id');
     }
 
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function productBatches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
+
     // Helper & Attribute Methods
 
     public function activeProducts(): HasMany
@@ -98,6 +109,13 @@ class Supplier extends Model
     public function getPaymentTermsDaysAttribute(): int
     {
         return $this->payment_terms?->days() ?? 0;
+    }
+
+    public function getTotalOutstandingAttribute(): float
+    {
+        return $this->purchaseOrders()
+            ->whereIn('payment_status', ['unpaid', 'partially_paid'])
+            ->sum('amount_due');
     }
 
     // Scopes

@@ -63,6 +63,32 @@ class Store extends Model
         return $this->hasMany(Inventory::class);
     }
 
+    public function outboundTransfers(): HasMany
+    {
+        return $this->hasMany(StockTransfer::class, 'from_store_id');
+    }
+
+    public function inboundTransfers(): HasMany
+    {
+        return $this->hasMany(StockTransfer::class, 'to_store_id');
+    }
+
+    public function allTransfers()
+    {
+        return StockTransfer::where('from_store_id', $this->id)
+            ->orWhere('to_store_id', $this->id);
+    }
+
+    public function productBatches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
 
     // ============================================
     // SCOPES
@@ -207,6 +233,19 @@ class Store extends Model
             'total_available' => $inventories->sum('quantity_available'),
         ];
     }
+
+    public function pendingOutboundTransfers(): HasMany
+    {
+        return $this->outboundTransfers()
+            ->where('status', 'pending');
+    }
+
+    public function pendingInboundTransfers(): HasMany
+    {
+        return $this->inboundTransfers()
+            ->where('status', 'in_transit');
+    }
+
 
     // ============================================
     // ACCESSORS & MUTATORS

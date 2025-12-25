@@ -52,6 +52,37 @@ class User extends Authenticatable
         return $this->hasMany(Store::class, 'updated_by');
     }
 
+    public function requestedTransfers()
+    {
+        return $this->hasMany(StockTransfer::class, 'requested_by');
+    }
+
+    public function approvedTransfers()
+    {
+        return $this->hasMany(StockTransfer::class, 'approved_by');
+    }
+
+    public function sentTransfers()
+    {
+        return $this->hasMany(StockTransfer::class, 'sent_by');
+    }
+
+    public function receivedTransfers()
+    {
+        return $this->hasMany(StockTransfer::class, 'received_by');
+    }
+
+    public function createdPurchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class, 'created_by');
+    }
+
+    public function approvedPurchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class, 'approved_by');
+    }
+
+
     // Helper methods
 
     public function isOwner(): bool

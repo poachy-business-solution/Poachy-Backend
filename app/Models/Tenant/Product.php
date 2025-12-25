@@ -136,6 +136,30 @@ class Product extends Model
             ->first();
     }
 
+    public function batches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
+    public function availableBatches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class)
+            ->where('quantity_remaining_in_base_uom', '>', 0)
+            ->where('is_expired', false)
+            ->orderBy('purchase_order_id', 'asc')
+            ->orderBy('expiry_date', 'asc');
+    }
+
+    public function purchaseOrderItems(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function transferItems(): HasMany
+    {
+        return $this->hasMany(StockTransferItem::class);
+    }
+
     // Scopes
 
     public function scopeActive($query)

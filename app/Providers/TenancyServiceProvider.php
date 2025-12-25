@@ -146,10 +146,10 @@ class TenancyServiceProvider extends ServiceProvider
             // Clear any cached permissions for this tenant
             $permissionRegistrar->forgetCachedPermissions();
 
-            Log::debug('Tenant permissions cache initialized', [
-                'tenant_id' => $event->tenancy->tenant->getTenantKey(),
-                'cache_key' => $permissionRegistrar->cacheKey,
-            ]);
+            // Log::debug('Tenant permissions cache initialized', [
+            //     'tenant_id' => $event->tenancy->tenant->getTenantKey(),
+            //     'cache_key' => $permissionRegistrar->cacheKey,
+            // ]);
         });
 
         // When tenant context ends, reset to default cache key
@@ -162,7 +162,7 @@ class TenancyServiceProvider extends ServiceProvider
             // Clear cached permissions
             $permissionRegistrar->forgetCachedPermissions();
 
-            Log::debug('Tenant permissions cache reset to default');
+            // Log::debug('Tenant permissions cache reset to default');
         });
 
         // ========================================

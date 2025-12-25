@@ -70,6 +70,20 @@ class ProductVariant extends Model
         return $this->hasMany(Inventory::class, 'product_variant_id');
     }
 
+    public function batches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class, 'product_variant_id');
+    }
+
+    public function availableBatches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class, 'product_variant_id')
+            ->where('quantity_remaining_in_base_uom', '>', 0)
+            ->where('is_expired', false)
+            ->orderBy('purchase_order_id', 'asc')
+            ->orderBy('expiry_date', 'asc');
+    }
+
     // Scopes
 
     public function scopeActive($query)
