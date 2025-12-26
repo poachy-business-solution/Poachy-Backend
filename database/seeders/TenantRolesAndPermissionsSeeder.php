@@ -60,10 +60,14 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             // Suppliers
             'manage-suppliers',
             'view-suppliers',
+
+            // Offers
+            'manage-coupons',
+            'view-coupons',
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create([
+            Permission::updateOrCreate([
                 'name' => $permission,
                 'guard_name' => 'tenant',
             ]);
@@ -74,7 +78,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
         // Create Roles and Assign Permissions
 
         // 1. OWNER ROLE (Full access)
-        $owner = Role::create([
+        $owner = Role::updateOrCreate([
             'name' => 'owner',
             'guard_name' => 'tenant',
         ]);
@@ -84,7 +88,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
         $this->command->info('✓ Created role: Owner (Full access)');
 
         // 2. MANAGER ROLE
-        $manager = Role::create([
+        $manager = Role::updateOrCreate([
             'name' => 'manager',
             'guard_name' => 'tenant',
         ]);
@@ -110,12 +114,14 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-financial-reports',
             'manage-suppliers',
             'view-suppliers',
+            'manage-coupons',
+            'view-coupons',
         ]);
 
         $this->command->info('✓ Created role: Manager (Store management)');
 
         // 3. CASHIER ROLE
-        $cashier = Role::create([
+        $cashier = Role::updateOrCreate([
             'name' => 'cashier',
             'guard_name' => 'tenant',
         ]);
@@ -128,6 +134,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-customers',
             'manage-customers',
             'apply-discounts',
+            'view-coupons',
         ]);
 
         $this->command->info('✓ Created role: Cashier (POS operations)');

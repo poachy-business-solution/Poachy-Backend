@@ -6,6 +6,7 @@ use App\Observers\Tenant\ProductBrandObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -64,6 +65,12 @@ class ProductBrand extends Model
         return $this->hasMany(Product::class, 'brand_id');
     }
 
+    public function coupons(): BelongsToMany
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_brands', 'brand_id', 'coupon_id')
+            ->withTimestamps();
+    }
+
     // Helper methods
 
     public function activeProducts(): HasMany
@@ -74,6 +81,24 @@ class ProductBrand extends Model
     public function hasProducts(): bool
     {
         return $this->products()->exists();
+    }
+
+    public function hasActiveCoupons(): bool
+    {
+        return $this->coupons()
+            ->where('is_active', true)
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->exists();
+    }
+
+    public function getActiveCoupons()
+    {
+        return $this->coupons()
+            ->where('is_active', true)
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->get();
     }
 
     // Scopes

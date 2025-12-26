@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
+use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
@@ -289,6 +290,35 @@ Route::prefix('v1/tenant')
             Route::delete('/{customer_group}/members/{customer}', [CustomerGroupController::class, 'removeMember']);
             Route::post('/{customer_group}/members/bulk', [CustomerGroupController::class, 'bulkAddMembers']);
         });
+
+        // Coupon Management
+        Route::prefix('coupons')->group(function () {
+            Route::get('available-coupons', [CouponController::class, 'availableCoupons']);
+            Route::get('/', [CouponController::class, 'index']);
+            Route::post('/', [CouponController::class, 'store']);
+            Route::get('/{id}', [CouponController::class, 'show']);
+            Route::patch('/{id}', [CouponController::class, 'update']);
+            Route::delete('/{id}', [CouponController::class, 'destroy']);
+
+            // Activation/Deactivation
+            Route::patch('/{id}/activate', [CouponController::class, 'activate']);
+            Route::patch('/{id}/deactivate', [CouponController::class, 'deactivate']);
+
+            // Applicability Management - Products
+            Route::post('/{id}/products', [CouponController::class, 'attachProducts']);
+            Route::post('/{id}/products/bulk', [CouponController::class, 'bulkAttachProducts']);
+            Route::delete('/{id}/products/bulk', [CouponController::class, 'bulkDetachProducts']);
+            Route::delete('/{id}/products/{productId}', [CouponController::class, 'detachProduct']);
+
+            // Applicability Management - Categories
+            Route::post('/{id}/categories', [CouponController::class, 'attachCategories']);
+            Route::delete('/{id}/categories/{categoryId}', [CouponController::class, 'detachCategory']);
+
+            // Applicability Management - Brands
+            Route::post('/{id}/brands', [CouponController::class, 'attachBrands']);
+            Route::delete('/{id}/brands/{brandId}', [CouponController::class, 'detachBrand']);
+        });
+
 
 
         // User Management (Owner/Manager only)

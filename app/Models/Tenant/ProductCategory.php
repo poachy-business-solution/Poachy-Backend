@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -79,6 +80,12 @@ class ProductCategory extends Model
         return $this->hasMany(Product::class, 'category_id');
     }
 
+    public function coupons(): BelongsToMany
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_categories', 'category_id', 'coupon_id')
+            ->withTimestamps();
+    }
+
     // Helper methods
 
     public function activeProducts(): HasMany
@@ -99,6 +106,24 @@ class ProductCategory extends Model
     public function hasChildren(): bool
     {
         return $this->children()->exists();
+    }
+
+    public function hasActiveCoupons(): bool
+    {
+        return $this->coupons()
+            ->where('is_active', true)
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->exists();
+    }
+
+    public function getActiveCoupons()
+    {
+        return $this->coupons()
+            ->where('is_active', true)
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->get();
     }
 
     // Scopes
