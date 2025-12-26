@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
+use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
+use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
@@ -259,6 +261,33 @@ Route::prefix('v1/tenant')
             Route::get('/cogs/calculate', [ProductBatchController::class, 'calculateCogs']);
             Route::post('/expired/mark', [ProductBatchController::class, 'markExpired']);
             Route::get('/{id}', [ProductBatchController::class, 'show']);
+        });
+
+        // Customer Management Routes
+        Route::prefix('customers')->group(function () {
+            Route::get('/search', [CustomerController::class, 'search']);
+            Route::get('/', [CustomerController::class, 'index']);
+            Route::post('/', [CustomerController::class, 'store']);
+            Route::get('/{customer}', [CustomerController::class, 'show']);
+            Route::patch('/{customer}', [CustomerController::class, 'update']);
+            Route::delete('/{customer}', [CustomerController::class, 'destroy']);
+            Route::post('/{customer}/restore', [CustomerController::class, 'restore']);
+            Route::patch('/{customer}/upgrade-type', [CustomerController::class, 'upgradeType']);
+            Route::patch('/{customer}/toggle-status', [CustomerController::class, 'toggleStatus']);
+        });
+
+        // Customer Group Routes
+        Route::prefix('customer-groups')->group(function () {
+            Route::get('/', [CustomerGroupController::class, 'index']);
+            Route::post('/', [CustomerGroupController::class, 'store']);
+            Route::get('/{customer_group}', [CustomerGroupController::class, 'show']);
+            Route::patch('/{customer_group}', [CustomerGroupController::class, 'update']);
+            Route::delete('/{customer_group}', [CustomerGroupController::class, 'destroy']);
+            Route::patch('/{customer_group}/toggle', [CustomerGroupController::class, 'toggleStatus']);
+            Route::get('/{customer_group}/members', [CustomerGroupController::class, 'members']);
+            Route::post('/{customer_group}/members', [CustomerGroupController::class, 'addMember']);
+            Route::delete('/{customer_group}/members/{customer}', [CustomerGroupController::class, 'removeMember']);
+            Route::post('/{customer_group}/members/bulk', [CustomerGroupController::class, 'bulkAddMembers']);
         });
 
 
