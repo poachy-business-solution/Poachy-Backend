@@ -11388,6 +11388,1953 @@
                 ]
             }
         },
+        "/api/v1/tenant/expense-categories": {
+            "get": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "List all expense categories",
+                "description": "Retrieve a flat list of all expense categories with optional filtering for active categories only. Returns hierarchical metadata (level, full_path, parent) but in a flat list structure.",
+                "operationId": "listExpenseCategories",
+                "parameters": [
+                    {
+                        "name": "active_only",
+                        "in": "query",
+                        "description": "Filter for active categories only",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Expense categories retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expense categories retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Rent"
+                                                            },
+                                                            "code": {
+                                                                "description": "Auto-generated from name if not provided",
+                                                                "type": "string",
+                                                                "example": "RENT"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Monthly store or office rent payments",
+                                                                "nullable": true
+                                                            },
+                                                            "parent_id": {
+                                                                "description": "Parent category ID for hierarchical structure",
+                                                                "type": "integer",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "is_recurring_eligible": {
+                                                                "description": "Can be used for recurring expenses",
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "requires_receipt": {
+                                                                "description": "Receipt attachment required for expenses in this category",
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "requires_approval": {
+                                                                "description": "Expenses require manager approval",
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "display_order": {
+                                                                "description": "Sort order for display",
+                                                                "type": "integer",
+                                                                "example": 10
+                                                            },
+                                                            "full_path": {
+                                                                "description": "Full hierarchical path (e.g., 'Utilities > Electricity')",
+                                                                "type": "string",
+                                                                "example": "Rent"
+                                                            },
+                                                            "level": {
+                                                                "description": "Depth in hierarchy (0 = root)",
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "has_children": {
+                                                                "description": "Has subcategories",
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "has_expenses": {
+                                                                "description": "Has expenses recorded",
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_deletable": {
+                                                                "description": "Can be deleted (false if has children or expenses)",
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "parent": {
+                                                                "description": "Parent category object (null for root categories)",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Utilities"
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "UTILITIES"
+                                                                    },
+                                                                    "full_path": {
+                                                                        "type": "string",
+                                                                        "example": "Utilities"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-29T07:19:11.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-29T07:19:11.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T07:27:41.761944Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "9eca143e-bb22-43f8-95a9-02c31f80b247"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Create expense category",
+                "description": "Create a new expense category. Categories can be nested by providing a parent_id. The code is auto-generated from name if not provided.",
+                "operationId": "createExpenseCategory",
+                "requestBody": {
+                    "description": "Expense category details",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Category name (required)",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Utilities"
+                                    },
+                                    "code": {
+                                        "description": "Unique code (auto-generated from name if not provided, alphanumeric and dash/underscore only)",
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "UTILITIES",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "description": "Category description",
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "example": "Electricity, water, internet, etc.",
+                                        "nullable": true
+                                    },
+                                    "parent_id": {
+                                        "description": "Parent category ID for hierarchical structure",
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "is_recurring_eligible": {
+                                        "description": "Allow recurring expenses in this category",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "requires_receipt": {
+                                        "description": "Require receipt attachment for expenses",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "requires_approval": {
+                                        "description": "Require manager approval for expenses",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "is_active": {
+                                        "description": "Category active status",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "display_order": {
+                                        "description": "Sort order for display",
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "example": 20
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Expense category created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expense category created successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Utilities"
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UTILITIES"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Electricity, water, internet, etc.",
+                                                    "nullable": true
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "is_recurring_eligible": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "requires_receipt": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "requires_approval": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "full_path": {
+                                                    "type": "string",
+                                                    "example": "Utilities"
+                                                },
+                                                "level": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "has_children": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "has_expenses": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_deletable": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "parent": {
+                                                    "type": "object",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "children": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T07:20:22.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T07:20:22.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T07:20:22.747100Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "458b3965-1938-4443-b382-d955234bd78a"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The name field is required."
+                                                    }
+                                                },
+                                                "code": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The code has already been taken."
+                                                    }
+                                                },
+                                                "parent_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected parent id is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/expense-categories/tree": {
+            "get": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Get expense categories tree structure",
+                "description": "Retrieve expense categories in a hierarchical tree structure with nested children. Useful for displaying category dropdowns and navigation menus.",
+                "operationId": "getExpenseCategoriesTree",
+                "parameters": [
+                    {
+                        "name": "active_only",
+                        "in": "query",
+                        "description": "Filter for active categories only",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category tree retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category tree retrieved successfully."
+                                        },
+                                        "data": {
+                                            "description": "Root categories with nested children",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Utilities"
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "UTILITIES"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Electricity, water, internet, etc.",
+                                                        "nullable": true
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "integer",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "is_recurring_eligible": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "requires_receipt": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "requires_approval": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "display_order": {
+                                                        "type": "integer",
+                                                        "example": 20
+                                                    },
+                                                    "full_path": {
+                                                        "type": "string",
+                                                        "example": "Utilities"
+                                                    },
+                                                    "level": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "has_children": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "has_expenses": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "is_deletable": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "parent": {
+                                                        "type": "object",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "children": {
+                                                        "description": "Nested child categories",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Electricity"
+                                                                },
+                                                                "code": {
+                                                                    "type": "string",
+                                                                    "example": "ELECTRICITY"
+                                                                },
+                                                                "description": {
+                                                                    "type": "string",
+                                                                    "example": "Monthly electricity bill",
+                                                                    "nullable": true
+                                                                },
+                                                                "parent_id": {
+                                                                    "type": "integer",
+                                                                    "example": 2
+                                                                },
+                                                                "is_recurring_eligible": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "requires_receipt": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "requires_approval": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                },
+                                                                "is_active": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "display_order": {
+                                                                    "type": "integer",
+                                                                    "example": 21
+                                                                },
+                                                                "full_path": {
+                                                                    "type": "string",
+                                                                    "example": "Utilities > Electricity"
+                                                                },
+                                                                "level": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "has_children": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                },
+                                                                "has_expenses": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                },
+                                                                "is_deletable": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "parent": {
+                                                                    "description": "Parent category reference",
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 2
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "Utilities"
+                                                                        },
+                                                                        "code": {
+                                                                            "type": "string",
+                                                                            "example": "UTILITIES"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "created_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time",
+                                                                    "example": "2025-12-29T07:22:08.000000Z"
+                                                                },
+                                                                "updated_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time",
+                                                                    "example": "2025-12-29T07:22:08.000000Z"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-29T07:20:22.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-29T07:20:22.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T07:28:47.696042Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "33f51ec7-5682-438c-8be8-8563c6fe0aef"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/expense-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Get expense category details",
+                "description": "Retrieve detailed information about a specific expense category including parent and children relationships",
+                "operationId": "getExpenseCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Expense category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Expense category retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expense category retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Rent"
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "RENT"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Monthly store or office rent payments",
+                                                    "nullable": true
+                                                },
+                                                "parent_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "is_recurring_eligible": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "requires_receipt": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "requires_approval": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "full_path": {
+                                                    "type": "string",
+                                                    "example": "Rent"
+                                                },
+                                                "level": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "has_children": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "has_expenses": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_deletable": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "parent": {
+                                                    "type": "object",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "children": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Delete expense category",
+                "description": "Delete an expense category. Cannot delete if category has children or associated expenses.",
+                "operationId": "deleteExpenseCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Expense category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Expense category deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expense category deleted successfully."
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "409": {
+                        "description": "Cannot delete - has children or expenses"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Update expense category",
+                "description": "Update expense category details. All fields are optional. Cannot set self as parent.",
+                "operationId": "updateExpenseCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Expense category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Rent UPDATED"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "RENT_NEW"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "nullable": true
+                                    },
+                                    "parent_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "is_recurring_eligible": {
+                                        "type": "boolean"
+                                    },
+                                    "requires_receipt": {
+                                        "type": "boolean"
+                                    },
+                                    "requires_approval": {
+                                        "type": "boolean"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "display_order": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/expense-categories/{id}/children": {
+            "get": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Get category children",
+                "description": "Retrieve all direct children (subcategories) of a specific expense category. Returns only immediate children, not nested descendants.",
+                "operationId": "getExpenseCategoryChildren",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Parent category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "active_only",
+                        "in": "query",
+                        "description": "Filter for active categories only",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category children retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category children retrieved successfully."
+                                        },
+                                        "data": {
+                                            "description": "Array of child categories",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Electricity"
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "ELECTRICITY"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Monthly electricity bill",
+                                                        "nullable": true
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "is_recurring_eligible": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "requires_receipt": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "requires_approval": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "display_order": {
+                                                        "type": "integer",
+                                                        "example": 21
+                                                    },
+                                                    "full_path": {
+                                                        "type": "string",
+                                                        "example": "Utilities > Electricity"
+                                                    },
+                                                    "level": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "has_children": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "has_expenses": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "is_deletable": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "parent": {
+                                                        "description": "Parent category reference",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Utilities"
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "UTILITIES"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Electricity, water, internet, etc.",
+                                                                "nullable": true
+                                                            },
+                                                            "parent_id": {
+                                                                "type": "integer",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "is_recurring_eligible": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "requires_receipt": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "requires_approval": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "display_order": {
+                                                                "type": "integer",
+                                                                "example": 20
+                                                            },
+                                                            "full_path": {
+                                                                "type": "string",
+                                                                "example": "Utilities"
+                                                            },
+                                                            "level": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "has_children": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "has_expenses": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_deletable": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "parent": {
+                                                                "type": "object",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-29T07:20:22.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-29T07:20:22.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-29T07:22:08.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-29T07:22:08.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T07:52:31.733741Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "59c81808-89b7-4abe-97df-c4d49f926f49"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The requested resource was not found."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred."
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/expense-categories/{id}/toggle-active": {
+            "post": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Toggle category active status",
+                "description": "Toggle the is_active status of an expense category between true and false",
+                "operationId": "toggleExpenseCategoryStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Expense category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category status updated successfully."
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/expense-categories/recurring-eligible": {
+            "get": {
+                "tags": [
+                    "Expense Management"
+                ],
+                "summary": "Get recurring-eligible categories",
+                "description": "Retrieve all expense categories that are marked as recurring-eligible (is_recurring_eligible = true). Useful for populating dropdowns when creating recurring expenses.",
+                "operationId": "getRecurringEligibleCategories",
+                "responses": {
+                    "200": {
+                        "description": "Recurring-eligible categories retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurring-eligible categories retrieved successfully."
+                                        },
+                                        "data": {
+                                            "description": "Array of categories with is_recurring_eligible = true",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 6
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Rent"
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "RENT"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Monthly store or office rent payments"
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "integer",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "is_recurring_eligible": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "requires_receipt": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "requires_approval": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "display_order": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "full_path": {
+                                                        "type": "string",
+                                                        "example": "Rent"
+                                                    },
+                                                    "level": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "has_children": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "has_expenses": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "is_deletable": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "parent": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Utilities"
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "UTILITIES"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Electricity, water, internet, etc."
+                                                            },
+                                                            "parent_id": {
+                                                                "type": "integer",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "is_recurring_eligible": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "requires_receipt": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "requires_approval": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "display_order": {
+                                                                "type": "integer",
+                                                                "example": 20
+                                                            },
+                                                            "full_path": {
+                                                                "type": "string",
+                                                                "example": "Utilities"
+                                                            },
+                                                            "level": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "has_children": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "has_expenses": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_deletable": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "parent": {
+                                                                "type": "object",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-29T07:20:22.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-12-29T07:55:39.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-29T07:49:04.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-12-29T07:49:04.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-29T08:02:04.183950Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e7df9752-cbc2-4460-a09f-d72dc81e015d"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "bbab2597-e1ae-466b-a071-83033841d2ed"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/inventory": {
             "get": {
                 "tags": [
@@ -55581,6 +57528,10 @@
         {
             "name": "Customer Groups",
             "description": "Customer Groups"
+        },
+        {
+            "name": "Expense Management",
+            "description": "Expense Management"
         },
         {
             "name": "Tenant - Inventory",

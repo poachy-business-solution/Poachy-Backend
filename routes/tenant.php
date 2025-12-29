@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
+use App\Http\Controllers\Api\Tenant\Expenses\ExpenseCategoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
@@ -319,8 +320,6 @@ Route::prefix('v1/tenant')
             Route::delete('/{id}/brands/{brandId}', [CouponController::class, 'detachBrand']);
         });
 
-
-
         // User Management (Owner/Manager only)
         Route::middleware(['role:owner|manager,tenant'])->group(function () {
             Route::get('/users', [TenantUserController::class, 'index']);
@@ -333,6 +332,19 @@ Route::prefix('v1/tenant')
         // Role Assignment (Owner only)
         Route::middleware(['role:owner,tenant'])->group(function () {
             Route::post('/users/{userId}/assign-role', [TenantUserController::class, 'assignRole']);
+        });
+
+        // Expense Categories
+        Route::prefix('expense-categories')->group(function () {
+            Route::get('/', [ExpenseCategoryController::class, 'index']);
+            Route::get('/tree', [ExpenseCategoryController::class, 'tree']);
+            Route::get('/recurring-eligible', [ExpenseCategoryController::class, 'recurringEligible']);
+            Route::post('/', [ExpenseCategoryController::class, 'store']);
+            Route::get('/{expense_category}', [ExpenseCategoryController::class, 'show']);
+            Route::patch('/{expense_category}', [ExpenseCategoryController::class, 'update']);
+            Route::delete('/{expense_category}', [ExpenseCategoryController::class, 'destroy']);
+            Route::get('/{expense_category}/children', [ExpenseCategoryController::class, 'children']);
+            Route::post('/{expense_category}/toggle-active', [ExpenseCategoryController::class, 'toggleActive']);
         });
     });
 
