@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
+use App\Http\Controllers\Api\Tenant\Budget\BudgetController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseCategoryController;
+use App\Http\Controllers\Api\Tenant\Expenses\ExpenseController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
@@ -345,6 +347,47 @@ Route::prefix('v1/tenant')
             Route::delete('/{expense_category}', [ExpenseCategoryController::class, 'destroy']);
             Route::get('/{expense_category}/children', [ExpenseCategoryController::class, 'children']);
             Route::post('/{expense_category}/toggle-active', [ExpenseCategoryController::class, 'toggleActive']);
+        });
+
+        // Expenses
+        Route::prefix('expenses')->group(function () {
+            Route::get('/', [ExpenseController::class, 'index']);
+            Route::post('/', [ExpenseController::class, 'store']);
+            Route::get('/pending-approval', [ExpenseController::class, 'pendingApproval']);
+            Route::get('/analytics', [ExpenseController::class, 'analytics']);
+            Route::get('/{expense}', [ExpenseController::class, 'show']);
+            Route::patch('/{expense}', [ExpenseController::class, 'update']);
+            Route::delete('/{expense}', [ExpenseController::class, 'destroy']);
+
+            // Approval actions
+            Route::post('/{expense}/approve', [ExpenseController::class, 'approve']);
+            Route::post('/{expense}/reject', [ExpenseController::class, 'reject']);
+
+            // Receipt management
+            Route::post('/{expense}/upload-receipt', [ExpenseController::class, 'uploadReceipt']);
+            Route::delete('/{expense}/delete-receipt', [ExpenseController::class, 'deleteReceipt']);
+
+            // Recurrences
+            Route::post('/{expense}/set-recurrence', [ExpenseController::class, 'setRecurrence']);
+            Route::patch('/{expense}/update-recurrence', [ExpenseController::class, 'updateRecurrence']);
+            Route::post('/{expense}/cancel-recurrence', [ExpenseController::class, 'cancelRecurrence']);
+            Route::get('/{expense}/recurrences', [ExpenseController::class, 'getRecurrences']);
+            Route::post('/{expense}/generate-recurrence', [ExpenseController::class, 'generateRecurrence']);
+        });
+
+        // Budgets
+        Route::prefix('budgets')->group(function () {
+            Route::get('/', [BudgetController::class, 'index']);
+            Route::post('/', [BudgetController::class, 'store']);
+            Route::get('/current', [BudgetController::class, 'current']);
+            Route::get('/alerts', [BudgetController::class, 'alerts']);
+            Route::get('/over-budget', [BudgetController::class, 'overBudget']);
+            Route::get('/performance', [BudgetController::class, 'performance']);
+            Route::get('/{budget}', [BudgetController::class, 'show']);
+            Route::patch('/{budget}', [BudgetController::class, 'update']);
+            Route::delete('/{budget}', [BudgetController::class, 'destroy']);
+            Route::post('/{budget}/recalculate', [BudgetController::class, 'recalculate']);
+            Route::get('/{budget}/expenses', [BudgetController::class, 'expenses']);
         });
     });
 
