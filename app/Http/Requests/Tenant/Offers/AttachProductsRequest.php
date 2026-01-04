@@ -8,7 +8,7 @@ class AttachProductsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('manage-coupons');
+        return $this->user()->can('manage-coupons') || $this->user()->can('manage-promotions');
     }
 
     public function rules(): array

@@ -182,22 +182,27 @@ class CouponRepository
         return $coupon->fresh();
     }
 
-    /**
-     * Attach products to coupon
-     */
     public function attachProducts(Coupon $coupon, array $productsData): void
     {
         DB::transaction(function () use ($coupon, $productsData) {
-            // Format: [product_id => ['product_variant_id' => variant_id_or_null]]
-            $syncData = [];
             foreach ($productsData as $productData) {
                 $productId = $productData['product_id'];
                 $variantId = $productData['product_variant_id'] ?? null;
 
-                $syncData[$productId] = ['product_variant_id' => $variantId];
-            }
+                // Check if this exact product-variant combination already exists
+                // Use where() for the FK and wherePivot() for pivot columns
+                $exists = $coupon->products()
+                    ->where('products.id', $productId)
+                    ->wherePivot('product_variant_id', $variantId)
+                    ->exists();
 
-            $coupon->products()->syncWithoutDetaching($syncData);
+                if (!$exists) {
+                    // Attach this specific product-variant combination
+                    $coupon->products()->attach($productId, [
+                        'product_variant_id' => $variantId
+                    ]);
+                }
+            }
 
             $this->invalidateCache($coupon->id);
         });

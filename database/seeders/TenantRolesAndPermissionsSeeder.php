@@ -64,6 +64,8 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             // Offers
             'manage-coupons',
             'view-coupons',
+            'manage-promotions',
+            'view-promotions',
         ];
 
         foreach ($permissions as $permission) {
@@ -116,6 +118,8 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-suppliers',
             'manage-coupons',
             'view-coupons',
+            'manage-promotions',
+            'view-promotions',
         ]);
 
         $this->command->info('✓ Created role: Manager (Store management)');
@@ -135,6 +139,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'manage-customers',
             'apply-discounts',
             'view-coupons',
+            'view-promotions',
         ]);
 
         $this->command->info('✓ Created role: Cashier (POS operations)');

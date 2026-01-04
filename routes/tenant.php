@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
+use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
@@ -320,6 +321,29 @@ Route::prefix('v1/tenant')
             // Applicability Management - Brands
             Route::post('/{id}/brands', [CouponController::class, 'attachBrands']);
             Route::delete('/{id}/brands/{brandId}', [CouponController::class, 'detachBrand']);
+        });
+
+        // Promotions Management
+        Route::prefix('promotions')->group(function () {
+            Route::get('active',   [PromotionController::class, 'activePromotions']);
+            Route::get('featured', [PromotionController::class, 'featuredPromotions']);
+            Route::get('pos',      [PromotionController::class, 'posPromotions']);
+            Route::get('website',  [PromotionController::class, 'websitePromotions']);
+            Route::apiResource('/', PromotionController::class)->parameter('', 'promotion');
+            Route::patch('{promotion}/activate',   [PromotionController::class, 'activate']);
+            Route::patch('{promotion}/deactivate', [PromotionController::class, 'deactivate']);
+            Route::post('{promotion}/banner', [PromotionController::class, 'updateBanner']);
+            Route::delete('{promotion}/banner', [PromotionController::class, 'removeBanner']);
+            Route::post('{promotion}/products',            [PromotionController::class, 'attachProducts']);
+            Route::post('{promotion}/products/bulk',       [PromotionController::class, 'bulkAttachProducts']);
+            Route::delete('{promotion}/products/bulk',     [PromotionController::class, 'bulkDetachProducts']);
+            Route::delete('{promotion}/products/{product}', [PromotionController::class, 'detachProduct']);
+            Route::post('{promotion}/categories',            [PromotionController::class, 'attachCategories']);
+            Route::delete('{promotion}/categories/{category}', [PromotionController::class, 'detachCategory']);
+            Route::post('{promotion}/brands',         [PromotionController::class, 'attachBrands']);
+            Route::delete('{promotion}/brands/{brand}', [PromotionController::class, 'detachBrand']);
+            Route::patch('{promotion}/stores',          [PromotionController::class, 'updateStores']);
+            Route::patch('{promotion}/customer-groups', [PromotionController::class, 'updateCustomerGroups']);
         });
 
         // User Management (Owner/Manager only)
