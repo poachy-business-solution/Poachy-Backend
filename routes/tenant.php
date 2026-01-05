@@ -23,6 +23,10 @@ use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
+use App\Http\Controllers\Api\Tenant\Shift\ShiftAnalyticsController;
+use App\Http\Controllers\Api\Tenant\Shift\ShiftAssignmentController;
+use App\Http\Controllers\Api\Tenant\Shift\ShiftController;
+use App\Http\Controllers\Api\Tenant\Shift\ShiftSwapController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Store\StoreProductController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
@@ -412,6 +416,55 @@ Route::prefix('v1/tenant')
             Route::delete('/{budget}', [BudgetController::class, 'destroy']);
             Route::post('/{budget}/recalculate', [BudgetController::class, 'recalculate']);
             Route::get('/{budget}/expenses', [BudgetController::class, 'expenses']);
+        });
+
+        // Shift Management Routes
+        Route::prefix('shifts')->group(function () {
+            Route::get('/', [ShiftController::class, 'index']);
+            Route::post('/', [ShiftController::class, 'store']);
+            Route::get('/statistics', [ShiftController::class, 'statistics']);
+            Route::get('/for-date', [ShiftController::class, 'forDate']);
+            Route::get('/{shift}', [ShiftController::class, 'show']);
+            Route::patch('/{shift}', [ShiftController::class, 'update']);
+            Route::delete('/{shift}', [ShiftController::class, 'destroy']);
+            Route::post('/{shift}/toggle-active', [ShiftController::class, 'toggleActive']);
+            Route::post('/{shift}/duplicate', [ShiftController::class, 'duplicate']);
+        });
+
+        // Shift Assignments Routes
+        Route::prefix('shift-assignments')->group(function () {
+            Route::get('/', [ShiftAssignmentController::class, 'index']);
+            Route::post('/', [ShiftAssignmentController::class, 'store']);
+            Route::post('/bulk', [ShiftAssignmentController::class, 'bulkStore']);
+            Route::get('/statistics', [ShiftAssignmentController::class, 'statistics']);
+            Route::get('/upcoming', [ShiftAssignmentController::class, 'upcomingAssignments']);
+            Route::get('/needing-approval', [ShiftAssignmentController::class, 'needingApproval']);
+            Route::get('/{assignment}', [ShiftAssignmentController::class, 'show']);
+            Route::post('/{assignment}/cancel', [ShiftAssignmentController::class, 'cancel']);
+            Route::post('/{assignment}/clock-in', [ShiftAssignmentController::class, 'clockIn']);
+            Route::post('/{assignment}/clock-out', [ShiftAssignmentController::class, 'clockOut']);
+            Route::post('/{assignment}/approve', [ShiftAssignmentController::class, 'approve']);
+        });
+        Route::get('/users/{userId}/shift-assignments', [ShiftAssignmentController::class, 'userAssignments']);
+        Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments']);
+
+        // Shift Analytics
+        Route::prefix('shift-analytics')->group(function () {
+            Route::get('/attendance-rate', [ShiftAnalyticsController::class, 'attendanceRate']);
+            Route::get('/cash-variances', [ShiftAnalyticsController::class, 'cashVariances']);
+            Route::get('/top-performers', [ShiftAnalyticsController::class, 'topPerformers']);
+            Route::get('/coverage-report', [ShiftAnalyticsController::class, 'coverageReport']);
+            Route::get('/overtime-analysis', [ShiftAnalyticsController::class, 'overtimeAnalysis']);
+            Route::get('/punctuality-analysis', [ShiftAnalyticsController::class, 'punctualityAnalysis']);
+            Route::get('/dashboard-summary', [ShiftAnalyticsController::class, 'dashboardSummary']);
+        });
+
+        // Shift Swaps 
+        Route::prefix('shift-swaps')->group(function () {
+            Route::get('/', [ShiftSwapController::class, 'index']);
+            Route::post('/', [ShiftSwapController::class, 'store']);
+            Route::get('/statistics', [ShiftSwapController::class, 'statistics']);
+            Route::get('/{swapRequest}', [ShiftSwapController::class, 'show']);
         });
     });
 

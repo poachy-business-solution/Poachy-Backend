@@ -29,6 +29,22 @@ enum DayOfWeek: string
     }
 
     /**
+     * Get short label (3 letters)
+     */
+    public function shortLabel(): string
+    {
+        return match ($this) {
+            self::MONDAY => 'Mon',
+            self::TUESDAY => 'Tue',
+            self::WEDNESDAY => 'Wed',
+            self::THURSDAY => 'Thu',
+            self::FRIDAY => 'Fri',
+            self::SATURDAY => 'Sat',
+            self::SUNDAY => 'Sun',
+        };
+    }
+
+    /**
      * Get all values as array
      */
     public static function values(): array
@@ -72,6 +88,38 @@ enum DayOfWeek: string
     }
 
     /**
+     * Get next day
+     */
+    public function next(): self
+    {
+        return match ($this) {
+            self::MONDAY => self::TUESDAY,
+            self::TUESDAY => self::WEDNESDAY,
+            self::WEDNESDAY => self::THURSDAY,
+            self::THURSDAY => self::FRIDAY,
+            self::FRIDAY => self::SATURDAY,
+            self::SATURDAY => self::SUNDAY,
+            self::SUNDAY => self::MONDAY,
+        };
+    }
+
+    /**
+     * Get previous day
+     */
+    public function previous(): self
+    {
+        return match ($this) {
+            self::MONDAY => self::SUNDAY,
+            self::TUESDAY => self::MONDAY,
+            self::WEDNESDAY => self::TUESDAY,
+            self::THURSDAY => self::WEDNESDAY,
+            self::FRIDAY => self::THURSDAY,
+            self::SATURDAY => self::FRIDAY,
+            self::SUNDAY => self::SATURDAY,
+        };
+    }
+
+    /**
      * Check if this is a weekday
      */
     public function isWeekday(): bool
@@ -100,6 +148,39 @@ enum DayOfWeek: string
             self::FRIDAY => 5,
             self::SATURDAY => 6,
             self::SUNDAY => 7,
+        };
+    }
+
+    /**
+     * Get Carbon day of week constant (0 = Sunday, 6 = Saturday)
+     */
+    public function carbonDayOfWeek(): int
+    {
+        return match ($this) {
+            self::SUNDAY => 0,
+            self::MONDAY => 1,
+            self::TUESDAY => 2,
+            self::WEDNESDAY => 3,
+            self::THURSDAY => 4,
+            self::FRIDAY => 5,
+            self::SATURDAY => 6,
+        };
+    }
+
+    /**
+     * Create from Carbon day of week
+     */
+    public static function fromCarbonDayOfWeek(int $dayOfWeek): self
+    {
+        return match ($dayOfWeek) {
+            0 => self::SUNDAY,
+            1 => self::MONDAY,
+            2 => self::TUESDAY,
+            3 => self::WEDNESDAY,
+            4 => self::THURSDAY,
+            5 => self::FRIDAY,
+            6 => self::SATURDAY,
+            default => throw new \InvalidArgumentException("Invalid day of week: {$dayOfWeek}"),
         };
     }
 
