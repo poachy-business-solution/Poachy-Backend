@@ -3,8 +3,6 @@
 namespace App\Services\Tenant\Shift;
 
 use App\Enums\Tenant\ShiftStatus;
-use App\Events\Tenant\ShiftApproved;
-use App\Events\Tenant\ShiftCancelled;
 use App\Events\Tenant\ShiftEnded;
 use App\Events\Tenant\ShiftStarted;
 use App\Models\Tenant\Shift;
@@ -180,9 +178,6 @@ class ShiftAssignmentService
 
             DB::commit();
 
-            // Fire cancellation event
-            event(new ShiftCancelled($assignment, $reason));
-
             Log::info('Shift assignment cancelled', [
                 'assignment_id' => $assignment->id,
                 'reason' => $reason,
@@ -348,9 +343,6 @@ class ShiftAssignmentService
             $this->clearAssignmentCache();
 
             DB::commit();
-
-            // Fire approval event
-            event(new ShiftApproved($assignment));
 
             Log::info('Shift approved', [
                 'assignment_id' => $assignment->id,

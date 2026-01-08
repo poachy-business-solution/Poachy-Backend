@@ -9,7 +9,8 @@ enum PaymentStatus: string
     case PAID = 'paid';
     case PENDING = 'pending';
     case OVERDUE = 'overdue';
-
+    case OVERPAID = 'overpaid';
+    case REFUNDED = 'refunded';
 
     public function label(): string
     {
@@ -19,6 +20,8 @@ enum PaymentStatus: string
             self::PAID => 'Fully Paid',
             self::PENDING => 'Pending',
             self::OVERDUE => 'Overdue',
+            self::OVERPAID => 'Overpaid',
+            self::REFUNDED => 'Refunded',
         };
     }
 
@@ -30,5 +33,22 @@ enum PaymentStatus: string
     public function canAcceptPayment(): bool
     {
         return in_array($this, [self::UNPAID, self::PARTIALLY_PAID]);
+    }
+
+    public static function fromAmounts(float $totalAmount, float $amountPaid): self
+    {
+        if ($amountPaid <= 0) {
+            return self::PENDING;
+        }
+
+        if ($amountPaid < $totalAmount) {
+            return self::PARTIALLY_PAID;
+        }
+
+        if ($amountPaid > $totalAmount) {
+            return self::OVERPAID;
+        }
+
+        return self::PAID;
     }
 }

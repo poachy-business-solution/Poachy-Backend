@@ -3,13 +3,16 @@
 namespace App\Models\Tenant;
 
 use App\Enums\Tenant\ShiftStatus;
+use App\Observers\Tenant\ShiftAssignmentObserver;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(ShiftAssignmentObserver::class)]
 class ShiftAssignment extends Model
 {
     use HasFactory;

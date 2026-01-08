@@ -3,13 +3,16 @@
 namespace App\Models\Tenant;
 
 use App\Enums\Tenant\DayOfWeek;
+use App\Observers\Tenant\ShiftObserver;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(ShiftObserver::class)]
 class Shift extends Model
 {
     use HasFactory;

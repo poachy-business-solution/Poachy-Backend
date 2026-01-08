@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
+use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAnalyticsController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAssignmentController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftController;
@@ -465,6 +466,17 @@ Route::prefix('v1/tenant')
             Route::post('/', [ShiftSwapController::class, 'store']);
             Route::get('/statistics', [ShiftSwapController::class, 'statistics']);
             Route::get('/{swapRequest}', [ShiftSwapController::class, 'show']);
+        });
+
+        // Sales Management
+        Route::prefix('sales')->group(function () {
+            Route::get('customers/search', [SaleController::class, 'searchCustomer']);
+            Route::post('calculate', [SaleController::class, 'calculateSale']);
+            Route::post('/', [SaleController::class, 'createSale']);
+            Route::get('/', [SaleController::class, 'listSales']);
+            Route::get('{sale}', [SaleController::class, 'getSale']);
+            Route::get('{sale}/receipt', [SaleController::class, 'generateReceipt']);
+            Route::post('{sale}/email-receipt', [SaleController::class, 'emailReceipt']);
         });
     });
 
