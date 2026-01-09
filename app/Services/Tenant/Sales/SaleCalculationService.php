@@ -83,10 +83,18 @@ class SaleCalculationService
         // Step 5: Apply cart-level coupon (if allowed)
         $couponDiscount = 0;
         $couponData = null;
+        $couponApplied = false;
+
         if ($applyCoupon && $couponCode) {
             $couponResult = $this->applyCoupon($couponCode, $lineItems, $subtotal, $customerId);
+
             $couponDiscount = $couponResult['discount'];
             $couponData = $couponResult['coupon'];
+
+            // Only mark as applied if we actually got a valid coupon AND discount > 0
+            if ($couponData !== null && $couponDiscount > 0) {
+                $couponApplied = true;
+            }
         }
 
         $subtotalAfterCoupon = $subtotal - $couponDiscount;
@@ -117,7 +125,7 @@ class SaleCalculationService
             'promotions_applied' => $applyPromotions,
             'subtotal_after_promotions' => $subtotal,
             'coupon_discount' => $couponDiscount,
-            'coupon_applied' => $applyCoupon,
+            'coupon_applied' => $couponApplied,
             'coupon_data' => $couponData,
             'subtotal_after_coupon' => $subtotalAfterCoupon,
             'tax_amount' => $taxAmount,

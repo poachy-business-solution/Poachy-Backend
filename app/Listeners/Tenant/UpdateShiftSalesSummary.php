@@ -2,8 +2,8 @@
 
 namespace App\Listeners\Tenant;
 
-use App\Events\Tenant\ShiftEnded;
-use App\Jobs\Tenant\CalculateShiftSalesSummaryJob;
+use App\Events\Tenant\SaleCompleted;
+use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -12,46 +12,63 @@ class UpdateShiftSalesSummary implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public $queue = 'sync-normal';
-    public $tries = 3;
-    public $backoff = [30, 60, 120];
+    public string $queue = 'sync-high';
+    public int $tries = 3;
+    public int $backoff = 5;
+
+    public function __construct(
+        protected ShiftSalesSummaryService $summaryService
+    ) {}
 
     /**
      * Handle the event.
      */
-    public function handle(ShiftEnded $event): void
+    public function handle(SaleCompleted $event): void
     {
-        try {
-            // Dispatch job to calculate sales summary
-            CalculateShiftSalesSummaryJob::dispatch(
-                tenant()->id,
-                $event->assignment->id
-            );
+        $sale = $event->sale;
 
-            Log::info('Dispatched sales summary calculation job', [
-                'assignment_id' => $event->assignment->id,
-                'tenant_id' => tenant()->id,
+        // Only update if sale is linked to a shift
+        if (!$sale->shift_assignment_id) {
+            Log::info('Sale not linked to shift, skipping summary update', [
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+            ]);
+            return;
+        }
+
+        try {
+            $this->summaryService->updateFromSale($sale);
+
+            Log::info('Shift sales summary updated', [
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'shift_assignment_id' => $sale->shift_assignment_id,
+                'total_amount' => $sale->total_amount,
+                // 'payment_method' => $sale->payment_method->value,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to dispatch sales summary calculation job', [
-                'assignment_id' => $event->assignment->id,
+            Log::error('Failed to update shift sales summary', [
+                'sale_id' => $sale->id,
+                'shift_assignment_id' => $sale->shift_assignment_id,
                 'error' => $e->getMessage(),
-                'tenant_id' => tenant()->id,
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            throw $e;
+            throw $e; // Re-throw to trigger retry
         }
     }
 
     /**
      * Handle a job failure.
      */
-    public function failed(ShiftEnded $event, \Throwable $exception): void
+    public function failed(SaleCompleted $event, \Throwable $exception): void
     {
-        Log::error('UpdateShiftSalesSummary listener failed permanently', [
-            'assignment_id' => $event->assignment->id,
+        Log::error('Shift sales summary update failed permanently', [
+            'sale_id' => $event->sale->id,
+            'shift_assignment_id' => $event->sale->shift_assignment_id,
             'error' => $exception->getMessage(),
-            'tenant_id' => tenant()->id,
         ]);
+
+        // Could notify admins here
     }
 }

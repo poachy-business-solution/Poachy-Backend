@@ -264,14 +264,18 @@ class ShiftAssignment extends Model
 
     public function getCashVarianceAttribute(): ?float
     {
-        if ($this->opening_cash === null || $this->closing_cash === null) {
+        if ($this->closing_cash === null) {
             return null;
         }
 
-        // Placeholder: Will be enhanced once sales module is implemented
-        // Expected cash = opening_cash + total_sales - total_refunds
-        // For now, simple difference
-        return $this->closing_cash - $this->opening_cash;
+        $expectedCash = $this->expected_cash;
+
+        if ($expectedCash === null) {
+            return null;
+        }
+
+        // Variance = what you have - what you should have
+        return round($this->closing_cash - $expectedCash, 2);
     }
 
     public function getHasSignificantCashVarianceAttribute(): bool
@@ -331,11 +335,15 @@ class ShiftAssignment extends Model
             return null;
         }
 
-        // Placeholder: Will calculate from sales once implemented
-        // expected_cash = opening_cash + cash_sales - cash_refunds
+        // Get actual cash received from sale_payments
+        $cashReceived = \App\Models\Tenant\SalePayment::whereHas('sale', function ($query) {
+            $query->where('shift_assignment_id', $this->id);
+        })
+            ->where('payment_method', \App\Enums\Tenant\PaymentMethod::CASH)
+            ->sum('amount');
 
-        // For now, return opening cash
-        return $this->opening_cash;
+        // Expected = opening + cash received - cash refunds (refunds not implemented yet)
+        return round($this->opening_cash + $cashReceived, 2);
     }
 
     // ========================================

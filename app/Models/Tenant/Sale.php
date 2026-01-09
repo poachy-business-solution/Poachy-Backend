@@ -23,6 +23,7 @@ class Sale extends Model
     protected $fillable = [
         'sale_number',
         'store_id',
+        'shift_assignment_id',
         'customer_id',
         'sale_date',
         'subtotal',
@@ -73,6 +74,11 @@ class Sale extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function shiftAssignment(): BelongsTo
+    {
+        return $this->belongsTo(ShiftAssignment::class);
     }
 
     public function customer(): BelongsTo
@@ -134,6 +140,11 @@ class Sale extends Model
     public function scopeByStore(Builder $query, int $storeId): Builder
     {
         return $query->where('store_id', $storeId);
+    }
+
+    public function scopeForShift($query, int $shiftAssignmentId)
+    {
+        return $query->where('shift_assignment_id', $shiftAssignmentId);
     }
 
     public function scopeByCustomer(Builder $query, int $customerId): Builder
@@ -319,5 +330,30 @@ class Sale extends Model
 
         // Total is already calculated correctly as final amount after all adjustments
         $this->save();
+    }
+
+    public function hasShift(): bool
+    {
+        return $this->shift_assignment_id !== null;
+    }
+
+    public function isCashPayment(): bool
+    {
+        return $this->payment_method === \App\Enums\Tenant\PaymentMethod::CASH;
+    }
+
+    public function getChangeAmount(): float
+    {
+        // Change only applies to cash payments
+        if (!$this->isCashPayment()) {
+            return 0;
+        }
+
+        // Only if customer paid more than total
+        if ($this->amount_paid <= $this->total_amount) {
+            return 0;
+        }
+
+        return round($this->amount_paid - $this->total_amount, 2);
     }
 }

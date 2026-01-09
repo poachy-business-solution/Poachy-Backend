@@ -47,7 +47,22 @@ class SaleResource extends JsonResource
                 'total_amount' => (float) $this->total_amount,
                 'amount_paid' => (float) $this->amount_paid,
                 'amount_due' => (float) $this->amount_due,
+                'change' => $this->getChangeAmount(),
             ],
+
+            'shift' => $this->when(
+                $this->shiftAssignment,
+                function () {
+                    return [
+                        'id' => $this->shiftAssignment->id,
+                        'shift_date' => $this->shiftAssignment->shift_date->toDateString(),
+                        'user' => [
+                            'id' => $this->shiftAssignment->user->id,
+                            'name' => $this->shiftAssignment->user->name,
+                        ],
+                    ];
+                }
+            ),
 
             'payment_status' => $this->payment_status->value,
             'payment_status_label' => $this->payment_status->label(),

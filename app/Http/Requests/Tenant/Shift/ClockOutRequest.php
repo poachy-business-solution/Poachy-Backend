@@ -87,15 +87,28 @@ class ClockOutRequest extends FormRequest
                 );
             }
 
-            // Validate cash variance reason if variance is significant
+            // ✅ FIXED: Calculate variance against EXPECTED cash (including sales)
             if ($this->closing_cash !== null && $assignment->opening_cash !== null) {
-                $variance = abs($this->closing_cash - $assignment->opening_cash);
+                // Get actual cash received from sales
+                $cashReceived = \App\Models\Tenant\SalePayment::whereHas('sale', function ($query) use ($assignment) {
+                    $query->where('shift_assignment_id', $assignment->id);
+                })
+                    ->where('payment_method', \App\Enums\Tenant\PaymentMethod::CASH)
+                    ->sum('amount');
+
+                // Calculate expected cash
+                $expectedCash = $assignment->opening_cash + $cashReceived;
+
+                // Calculate variance against expected
+                $variance = abs($this->closing_cash - $expectedCash);
                 $threshold = config('shift.cash_variance_threshold', 100);
 
                 if ($variance >= $threshold && empty($this->cash_variance_reason)) {
                     $validator->errors()->add(
                         'cash_variance_reason',
-                        "Cash variance of " . number_format($variance, 2) . " requires an explanation."
+                        "Cash variance of KES " . number_format($variance, 2) . " requires an explanation. " .
+                            "Expected: KES " . number_format($expectedCash, 2) . ", " .
+                            "Counted: KES " . number_format($this->closing_cash, 2)
                     );
                 }
             }

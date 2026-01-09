@@ -13,18 +13,21 @@ use App\Http\Resources\Tenant\Shift\ShiftAssignmentResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
+use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use App\Services\Tenant\Shift\ShiftAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+
 class ShiftAssignmentController extends Controller
 {
     use AuthorizesRequests;
 
     public function __construct(
-        protected ShiftAssignmentService $assignmentService
+        protected ShiftAssignmentService $assignmentService,
+        protected ShiftSalesSummaryService $salesSummaryService
     ) {}
 
     /**
@@ -33,7 +36,7 @@ class ShiftAssignmentController extends Controller
      *     summary="List shift assignments",
      *     description="Retrieve a paginated list of shift assignments with optional filtering",
      *     operationId="listShiftAssignments",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
@@ -261,7 +264,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Create a shift assignment",
      *     description="Create a new shift assignment for a user",
      *     operationId="createShiftAssignment",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -420,7 +423,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Bulk create shift assignments",
      *     description="Create multiple shift assignments with recurrence patterns",
      *     operationId="bulkCreateShiftAssignments",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -587,7 +590,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Get shift assignment details",
      *     description="Retrieve detailed information about a specific shift assignment",
      *     operationId="getShiftAssignment",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -716,7 +719,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Cancel a shift assignment",
      *     description="Cancel a scheduled shift assignment with a reason",
      *     operationId="cancelShiftAssignment",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -851,7 +854,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Clock in to a shift",
      *     description="Start a shift by clocking in with opening cash amount",
      *     operationId="clockInShift",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -1026,7 +1029,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Clock out of a shift",
      *     description="End a shift by clocking out with closing cash amount and optional notes",
      *     operationId="clockOutShift",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -1174,7 +1177,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Approve a shift",
      *     description="Approve a completed shift assignment",
      *     operationId="approveShift",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -1323,7 +1326,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Get assignments for a specific user",
      *     description="Retrieve shift assignments for a specific user within a date range",
      *     operationId="getUserShiftAssignments",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="userId",
      *         in="path",
@@ -1486,7 +1489,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Get assignments for a specific store on a date",
      *     description="Retrieve shift assignments for a specific store with optional status filter",
      *     operationId="getStoreShiftAssignments",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
@@ -1625,7 +1628,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Get upcoming assignments for authenticated user",
      *     description="Retrieve upcoming shift assignments for the currently authenticated user",
      *     operationId="getUpcomingAssignments",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="days_ahead",
      *         in="query",
@@ -1750,7 +1753,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Get assignments needing approval",
      *     description="Retrieve shift assignments that are completed but not yet approved",
      *     operationId="getAssignmentsNeedingApproval",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
@@ -1900,7 +1903,7 @@ class ShiftAssignmentController extends Controller
      *     summary="Get assignment statistics",
      *     description="Retrieve statistical data about shift assignments within a date range",
      *     operationId="getAssignmentStatistics",
-     *     tags={"Shift Assignments"},
+     *     tags={"Tenant Shift Assignments"},
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
@@ -1976,6 +1979,331 @@ class ShiftAssignmentController extends Controller
         return ApiResponse::success(
             'Assignment statistics retrieved successfully',
             ['statistics' => $stats]
+        );
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/tenant/shift-assignments/{shiftAssignmentId}/clock-out-info",
+     *     summary="Get clock-out information for a shift assignment",
+     *     description="Retrieves comprehensive information required for clocking out of a shift, including shift details, cash tracking data, sales summary, and instructions for the clock-out process",
+     *     operationId="getShiftClockOutInfo",
+     *     tags={"Tenant Shift Assignments"},
+     *     @OA\Parameter(
+     *         name="shiftAssignmentId",
+     *         in="path",
+     *         description="The unique identifier of the shift assignment",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer",
+     *             example=4
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Clock out information retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"success", "message", "data", "meta"},
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 description="Indicates whether the request was successful",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 description="Human-readable message describing the result",
+     *                 example="Clock out information retrieved successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 required={"shift", "cash_tracking", "sales_summary", "instructions"},
+     *                 description="Container for the clock-out information data",
+     *                 @OA\Property(
+     *                     property="shift",
+     *                     type="object",
+     *                     required={"id", "shift_date", "actual_start", "duration_so_far"},
+     *                     description="Information about the current shift",
+     *                     @OA\Property(
+     *                         property="id",
+     *                         type="integer",
+     *                         description="Unique identifier of the shift assignment",
+     *                         example=4
+     *                     ),
+     *                     @OA\Property(
+     *                         property="shift_date",
+     *                         type="string",
+     *                         format="date",
+     *                         description="The date of the shift in YYYY-MM-DD format",
+     *                         example="2026-01-09"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="actual_start",
+     *                         type="string",
+     *                         format="date-time",
+     *                         description="The actual start timestamp of the shift in ISO 8601 format",
+     *                         example="2026-01-09T12:25:10.000000Z"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="duration_so_far",
+     *                         type="number",
+     *                         format="double",
+     *                         description="Duration of the shift so far in minutes",
+     *                         example=443.19242455000006
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="cash_tracking",
+     *                     type="object",
+     *                     required={"opening_cash", "expected_cash", "variance_threshold"},
+     *                     description="Cash tracking information for reconciliation",
+     *                     @OA\Property(
+     *                         property="opening_cash",
+     *                         type="number",
+     *                         format="double",
+     *                         description="The amount of cash at the beginning of the shift",
+     *                         example=5000
+     *                     ),
+     *                     @OA\Property(
+     *                         property="expected_cash",
+     *                         type="number",
+     *                         format="double",
+     *                         description="The expected cash amount at clock-out (opening cash + cash sales)",
+     *                         example=582875
+     *                     ),
+     *                     @OA\Property(
+     *                         property="variance_threshold",
+     *                         type="number",
+     *                         format="double",
+     *                         description="The maximum allowed variance before explanation is required",
+     *                         example=100
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="sales_summary",
+     *                     type="object",
+     *                     required={"total_transactions", "total_sales_amount", "total_cash_sales", "total_card_sales", "total_mpesa_sales", "total_credit_sales"},
+     *                     description="Summary of all sales during the shift",
+     *                     @OA\Property(
+     *                         property="total_transactions",
+     *                         type="integer",
+     *                         description="Total number of transactions processed during the shift",
+     *                         example=9
+     *                     ),
+     *                     @OA\Property(
+     *                         property="total_sales_amount",
+     *                         type="number",
+     *                         format="double",
+     *                         description="Total sales amount across all payment methods",
+     *                         example=1494350
+     *                     ),
+     *                     @OA\Property(
+     *                         property="total_cash_sales",
+     *                         type="number",
+     *                         format="double",
+     *                         description="Total sales amount paid in cash",
+     *                         example=577875
+     *                     ),
+     *                     @OA\Property(
+     *                         property="total_card_sales",
+     *                         type="number",
+     *                         format="double",
+     *                         description="Total sales amount paid by card",
+     *                         example=0
+     *                     ),
+     *                     @OA\Property(
+     *                         property="total_mpesa_sales",
+     *                         type="number",
+     *                         format="double",
+     *                         description="Total sales amount paid via M-Pesa",
+     *                         example=249975
+     *                     ),
+     *                     @OA\Property(
+     *                         property="total_credit_sales",
+     *                         type="number",
+     *                         format="double",
+     *                         description="Total sales amount on credit",
+     *                         example=370000
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="instructions",
+     *                     type="object",
+     *                     required={"step_1", "step_2", "step_3"},
+     *                     description="Step-by-step instructions for the clock-out process",
+     *                     @OA\Property(
+     *                         property="step_1",
+     *                         type="string",
+     *                         description="First instruction: Expected cash amount",
+     *                         example="Expected amount is KES 582,875.00"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="step_2",
+     *                         type="string",
+     *                         description="Second instruction: Action to enter actual count",
+     *                         example="Enter the actual amount you counted"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="step_3",
+     *                         type="string",
+     *                         description="Third instruction: Variance explanation requirement",
+     *                         example="If variance >= KES 100, explain the difference"
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 required={"timestamp", "request_id", "tenant_id", "tenant_name"},
+     *                 description="Metadata about the API request and response",
+     *                 @OA\Property(
+     *                     property="timestamp",
+     *                     type="string",
+     *                     format="date-time",
+     *                     description="The timestamp when the response was generated in ISO 8601 format",
+     *                     example="2026-01-09T19:48:21.545822Z"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="request_id",
+     *                     type="string",
+     *                     format="uuid",
+     *                     description="Unique identifier for tracking this specific request",
+     *                     example="c327146d-6254-4e30-8c25-37cc07a312f7"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tenant_id",
+     *                     type="string",
+     *                     format="uuid",
+     *                     description="Unique identifier of the tenant",
+     *                     example="bbab2597-e1ae-466b-a071-83033841d2ed"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tenant_name",
+     *                     type="string",
+     *                     nullable=true,
+     *                     description="Name of the tenant (null if not available)",
+     *                     example=null
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift assignment not found",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Shift assignment not found"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized - Invalid or missing authentication token",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthorized"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - User does not have permission to access this shift",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="You do not have permission to access this shift"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="An error occurred while retrieving clock-out information"
+     *             )
+     *         )
+     *     ),
+     *     security={{"bearerAuth": {}}}
+     * )
+     */
+    public function getClockOutInfo(ShiftAssignment $assignment): JsonResponse
+    {
+        // Get shift sales summary
+        $summary = $assignment->salesSummary;
+
+        // Calculate expected cash using the service
+        $expectedCash = $this->salesSummaryService->calculateExpectedCash($assignment);
+
+        $data = [
+            'shift' => [
+                'id' => $assignment->id,
+                'shift_date' => $assignment->shift_date->toDateString(),
+                'actual_start' => $assignment->actual_start?->toISOString(),
+                'duration_so_far' => $assignment->actual_start
+                    ? abs(now()->diffInMinutes($assignment->actual_start))
+                    : 0,
+            ],
+
+            'cash_tracking' => [
+                'opening_cash' => (float) $assignment->opening_cash,
+                'expected_cash' => $expectedCash,
+                'variance_threshold' => config('shift.cash_variance_threshold', 100),
+            ],
+
+            'sales_summary' => $summary ? [
+                'total_transactions' => $summary->total_transactions,
+                'total_sales_amount' => (float) $summary->total_sales_amount,
+                'total_cash_sales' => (float) $summary->total_cash_sales,
+                'total_card_sales' => (float) $summary->total_card_sales,
+                'total_mpesa_sales' => (float) $summary->total_mpesa_sales,
+                'total_credit_sales' => (float) $summary->total_credit_sales,
+            ] : null,
+
+            'instructions' => [
+                'step_1' => "Expected amount is KES " . number_format($expectedCash, 2),
+                'step_2' => 'Enter the actual amount you counted',
+                'step_3' => 'If variance >= KES 100, explain the difference',
+            ],
+        ];
+
+        return ApiResponse::success(
+            'Clock out information retrieved successfully',
+            $data
         );
     }
 }

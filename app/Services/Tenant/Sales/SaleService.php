@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Sales;
 
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\PaymentStatus;
+use App\Enums\Tenant\ShiftStatus;
 use App\Events\Tenant\SaleCompleted;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
@@ -12,6 +13,7 @@ use App\Models\Tenant\PromotionUsage;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SalePayment;
+use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Sales\CreditService;
 use App\Services\Tenant\Customer\CustomerService;
@@ -46,6 +48,18 @@ class SaleService
 
         return Customer::where('phone', $normalizedPhone)
             ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Get active shift assignment for a user at a specific store
+     */
+    public function getActiveShiftForUser(int $userId, int $storeId): ?ShiftAssignment
+    {
+        return ShiftAssignment::where('user_id', $userId)
+            ->where('store_id', $storeId)
+            ->where('status', ShiftStatus::IN_PROGRESS)
+            ->whereDate('shift_date', today())
             ->first();
     }
 
@@ -85,9 +99,22 @@ class SaleService
             $paymentInfo = $this->determinePaymentInfo($data['payments'], $calculations);
 
             // STEP 8: Create Sale record
+            $activeShift = $this->getActiveShiftForUser(
+                Auth::id(),
+                $data['store_id']
+            );
+
+            $actualLoyaltyPointsEarned = $this->loyaltyService->isEnabled() && $data['customer_id']
+                ? $this->loyaltyService->calculatePointsEarned(
+                    $paymentInfo['amount_paid'],
+                    $data['customer_id']
+                )
+                : 0;
+
             $sale = Sale::create([
                 'sale_number' => $saleNumber,
                 'store_id' => $data['store_id'],
+                'shift_assignment_id' => $activeShift?->id,
                 'customer_id' => $data['customer_id'] ?? null,
                 'sale_date' => now(),
                 'subtotal' => $calculations['subtotal_after_promotions'],
@@ -100,7 +127,7 @@ class SaleService
                 'payment_method' => $paymentInfo['method'],
                 'payment_reference' => $paymentInfo['reference'] ?? null,
                 'coupon_id' => $calculations['coupon_data']->id ?? null,
-                'loyalty_points_earned' => $calculations['loyalty_points_earned'],
+                'loyalty_points_earned' => $actualLoyaltyPointsEarned,
                 'loyalty_points_redeemed' => $calculations['loyalty_points_to_redeem'],
                 'served_by' => Auth::id(),
                 'notes' => $data['notes'] ?? null,
@@ -131,7 +158,7 @@ class SaleService
 
                 $this->loyaltyService->processSaleLoyalty(
                     $customer,
-                    $calculations['total_amount'],
+                    $paymentInfo['amount_paid'],
                     $calculations['loyalty_points_to_redeem'],
                     Sale::class,
                     $sale->id,
@@ -408,9 +435,9 @@ class SaleService
     {
         foreach ($payments as $payment) {
             // Skip credit "payment" as it's tracked separately
-            if ($payment['method'] === 'credit') {
-                continue;
-            }
+            // if ($payment['method'] === 'credit') {
+            //     continue;
+            // }
 
             SalePayment::create([
                 'sale_id' => $sale->id,

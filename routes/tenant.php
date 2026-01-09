@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
+use App\Http\Controllers\Api\Tenant\Sales\ShiftSalesSummaryController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAnalyticsController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAssignmentController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftController;
@@ -445,9 +446,17 @@ Route::prefix('v1/tenant')
             Route::post('/{assignment}/clock-in', [ShiftAssignmentController::class, 'clockIn']);
             Route::post('/{assignment}/clock-out', [ShiftAssignmentController::class, 'clockOut']);
             Route::post('/{assignment}/approve', [ShiftAssignmentController::class, 'approve']);
+            Route::get('/{assignment}/clock-out-info', [ShiftAssignmentController::class, 'getClockOutInfo']);
         });
         Route::get('/users/{userId}/shift-assignments', [ShiftAssignmentController::class, 'userAssignments']);
         Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments']);
+
+        // Shift Sales Summary Routes
+        Route::prefix('shifts/{shiftAssignment}')->group(function () {
+            Route::get('sales-summary', [ShiftSalesSummaryController::class, 'show']);
+            Route::post('recalculate-summary', [ShiftSalesSummaryController::class, 'recalculate']);
+            Route::get('cash-reconciliation', [ShiftSalesSummaryController::class, 'cashReconciliation']);
+        });
 
         // Shift Analytics
         Route::prefix('shift-analytics')->group(function () {
