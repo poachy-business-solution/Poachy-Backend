@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\Tenant\Budget\BudgetController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
+use App\Http\Controllers\Api\Tenant\Customer\CustomerCreditTransactionController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
+use App\Http\Controllers\Api\Tenant\Customer\LoyaltyTransactionController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseCategoryController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
@@ -487,6 +489,26 @@ Route::prefix('v1/tenant')
             Route::get('{sale}/receipt', [SaleController::class, 'generateReceipt']);
             Route::post('{sale}/email-receipt', [SaleController::class, 'emailReceipt']);
         });
+
+        // Loyalty Transactions
+        Route::prefix('loyalty-transactions')->group(function () {
+            Route::get('/', [LoyaltyTransactionController::class, 'index']);
+            Route::post('/award-manual', [LoyaltyTransactionController::class, 'awardManual']);
+            Route::get('/analytics/overview', [LoyaltyTransactionController::class, 'analytics'])->middleware('permission:loyalty-transactions');
+            Route::get('/{id}', [LoyaltyTransactionController::class, 'show'])->middleware('permission:loyalty-transactions');
+        });
+        Route::get('/customers/{customerId}/loyalty-transactions', [LoyaltyTransactionController::class, 'customerHistory']);
+
+        // Customer credits Routes
+        Route::prefix('credit-transactions')->group(function () {
+            Route::get('/', [CustomerCreditTransactionController::class, 'index']);
+            Route::post('/record-payment', [CustomerCreditTransactionController::class, 'recordPayment']);
+            Route::post('/record-adjustment', [CustomerCreditTransactionController::class, 'recordAdjustment']);
+            Route::post('/record-write-off', [CustomerCreditTransactionController::class, 'recordWriteOff']);
+            Route::get('/analytics/overview', [CustomerCreditTransactionController::class, 'analytics']);
+            Route::get('/{id}', [CustomerCreditTransactionController::class, 'show'])->middleware('permission:credit-management');
+        });
+        Route::get('/customers/{customerId}/credit-transactions', [CustomerCreditTransactionController::class, 'customerHistory']);
     });
 
 // Protected tenant routes requires authentication

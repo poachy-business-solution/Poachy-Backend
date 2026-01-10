@@ -85,20 +85,20 @@ class Customer extends Model
         return $this->hasOne(CustomerGroupMember::class)->latestOfMany();
     }
 
-    // public function loyaltyTransactions(): HasMany
-    // {
-    //     return $this->hasMany(LoyaltyTransaction::class);
-    // }
+    public function loyaltyTransactions(): HasMany
+    {
+        return $this->hasMany(LoyaltyTransaction::class);
+    }
 
-    // public function creditTransactions(): HasMany
-    // {
-    //     return $this->hasMany(CustomerCreditTransaction::class);
-    // }
+    public function creditTransactions(): HasMany
+    {
+        return $this->hasMany(CustomerCreditTransaction::class);
+    }
 
-    // public function sales(): HasMany
-    // {
-    //     return $this->hasMany(Sale::class);
-    // }
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
 
     // ============================================
     // ACCESSORS

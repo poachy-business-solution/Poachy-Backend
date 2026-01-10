@@ -349,4 +349,252 @@ class CreditService
             'grace_period_days' => $gracePeriodDays,
         ];
     }
+
+    /**
+     * Calculate summary statistics for transactions list
+     */
+    public function calculateSummary(array $filters): array
+    {
+        $query = CustomerCreditTransaction::query();
+
+        // Apply same filters as main query
+        if (!empty($filters['customer_id'])) {
+            $query->where('customer_id', $filters['customer_id']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $creditSales = (clone $query)->creditSales()->sum('amount');
+        $payments = abs((clone $query)->payments()->sum('amount'));
+        $writeOffs = abs((clone $query)->writeOffs()->sum('amount'));
+
+        $outstanding = Customer::where('current_debt', '>', 0)->sum('current_debt');
+        $uniqueCustomers = (clone $query)->distinct('customer_id')->count('customer_id');
+
+        $collectionRate = $creditSales > 0 ? ($payments / $creditSales) * 100 : 0;
+        $avgDebt = $uniqueCustomers > 0 ? $outstanding / $uniqueCustomers : 0;
+
+        return [
+            'total_credit_sales' => round($creditSales, 2),
+            'total_payments' => round($payments, 2),
+            'total_outstanding' => round($outstanding, 2),
+            'total_write_offs' => round($writeOffs, 2),
+            'unique_credit_customers' => $uniqueCustomers,
+            'avg_debt_per_customer' => round($avgDebt, 2),
+            'collection_rate' => round($collectionRate, 2),
+        ];
+    }
+
+    /**
+     * Calculate customer debt summary
+     */
+    public function calculateCustomerDebtSummary(int $customerId, Customer $customer): array
+    {
+        $creditSales = CustomerCreditTransaction::byCustomer($customerId)
+            ->creditSales()
+            ->sum('amount');
+
+        $payments = abs(CustomerCreditTransaction::byCustomer($customerId)
+            ->payments()
+            ->sum('amount'));
+
+        $adjustments = CustomerCreditTransaction::byCustomer($customerId)
+            ->adjustments()
+            ->sum('amount');
+
+        $availableCredit = max(0, $customer->credit_limit - $customer->current_debt);
+        $creditUtilization = $customer->credit_limit > 0
+            ? ($customer->current_debt / $customer->credit_limit) * 100
+            : 0;
+
+        return [
+            'total_credit_sales' => round($creditSales, 2),
+            'total_payments' => round($payments, 2),
+            'total_adjustments' => round($adjustments, 2),
+            'current_debt' => round($customer->current_debt, 2),
+            'credit_limit' => round($customer->credit_limit, 2),
+            'available_credit' => round($availableCredit, 2),
+            'credit_utilization' => round($creditUtilization, 2),
+        ];
+    }
+
+    /**
+     * Get overall credit program metrics
+     */
+    public function getOverallMetrics(): array
+    {
+        $totalCustomers = Customer::whereHas('creditTransactions')->count();
+        $activeCustomers = Customer::where('current_debt', '>', 0)->count();
+
+        $issued = CustomerCreditTransaction::creditSales()->sum('amount');
+        $payments = abs(CustomerCreditTransaction::payments()->sum('amount'));
+        $outstanding = Customer::sum('current_debt');
+        $writeOffs = abs(CustomerCreditTransaction::writeOffs()->sum('amount'));
+
+        $collectionRate = $issued > 0 ? ($payments / $issued) * 100 : 0;
+        $avgDebt = $activeCustomers > 0 ? $outstanding / $activeCustomers : 0;
+
+        return [
+            'total_credit_customers' => $totalCustomers,
+            'active_credit_customers' => $activeCustomers,
+            'total_credit_issued' => round($issued, 2),
+            'total_payments_received' => round($payments, 2),
+            'total_outstanding_debt' => round($outstanding, 2),
+            'total_write_offs' => round($writeOffs, 2),
+            'collection_rate' => round($collectionRate, 2),
+            'avg_debt_per_customer' => round($avgDebt, 2),
+        ];
+    }
+
+    /**
+     * Get period-specific metrics
+     */
+    public function getPeriodMetrics(?string $dateFrom, ?string $dateTo): array
+    {
+        $query = CustomerCreditTransaction::query();
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $creditSales = (clone $query)->creditSales()->sum('amount');
+        $payments = abs((clone $query)->payments()->sum('amount'));
+        $writeOffs = abs((clone $query)->writeOffs()->sum('amount'));
+
+        // New credit customers in period
+        $newCustomers = (clone $query)
+            ->creditSales()
+            ->whereHas('customer', function ($q) use ($dateFrom) {
+                if ($dateFrom) {
+                    $q->whereDate('created_at', '>=', $dateFrom);
+                }
+            })
+            ->distinct('customer_id')
+            ->count('customer_id');
+
+        // Customers who made payments in period
+        $customersWhoPaid = (clone $query)
+            ->payments()
+            ->distinct('customer_id')
+            ->count('customer_id');
+
+        return [
+            'credit_sales' => round($creditSales, 2),
+            'payments_received' => round($payments, 2),
+            'write_offs' => round($writeOffs, 2),
+            'new_credit_customers' => $newCustomers,
+            'customers_who_paid' => $customersWhoPaid,
+        ];
+    }
+
+    /**
+     * Get risk analysis
+     */
+    public function getRiskAnalysis(): array
+    {
+        $customers = Customer::where('current_debt', '>', 0)
+            ->select('id', 'current_debt', 'credit_limit')
+            ->get();
+
+        $highRisk = 0;
+        $mediumRisk = 0;
+        $lowRisk = 0;
+        $overLimit = 0;
+
+        foreach ($customers as $customer) {
+            if ($customer->current_debt > $customer->credit_limit) {
+                $overLimit++;
+                $highRisk++;
+            } else {
+                $utilization = $customer->credit_limit > 0
+                    ? ($customer->current_debt / $customer->credit_limit) * 100
+                    : 0;
+
+                if ($utilization >= 80) {
+                    $highRisk++;
+                } elseif ($utilization >= 50) {
+                    $mediumRisk++;
+                } else {
+                    $lowRisk++;
+                }
+            }
+        }
+
+        return [
+            'high_risk_customers' => $highRisk,
+            'medium_risk_customers' => $mediumRisk,
+            'low_risk_customers' => $lowRisk,
+            'customers_over_limit' => $overLimit,
+        ];
+    }
+
+    /**
+     * Get top debtors
+     */
+    public function getTopDebtors(int $limit = 10): array
+    {
+        return Customer::where('current_debt', '>', 0)
+            ->select('id', 'name', 'phone', 'current_debt', 'credit_limit')
+            ->orderByDesc('current_debt')
+            ->limit($limit)
+            ->get()
+            ->map(function ($customer) {
+                $utilization = $customer->credit_limit > 0
+                    ? ($customer->current_debt / $customer->credit_limit) * 100
+                    : 0;
+
+                return [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->name,
+                    'customer_phone' => $customer->phone,
+                    'current_debt' => round($customer->current_debt, 2),
+                    'credit_limit' => round($customer->credit_limit, 2),
+                    'credit_utilization' => round($utilization, 2),
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * Get best payers
+     */
+    public function getBestPayers(?string $dateFrom, ?string $dateTo, int $limit = 10): array
+    {
+        $query = CustomerCreditTransaction::query()
+            ->select('customer_id', DB::raw('ABS(SUM(amount)) as total_paid'))
+            ->payments()
+            ->groupBy('customer_id')
+            ->orderByDesc('total_paid')
+            ->limit($limit);
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        return $query->with('customer:id,name,phone')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'customer_id' => $item->customer_id,
+                    'customer_name' => $item->customer->name ?? 'Unknown',
+                    'customer_phone' => $item->customer->phone ?? 'N/A',
+                    'total_paid' => round($item->total_paid, 2),
+                ];
+            })
+            ->toArray();
+    }
 }

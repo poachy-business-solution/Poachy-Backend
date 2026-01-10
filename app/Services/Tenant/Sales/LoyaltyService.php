@@ -97,7 +97,7 @@ class LoyaltyService
     public function awardPoints(
         Customer $customer,
         float $points,
-        string $referenceType,
+        ?string $referenceType = null,
         int $referenceId,
         ?string $description = null
     ): LoyaltyTransaction {
@@ -107,7 +107,7 @@ class LoyaltyService
 
         return DB::transaction(function () use ($customer, $points, $referenceType, $referenceId, $description) {
             // Calculate expiry date
-            $expiryDays = TenantConfiguration::get('loyalty_points_expiry_days', 365);
+            $expiryDays = (int) TenantConfiguration::get('loyalty_points_expiry_days', 365);
             $expiryDate = now()->addDays($expiryDays);
 
             // Create transaction
@@ -319,5 +319,241 @@ class LoyaltyService
             ->whereBetween('expires_at', [now(), $thresholdDate])
             ->where('points', '>', 0)
             ->sum('points');
+    }
+
+    /**
+     * Calculate summary statistics for transactions list
+     */
+    public function calculateSummary(array $filters): array
+    {
+        $query = LoyaltyTransaction::query();
+
+        // Apply same filters as main query
+        if (!empty($filters['customer_id'])) {
+            $query->where('customer_id', $filters['customer_id']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $earned = (clone $query)->earned()->sum('points');
+        $redeemed = abs((clone $query)->redeemed()->sum('points'));
+        $expired = abs((clone $query)->expired()->sum('points'));
+
+        $uniqueCustomers = (clone $query)->distinct('customer_id')->count('customer_id');
+
+        $redemptionRate = $earned > 0 ? ($redeemed / $earned) * 100 : 0;
+
+        $pointsExpiringSoon = LoyaltyTransaction::expiringSoon(30)
+            ->earned()
+            ->sum('points');
+
+        return [
+            'total_points_earned' => round($earned, 2),
+            'total_points_redeemed' => round($redeemed, 2),
+            'total_points_expired' => round($expired, 2),
+            'net_points_outstanding' => round($earned - $redeemed - $expired, 2),
+            'unique_customers' => $uniqueCustomers,
+            'avg_points_per_customer' => $uniqueCustomers > 0 ? round(($earned - $redeemed - $expired) / $uniqueCustomers, 2) : 0,
+            'redemption_rate' => round($redemptionRate, 2),
+            'points_expiring_soon' => round($pointsExpiringSoon, 2),
+        ];
+    }
+
+    /**
+     * Calculate customer balance summary
+     */
+    public function calculateCustomerBalanceSummary(int $customerId): array
+    {
+        $earned = LoyaltyTransaction::byCustomer($customerId)
+            ->earned()
+            ->sum('points');
+
+        $redeemed = abs(LoyaltyTransaction::byCustomer($customerId)
+            ->redeemed()
+            ->sum('points'));
+
+        $expired = abs(LoyaltyTransaction::byCustomer($customerId)
+            ->expired()
+            ->sum('points'));
+
+        $expiringSoon = LoyaltyTransaction::byCustomer($customerId)
+            ->expiringSoon(30)
+            ->earned()
+            ->sum('points');
+
+        return [
+            'total_earned' => round($earned, 2),
+            'total_redeemed' => round($redeemed, 2),
+            'total_expired' => round($expired, 2),
+            'current_balance' => round($earned - $redeemed - $expired, 2),
+            'points_expiring_soon' => round($expiringSoon, 2),
+        ];
+    }
+
+    /**
+     * Get overall loyalty program metrics
+     */
+    public function getOverallMetrics(): array
+    {
+        $totalMembers = Customer::where('loyalty_points', '>', 0)
+            ->orWhereHas('loyaltyTransactions')
+            ->count();
+
+        $activeMembers = Customer::where('loyalty_points', '>', 0)->count();
+
+        $issued = LoyaltyTransaction::earned()->sum('points');
+        $redeemed = abs(LoyaltyTransaction::redeemed()->sum('points'));
+        $expired = abs(LoyaltyTransaction::expired()->sum('points'));
+        $outstanding = Customer::sum('loyalty_points');
+
+        $redemptionRate = $issued > 0 ? ($redeemed / $issued) * 100 : 0;
+        $avgPerMember = $activeMembers > 0 ? $outstanding / $activeMembers : 0;
+
+        return [
+            'total_members' => $totalMembers,
+            'active_members' => $activeMembers,
+            'total_points_issued' => round($issued, 2),
+            'total_points_redeemed' => round($redeemed, 2),
+            'total_points_expired' => round($expired, 2),
+            'outstanding_points' => round($outstanding, 2),
+            'redemption_rate' => round($redemptionRate, 2),
+            'avg_points_per_member' => round($avgPerMember, 2),
+        ];
+    }
+
+    /**
+     * Get period-specific metrics
+     */
+    public function getPeriodMetrics(?string $dateFrom, ?string $dateTo): array
+    {
+        $query = LoyaltyTransaction::query();
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $earned = (clone $query)->earned()->sum('points');
+        $redeemed = abs((clone $query)->redeemed()->sum('points'));
+        $expired = abs((clone $query)->expired()->sum('points'));
+
+        // New members who earned points in period
+        $newMembers = (clone $query)
+            ->earned()
+            ->whereHas('customer', function ($q) use ($dateFrom) {
+                if ($dateFrom) {
+                    $q->whereDate('created_at', '>=', $dateFrom);
+                }
+            })
+            ->distinct('customer_id')
+            ->count('customer_id');
+
+        // Active redeemers in period
+        $activeRedeemers = (clone $query)
+            ->redeemed()
+            ->distinct('customer_id')
+            ->count('customer_id');
+
+        return [
+            'points_earned' => round($earned, 2),
+            'points_redeemed' => round($redeemed, 2),
+            'points_expired' => round($expired, 2),
+            'new_members' => $newMembers,
+            'active_redeemers' => $activeRedeemers,
+        ];
+    }
+
+    /**
+     * Get expiry analysis
+     */
+    public function getExpiryAnalysis(): array
+    {
+        return [
+            'expiring_within_7_days' => round(
+                LoyaltyTransaction::expiringSoon(7)->earned()->sum('points'),
+                2
+            ),
+            'expiring_within_30_days' => round(
+                LoyaltyTransaction::expiringSoon(30)->earned()->sum('points'),
+                2
+            ),
+            'expiring_within_90_days' => round(
+                LoyaltyTransaction::expiringSoon(90)->earned()->sum('points'),
+                2
+            ),
+        ];
+    }
+
+    /**
+     * Get top earners
+     */
+    public function getTopEarners(?string $dateFrom, ?string $dateTo, int $limit = 10): array
+    {
+        $query = LoyaltyTransaction::query()
+            ->select('customer_id', DB::raw('SUM(points) as total_points'))
+            ->earned()
+            ->groupBy('customer_id')
+            ->orderByDesc('total_points')
+            ->limit($limit);
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        return $query->with('customer:id,name,phone')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'customer_id' => $item->customer_id,
+                    'customer_name' => $item->customer->name ?? 'Unknown',
+                    'points_earned' => round($item->total_points, 2),
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * Get top redeemers
+     */
+    public function getTopRedeemers(?string $dateFrom, ?string $dateTo, int $limit = 10): array
+    {
+        $query = LoyaltyTransaction::query()
+            ->select('customer_id', DB::raw('ABS(SUM(points)) as total_points'))
+            ->redeemed()
+            ->groupBy('customer_id')
+            ->orderByDesc('total_points')
+            ->limit($limit);
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        return $query->with('customer:id,name,phone')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'customer_id' => $item->customer_id,
+                    'customer_name' => $item->customer->name ?? 'Unknown',
+                    'points_redeemed' => round($item->total_points, 2),
+                ];
+            })
+            ->toArray();
     }
 }

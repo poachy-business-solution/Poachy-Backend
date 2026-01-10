@@ -39,6 +39,8 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             // Customer Management
             'manage-customers',
             'view-customers',
+            'loyalty-transactions',
+            'credit-management',
 
             // Expense Management
             'manage-expenses',
@@ -107,6 +109,8 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'process-refunds',
             'apply-discounts',
             'manage-customers',
+            'loyalty-transactions',
+            'credit-management',
             'view-customers',
             'manage-expenses',
             'view-expenses',
