@@ -73,6 +73,10 @@ class Supplier extends Model
         return $this->hasMany(ProductBatch::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
 
     // Helper & Attribute Methods
 

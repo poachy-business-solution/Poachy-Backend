@@ -70,6 +70,11 @@ class PurchaseOrder extends Model
         return $this->hasMany(ProductBatch::class, 'purchase_order_id');
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class, 'purchase_order_id');
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

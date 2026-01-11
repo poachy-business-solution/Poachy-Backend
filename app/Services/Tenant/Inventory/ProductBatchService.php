@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Inventory;
 
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\PurchaseOrder;
+use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ class ProductBatchService
      * 3. Update inventory
      * 4. Update PO item quantities
      * 5. Update PO status
+     * 6. Increment supplier total_orders (on first full receipt)
      *
      * @param int $purchaseOrderId
      * @param array $receivedItems Format: ['item_id' => ['quantity' => X, 'manufacture_date' => Y, 'expiry_date' => Z]]
@@ -39,6 +41,9 @@ class ProductBatchService
                     "Purchase order cannot be received. Current status: {$po->status->label()}"
                 );
             }
+
+            // Track if this is the first receipt for this PO
+            $wasNeverReceived = $po->items->every(fn($item) => $item->quantity_received == 0);
 
             $createdBatches = collect();
 
@@ -95,7 +100,14 @@ class ProductBatchService
             }
 
             // Update PO status based on completion
+            $oldPoStatus = $po->status;
             $this->updatePurchaseOrderStatus($po);
+            $newPoStatus = $po->fresh()->status;
+
+            // Increment supplier total_orders if PO is now fully received for the first time
+            if ($wasNeverReceived && $newPoStatus->value === 'received') {
+                $this->incrementSupplierTotalOrders($po);
+            }
 
             Log::info('Goods received from purchase order', [
                 'po_id' => $po->id,
@@ -280,6 +292,32 @@ class ProductBatchService
                 'pending_items' => $pendingItems,
             ]);
         }
+    }
+
+    /**
+     * Increment supplier's total_orders when PO is fully received
+     *
+     * This tracks the number of successfully completed orders from this supplier.
+     * Only increments when ALL items in the PO are fully received.
+     *
+     * @param PurchaseOrder $po
+     * @return void
+     */
+    private function incrementSupplierTotalOrders(PurchaseOrder $po): void
+    {
+        $supplier = Supplier::lockForUpdate()->findOrFail($po->supplier_id);
+
+        $supplier->increment('total_orders');
+
+        Log::info('Supplier total_orders incremented', [
+            'supplier_id' => $supplier->id,
+            'supplier_name' => $supplier->name,
+            'new_total_orders' => $supplier->fresh()->total_orders,
+            'po_id' => $po->id,
+            'po_number' => $po->po_number,
+            'trigger' => 'purchase_order_fully_received',
+            'tenant_id' => tenant()->id ?? 'system',
+        ]);
     }
 
     /**

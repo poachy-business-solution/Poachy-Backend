@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Supplier;
 
+use App\Enums\Tenant\PurchaseOrderStatus;
 use App\Models\Tenant\Supplier;
 use App\Repositories\Tenant\SupplierRepository;
 use Illuminate\Database\Eloquent\Collection;
@@ -130,6 +131,96 @@ class SupplierService
                 'message' => $newStatus ? 'Supplier activated successfully' : 'Supplier deactivated successfully'
             ];
         });
+    }
+
+    /**
+     * Get comprehensive financial summary for a supplier
+     * 
+     * @param int $supplierId
+     * @return array
+     */
+    public function getSupplierFinancialSummary(int $supplierId): array
+    {
+        $supplier = Supplier::with(['purchaseOrders', 'payments'])->findOrFail($supplierId);
+
+        // Total purchase orders (only counted statuses)
+        $totalPurchases = $supplier->purchaseOrders()
+            ->whereIn('status', [
+                PurchaseOrderStatus::SENT,
+                PurchaseOrderStatus::CONFIRMED,
+                PurchaseOrderStatus::PARTIALLY_RECEIVED,
+                PurchaseOrderStatus::RECEIVED,
+            ])
+            ->sum('total_amount');
+
+        // Total payments made
+        $totalPaid = $supplier->payments()->sum('amount');
+
+        // Outstanding balance (from supplier record - this is the source of truth)
+        $outstandingBalance = $supplier->outstanding_balance;
+
+        // Calculate what outstanding SHOULD be (for verification)
+        $calculatedOutstanding = $totalPurchases - $totalPaid;
+
+        // Check for balance mismatch (with tolerance for floating point)
+        $balanceMismatch = abs($calculatedOutstanding - $outstandingBalance) > 0.01;
+
+        // Credit limit utilization
+        $creditUtilization = $supplier->credit_limit > 0
+            ? ($outstandingBalance / $supplier->credit_limit) * 100
+            : 0;
+
+        // Payment statistics
+        $paymentCount = $supplier->payments()->count();
+        $lastPayment = $supplier->payments()->latest('payment_date')->first();
+
+        // Purchase order statistics
+        $poCount = $supplier->purchaseOrders()->count();
+        $activePOCount = $supplier->purchaseOrders()
+            ->whereIn('status', [
+                PurchaseOrderStatus::SENT,
+                PurchaseOrderStatus::CONFIRMED,
+                PurchaseOrderStatus::PARTIALLY_RECEIVED,
+            ])
+            ->count();
+
+        return [
+            'supplier_id' => $supplierId,
+            'supplier_name' => $supplier->name,
+            'supplier_type' => $supplier->supplier_type->value,
+            'is_active' => $supplier->is_active,
+
+            // Financial metrics
+            'total_purchases' => round($totalPurchases, 2),
+            'total_paid' => round($totalPaid, 2),
+            'outstanding_balance' => round($outstandingBalance, 2),
+            'calculated_outstanding' => round($calculatedOutstanding, 2),
+            'balance_mismatch' => $balanceMismatch,
+
+            // Credit information
+            'credit_limit' => round($supplier->credit_limit, 2),
+            'credit_available' => round(max(0, $supplier->credit_limit - $outstandingBalance), 2),
+            'credit_utilization_percent' => round($creditUtilization, 2),
+
+            // Statistics
+            'payment_count' => $paymentCount,
+            'purchase_order_count' => $poCount,
+            'active_purchase_orders' => $activePOCount,
+
+            // Last payment info
+            'last_payment' => $lastPayment ? [
+                'payment_number' => $lastPayment->payment_number,
+                'amount' => round($lastPayment->amount, 2),
+                'payment_date' => $lastPayment->payment_date->format('Y-m-d'),
+                'payment_method' => $lastPayment->payment_method->label(),
+            ] : null,
+
+            // Ratings
+            'supplier_rating' => round($supplier->rating, 2),
+            'total_orders' => $supplier->total_orders,
+
+            'currency' => 'KES',
+        ];
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Enums\Tenant\PurchaseOrderStatus;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\StoreProduct;
+use App\Models\Tenant\Supplier;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,9 @@ class PurchaseOrderService
             foreach ($data['items'] as $itemData) {
                 $this->addPurchaseOrderItem($po, $itemData);
             }
+
+            // Update supplier outstanding balance (increment)
+            $this->updateSupplierOutstandingBalance($po, 'add');
 
             Log::info('Purchase order created', [
                 'po_id' => $po->id,
@@ -169,6 +173,9 @@ class PurchaseOrderService
                 throw new \RuntimeException("Only draft purchase orders can be edited. Current status: {$po->status->label()}");
             }
 
+            // Store old total for balance adjustment
+            $oldTotalAmount = $po->total_amount;
+
             // Update header
             $po->update([
                 'supplier_id' => $data['supplier_id'] ?? $po->supplier_id,
@@ -190,6 +197,14 @@ class PurchaseOrderService
 
                 // Recalculate totals
                 $this->recalculateTotals($po);
+            }
+
+            // Adjust supplier balance if total changed
+            $po->refresh();
+            $newTotalAmount = $po->total_amount;
+
+            if ($oldTotalAmount != $newTotalAmount) {
+                $this->adjustSupplierBalanceForPOUpdate($po, $oldTotalAmount, $newTotalAmount);
             }
 
             Log::info('Purchase order updated', [
@@ -248,6 +263,9 @@ class PurchaseOrderService
                 'status' => PurchaseOrderStatus::CANCELLED,
             ]);
 
+            // Reverse supplier outstanding balance
+            $this->updateSupplierOutstandingBalance($po, 'subtract');
+
             Log::warning('Purchase order cancelled', [
                 'po_id' => $poId,
                 'po_number' => $po->po_number,
@@ -283,6 +301,67 @@ class PurchaseOrderService
         return $query->with(['supplier', 'store', 'items.product'])
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Update supplier outstanding balance when PO is created or cancelled
+     *
+     * @param PurchaseOrder $po
+     * @param string $operation 'add' or 'subtract'
+     * @return void
+     */
+    private function updateSupplierOutstandingBalance(PurchaseOrder $po, string $operation): void
+    {
+        $supplier = Supplier::lockForUpdate()->findOrFail($po->supplier_id);
+
+        if ($operation === 'add') {
+            $supplier->increment('outstanding_balance', $po->total_amount);
+        } else {
+            $supplier->decrement('outstanding_balance', $po->total_amount);
+        }
+
+        Log::info('Supplier outstanding balance updated', [
+            'supplier_id' => $supplier->id,
+            'supplier_name' => $supplier->name,
+            'operation' => $operation,
+            'amount' => $po->total_amount,
+            'new_balance' => $supplier->fresh()->outstanding_balance,
+            'po_id' => $po->id,
+            'po_number' => $po->po_number,
+            'tenant_id' => tenant()->id ?? 'system',
+        ]);
+    }
+
+    /**
+     * Adjust supplier balance when PO is updated (draft only)
+     *
+     * @param PurchaseOrder $po
+     * @param float $oldTotal
+     * @param float $newTotal
+     * @return void
+     */
+    private function adjustSupplierBalanceForPOUpdate(PurchaseOrder $po, float $oldTotal, float $newTotal): void
+    {
+        $supplier = Supplier::lockForUpdate()->findOrFail($po->supplier_id);
+
+        $difference = $newTotal - $oldTotal;
+
+        if ($difference > 0) {
+            // New total is higher, increment balance
+            $supplier->increment('outstanding_balance', $difference);
+        } else {
+            // New total is lower, decrement balance
+            $supplier->decrement('outstanding_balance', abs($difference));
+        }
+
+        Log::info('Supplier outstanding balance adjusted for PO update', [
+            'supplier_id' => $supplier->id,
+            'old_po_total' => $oldTotal,
+            'new_po_total' => $newTotal,
+            'difference' => $difference,
+            'new_balance' => $supplier->fresh()->outstanding_balance,
+            'po_id' => $po->id,
+        ]);
     }
 
     /**

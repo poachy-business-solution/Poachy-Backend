@@ -42,4 +42,35 @@ enum PurchaseOrderStatus: string
     {
         return in_array($this, [self::DRAFT, self::SENT, self::CONFIRMED]);
     }
+
+    /**
+     * Check if PO can receive payments
+     * 
+     * Payments can be made once PO is sent and goods are being/have been received
+     */
+    public function canReceivePayment(): bool
+    {
+        return in_array($this, [
+            self::SENT,
+            self::CONFIRMED,
+            self::PARTIALLY_RECEIVED,
+            self::RECEIVED,
+        ]);
+    }
+
+    /**
+     * Get all possible values
+     */
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+
+    /**
+     * Get all labels
+     */
+    public static function labels(): array
+    {
+        return array_map(fn($case) => $case->label(), self::cases());
+    }
 }

@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\Tenant\Shift\ShiftSwapController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Store\StoreProductController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
+use App\Http\Controllers\Api\Tenant\Supplier\SupplierPaymentController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
@@ -509,6 +510,16 @@ Route::prefix('v1/tenant')
             Route::get('/{id}', [CustomerCreditTransactionController::class, 'show'])->middleware('permission:credit-management');
         });
         Route::get('/customers/{customerId}/credit-transactions', [CustomerCreditTransactionController::class, 'customerHistory']);
+
+        // Supplier Payment routes
+        Route::prefix('supplier-payments')->group(function () {
+            Route::post('/', [SupplierPaymentController::class, 'store']);
+            Route::get('/', [SupplierPaymentController::class, 'index']);
+            Route::get('/{id}', [SupplierPaymentController::class, 'show']);
+        });
+        Route::get('suppliers/{supplierId}/payments', [SupplierPaymentController::class, 'supplierPayments']);
+        Route::get('suppliers/{supplierId}/payment-summary', [SupplierPaymentController::class, 'supplierPaymentSummary']);
+        Route::get('purchase-orders/{poId}/payments', [SupplierPaymentController::class, 'purchaseOrderPayments']);
     });
 
 // Protected tenant routes requires authentication
