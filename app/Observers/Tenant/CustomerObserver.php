@@ -39,6 +39,7 @@ class CustomerObserver
         $customer->total_visits = $customer->total_visits ?? 0;
         $customer->credit_limit = $customer->credit_limit ?? 0;
         $customer->current_debt = $customer->current_debt ?? 0;
+        $customer->accepts_marketing = $customer->accepts_marketing ?? false;
     }
 
     /**

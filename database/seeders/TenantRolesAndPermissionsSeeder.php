@@ -70,6 +70,18 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-coupons',
             'manage-promotions',
             'view-promotions',
+
+            // Stock Alert Permissions
+            'view-stock-alerts',
+            'resolve-stock-alerts',
+
+            // Expiry Alert Permissions
+            'view-expiry-alerts',
+            'resolve-expiry-alerts',
+
+            // Waste Permissions
+            'view-waste-records',
+            'manage-waste-records',
         ];
 
         foreach ($permissions as $permission) {
@@ -128,6 +140,12 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-promotions',
             'manage-supplier-payments',
             'view-supplier-payments',
+            'manage-waste-records',
+            'view-waste-records',
+            'view-stock-alerts',
+            'resolve-stock-alerts',
+            'view-expiry-alerts',
+            'resolve-expiry-alerts',
         ]);
 
         $this->command->info('✓ Created role: Manager (Store management)');
@@ -149,6 +167,9 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-coupons',
             'view-promotions',
             'view-supplier-payments',
+            'view-stock-alerts',
+            'view-expiry-alerts',
+            'view-waste-records',
         ]);
 
         $this->command->info('✓ Created role: Cashier (POS operations)');

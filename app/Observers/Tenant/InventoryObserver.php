@@ -4,12 +4,14 @@ namespace App\Observers\Tenant;
 
 use App\Models\Tenant\Inventory;
 use App\Services\Tenant\Inventory\InventoryService;
+use App\Services\Tenant\Inventory\StockAlertService;
 use Illuminate\Support\Facades\Log;
 
 class InventoryObserver
 {
     public function __construct(
-        private InventoryService $inventoryService
+        private InventoryService $inventoryService,
+        private StockAlertService $stockAlertService
     ) {}
 
     /**
@@ -21,6 +23,10 @@ class InventoryObserver
         try {
             // Clear inventory cache for this store
             $this->inventoryService->clearCache($inventory->store_id);
+
+            // Check and generate stock alerts (event-driven)
+            // This will create/update alerts or auto-resolve them
+            $this->stockAlertService->checkAndGenerateAlert($inventory);
         } catch (\Exception $e) {
             Log::error('Failed to clear inventory cache', [
                 'inventory_id' => $inventory->id,
@@ -37,6 +43,9 @@ class InventoryObserver
         try {
             // Clear cache when new inventory record created
             $this->inventoryService->clearCache($inventory->store_id);
+
+            // Check for stock alerts on new inventory
+            $this->stockAlertService->checkAndGenerateAlert($inventory);
         } catch (\Exception $e) {
             Log::error('Failed to process inventory creation', [
                 'inventory_id' => $inventory->id,

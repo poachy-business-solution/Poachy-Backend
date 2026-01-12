@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('batch_id')->constrained('product_batches')->onDelete('cascade');
             $table->string('alert_level'); // warning, urgent, expired
-
-            // WARNING: 30+ days, URGENT: <30 days, EXPIRED: past expiry
             $table->date('alert_date'); // When alert was generated
             $table->integer('days_until_expiry')->nullable(); // For quick reference
             $table->boolean('is_resolved')->default(false);
@@ -24,7 +22,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['batch_id', 'is_resolved']);
             $table->index(['alert_level', 'is_resolved']);
         });

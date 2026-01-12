@@ -20,6 +20,8 @@ class TenantDatabaseSeeder extends Seeder
 
             UnitsOfMeasureSeeder::class,
             UomConversionsSeeder::class,
+
+            TenantConfigurationSeeder::class,
         ]);
     }
 }

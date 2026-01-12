@@ -12,10 +12,13 @@ use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
 use App\Http\Controllers\Api\Tenant\Customer\LoyaltyTransactionController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseCategoryController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseController;
+use App\Http\Controllers\Api\Tenant\Inventory\ExpiryAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
+use App\Http\Controllers\Api\Tenant\Inventory\InventoryWasteController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
+use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
@@ -522,6 +525,47 @@ Route::prefix('v1/tenant')
         Route::get('suppliers/{supplierId}/payments', [SupplierPaymentController::class, 'supplierPayments']);
         Route::get('suppliers/{supplierId}/payment-summary', [SupplierPaymentController::class, 'supplierPaymentSummary']);
         Route::get('purchase-orders/{poId}/payments', [SupplierPaymentController::class, 'purchaseOrderPayments']);
+
+        // Stock Alerts
+        Route::prefix('stock-alerts')->group(function () {
+            Route::get('/', [StockAlertController::class, 'index']);
+            Route::get('/{id}', [StockAlertController::class, 'show']);
+            Route::post('/{id}/resolve', [StockAlertController::class, 'resolve']);
+        });
+
+        // Expiry Alerts
+        Route::prefix('expiry-alerts')->group(function () {
+            Route::get('/', [ExpiryAlertController::class, 'index']);
+            Route::get('/{id}', [ExpiryAlertController::class, 'show']);
+            Route::post('/{id}/resolve', [ExpiryAlertController::class, 'resolve']);
+        });
+
+        // Inventory Waste
+        Route::prefix('inventory-waste')->group(function () {
+            Route::get('/', [InventoryWasteController::class, 'index']);
+            Route::post('/', [InventoryWasteController::class, 'store']);
+            Route::get('/{id}', [InventoryWasteController::class, 'show']);
+            Route::patch('/{id}', [InventoryWasteController::class, 'update']);
+            Route::delete('/{id}', [InventoryWasteController::class, 'destroy']);
+            Route::post('/{id}/approve', [InventoryWasteController::class, 'approve']);
+            Route::post('/{id}/reject', [InventoryWasteController::class, 'reject']);
+        });
+
+        // Store-specific routes
+        Route::prefix('stores/{storeId}')->group(function () {
+            // Stock Alerts by Store
+            Route::get('/stock-alerts', [StockAlertController::class, 'byStore']);
+            Route::get('/stock-alerts/summary', [StockAlertController::class, 'summary']);
+            Route::get('/stock-alerts/dashboard', [StockAlertController::class, 'dashboard']);
+
+            // Expiry Alerts by Store
+            Route::get('/expiry-alerts', [ExpiryAlertController::class, 'byStore']);
+            Route::get('/expiry-alerts/summary', [ExpiryAlertController::class, 'summary']);
+            Route::get('/expiry-alerts/dashboard', [ExpiryAlertController::class, 'dashboard']);
+
+            // Waste Summary by Store
+            Route::get('/inventory-waste/summary', [InventoryWasteController::class, 'summary']);
+        });
     });
 
 // Protected tenant routes requires authentication
