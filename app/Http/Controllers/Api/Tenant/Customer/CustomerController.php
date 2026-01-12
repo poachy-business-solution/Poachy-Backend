@@ -1592,4 +1592,184 @@ class CustomerController extends Controller
             ['status' => $statusText]
         );
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/tenant/customers/marketing-eligible",
+     *     summary="Get marketing-eligible customers",
+     *     description="Retrieve a paginated list of customers who have opted in to receive marketing communications (accepts_marketing = true). This endpoint returns customers who can be contacted for promotional and marketing purposes, including their complete profile and purchase history.",
+     *     operationId="getMarketingEligibleCustomers",
+     *     tags={"Customers"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=50, example=50)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Marketing-eligible customers retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Marketing-eligible customers retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=14),
+     *                         @OA\Property(property="customer_number", type="string", example="CUST-2026-000002", description="Unique customer number"),
+     *                         @OA\Property(property="name", type="string", example="Jane Smith"),
+     *                         @OA\Property(property="email", type="string", nullable=true, example="janetest@example.com"),
+     *                         @OA\Property(property="phone", type="string", example="+254700001111"),
+     *                         @OA\Property(property="date_of_birth", type="string", format="date", nullable=true, example="1995-06-20"),
+     *                         @OA\Property(property="address", type="string", nullable=true, example="456 Oak Ave, Nairobi"),
+     *                         @OA\Property(
+     *                             property="customer_type",
+     *                             type="object",
+     *                             @OA\Property(property="value", type="string", example="walk_in", description="Customer type code"),
+     *                             @OA\Property(property="label", type="string", example="Walk-In Customer", description="Human-readable customer type label")
+     *                         ),
+     *                         @OA\Property(property="loyalty_points", type="number", format="float", example=0, description="Current loyalty points balance"),
+     *                         @OA\Property(property="total_lifetime_purchases", type="number", format="float", example=0, description="Total amount spent by customer"),
+     *                         @OA\Property(property="total_visits", type="integer", example=0, description="Total number of visits/purchases"),
+     *                         @OA\Property(property="credit_limit", type="number", format="float", nullable=true, example=3000, description="Customer's credit limit"),
+     *                         @OA\Property(property="current_debt", type="number", format="float", example=0, description="Current outstanding debt"),
+     *                         @OA\Property(property="available_credit", type="number", format="float", example=3000, description="Available credit remaining"),
+     *                         @OA\Property(property="is_active", type="boolean", example=true, description="Whether the customer account is active"),
+     *                         @OA\Property(property="accepts_marketing", type="boolean", example=true, description="Whether customer accepts marketing communications"),
+     *                         @OA\Property(property="registered_at", type="string", format="date-time", example="2026-01-11T18:35:34.000000Z", description="Customer registration date"),
+     *                         @OA\Property(
+     *                             property="preferred_store",
+     *                             type="object",
+     *                             nullable=true,
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Branch Store - Mombasa"),
+     *                             @OA\Property(property="code", type="string", example="STR-2025-74622")
+     *                         ),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-11T18:35:34.000000Z"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", example="2026-01-12T06:42:37.000000Z")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="pagination",
+     *                     type="object",
+     *                     @OA\Property(property="current_page", type="integer", example=1),
+     *                     @OA\Property(property="last_page", type="integer", example=1),
+     *                     @OA\Property(property="per_page", type="integer", example=50),
+     *                     @OA\Property(property="total", type="integer", example=1, description="Total number of marketing-eligible customers"),
+     *                     @OA\Property(property="from", type="integer", example=1),
+     *                     @OA\Property(property="to", type="integer", example=1)
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2026-01-12T06:43:19.713451Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="d8c83e2a-b687-48be-8adb-fbfc029a60aa"),
+     *                 @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - User does not have the right permissions"
+     *     )
+     * )*/
+    public function marketingEligible(Request $request): JsonResponse
+    {
+        $perPage = $request->input('per_page', 50);
+
+        $customers = $this->customerService->getMarketingEligibleCustomers(true, $perPage);
+
+        return ApiResponse::paginated(
+            CustomerResource::collection($customers),
+            'Marketing-eligible customers retrieved successfully'
+        );
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/tenant/customers/{id}/toggle-marketing",
+     *     summary="Toggle customer marketing preferences",
+     *     description="Toggle a customer's marketing communication preferences. This endpoint switches the accepts_marketing flag between true and false. When true, the customer has opted in to receive marketing communications. When false, the customer has opted out.",
+     *     operationId="toggleCustomerMarketing",
+     *     tags={"Customers"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Customer ID",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=14)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Marketing preference toggled successfully",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     description="Customer opted out of marketing",
+     *                     @OA\Property(property="success", type="boolean", example=true),
+     *                     @OA\Property(property="message", type="string", example="Customer has opted out of marketing communications"),
+     *                     @OA\Property(
+     *                         property="data",
+     *                         type="object",
+     *                         @OA\Property(property="accepts_marketing", type="boolean", example=false, description="Customer's new marketing preference status")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="meta",
+     *                         type="object",
+     *                         @OA\Property(property="timestamp", type="string", format="date-time", example="2026-01-12T06:42:08.745077Z"),
+     *                         @OA\Property(property="request_id", type="string", format="uuid", example="0c08e24f-35fc-4219-bee8-6dc271885c51"),
+     *                         @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *                     )
+     *                 ),
+     *                 @OA\Schema(
+     *                     description="Customer opted in to marketing",
+     *                     @OA\Property(property="success", type="boolean", example=true),
+     *                     @OA\Property(property="message", type="string", example="Customer has opted in to marketing communications"),
+     *                     @OA\Property(
+     *                         property="data",
+     *                         type="object",
+     *                         @OA\Property(property="accepts_marketing", type="boolean", example=true, description="Customer's new marketing preference status")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="meta",
+     *                         type="object",
+     *                         @OA\Property(property="timestamp", type="string", format="date-time", example="2026-01-12T06:42:37.094399Z"),
+     *                         @OA\Property(property="request_id", type="string", format="uuid", example="463234d9-c9b6-44f5-8bf3-10c54b0cce88"),
+     *                         @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *                     )
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - User does not have the right permissions"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Customer not found"
+     *     )
+     * )*/
+    public function toggleMarketingConsent(int $id): JsonResponse
+    {
+        $result = $this->customerService->toggleMarketingConsent($id);
+
+        return ApiResponse::success(
+            $result['message'],
+            [
+                'accepts_marketing' => $result['accepts_marketing'],
+            ]
+        );
+    }
 }

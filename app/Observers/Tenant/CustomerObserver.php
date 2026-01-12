@@ -2,6 +2,7 @@
 
 namespace App\Observers\Tenant;
 
+use App\Helpers\PhoneNumberNormalizer;
 use App\Models\Tenant\Customer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -18,6 +19,15 @@ class CustomerObserver
             $customer->customer_number = $this->generateCustomerNumber();
         }
 
+        // Normalize phone number (safety layer - should already be normalized from request)
+        if (!empty($customer->phone)) {
+            $normalizedPhone = PhoneNumberNormalizer::normalize($customer->phone);
+
+            if ($customer->phone !== $normalizedPhone) {
+                $customer->phone = $normalizedPhone;
+            }
+        }
+
         // Set registered_at timestamp
         if (empty($customer->registered_at)) {
             $customer->registered_at = now();
@@ -29,6 +39,21 @@ class CustomerObserver
         $customer->total_visits = $customer->total_visits ?? 0;
         $customer->credit_limit = $customer->credit_limit ?? 0;
         $customer->current_debt = $customer->current_debt ?? 0;
+    }
+
+    /**
+     * Handle the Customer "updating" event.
+     */
+    public function updating(Customer $customer): void
+    {
+        // Normalize phone number if it's being changed
+        if ($customer->isDirty('phone') && !empty($customer->phone)) {
+            $normalizedPhone = PhoneNumberNormalizer::normalize($customer->phone);
+
+            if ($customer->phone !== $normalizedPhone) {
+                $customer->phone = $normalizedPhone;
+            }
+        }
     }
 
     /**

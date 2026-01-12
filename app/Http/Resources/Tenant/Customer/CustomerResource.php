@@ -33,6 +33,7 @@ class CustomerResource extends JsonResource
             'current_debt' => (float) $this->current_debt,
             'available_credit' => (float) $this->available_credit,
             'is_active' => $this->is_active,
+            'accepts_marketing' => $this->accepts_marketing,
             'registered_at' => $this->registered_at?->toISOString(),
             'preferred_store' => $this->when(
                 $this->relationLoaded('preferredStore'),

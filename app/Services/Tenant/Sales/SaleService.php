@@ -104,12 +104,19 @@ class SaleService
                 $data['store_id']
             );
 
-            $actualLoyaltyPointsEarned = $this->loyaltyService->isEnabled() && $data['customer_id']
-                ? $this->loyaltyService->calculatePointsEarned(
-                    $paymentInfo['amount_paid'],
+            $actualLoyaltyPointsEarned = 0;
+            if ($this->loyaltyService->isEnabled() && $data['customer_id']) {
+                // Use the lesser of what they paid or what they owe
+                // This ensures:
+                // 1. Credit sales get points only on amount paid
+                // 2. Cash overpayment doesn't give extra points
+                $loyaltyEligibleAmount = min($paymentInfo['amount_paid'], $calculations['total_amount']);
+
+                $actualLoyaltyPointsEarned = $this->loyaltyService->calculatePointsEarned(
+                    $loyaltyEligibleAmount,
                     $data['customer_id']
-                )
-                : 0;
+                );
+            }
 
             $sale = Sale::create([
                 'sale_number' => $saleNumber,

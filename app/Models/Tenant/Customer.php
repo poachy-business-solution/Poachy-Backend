@@ -36,6 +36,7 @@ class Customer extends Model
         'credit_limit',
         'current_debt',
         'is_active',
+        'accepts_marketing',
         'registered_at',
     ];
 
@@ -48,6 +49,7 @@ class Customer extends Model
         'current_debt' => 'decimal:2',
         'is_active' => 'boolean',
         'registered_at' => 'datetime',
+        'accepts_marketing' => 'boolean',
     ];
 
     protected $hidden = [
@@ -153,6 +155,12 @@ class Customer extends Model
         return $query->orderByDesc('total_lifetime_purchases')->limit($limit);
     }
 
+    public function scopeAcceptsMarketing(Builder $query): Builder
+    {
+        return $query->where('accepts_marketing', true)
+            ->where('is_active', true);
+    }
+
     // ============================================
     // METHODS
     // ============================================
@@ -195,5 +203,13 @@ class Customer extends Model
     public function getActiveGroup(): ?CustomerGroup
     {
         return $this->groups()->first();
+    }
+
+    public function toggleMarketingConsent(): bool
+    {
+        $this->accepts_marketing = !$this->accepts_marketing;
+        $this->save();
+
+        return $this->accepts_marketing;
     }
 }

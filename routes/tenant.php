@@ -280,6 +280,7 @@ Route::prefix('v1/tenant')
         // Customer Management Routes
         Route::prefix('customers')->group(function () {
             Route::get('/search', [CustomerController::class, 'search']);
+            Route::get('marketing-eligible', [CustomerController::class, 'marketingEligible']);
             Route::get('/', [CustomerController::class, 'index']);
             Route::post('/', [CustomerController::class, 'store']);
             Route::get('/{customer}', [CustomerController::class, 'show']);
@@ -288,6 +289,7 @@ Route::prefix('v1/tenant')
             Route::post('/{customer}/restore', [CustomerController::class, 'restore']);
             Route::patch('/{customer}/upgrade-type', [CustomerController::class, 'upgradeType']);
             Route::patch('/{customer}/toggle-status', [CustomerController::class, 'toggleStatus']);
+            Route::patch('{customer}/toggle-marketing', [CustomerController::class, 'toggleMarketingConsent']);
         });
 
         // Customer Group Routes

@@ -228,6 +228,65 @@ class CustomerService
     }
 
     /**
+     * Get customers who accept marketing
+     *
+     * @param bool $paginate
+     * @param int $perPage
+     * @return Collection|LengthAwarePaginator
+     */
+    public function getMarketingEligibleCustomers(
+        bool $paginate = true,
+        int $perPage = 50
+    ): Collection|LengthAwarePaginator {
+        $query = Customer::acceptsMarketing()
+            ->with(['preferredStore'])
+            ->orderBy('name');
+
+        if ($paginate) {
+            return $query->paginate($perPage);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Get customer by phone number
+     *
+     * @param string $phone
+     * @return Customer|null
+     */
+    public function getCustomerByPhone(string $phone): ?Customer
+    {
+        return Customer::where('phone', $phone)->first();
+    }
+
+    /**
+     * Toggle customer's marketing consent
+     *
+     * @param int $customerId
+     * @return array ['accepts_marketing' => bool, 'message' => string]
+     */
+    public function toggleMarketingConsent(int $customerId): array
+    {
+        return DB::transaction(function () use ($customerId) {
+            $customer = Customer::findOrFail($customerId);
+
+            $previousStatus = $customer->accepts_marketing;
+            $newStatus = $customer->toggleMarketingConsent();
+
+            // Clear cache
+            $this->clearCustomerCache();
+
+            return [
+                'accepts_marketing' => $newStatus,
+                'message' => $newStatus
+                    ? 'Customer has opted in to marketing communications'
+                    : 'Customer has opted out of marketing communications',
+            ];
+        });
+    }
+
+    /**
      * Get customer statistics
      */
     public function getCustomerStats(Customer $customer): array

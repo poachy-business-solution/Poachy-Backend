@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tenant\Customer;
 
 use App\Enums\Tenant\CustomerType;
+use App\Helpers\PhoneNumberNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -39,9 +40,25 @@ class UpdateCustomerRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('customers', 'phone')
-                    ->ignore($customerId)
-                    ->whereNull('deleted_at'),
+                function ($attribute, $value, $fail) {
+                    // Validate if it's a valid Kenyan phone number after normalization
+                    if (!PhoneNumberNormalizer::isValidKenyanNumber($value)) {
+                        $fail('The phone number must be a valid Kenyan phone number.');
+                    }
+                },
+                // Check uniqueness against normalized phone numbers
+                function ($attribute, $value, $fail) use ($customerId) {
+                    $normalized = PhoneNumberNormalizer::normalize($value);
+
+                    $exists = \App\Models\Tenant\Customer::whereNull('deleted_at')
+                        ->where('phone', $normalized)
+                        ->where('id', '!=', $customerId)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('This phone number is already registered.');
+                    }
+                },
             ],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
             'address' => ['nullable', 'string', 'max:500'],
@@ -75,11 +92,28 @@ class UpdateCustomerRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Normalize phone number if provided
+        // Normalize phone number to international format
         if ($this->has('phone')) {
+            $normalized = PhoneNumberNormalizer::normalize($this->phone);
+
             $this->merge([
-                'phone' => preg_replace('/[^0-9+]/', '', $this->phone),
+                'phone' => $normalized,
             ]);
         }
+    }
+
+    /**
+     * Get validated data with normalized phone
+     */
+    public function validated($key = null, $default = null): array
+    {
+        $validated = parent::validated($key, $default);
+
+        // Ensure phone is normalized (double-check)
+        if (isset($validated['phone'])) {
+            $validated['phone'] = PhoneNumberNormalizer::normalize($validated['phone']);
+        }
+
+        return $validated;
     }
 }
