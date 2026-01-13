@@ -2,6 +2,8 @@
 
 namespace App\Observers\Tenant;
 
+use App\Jobs\Tenant\UpdateDailyAggregatesJob;
+use App\Jobs\Tenant\UpdateUniqueCustomerCountJob;
 use App\Models\Tenant\Sale;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -29,9 +31,35 @@ class SaleObserver
      */
     public function created(Sale $sale): void
     {
-        // Create audit log
-        $this->createAuditLog($sale, 'created', null, $sale->toArray());
+        try {
+            $tenantId = tenant()->id;
+
+            // Dispatch job to update aggregates
+            UpdateDailyAggregatesJob::dispatch($tenantId, $sale->id);
+
+            // Dispatch job to update unique customer count
+            $aggregateDate = $sale->sale_date->toDateString();
+            UpdateUniqueCustomerCountJob::dispatch($tenantId, $aggregateDate, $sale->store_id)
+                ->delay(now()->addSeconds(5)); // Small delay to let aggregates update first
+
+            // Create audit log
+            $this->createAuditLog($sale, 'created', null, $sale->toArray());
+
+            Log::info('Daily aggregate jobs dispatched', [
+                'tenant_id' => $tenantId,
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+            ]);
+        } catch (\Exception $e) {
+            // Don't block sale creation if job dispatch fails
+            Log::error('Failed to dispatch daily aggregate jobs', [
+                'tenant_id' => tenant()->id ?? 'unknown',
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+
 
     /**
      * Handle the Sale "updated" event.

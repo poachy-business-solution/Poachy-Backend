@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
+use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Controllers\Api\Tenant\Sales\ShiftSalesSummaryController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAnalyticsController;
@@ -565,6 +566,17 @@ Route::prefix('v1/tenant')
 
             // Waste Summary by Store
             Route::get('/inventory-waste/summary', [InventoryWasteController::class, 'summary']);
+        });
+
+        // Daily sales aggregates
+        Route::prefix('reports/daily-sales')->group(function () {
+            Route::get('/', [DailySalesReportController::class, 'index']);
+            Route::get('/range', [DailySalesReportController::class, 'range']);
+            Route::get('/summary', [DailySalesReportController::class, 'summary']);
+            Route::get('/top-selling', [DailySalesReportController::class, 'topSelling']);
+            Route::get('/top-revenue', [DailySalesReportController::class, 'topRevenue']);
+            Route::get('/by-category', [DailySalesReportController::class, 'byCategory']);
+            Route::post('/recalculate', [DailySalesReportController::class, 'recalculate']);
         });
     });
 
