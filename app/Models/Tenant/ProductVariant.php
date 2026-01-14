@@ -28,6 +28,7 @@ class ProductVariant extends Model
         'quantity_in_base_uom',
         'base_selling_price_adjustment',
         'variant_price',
+        'online_price',
         'stock_status',
         'reorder_level',
         'shelf_life_days',
@@ -40,6 +41,7 @@ class ProductVariant extends Model
         'quantity_in_base_uom' => 'decimal:4',
         'base_selling_price_adjustment' => 'decimal:2',
         'variant_price' => 'decimal:2',
+        'online_price' => 'decimal:2',
         'stock_status' => ProductStatus::class,
         'reorder_level' => 'decimal:4',
         'shelf_life_days' => 'integer',
@@ -120,11 +122,23 @@ class ProductVariant extends Model
         return $query->whereRaw("JSON_EXTRACT(attributes, '$.{$key}') = ?", [$value]);
     }
 
+    public function scopeAvailableOnline($query)
+    {
+        return $query->where('is_active', true)
+            ->whereNotNull('online_price')
+            ->where('stock_status', ProductStatus::IN_STOCK);
+    }
+
     // Accessors & Mutators
 
     public function getFormattedVariantPriceAttribute(): string
     {
         return 'KES ' . number_format($this->variant_price ?? 0, 2);
+    }
+
+    public function getFormattedOnlinePriceAttribute(): string
+    {
+        return 'KES ' . number_format($this->online_price ?? 0, 2);
     }
 
     public function getFormattedAdjustmentAttribute(): string
@@ -165,6 +179,28 @@ class ProductVariant extends Model
         return $basePrice + $this->base_selling_price_adjustment;
     }
 
+    public function getComputedOnlinePriceAttribute(): float
+    {
+        // Priority 1: Explicit online_price
+        if ($this->online_price !== null) {
+            return $this->online_price;
+        }
+
+        // Priority 2: Regular variant_price
+        if ($this->variant_price !== null) {
+            return $this->variant_price;
+        }
+
+        // Priority 3: Product's online_price (if available)
+        if ($this->product?->online_price !== null) {
+            return $this->product->online_price + $this->base_selling_price_adjustment;
+        }
+
+        // Priority 4: Base price + adjustment
+        $basePrice = $this->product?->base_selling_price ?? 0;
+        return $basePrice + $this->base_selling_price_adjustment;
+    }
+
     // Helper Methods
 
     public function isActive(): bool
@@ -185,6 +221,13 @@ class ProductVariant extends Model
     public function isDiscontinued(): bool
     {
         return $this->stock_status === ProductStatus::DISCONTINUED;
+    }
+
+    public function isAvailableOnline(): bool
+    {
+        return $this->is_active
+            && $this->online_price !== null
+            && $this->isInStock();
     }
 
     /**
@@ -270,5 +313,28 @@ class ProductVariant extends Model
     {
         $inventory = $this->inventoryForStore($storeId);
         return $inventory && $inventory->hasStock($quantity);
+    }
+
+    public function getPriceDifferenceAttribute(): float
+    {
+        if ($this->online_price === null) {
+            return 0;
+        }
+
+        $offlinePrice = $this->computed_price;
+        return $this->online_price - $offlinePrice;
+    }
+
+    public function getFormattedPriceDifferenceAttribute(): string
+    {
+        $diff = $this->price_difference;
+
+        if ($diff > 0) {
+            return '+KES ' . number_format($diff, 2) . ' online';
+        } elseif ($diff < 0) {
+            return '-KES ' . number_format(abs($diff), 2) . ' online';
+        }
+
+        return 'Same price';
     }
 }

@@ -35,6 +35,7 @@ class StoreProductVariantRequest extends FormRequest
             // Pricing
             'base_selling_price_adjustment' => 'nullable|numeric|min:-999999.99|max:999999.99',
             'variant_price' => 'nullable|numeric|min:0|max:9999999999.99',
+            'online_price' => 'nullable|numeric|min:0|max:9999999999.99',
 
             // Inventory
             'stock_status' => [
@@ -59,6 +60,8 @@ class StoreProductVariantRequest extends FormRequest
             'uom_quantity.required' => 'UOM quantity is required',
             'uom_quantity.min' => 'UOM quantity must be greater than 0',
             'attributes.*.required' => 'All attribute values are required',
+            'online_price.numeric' => 'Online price must be a valid number',
+            'online_price.min' => 'Online price must be at least 0',
         ];
     }
 
@@ -72,6 +75,7 @@ class StoreProductVariantRequest extends FormRequest
             'quantity_in_base_uom' => 'quantity in base UOM',
             'base_selling_price_adjustment' => 'price adjustment',
             'variant_price' => 'variant price',
+            'online_price' => 'online price',
             'stock_status' => 'stock status',
             'reorder_level' => 'reorder level',
             'shelf_life_days' => 'shelf life',
@@ -143,6 +147,14 @@ class StoreProductVariantRequest extends FormRequest
                         'Cannot use an inactive unit of measure'
                     );
                 }
+            }
+
+            // Validate online_price if product is available online
+            if ($this->online_price !== null && !$product->is_available_online) {
+                $validator->errors()->add(
+                    'online_price',
+                    'Cannot set online price for a product that is not available online. Enable online availability for the product first.'
+                );
             }
         });
     }

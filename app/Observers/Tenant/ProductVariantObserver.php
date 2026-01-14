@@ -47,15 +47,25 @@ class ProductVariantObserver
                     'changed_by' => Auth::id() ?? 1,
                     'effective_from' => now(),
                 ]);
+            }
+        }
 
-                Log::info('Variant price change recorded', [
-                    'variant_id' => $variant->id,
+        // Check if variant online price changed
+        if ($variant->isDirty('online_price')) {
+            $oldPrice = $variant->getOriginal('online_price');
+            $newPrice = $variant->online_price;
+
+            // Only record if price actually changed
+            if ($oldPrice != $newPrice) {
+                ProductPriceHistory::create([
                     'product_id' => $variant->product_id,
-                    'variant_name' => $variant->variant_name,
-                    'old_price' => $oldPrice,
-                    'new_price' => $newPrice,
-                    'changed_by' => Auth::id(),
-                    'tenant_id' => tenant()->id,
+                    'product_variant_id' => $variant->id,
+                    'old_selling_price' => $oldPrice,
+                    'new_selling_price' => $newPrice,
+                    'base_uom_id' => $variant->uom_id,
+                    'change_reason' => 'manual',
+                    'changed_by' => Auth::id() ?? 1,
+                    'effective_from' => now(),
                 ]);
             }
         }

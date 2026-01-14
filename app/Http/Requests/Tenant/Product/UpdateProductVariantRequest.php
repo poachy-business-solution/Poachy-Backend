@@ -31,6 +31,7 @@ class UpdateProductVariantRequest extends FormRequest
 
             'base_selling_price_adjustment' => 'sometimes|numeric|min:-999999.99|max:999999.99',
             'variant_price' => 'sometimes|nullable|numeric|min:0|max:9999999999.99',
+            'online_price' => 'sometimes|nullable|numeric|min:0|max:9999999999.99',
         ];
     }
 
@@ -50,6 +51,7 @@ class UpdateProductVariantRequest extends FormRequest
             'sku' => 'SKU',
             'base_selling_price_adjustment' => 'price adjustment',
             'variant_price' => 'variant price',
+            'online_price' => 'online price',
         ];
     }
 }

@@ -85,6 +85,14 @@ class ProductVariantController extends Controller
      *         example="created_at"
      *     ),
      *     @OA\Parameter(
+     *         name="is_available_online",
+     *         in="query",
+     *         description="Filter by online availability",
+     *         required=false,
+     *         @OA\Schema(type="boolean"),
+     *         example=true
+     *     ),
+     *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction",
@@ -107,7 +115,8 @@ class ProductVariantController extends Controller
      *                     @OA\Property(property="uuid", type="string", format="uuid", example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"),
      *                     @OA\Property(property="name", type="string", example="TCL 55 4K UHD Smart LED TV"),
      *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT"),
-     *                     @OA\Property(property="product_type", type="string", example="variable")
+     *                     @OA\Property(property="product_type", type="string", example="variable"),
+     *                     @OA\Property(property="product_available_online", type="boolean", example=true),
      *                 ),
      *                 @OA\Property(
      *                     property="variants",
@@ -133,6 +142,11 @@ class ProductVariantController extends Controller
      *                         @OA\Property(property="quantity_in_base_uom", type="string", example="1.0000"),
      *                         @OA\Property(property="computed_price", type="number", example=141499),
      *                         @OA\Property(property="formatted_price", type="string", example="KES 141,499.00"),
+     *                         @OA\Property(property="online_price", type="number", example=141499),
+     *                         @OA\Property(property="formatted_online_price", type="string", example="KES 141,499.00"),
+     *                         @OA\Property(property="computed_online_price", type="number", example=141499),
+     *                         @OA\Property(property="formatted_computed_online_price", type="string", example="KES 141,499.00"),
+     *                         @OA\Property(property="is_available_online", type="boolean", example=true),
      *                         @OA\Property(property="stock_status", type="string", example="in_stock"),
      *                         @OA\Property(property="stock_status_label", type="string", example="In Stock"),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
@@ -171,6 +185,7 @@ class ProductVariantController extends Controller
             'status',
             'attribute_key',
             'attribute_value',
+            'is_available_online',
             'sort_by',
             'sort_order',
         ]);
@@ -229,6 +244,7 @@ class ProductVariantController extends Controller
      *             @OA\Property(property="quantity_in_base_uom", type="number", format="decimal", minimum=0.0001, maximum=999999.9999, example=1, description="Equivalent quantity in base UOM (auto-calculated if not provided)"),
      *             @OA\Property(property="base_selling_price_adjustment", type="number", format="decimal", minimum=-999999.99, maximum=999999.99, example=5500, description="Price adjustment relative to base product price (+/-)"),
      *             @OA\Property(property="variant_price", type="number", format="decimal", minimum=0, maximum=9999999999.99, example=141499, description="Fixed variant price (overrides adjustment calculation)"),
+     *             @OA\Property(property="online_price", type="number", format="decimal", minimum=0, maximum=9999999999.99, example=141499, description="Online price for the variant"),
      *             @OA\Property(property="is_active", type="boolean", example=true, description="Active status")
      *         )
      *     ),
@@ -250,7 +266,8 @@ class ProductVariantController extends Controller
      *                     @OA\Property(property="uuid", type="string", format="uuid", example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"),
      *                     @OA\Property(property="name", type="string", example="TCL 55 4K UHD Smart LED TV"),
      *                     @OA\Property(property="slug", type="string", example="tcl-55-4k-uhd-smart-led-tv"),
-     *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT")
+     *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT"),
+     *                     @OA\Property(property="is_available_online", type="boolean", example=true),
      *                 ),
      *                 @OA\Property(property="variant_name", type="string", example="55C725-QLED"),
      *                 @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT-V14Q"),
@@ -291,6 +308,11 @@ class ProductVariantController extends Controller
      *                 @OA\Property(property="computed_price", type="number", example=141499),
      *                 @OA\Property(property="formatted_variant_price", type="string", example="KES 141,499.00"),
      *                 @OA\Property(property="formatted_computed_price", type="string", example="KES 141,499.00"),
+     *                 @OA\Property(property="online_price", type="number", example=141499),
+     *                 @OA\Property(property="formatted_online_price", type="string", example="KES 141,499.00"),
+     *                 @OA\Property(property="computed_online_price", type="number", example=141499),
+     *                 @OA\Property(property="formatted_computed_online_price", type="string", example="KES 141,499.00"),
+     *                 @OA\Property(property="is_available_online", type="boolean", example=true),
      *                 @OA\Property(property="stock_status", type="string", example="in_stock"),
      *                 @OA\Property(property="stock_status_label", type="string", example="In Stock"),
      *                 @OA\Property(property="reorder_level", type="string", example="0.0000"),
@@ -468,6 +490,7 @@ class ProductVariantController extends Controller
      *                         @OA\Property(property="product_sku", type="string", example="ELEC-DELL-56QT"),
      *                         @OA\Property(property="variant_name", type="string", example="55C725-QLED"),
      *                         @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT-V14Q"),
+     *                         @OA\Property(property="product_available_online", type="boolean", example=true),
      *                         @OA\Property(property="display_name", type="string", example="TCL 55 4K UHD Smart LED TV - 55C725-QLED"),
      *                         @OA\Property(
      *                             property="attributes",
@@ -481,6 +504,11 @@ class ProductVariantController extends Controller
      *                         @OA\Property(property="quantity_in_base_uom", type="string", example="1.0000"),
      *                         @OA\Property(property="computed_price", type="number", example=141499),
      *                         @OA\Property(property="formatted_price", type="string", example="KES 141,499.00"),
+     *                         @OA\Property(property="online_price", type="number", example=141499),
+     *                         @OA\Property(property="formatted_online_price", type="string", example="KES 141,499.00"),
+     *                         @OA\Property(property="computed_online_price", type="number", example=141499),
+     *                         @OA\Property(property="formatted_computed_online_price", type="string", example="KES 141,499.00"),   
+     *                         @OA\Property(property="is_available_online", type="boolean", example=true),
      *                         @OA\Property(property="stock_status", type="string", example="in_stock"),
      *                         @OA\Property(property="stock_status_label", type="string", example="In Stock"),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
@@ -708,7 +736,8 @@ class ProductVariantController extends Controller
      *                 }
      *             ),
      *             @OA\Property(property="base_selling_price_adjustment", type="number", format="decimal", minimum=-999999.99, maximum=999999.99, example=16000, description="Price adjustment relative to base product price"),
-     *             @OA\Property(property="variant_price", type="number", format="decimal", nullable=true, minimum=0, maximum=9999999999.99, example=151999, description="Fixed variant price (overrides adjustment)")
+     *             @OA\Property(property="variant_price", type="number", format="decimal", nullable=true, minimum=0, maximum=9999999999.99, example=151999, description="Fixed variant price (overrides adjustment)"),
+     *             @OA\Property(property="online_price", type="number", format="decimal", nullable=true, minimum=0, maximum=9999999999.99, example=151999, description="Online price (overrides adjustment)"),
      *         )
      *     ),
      *     @OA\Response(
@@ -729,7 +758,8 @@ class ProductVariantController extends Controller
      *                     @OA\Property(property="uuid", type="string", format="uuid", example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"),
      *                     @OA\Property(property="name", type="string", example="TCL 55 4K UHD Smart LED TV"),
      *                     @OA\Property(property="slug", type="string", example="tcl-55-4k-uhd-smart-led-tv"),
-     *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT")
+     *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT"),
+     *                     @OA\Property(property="product_available_online", type="boolean", example=true),
      *                 ),
      *                 @OA\Property(property="variant_name", type="string", example="55C725-GAL"),
      *                 @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT-V14Q"),
@@ -769,7 +799,12 @@ class ProductVariantController extends Controller
      *                 @OA\Property(property="variant_price", type="string", example="151999.00"),
      *                 @OA\Property(property="computed_price", type="number", example=151999),
      *                 @OA\Property(property="formatted_variant_price", type="string", example="KES 151,999.00"),
-     *                 @OA\Property(property="formatted_computed_price", type="string", example="KES 151,999.00"),
+     *                 @OA\Property(property="formatted_computed_price", type="string", example="KES 151,999.00"),  
+     *                 @OA\Property(property="online_price", type="number", example=151999),
+     *                 @OA\Property(property="formatted_online_price", type="string", example="KES 151,999.00"),
+     *                 @OA\Property(property="computed_online_price", type="number", example=151999),
+     *                 @OA\Property(property="formatted_computed_online_price", type="string", example="KES 151,999.00"),
+     *                 @OA\Property(property="is_available_online", type="boolean", example=true),
      *                 @OA\Property(property="stock_status", type="string", example="in_stock"),
      *                 @OA\Property(property="stock_status_label", type="string", example="In Stock"),
      *                 @OA\Property(property="reorder_level", type="string", example="0.0000"),
@@ -899,7 +934,8 @@ class ProductVariantController extends Controller
      *                     @OA\Property(property="uuid", type="string", format="uuid", example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"),
      *                     @OA\Property(property="name", type="string", example="TCL 55 4K UHD Smart LED TV"),
      *                     @OA\Property(property="slug", type="string", example="tcl-55-4k-uhd-smart-led-tv"),
-     *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT")
+     *                     @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT"),
+     *                     @OA\Property(property="product_available_online", type="boolean", example=true),
      *                 ),
      *                 @OA\Property(property="variant_name", type="string", example="55C725-GAL"),
      *                 @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT-V14Q"),
@@ -940,6 +976,11 @@ class ProductVariantController extends Controller
      *                 @OA\Property(property="computed_price", type="number", example=151999),
      *                 @OA\Property(property="formatted_variant_price", type="string", example="KES 151,999.00"),
      *                 @OA\Property(property="formatted_computed_price", type="string", example="KES 151,999.00"),
+     *                 @OA\Property(property="online_price", type="number", example=151999),
+     *                 @OA\Property(property="formatted_online_price", type="string", example="KES 151,999.00"),
+     *                 @OA\Property(property="computed_online_price", type="number", example=151999),
+     *                 @OA\Property(property="formatted_computed_online_price", type="string", example="KES 151,999.00"),
+     *                 @OA\Property(property="is_available_online", type="boolean", example=true),
      *                 @OA\Property(property="stock_status", type="string", example="out_of_stock"),
      *                 @OA\Property(property="stock_status_label", type="string", example="Out of Stock"),
      *                 @OA\Property(property="reorder_level", type="string", example="20.0000"),

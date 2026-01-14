@@ -26,6 +26,7 @@ class ProductVariantResource extends JsonResource
                     'name' => $this->product->name,
                     'slug' => $this->product->slug,
                     'sku' => $this->product->sku,
+                    'is_available_online' => $this->product->is_available_online,
                 ]
             ),
 
@@ -49,6 +50,11 @@ class ProductVariantResource extends JsonResource
             'computed_price' => $this->computed_price,
             'formatted_variant_price' => $this->formatted_variant_price,
             'formatted_computed_price' => 'KES ' . number_format($this->computed_price, 2),
+            'online_price' => $this->online_price,
+            'formatted_online_price' => $this->formatted_online_price,
+            'computed_online_price' => $this->computed_online_price,
+            'formatted_computed_online_price' => 'KES ' . number_format($this->computed_online_price, 2),
+            'is_available_online' => $this->isAvailableOnline(),
 
             // Inventory & Status
             'stock_status' => $this->stock_status?->value,

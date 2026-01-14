@@ -14,7 +14,7 @@ class UpdateOnlineConfigRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'is_available_online' => 'required|boolean',
+            'is_available_online' => 'sometimes|required|boolean',
             'online_price' => 'nullable|numeric|min:0|max:9999999999.99',
             'online_description' => 'nullable|string|max:5000',
             'notes' => 'nullable|string|max:2000',

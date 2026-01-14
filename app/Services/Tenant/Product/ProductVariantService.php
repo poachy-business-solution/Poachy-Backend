@@ -41,6 +41,14 @@ class ProductVariantService
             $query->byAttribute($filters['attribute_key'], $filters['attribute_value']);
         }
 
+        if (isset($filters['available_online'])) {
+            if ($filters['available_online']) {
+                $query->whereNotNull('online_price');
+            } else {
+                $query->whereNull('online_price');
+            }
+        }
+
         // Sorting
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortOrder = $filters['sort_order'] ?? 'desc';
@@ -80,6 +88,15 @@ class ProductVariantService
         // Attribute filters
         if (!empty($filters['attribute_key']) && !empty($filters['attribute_value'])) {
             $query->byAttribute($filters['attribute_key'], $filters['attribute_value']);
+        }
+
+        // Available online filter
+        if (isset($filters['available_online'])) {
+            if ($filters['available_online']) {
+                $query->whereNotNull('online_price');
+            } else {
+                $query->whereNull('online_price');
+            }
         }
 
         // Sorting
@@ -123,6 +140,12 @@ class ProductVariantService
             // Calculate variant price if not provided
             if (!isset($data['variant_price']) && isset($data['base_selling_price_adjustment'])) {
                 $data['variant_price'] = $product->base_selling_price + $data['base_selling_price_adjustment'];
+            }
+
+            // Handle online_price: if not provided but product has online_price, calculate it
+            if (!isset($data['online_price']) && $product->online_price !== null) {
+                $adjustment = $data['base_selling_price_adjustment'] ?? 0;
+                $data['online_price'] = $product->online_price + $adjustment;
             }
 
             $data['product_id'] = $product->id;
