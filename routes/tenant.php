@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
+use App\Http\Controllers\Api\Tenant\Product\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
@@ -577,6 +578,12 @@ Route::prefix('v1/tenant')
             Route::get('/top-revenue', [DailySalesReportController::class, 'topRevenue']);
             Route::get('/by-category', [DailySalesReportController::class, 'byCategory']);
             Route::post('/recalculate', [DailySalesReportController::class, 'recalculate']);
+        });
+
+        // Price History Routes
+        Route::prefix('price-history')->group(function () {
+            Route::get('/', [ProductPriceHistoryController::class, 'index']);
+            Route::get('/products/{product}', [ProductPriceHistoryController::class, 'show']);
         });
     });
 
