@@ -5,6 +5,7 @@ namespace App\Models\Tenant;
 use App\Enums\Tenant\CreditTransactionType;
 use App\Enums\Tenant\PaymentMethod;
 use App\Observers\Tenant\CustomerCreditTransactionObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,10 +14,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 
-// #[ObservedBy([CustomerCreditTransactionObserver::class])]
+#[ObservedBy([CustomerCreditTransactionObserver::class])]
 class CustomerCreditTransaction extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'customer_credit_transactions';
 

@@ -4,6 +4,7 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\ProductStatus;
 use App\Observers\Tenant\ProductVariantObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([ProductVariantObserver::class])]
 class ProductVariant extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'product_variants';
 

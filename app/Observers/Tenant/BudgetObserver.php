@@ -3,12 +3,17 @@
 namespace App\Observers\Tenant;
 
 use App\Models\Tenant\Budget;
+use App\Services\Tenant\AuditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class BudgetObserver
 {
+    public function __construct(
+        private AuditService $auditService
+    ) {}
+
     /**
      * Handle the Budget "creating" event.
      */
@@ -39,8 +44,25 @@ class BudgetObserver
     public function created(Budget $budget): void
     {
         $this->clearCache();
-        $this->logAction('created', $budget);
+
+        try {
+            $this->auditService->createAudit(
+                model: $budget,
+                action: 'created',
+                oldValues: null,
+                newValues: $budget->toArray(),
+                description: $this->generateCreationDescription($budget),
+                tags: ['budget', 'financial']
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to create budget audit log', [
+                'tenant_id' => tenant()?->id,
+                'budget_id' => $budget->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+
 
     /**
      * Handle the Budget "updated" event.
@@ -50,7 +72,6 @@ class BudgetObserver
         $this->clearCache();
 
         $changes = $budget->getDirty();
-        $this->logAction('updated', $budget, $changes);
 
         // Check if alert was triggered
         if (isset($changes['alert_triggered']) && $changes['alert_triggered'] === true) {
@@ -84,7 +105,23 @@ class BudgetObserver
     public function deleted(Budget $budget): void
     {
         $this->clearCache();
-        $this->logAction('deleted', $budget);
+
+        try {
+            $this->auditService->createAudit(
+                model: $budget,
+                action: 'deleted',
+                oldValues: $budget->toArray(),
+                newValues: null,
+                description: $this->generateDeletionDescription($budget),
+                tags: ['budget', 'financial', 'critical']
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to create budget deletion audit log', [
+                'tenant_id' => tenant()?->id,
+                'budget_id' => $budget->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -93,7 +130,23 @@ class BudgetObserver
     public function restored(Budget $budget): void
     {
         $this->clearCache();
-        $this->logAction('restored', $budget);
+
+        try {
+            $this->auditService->createAudit(
+                model: $budget,
+                action: 'restored',
+                oldValues: null,
+                newValues: $budget->toArray(),
+                description: $this->generateRestorationDescription($budget),
+                tags: ['budget', 'financial']
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to create budget restoration audit log', [
+                'tenant_id' => tenant()?->id,
+                'budget_id' => $budget->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -105,21 +158,66 @@ class BudgetObserver
     }
 
     /**
-     * Log action for audit trail
+     * Generate description for budget creation
      */
-    protected function logAction(string $action, Budget $budget, array $changes = []): void
+    private function generateCreationDescription(Budget $budget): string
     {
-        Log::info("Budget {$action}", [
-            'tenant_id' => tenant()->id,
-            'budget_id' => $budget->id,
-            'budget_name' => $budget->budget_name,
-            'category_id' => $budget->category_id,
-            'store_id' => $budget->store_id,
-            'budget_amount' => $budget->budget_amount,
-            'spent_amount' => $budget->spent_amount,
-            'action' => $action,
-            'changes' => $changes,
-            'user_id' => Auth::id(),
-        ]);
+        $user = Auth::user()?->name ?? 'System';
+        $amount = number_format($budget->budget_amount, 2);
+        $period = $budget->period_type->label();
+        $categoryName = $budget->category->name ?? 'Unknown Category';
+        $storeInfo = $budget->store ? " for {$budget->store->name}" : ' (company-wide)';
+
+        return "{$user} created {$period} budget '{$budget->budget_name}' - KES {$amount} for {$categoryName}{$storeInfo}";
+    }
+
+    /**
+     * Generate description for budget update
+     */
+    private function generateUpdateDescription(Budget $budget, array $changes): string
+    {
+        $user = Auth::user()?->name ?? 'System';
+
+        // Alert triggered
+        if (isset($changes['alert_triggered']) && $changes['alert_triggered']) {
+            $percentage = number_format($budget->percentage_spent, 2);
+            $threshold = number_format($budget->alert_threshold_percentage, 2);
+            return "{$user} - Budget '{$budget->budget_name}' alert triggered (spent: {$percentage}%, threshold: {$threshold}%)";
+        }
+
+        // Spent amount change (critical)
+        if (isset($changes['spent_amount'])) {
+            $oldSpent = number_format($budget->getOriginal('spent_amount'), 2);
+            $newSpent = number_format($changes['spent_amount'], 2);
+            $status = $budget->is_over_budget ? ' - BUDGET EXCEEDED' : '';
+            return "{$user} - Budget '{$budget->budget_name}' spent amount changed from KES {$oldSpent} to KES {$newSpent}{$status}";
+        }
+
+        // Generic update
+        $changedFields = implode(', ', array_keys($changes));
+        return "{$user} updated budget '{$budget->budget_name}' - {$changedFields}";
+    }
+
+    /**
+     * Generate description for budget deletion
+     */
+    private function generateDeletionDescription(Budget $budget): string
+    {
+        $user = Auth::user()?->name ?? 'System';
+        $amount = number_format($budget->budget_amount, 2);
+        $spent = number_format($budget->spent_amount, 2);
+
+        return "{$user} deleted budget '{$budget->budget_name}' - KES {$amount} (spent: KES {$spent})";
+    }
+
+    /**
+     * Generate description for budget restoration
+     */
+    private function generateRestorationDescription(Budget $budget): string
+    {
+        $user = Auth::user()?->name ?? 'System';
+        $amount = number_format($budget->budget_amount, 2);
+
+        return "{$user} restored budget '{$budget->budget_name}' - KES {$amount}";
     }
 }

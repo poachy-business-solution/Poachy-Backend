@@ -4,6 +4,7 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\BudgetPeriodType;
 use App\Observers\Tenant\BudgetObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[ObservedBy(BudgetObserver::class)]
 class Budget extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'budgets';
 

@@ -4,6 +4,7 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\PaymentMethod;
 use App\Observers\Tenant\SupplierPaymentObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 #[ObservedBy([SupplierPaymentObserver::class])]
 class SupplierPayment extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'supplier_payments';
 

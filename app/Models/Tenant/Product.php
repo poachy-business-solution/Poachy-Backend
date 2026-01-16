@@ -5,6 +5,7 @@ namespace App\Models\Tenant;
 use App\Enums\Tenant\ProductStatus;
 use App\Enums\Tenant\ProductType;
 use App\Observers\Tenant\ProductObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[ObservedBy([ProductObserver::class])]
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'products';
 

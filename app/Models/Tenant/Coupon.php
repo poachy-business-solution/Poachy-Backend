@@ -5,6 +5,7 @@ namespace App\Models\Tenant;
 use App\Enums\Tenant\CouponApplicabilityType;
 use App\Enums\Tenant\DiscountType;
 use App\Observers\Tenant\CouponObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 #[ObservedBy(CouponObserver::class)]
 class Coupon extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'coupons';
 

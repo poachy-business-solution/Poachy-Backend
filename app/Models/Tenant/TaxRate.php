@@ -3,6 +3,7 @@
 namespace App\Models\Tenant;
 
 use App\Observers\Tenant\TaxRateObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 #[ObservedBy([TaxRateObserver::class])]
 class TaxRate extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'tax_rates';
 

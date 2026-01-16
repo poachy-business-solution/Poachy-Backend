@@ -5,6 +5,7 @@ namespace App\Models\Tenant;
 use App\Enums\Tenant\PaymentTerms;
 use App\Enums\Tenant\SupplierType;
 use App\Observers\Tenant\SupplierObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy(SupplierObserver::class)]
 class Supplier extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'suppliers';
 

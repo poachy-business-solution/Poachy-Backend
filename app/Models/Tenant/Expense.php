@@ -6,6 +6,9 @@ use App\Enums\Tenant\ExpenseStatus;
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\RecurrenceFrequency;
+use App\Observers\Tenant\ExpenseObserver;
+use App\Traits\Tenant\HasAuditLogging;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,9 +17,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+#[ObservedBy([ExpenseObserver::class])]
 class Expense extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'expenses';
 

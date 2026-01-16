@@ -3,6 +3,7 @@
 namespace App\Models\Tenant;
 
 use App\Observers\Tenant\StoreObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 #[ObservedBy([StoreObserver::class])]
 class Store extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'stores';
 

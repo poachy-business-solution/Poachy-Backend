@@ -2,14 +2,18 @@
 
 namespace App\Models\Tenant;
 
+use App\Observers\Tenant\ProductBatchObserver;
+use App\Traits\Tenant\HasAuditLogging;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy([ProductBatchObserver::class])]
 class ProductBatch extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $fillable = [
         'store_id',

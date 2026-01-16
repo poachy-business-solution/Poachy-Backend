@@ -5,6 +5,7 @@ namespace App\Models\Tenant;
 use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\PaymentMethod;
 use App\Observers\Tenant\SaleObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 #[ObservedBy([SaleObserver::class])]
 class Sale extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'sales';
 
@@ -66,6 +67,26 @@ class Sale extends Model
         'is_credit_sale',
         'has_refunds',
     ];
+
+    /**
+     * Override getAuditableFields from HasAuditLogging
+     */
+    public function getAuditableFields(): array
+    {
+        return [
+            'sale_number',
+            'store_id',
+            'customer_id',
+            'subtotal',
+            'tax_amount',
+            'discount_amount',
+            'total_amount',
+            'payment_status',
+            'amount_paid',
+            'amount_due',
+            'payment_method',
+        ];
+    }
 
     // ============================================
     // RELATIONSHIPS

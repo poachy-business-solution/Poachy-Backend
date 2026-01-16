@@ -4,16 +4,20 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\PromotionApplicabilityType;
 use App\Enums\Tenant\PromotionType;
+use App\Observers\Tenant\PromotionObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(PromotionObserver::class)]
 class Promotion extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'promotions';
 

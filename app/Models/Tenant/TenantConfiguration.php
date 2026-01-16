@@ -2,13 +2,17 @@
 
 namespace App\Models\Tenant;
 
+use App\Observers\Tenant\TenantConfigurationObserver;
+use App\Traits\Tenant\HasAuditLogging;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
+#[ObservedBy([TenantConfigurationObserver::class])]
 class TenantConfiguration extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'tenant_configurations';
 
@@ -28,6 +32,35 @@ class TenantConfiguration extends Model
 
     // Cache TTL in seconds (1 hour)
     private const CACHE_TTL = 3600;
+
+    /**
+     * Override getAuditableFields from HasAuditLogging
+     */
+    public function getAuditableFields(): array
+    {
+        return [
+            'config_key',
+            'config_value',
+            'config_type',
+            'config_group',
+            'is_active',
+        ];
+    }
+
+    /**
+     * Override getCriticalFields from HasAuditLogging
+     * For TenantConfiguration, all fields are critical (full audit mode)
+     */
+    public function getCriticalFields(): array
+    {
+        return [
+            'config_key',
+            'config_value',
+            'config_type',
+            'config_group',
+            'is_active',
+        ];
+    }
 
     /**
      * Get configuration value with caching

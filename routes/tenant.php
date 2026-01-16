@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Tenant\Audit\AuditLogController;
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Budget\BudgetController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
@@ -584,6 +585,15 @@ Route::prefix('v1/tenant')
         Route::prefix('price-history')->group(function () {
             Route::get('/', [ProductPriceHistoryController::class, 'index']);
             Route::get('/products/{product}', [ProductPriceHistoryController::class, 'show']);
+        });
+
+        // Audit logs routes
+        Route::prefix('audit-logs')->group(function () {
+            Route::get('/', [AuditLogController::class, 'index']);
+            Route::get('/statistics', [AuditLogController::class, 'statistics']);
+            Route::get('/grouped-summary', [AuditLogController::class, 'groupedSummary']);
+            Route::get('/recent-activity', [AuditLogController::class, 'recentActivity']);
+            Route::get('/available-filters', [AuditLogController::class, 'availableFilters']);
         });
     });
 

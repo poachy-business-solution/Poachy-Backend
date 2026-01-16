@@ -4,6 +4,7 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\LoyaltyTransactionType;
 use App\Observers\Tenant\LoyaltyTransactionObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,10 +13,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 
-// #[ObservedBy([LoyaltyTransactionObserver::class])]
+#[ObservedBy([LoyaltyTransactionObserver::class])]
 class LoyaltyTransaction extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'loyalty_transactions';
 

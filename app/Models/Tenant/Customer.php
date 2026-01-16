@@ -4,6 +4,7 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\CustomerType;
 use App\Observers\Tenant\CustomerObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 #[ObservedBy([CustomerObserver::class])]
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasAuditLogging;
 
     protected $table = 'customers';
 
