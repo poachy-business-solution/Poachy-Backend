@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
             CentralRolesPermissionsSeeder::class,
             CentralAdminSeeder::class,
             TenantSeeder::class,
+            MarketplaceCategorySeeder::class,
+            MarketplaceBrandSeeder::class,
         ]);
 
         // seed tenant database using php artisan tenant:seed

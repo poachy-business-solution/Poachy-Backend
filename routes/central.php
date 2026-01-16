@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
+use App\Http\Controllers\Api\Central\Sync\SyncController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,3 +75,15 @@ Route::prefix('v1/central')
             Route::post('/{id}/verify', [BusinessReviewController::class, 'verify']);
         });
     });
+
+// Sync Routes
+Route::prefix('v1/central')->group(function () {
+
+    // Sync endpoints
+    Route::prefix('sync')->group(function () {
+
+        // Inbound sync (from tenants)
+        Route::post('inbound/product', [SyncController::class, 'receiveProductSync']);
+        Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);
+    });
+});

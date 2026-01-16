@@ -5,6 +5,7 @@ namespace App\Observers\Tenant;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductPriceHistory;
 use App\Services\Tenant\AuditService;
+use App\Services\Tenant\Sync\ProductSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 class ProductObserver
 {
     public function __construct(
-        private AuditService $auditService
+        private AuditService $auditService,
+        private ProductSyncService $productSyncService
     ) {}
 
     /**
@@ -49,10 +51,18 @@ class ProductObserver
                 'error' => $e->getMessage(),
             ]);
         }
-
-        // TODO: Dispatch ProductCreated event for sync queue
+        // Trigger marketplace sync if product is available online
         if ($product->is_available_online) {
-            // Dispatch event to sync with marketplace
+            try {
+                $this->productSyncService->syncToMarketplace($product, 'create', 3);
+            } catch (\Exception $e) {
+                Log::error('Failed to sync new product to marketplace', [
+                    'tenant_id' => tenant()->id,
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't throw - product creation should succeed even if sync fails
+            }
         }
     }
 
@@ -101,15 +111,8 @@ class ProductObserver
             ]);
         }
 
-        // TODO: If is_available_online changed, trigger sync
-        if ($product->wasChanged('is_available_online')) {
-            // Dispatch event to sync with marketplace
-        }
-
-        // TODO: If inventory-related fields changed, trigger sync
-        if ($product->wasChanged(['base_selling_price', 'online_price', 'stock_status'])) {
-            // Dispatch event to update marketplace
-        }
+        // Handle marketplace sync based on changes
+        $this->handleMarketplaceSync($product);
     }
 
     public function updating(Product $product): void
@@ -176,7 +179,6 @@ class ProductObserver
         }
     }
 
-
     /**
      * Handle the Product "deleted" event.
      */
@@ -201,9 +203,17 @@ class ProductObserver
             ]);
         }
 
-        // TODO: If was available online, remove from marketplace
+        // Remove from marketplace if was available online
         if ($product->is_available_online) {
-            // Dispatch event to remove from marketplace
+            try {
+                $this->productSyncService->syncToMarketplace($product, 'delete', 3);
+            } catch (\Exception $e) {
+                Log::error('Failed to remove deleted product from marketplace', [
+                    'tenant_id' => tenant()->id,
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -253,6 +263,123 @@ class ProductObserver
                 'product_id' => $product->id,
                 'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Handle marketplace sync based on product changes
+     */
+    protected function handleMarketplaceSync(Product $product): void
+    {
+        try {
+            // Product just made available online
+            if ($product->wasChanged('is_available_online') && $product->is_available_online) {
+                if ($this->productSyncService->isEligibleForSync($product)) {
+                    $this->productSyncService->syncToMarketplace($product, 'create', 3);
+                } else {
+                    Log::warning('Product not eligible for marketplace sync', [
+                        'tenant_id' => tenant()->id,
+                        'product_id' => $product->id,
+                        'errors' => $this->productSyncService->getSyncValidationErrors($product),
+                    ]);
+                }
+                return;
+            }
+
+            // Product removed from marketplace
+            if ($product->wasChanged('is_available_online') && !$product->is_available_online) {
+                $this->productSyncService->syncToMarketplace($product, 'deactivate', 3);
+                return;
+            }
+
+            // Product already online - handle status and content changes
+            if ($product->is_available_online) {
+
+                // Handle is_active status change
+                if ($product->wasChanged('is_active')) {
+                    $action = $product->is_active ? 'activate' : 'deactivate';
+                    $this->productSyncService->syncToMarketplace($product, $action, 3);
+
+                    Log::info('Product active status changed, syncing to marketplace', [
+                        'tenant_id' => tenant()->id,
+                        'product_id' => $product->id,
+                        'is_active' => $product->is_active,
+                        'action' => $action,
+                    ]);
+
+                    // Don't return - check if featured also changed
+                }
+
+                // Handle is_featured status change
+                if ($product->wasChanged('is_featured')) {
+                    // Only sync featured if product is active
+                    if ($product->is_active) {
+                        $this->productSyncService->syncToMarketplace($product, 'update', 3);
+
+                        Log::info('Product featured status changed, syncing to marketplace', [
+                            'tenant_id' => tenant()->id,
+                            'product_id' => $product->id,
+                            'is_featured' => $product->is_featured,
+                        ]);
+                    } else {
+                        Log::info('Product featured status changed but product inactive, skipping sync', [
+                            'tenant_id' => tenant()->id,
+                            'product_id' => $product->id,
+                            'is_featured' => $product->is_featured,
+                            'is_active' => false,
+                        ]);
+                    }
+
+                    // If is_active also changed, we already handled it above, so return
+                    if ($product->wasChanged('is_active')) {
+                        return;
+                    }
+                }
+
+                // Other marketplace-relevant fields (only if status didn't change)
+                if (!$product->wasChanged(['is_active', 'is_featured'])) {
+                    $marketplaceRelevantFields = [
+                        'name',
+                        'slug',
+                        'description',
+                        'online_description',
+                        'online_price',
+                        'tax_rate_id',
+                        'primary_image',
+                        'secondary_images',
+                        'category_id',
+                        'brand_id',
+                    ];
+
+                    $hasRelevantChanges = collect($marketplaceRelevantFields)
+                        ->some(fn($field) => $product->wasChanged($field));
+
+                    if ($hasRelevantChanges) {
+                        // Determine priority based on what changed
+                        $priority = match (true) {
+                            $product->wasChanged('online_price') => 3, // High priority
+                            $product->wasChanged(['category_id', 'brand_id']) => 3, // High priority
+                            default => 5, // Normal priority
+                        };
+
+                        $this->productSyncService->syncToMarketplace($product, 'update', $priority);
+
+                        Log::info('Product marketplace-relevant fields changed', [
+                            'tenant_id' => tenant()->id,
+                            'product_id' => $product->id,
+                            'changed_fields' => array_keys($product->getChanges()),
+                            'priority' => $priority,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to handle marketplace sync', [
+                'tenant_id' => tenant()->id,
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't throw - product update should succeed even if sync fails
         }
     }
 

@@ -37,6 +37,12 @@ Schedule::call(function () {
     }
 })->daily()->at('03:00')->name('check-batch-expiries');
 
+// Clean up stale syncs every hour
+Schedule::command('sync:cleanup-stale')->hourly();
+
+// Clean up old completed syncs daily
+Schedule::command('sync:cleanup-completed --days=30')->dailyAt('02:00');
+
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
