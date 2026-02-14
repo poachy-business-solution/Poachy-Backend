@@ -5,15 +5,28 @@ namespace App\Observers\Tenant;
 use App\Models\Tenant\ProductPriceHistory;
 use App\Models\Tenant\ProductVariant;
 use App\Services\Tenant\AuditService;
+use App\Services\Tenant\Sync\VariantSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ProductVariantObserver
 {
     public function __construct(
-        private AuditService $auditService
+        private AuditService $auditService,
+        private VariantSyncService $variantSyncService
     ) {}
+
+    /**
+     * Handle the ProductVariant "creating" event.
+     */
+    public function creating(ProductVariant $variant): void
+    {
+        if (empty($variant->uuid)) {
+            $variant->uuid = Str::uuid()->toString();
+        }
+    }
 
     /**
      * Handle the ProductVariant "created" event.
@@ -39,60 +52,25 @@ class ProductVariantObserver
             ]);
         }
 
-        // TODO: Sync to marketplace if product is available online
-        if ($variant->is_available_online) {
-            // Trigger marketplace sync
+        // Sync to marketplace if variant is eligible
+        if ($variant->isAvailableOnline() && $variant->product?->is_available_online) {
+            try {
+                if ($this->variantSyncService->isEligibleForSync($variant)) {
+                    $this->variantSyncService->syncToMarketplace($variant, 'create', 3);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to sync new variant to marketplace', [
+                    'tenant_id' => tenant()?->id,
+                    'variant_id' => $variant->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
     /**
-     * Handle the ProductVariant "updated" event.
+     * Handle the ProductVariant "updating" event.
      */
-    public function updated(ProductVariant $variant): void
-    {
-        $this->clearCache($variant);
-
-        try {
-            if ($this->auditService->hasCriticalChanges($variant)) {
-                $oldValues = $variant->getOldValuesForAudit();
-                $criticalChanges = $variant->getCriticalChanges();
-
-                // Generate context-aware description
-                $description = $this->generateUpdateDescription($variant, $criticalChanges);
-
-                // Add specific tags based on changes
-                $tags = ['product_variant', 'inventory'];
-                if (isset($criticalChanges['variant_price']) || isset($criticalChanges['base_selling_price_adjustment'])) {
-                    $tags[] = 'price_change';
-                    $tags[] = 'critical';
-                }
-                if (isset($criticalChanges['stock_status'])) {
-                    $tags[] = 'stock_status';
-                }
-
-                $this->auditService->createAudit(
-                    model: $variant,
-                    action: 'updated',
-                    oldValues: array_intersect_key($oldValues, $criticalChanges),
-                    newValues: $criticalChanges,
-                    description: $description,
-                    tags: $tags
-                );
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to create product variant update audit log', [
-                'tenant_id' => tenant()?->id,
-                'variant_id' => $variant->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        // TODO: Sync changes to marketplace
-        if ($variant->wasChanged(['variant_price', 'stock_status', 'is_active'])) {
-            // Trigger marketplace sync
-        }
-    }
-
     public function updating(ProductVariant $variant): void
     {
         $variant->storeOldValuesForAudit();
@@ -102,7 +80,6 @@ class ProductVariantObserver
             $oldPrice = $variant->getOriginal('variant_price');
             $newPrice = $variant->variant_price;
 
-            // Only record if price actually changed
             if ($oldPrice != $newPrice) {
                 ProductPriceHistory::create([
                     'product_id' => $variant->product_id,
@@ -122,7 +99,6 @@ class ProductVariantObserver
             $oldPrice = $variant->getOriginal('online_price');
             $newPrice = $variant->online_price;
 
-            // Only record if price actually changed
             if ($oldPrice != $newPrice) {
                 ProductPriceHistory::create([
                     'product_id' => $variant->product_id,
@@ -136,6 +112,53 @@ class ProductVariantObserver
                 ]);
             }
         }
+    }
+
+    /**
+     * Handle the ProductVariant "updated" event.
+     */
+    public function updated(ProductVariant $variant): void
+    {
+        $this->clearCache($variant);
+
+        try {
+            if ($this->auditService->hasCriticalChanges($variant)) {
+                $oldValues = $variant->getOldValuesForAudit();
+                $criticalChanges = $variant->getCriticalChanges();
+
+                $description = $this->generateUpdateDescription($variant, $criticalChanges);
+
+                $tags = ['product_variant', 'inventory'];
+                if (isset($criticalChanges['variant_price']) || isset($criticalChanges['base_selling_price_adjustment'])) {
+                    $tags[] = 'price_change';
+                    $tags[] = 'critical';
+                }
+                if (isset($criticalChanges['stock_status'])) {
+                    $tags[] = 'stock_status';
+                }
+                if (isset($criticalChanges['online_price'])) {
+                    $tags[] = 'marketplace';
+                }
+
+                $this->auditService->createAudit(
+                    model: $variant,
+                    action: 'updated',
+                    oldValues: array_intersect_key($oldValues, $criticalChanges),
+                    newValues: $criticalChanges,
+                    description: $description,
+                    tags: $tags
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to create product variant update audit log', [
+                'tenant_id' => tenant()?->id,
+                'variant_id' => $variant->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Handle marketplace sync based on changes
+        $this->handleMarketplaceSync($variant);
     }
 
     /**
@@ -162,9 +185,17 @@ class ProductVariantObserver
             ]);
         }
 
-        // TODO: Remove from marketplace if was available online
-        if ($variant->is_available_online) {
-            // Trigger marketplace removal
+        // Remove from marketplace if was available online
+        if ($variant->getOriginal('online_price') && $variant->product?->is_available_online) {
+            try {
+                $this->variantSyncService->syncToMarketplace($variant, 'delete', 3);
+            } catch (\Exception $e) {
+                Log::error('Failed to remove deleted variant from marketplace', [
+                    'tenant_id' => tenant()?->id,
+                    'variant_id' => $variant->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -186,6 +217,91 @@ class ProductVariantObserver
             );
         } catch (\Exception $e) {
             Log::error('Failed to create product variant restoration audit log', [
+                'tenant_id' => tenant()?->id,
+                'variant_id' => $variant->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Re-sync to marketplace if eligible
+        if ($this->variantSyncService->isEligibleForSync($variant)) {
+            try {
+                $this->variantSyncService->syncToMarketplace($variant, 'activate', 3);
+            } catch (\Exception $e) {
+                Log::error('Failed to re-sync restored variant to marketplace', [
+                    'tenant_id' => tenant()?->id,
+                    'variant_id' => $variant->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Handle marketplace sync based on variant changes
+     */
+    private function handleMarketplaceSync(ProductVariant $variant): void
+    {
+        try {
+            $variant->loadMissing('product');
+            $parentOnline = $variant->product?->is_available_online;
+
+            // Variant became eligible (online_price set while active and parent online)
+            $onlinePriceAdded = $variant->wasChanged('online_price')
+                && $variant->online_price !== null
+                && $variant->getOriginal('online_price') === null;
+
+            if ($onlinePriceAdded && $variant->is_active && $parentOnline) {
+                if ($this->variantSyncService->isEligibleForSync($variant)) {
+                    $this->variantSyncService->syncToMarketplace($variant, 'create', 3);
+                }
+                return;
+            }
+
+            // Variant online_price removed → deactivate
+            $onlinePriceRemoved = $variant->wasChanged('online_price')
+                && $variant->online_price === null
+                && $variant->getOriginal('online_price') !== null;
+
+            if ($onlinePriceRemoved && $parentOnline) {
+                $this->variantSyncService->syncToMarketplace($variant, 'deactivate', 3);
+                return;
+            }
+
+            // is_active changed
+            if ($variant->wasChanged('is_active') && $parentOnline && $variant->online_price !== null) {
+                $action = $variant->is_active ? 'activate' : 'deactivate';
+                $this->variantSyncService->syncToMarketplace($variant, $action, 3);
+                return;
+            }
+
+            // Other marketplace-relevant field changes while eligible
+            if ($parentOnline && $variant->isAvailableOnline()) {
+                $marketplaceRelevantFields = [
+                    'variant_name',
+                    'sku',
+                    'online_price',
+                    'variant_price',
+                    'stock_status',
+                    'attributes',
+                    'base_selling_price_adjustment',
+                ];
+
+                $hasRelevantChanges = collect($marketplaceRelevantFields)
+                    ->some(fn ($field) => $variant->wasChanged($field));
+
+                if ($hasRelevantChanges) {
+                    $priority = match (true) {
+                        $variant->wasChanged('online_price') => 3,
+                        $variant->wasChanged('variant_price') => 3,
+                        default => 5,
+                    };
+
+                    $this->variantSyncService->syncToMarketplace($variant, 'update', $priority);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to handle variant marketplace sync', [
                 'tenant_id' => tenant()?->id,
                 'variant_id' => $variant->id,
                 'error' => $e->getMessage(),
@@ -222,34 +338,29 @@ class ProductVariantObserver
         $user = Auth::user()?->name ?? 'System';
         $displayName = $variant->display_name;
 
-        // Variant price change
         if (isset($changes['variant_price'])) {
             $oldPrice = $variant->getOriginal('variant_price') ? number_format($variant->getOriginal('variant_price'), 2) : 'N/A';
             $newPrice = number_format($changes['variant_price'], 2);
             return "{$user} changed variant {$displayName} price from KES {$oldPrice} to KES {$newPrice}";
         }
 
-        // Base selling price adjustment change
         if (isset($changes['base_selling_price_adjustment'])) {
             $oldAdj = number_format($variant->getOriginal('base_selling_price_adjustment'), 2);
             $newAdj = number_format($changes['base_selling_price_adjustment'], 2);
             return "{$user} changed variant {$displayName} price adjustment from KES {$oldAdj} to KES {$newAdj}";
         }
 
-        // Stock status change
         if (isset($changes['stock_status'])) {
             $oldStatus = $variant->getOriginal('stock_status');
             $newStatus = $changes['stock_status'];
             return "{$user} changed variant {$displayName} stock status from {$oldStatus} to {$newStatus}";
         }
 
-        // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
             return "{$user} {$status} variant {$displayName}";
         }
 
-        // Generic update
         $changedFields = implode(', ', array_keys($changes));
         return "{$user} updated variant {$displayName} ({$changedFields})";
     }

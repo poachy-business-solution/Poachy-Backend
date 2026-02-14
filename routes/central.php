@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,12 @@ Route::prefix('v1/central')->group(function () {
     // Subscription plans
     Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
     Route::get('/subscription-plans/{slug}', [SubscriptionPlanController::class, 'show']);
+
+    // Marketplace routes
+    Route::prefix('marketplace')->group(function () {
+        Route::get('/products', [MarketplaceProductController::class, 'index']);
+        Route::get('/products/{slug}', [MarketplaceProductController::class, 'show']);
+    });
 });
 
 // Protected routes (requires authentication)
@@ -84,6 +91,8 @@ Route::prefix('v1/central')->group(function () {
 
         // Inbound sync (from tenants)
         Route::post('inbound/product', [SyncController::class, 'receiveProductSync']);
+        Route::post('inbound/variant', [SyncController::class, 'receiveVariantSync']);
+        Route::post('inbound/bundle', [SyncController::class, 'receiveBundleSync']);
         Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);
     });
 });

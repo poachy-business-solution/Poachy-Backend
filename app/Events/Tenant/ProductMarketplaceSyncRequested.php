@@ -24,8 +24,8 @@ class ProductMarketplaceSyncRequested
         string $action = 'create',
         int $priority = 3
     ) {
-        // Build DTO from product
-        $this->productDTO = ProductSyncDTO::fromProduct($product);
+        $skipValidation = in_array($action, ['delete', 'deactivate']);
+        $this->productDTO = ProductSyncDTO::fromProduct($product, $skipValidation);
         $this->action = $action;
         $this->priority = $priority;
     }

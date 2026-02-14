@@ -14,35 +14,37 @@ class ProductSyncService
      */
     public function syncToMarketplace(Product $product, string $action = 'create', int $priority = 3): void
     {
-        // Validation
-        if (!$product->is_available_online) {
-            throw new \InvalidArgumentException(
-                "Product '{$product->name}' is not available online and cannot be synced to marketplace."
-            );
-        }
+        // Skip validation for delete/deactivate actions
+        if (!in_array($action, ['delete', 'deactivate'])) {
+            if (!$product->is_available_online) {
+                throw new \InvalidArgumentException(
+                    "Product '{$product->name}' is not available online and cannot be synced to marketplace."
+                );
+            }
 
-        if (!$product->online_price || $product->online_price <= 0) {
-            throw new \InvalidArgumentException(
-                "Product '{$product->name}' must have a valid online_price set before syncing."
-            );
-        }
+            if (!$product->online_price || $product->online_price <= 0) {
+                throw new \InvalidArgumentException(
+                    "Product '{$product->name}' must have a valid online_price set before syncing."
+                );
+            }
 
-        if (!$product->category_id) {
-            throw new \InvalidArgumentException(
-                "Product '{$product->name}' must have a category assigned before syncing."
-            );
-        }
+            if (!$product->category_id) {
+                throw new \InvalidArgumentException(
+                    "Product '{$product->name}' must have a category assigned before syncing."
+                );
+            }
 
-        if (!$product->base_uom_id) {
-            throw new \InvalidArgumentException(
-                "Product '{$product->name}' must have a base UOM assigned before syncing."
-            );
-        }
+            if (!$product->base_uom_id) {
+                throw new \InvalidArgumentException(
+                    "Product '{$product->name}' must have a base UOM assigned before syncing."
+                );
+            }
 
-        if (!$product->tax_rate_id) {
-            throw new \InvalidArgumentException(
-                "Product '{$product->name}' must have a tax rate assigned before syncing."
-            );
+            if (!$product->tax_rate_id) {
+                throw new \InvalidArgumentException(
+                    "Product '{$product->name}' must have a tax rate assigned before syncing."
+                );
+            }
         }
 
         try {

@@ -3,6 +3,7 @@
 namespace App\Models\Tenant;
 
 use App\Observers\Tenant\ProductBundleObserver;
+use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,11 +14,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([ProductBundleObserver::class])]
 class ProductBundle extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasAuditLogging, SoftDeletes;
 
     protected $table = 'product_bundles';
 
     protected $fillable = [
+        'uuid',
         'bundle_name',
         'bundle_sku',
         'description',

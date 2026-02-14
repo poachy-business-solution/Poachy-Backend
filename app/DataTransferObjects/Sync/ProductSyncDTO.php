@@ -36,18 +36,20 @@ class ProductSyncDTO
     /**
      * Create DTO from Tenant Product model
      */
-    public static function fromProduct(Product $product): self
+    public static function fromProduct(Product $product, bool $skipValidation = false): self
     {
         if (!tenant()) {
             throw new \RuntimeException('Cannot create ProductSyncDTO outside tenant context');
         }
 
-        if (!$product->is_available_online) {
-            throw new \InvalidArgumentException('Product must be available online to sync');
-        }
+        if (!$skipValidation) {
+            if (!$product->is_available_online) {
+                throw new \InvalidArgumentException('Product must be available online to sync');
+            }
 
-        if (!$product->online_price) {
-            throw new \InvalidArgumentException('Product must have online_price set');
+            if (!$product->online_price) {
+                throw new \InvalidArgumentException('Product must have online_price set');
+            }
         }
 
         // Load required relationships
@@ -65,10 +67,10 @@ class ProductSyncDTO
             sku: $product->sku,
             description: $product->description,
             onlineDescription: $product->online_description,
-            onlinePrice: (float) $product->online_price,
-            taxRate: (float) $product->taxRate->rate,
-            baseUom: UomDTO::fromModel($product->baseUom),
-            category: CategoryDTO::fromModel($product->category),
+            onlinePrice: (float) ($product->online_price ?? 0),
+            taxRate: (float) ($product->taxRate?->rate ?? 0),
+            baseUom: $product->baseUom ? UomDTO::fromModel($product->baseUom) : new UomDTO(code: 'N/A', name: 'N/A'),
+            category: $product->category ? CategoryDTO::fromModel($product->category) : new CategoryDTO(id: 0, name: 'N/A', slug: 'n-a'),
             brand: $product->brand ? BrandDTO::fromModel($product->brand) : null,
             primaryImage: $product->primary_image,
             secondaryImages: $product->secondary_images ?? [],

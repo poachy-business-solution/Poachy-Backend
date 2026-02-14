@@ -6,6 +6,7 @@ use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductPriceHistory;
 use App\Services\Tenant\AuditService;
 use App\Services\Tenant\Sync\ProductSyncService;
+use App\Services\Tenant\Sync\VariantSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +15,8 @@ class ProductObserver
 {
     public function __construct(
         private AuditService $auditService,
-        private ProductSyncService $productSyncService
+        private ProductSyncService $productSyncService,
+        private VariantSyncService $variantSyncService
     ) {}
 
     /**
@@ -283,12 +285,18 @@ class ProductObserver
                         'errors' => $this->productSyncService->getSyncValidationErrors($product),
                     ]);
                 }
+
+                // Cascade: sync all eligible variants
+                $this->variantSyncService->bulkSyncVariantsForProduct($product, 'create', 5);
                 return;
             }
 
             // Product removed from marketplace
             if ($product->wasChanged('is_available_online') && !$product->is_available_online) {
                 $this->productSyncService->syncToMarketplace($product, 'deactivate', 3);
+
+                // Cascade: deactivate all variants
+                $this->variantSyncService->bulkSyncVariantsForProduct($product, 'deactivate', 3);
                 return;
             }
 

@@ -3,17 +3,16 @@
 namespace App\Services\Central\Sync;
 
 use App\DataTransferObjects\Sync\ProductSyncDTO;
-use App\Models\MarketplaceBrand;
-use App\Models\MarketplaceCategory;
 use App\Models\MarketplaceProduct;
 use App\Models\SyncQueueInbound;
-use App\Models\TenantBrandMapping;
-use App\Models\TenantCategoryMapping;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MarketplaceSyncService
 {
+    public function __construct(
+        private MarketplaceMappingService $mappingService
+    ) {}
     /**
      * Create a new marketplace product
      */
@@ -177,12 +176,10 @@ class MarketplaceSyncService
                     'action' => 'update->create',
                 ]);
 
-                // Delegate to create method
-                $result = $this->createMarketplaceProduct($dto, $syncQueue);
-
+                // Commit current transaction before delegating (create manages its own)
                 DB::connection('central')->commit();
 
-                return $result;
+                return $this->createMarketplaceProduct($dto, $syncQueue);
             }
 
             // Product exists - proceed with update
@@ -305,12 +302,10 @@ class MarketplaceSyncService
                     'tenant_product_id' => $dto->productId,
                 ]);
 
-                // Create if doesn't exist
-                $result = $this->createMarketplaceProduct($dto, $syncQueue);
-
+                // Commit current transaction before delegating (create manages its own)
                 DB::connection('central')->commit();
 
-                return $result;
+                return $this->createMarketplaceProduct($dto, $syncQueue);
             }
 
             $syncQueue->markAsSyncing();
@@ -427,86 +422,11 @@ class MarketplaceSyncService
      */
     protected function mapCategory(ProductSyncDTO $dto): array
     {
-        // Check if mapping already exists
-        $existingMapping = TenantCategoryMapping::where('tenant_id', $dto->tenantId)
-            ->where('tenant_category_id', $dto->category->id)
-            ->first();
-
-        if ($existingMapping) {
-            Log::debug('Using existing category mapping', [
-                'tenant_id' => $dto->tenantId,
-                'tenant_category_id' => $dto->category->id,
-                'marketplace_category_id' => $existingMapping->marketplace_category_id,
-                'confidence' => $existingMapping->confidence_score,
-            ]);
-
-            return [
-                'category_id' => $existingMapping->marketplace_category_id,
-                'confidence' => $existingMapping->confidence_score,
-                'is_verified' => $existingMapping->is_verified,
-            ];
-        }
-
-        // Auto-map using slug/name matching
-        $matchResult = MarketplaceCategory::findBestMatch(
-            $dto->category->slug,
-            $dto->category->name
-        );
-
-        if (!$matchResult) {
-            // No match found - use generic category
-            $genericCategory = MarketplaceCategory::where('slug', 'uncategorized')->first();
-
-            if (!$genericCategory) {
-                throw new \RuntimeException('No suitable marketplace category found and no generic category available');
-            }
-
-            Log::warning('No category match found, using generic category', [
-                'tenant_id' => $dto->tenantId,
-                'tenant_category' => $dto->category->name,
-                'marketplace_category' => $genericCategory->name,
-            ]);
-
-            $matchResult = [
-                'category' => $genericCategory,
-                'confidence' => 0.0,
-            ];
-        }
-
-        // Create mapping record
-        $mapping = TenantCategoryMapping::create([
-            'tenant_id' => $dto->tenantId,
-            'tenant_category_id' => $dto->category->id,
-            'tenant_category_name' => $dto->category->name,
-            'tenant_category_slug' => $dto->category->slug,
-            'marketplace_category_id' => $matchResult['category']->id,
-            'confidence_score' => $matchResult['confidence'],
-            'is_auto_mapped' => true,
-            'is_verified' => $matchResult['confidence'] >= 90, // Auto-verify if confidence >= 90%
+        return $this->mappingService->mapCategory($dto->tenantId, [
+            'id' => $dto->category->id,
+            'name' => $dto->category->name,
+            'slug' => $dto->category->slug,
         ]);
-
-        Log::info('Category mapping created', [
-            'tenant_id' => $dto->tenantId,
-            'tenant_category' => $dto->category->name,
-            'marketplace_category' => $matchResult['category']->name,
-            'confidence' => $matchResult['confidence'],
-            'needs_verification' => $mapping->needsVerification(),
-        ]);
-
-        // TODO: If needs verification, trigger notification to merchant
-        if ($mapping->needsVerification()) {
-            Log::notice('Category mapping needs merchant verification', [
-                'tenant_id' => $dto->tenantId,
-                'mapping_id' => $mapping->id,
-                'confidence' => $mapping->confidence_score,
-            ]);
-        }
-
-        return [
-            'category_id' => $matchResult['category']->id,
-            'confidence' => $matchResult['confidence'],
-            'is_verified' => $mapping->is_verified,
-        ];
     }
 
     /**
@@ -518,91 +438,11 @@ class MarketplaceSyncService
             return null;
         }
 
-        // Check if mapping already exists
-        $existingMapping = TenantBrandMapping::where('tenant_id', $dto->tenantId)
-            ->where('tenant_brand_id', $dto->brand->id)
-            ->first();
-
-        if ($existingMapping) {
-            Log::debug('Using existing brand mapping', [
-                'tenant_id' => $dto->tenantId,
-                'tenant_brand_id' => $dto->brand->id,
-                'marketplace_brand_id' => $existingMapping->marketplace_brand_id,
-                'confidence' => $existingMapping->confidence_score,
-            ]);
-
-            return [
-                'brand_id' => $existingMapping->marketplace_brand_id,
-                'confidence' => $existingMapping->confidence_score,
-                'is_verified' => $existingMapping->is_verified,
-            ];
-        }
-
-        // Auto-map using slug/name matching
-        $matchResult = MarketplaceBrand::findBestMatch(
-            $dto->brand->slug,
-            $dto->brand->name
-        );
-
-        if (!$matchResult) {
-            // No match found - use generic brand
-            $genericBrand = MarketplaceBrand::where('slug', 'generic')->first();
-
-            if (!$genericBrand) {
-                Log::warning('No brand match found and no generic brand available', [
-                    'tenant_id' => $dto->tenantId,
-                    'tenant_brand' => $dto->brand->name,
-                ]);
-
-                return null; // Allow null brand
-            }
-
-            Log::warning('No brand match found, using generic brand', [
-                'tenant_id' => $dto->tenantId,
-                'tenant_brand' => $dto->brand->name,
-                'marketplace_brand' => $genericBrand->name,
-            ]);
-
-            $matchResult = [
-                'brand' => $genericBrand,
-                'confidence' => 0.0,
-            ];
-        }
-
-        // Create mapping record
-        $mapping = TenantBrandMapping::create([
-            'tenant_id' => $dto->tenantId,
-            'tenant_brand_id' => $dto->brand->id,
-            'tenant_brand_name' => $dto->brand->name,
-            'tenant_brand_slug' => $dto->brand->slug,
-            'marketplace_brand_id' => $matchResult['brand']->id,
-            'confidence_score' => $matchResult['confidence'],
-            'is_auto_mapped' => true,
-            'is_verified' => $matchResult['confidence'] >= 90, // Auto-verify if confidence >= 90%
+        return $this->mappingService->mapBrand($dto->tenantId, [
+            'id' => $dto->brand->id,
+            'name' => $dto->brand->name,
+            'slug' => $dto->brand->slug,
         ]);
-
-        Log::info('Brand mapping created', [
-            'tenant_id' => $dto->tenantId,
-            'tenant_brand' => $dto->brand->name,
-            'marketplace_brand' => $matchResult['brand']->name,
-            'confidence' => $matchResult['confidence'],
-            'needs_verification' => $mapping->needsVerification(),
-        ]);
-
-        // TODO: If needs verification, trigger notification to merchant
-        if ($mapping->needsVerification()) {
-            Log::notice('Brand mapping needs merchant verification', [
-                'tenant_id' => $dto->tenantId,
-                'mapping_id' => $mapping->id,
-                'confidence' => $mapping->confidence_score,
-            ]);
-        }
-
-        return [
-            'brand_id' => $matchResult['brand']->id,
-            'confidence' => $matchResult['confidence'],
-            'is_verified' => $mapping->is_verified,
-        ];
     }
 
     /**

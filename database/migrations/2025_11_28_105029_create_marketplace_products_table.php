@@ -16,7 +16,7 @@ return new class extends Migration
 
             // Source Information
             $table->string('tenant_id');
-            $table->unsignedBigInteger('tenant_product_id');
+            $table->unsignedBigInteger('tenant_product_id')->nullable();
             $table->string('tenant_product_type')->default('product'); // product, variant, bundle
             $table->unsignedBigInteger('tenant_variant_id')->nullable();
             $table->unsignedBigInteger('tenant_bundle_id')->nullable();
