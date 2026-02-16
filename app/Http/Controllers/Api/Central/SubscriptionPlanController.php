@@ -21,7 +21,7 @@ class SubscriptionPlanController extends Controller
      *     path="/api/v1/central/subscription-plans",
      *     summary="Get all subscription plans",
      *     description="Retrieves a list of all available subscription plans with optional filtering and sorting. This endpoint is public and does not require authentication.",
-     *     tags={"Subscription Plans"},
+     *     tags={"Central - Subscription Plans"},
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
@@ -415,7 +415,7 @@ class SubscriptionPlanController extends Controller
      *     path="/api/v1/central/subscription-plans/{slug}",
      *     summary="Get subscription plan by slug",
      *     description="Retrieves detailed information about a specific subscription plan using its slug identifier. This endpoint is public and does not require authentication.",
-     *     tags={"Subscription Plans"},
+     *     tags={"Central - Subscription Plans"},
      *     @OA\Parameter(
      *         name="slug",
      *         in="path",

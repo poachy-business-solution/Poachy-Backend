@@ -22,7 +22,7 @@ class BusinessReviewController extends Controller
      *     path="/api/v1/central/business-details/pending",
      *     summary="Get pending business details",
      *     description="Admin retrieves all business details awaiting approval",
-     *     tags={"Business Review"},
+     *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="per_page",
@@ -62,7 +62,7 @@ class BusinessReviewController extends Controller
      *     path="/api/v1/central/business-details",
      *     summary="Get all business details",
      *     description="Admin retrieves all business details with optional filters",
-     *     tags={"Business Review"},
+     *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="status",
@@ -128,7 +128,7 @@ class BusinessReviewController extends Controller
      *     path="/api/v1/central/business-details/{id}/approve",
      *     summary="Approve business details",
      *     description="Admin approves a business details submission",
-     *     tags={"Business Review"},
+     *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="id",
@@ -166,7 +166,7 @@ class BusinessReviewController extends Controller
      *     path="/api/v1/central/business-details/{id}/reject",
      *     summary="Reject business details",
      *     description="Admin rejects a business details submission",
-     *     tags={"Business Review"},
+     *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="id",
@@ -208,7 +208,7 @@ class BusinessReviewController extends Controller
      *     path="/api/v1/central/business-details/{id}/verify",
      *     summary="Verify/unverify business",
      *     description="Admin adds or removes verification badge from business",
-     *     tags={"Business Review"},
+     *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="id",

@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'user_type',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -36,6 +37,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // Relationships
+
+    public function marketplaceCustomer()
+    {
+        return $this->hasOne(MarketplaceCustomer::class, 'user_id');
     }
 
     // Helper methods

@@ -31,20 +31,52 @@ namespace App\Http\Controllers;
  * )
  *
  * @OA\Tag(
- *     name="Central Admin Authentication",
+ *     name="Central - Admin - Auth",
  *     description="Admin authentication endpoints with 2FA"
  * )
  *
  * @OA\Tag(
- *     name="Admin Management",
+ *     name="Central - Admin - Management",
  *     description="Admin user management endpoints"
  * )
- *
- *
+ * 
  * @OA\Tag(
- *     name="Tenant Management",
+ *     name="Central - Subscription Plans",
+ *     description="Poachy subscription plans management endpoints"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Admin - Business Review",
+ *     description="Business/Tenant details management."
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Admin - Tenant Management",
  *     description="Tenant and domain management endpoints"
  * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Customer - Auth",
+ *     description="Customer authentication and authorization endpoints."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Customer - Profile",
+ *     description="Customer profile management endpoints for retrieving and updating customer information."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Customer - Delivery Addresses",
+ *     description="Delivery address management endpoints for creating, retrieving, updating, and deleting customer delivery addresses."
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Marketplace - Products",
+ *     description="Marketplace products management endpoints."
+ * )
+ *
+ *
+ * 
  */
 abstract class Controller
 {

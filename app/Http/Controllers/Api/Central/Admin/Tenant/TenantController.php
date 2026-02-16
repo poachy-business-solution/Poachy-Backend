@@ -32,7 +32,7 @@ class TenantController extends Controller
      *     summary="Create New Tenant",
      *     description="Create a new tenant with domain(s). This will create the tenant database and assign domain(s).",
      *     operationId="createTenant",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -130,7 +130,7 @@ class TenantController extends Controller
      *     summary="List All Tenants",
      *     description="Get paginated list of all tenants with their domains and business details.",
      *     operationId="listTenants",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="page",
@@ -196,7 +196,7 @@ class TenantController extends Controller
      *     summary="Get Tenant Details",
      *     description="Get detailed information about a specific tenant including domains and business details.",
      *     operationId="getTenant",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="tenant_id",
@@ -245,7 +245,7 @@ class TenantController extends Controller
      *     summary="Search Tenants",
      *     description="Search tenants by domain name or business name.",
      *     operationId="searchTenants",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="q",
@@ -295,7 +295,7 @@ class TenantController extends Controller
      *     summary="Add Domain to Tenant",
      *     description="Add an additional domain to an existing tenant.",
      *     operationId="addDomainToTenant",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="tenant_id",
@@ -358,7 +358,7 @@ class TenantController extends Controller
      *     summary="Update Domain",
      *     description="Update an existing domain name.",
      *     operationId="updateDomain",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="domain_id",
@@ -417,7 +417,7 @@ class TenantController extends Controller
      *     summary="Delete Domain",
      *     description="Delete a domain. Cannot delete the last domain of a tenant.",
      *     operationId="deleteDomain",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="domain_id",
@@ -463,7 +463,7 @@ class TenantController extends Controller
      *     summary="Update Tenant Metadata",
      *     description="Update tenant metadata (name, notes, etc.).",
      *     operationId="updateTenantMetadata",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="tenant_id",
@@ -519,7 +519,7 @@ class TenantController extends Controller
      *     summary="Delete Tenant",
      *     description="Delete a tenant and all associated data including database. This action is irreversible.",
      *     operationId="deleteTenant",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="tenant_id",
@@ -554,7 +554,7 @@ class TenantController extends Controller
      *     path="/api/v1/central/tenants/{tenantId}/users",
      *     summary="Create initial tenant user",
      *     description="Admin creates the first user for a tenant (stored in tenant's database)",
-     *     tags={"Tenant Management"},
+     *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="tenantId",
@@ -616,7 +616,7 @@ class TenantController extends Controller
      *     path="/api/v1/central/tenants/{tenant_id}/trial-period",
      *     summary="Start trial period for tenant",
      *     description="Initiates a trial period for a specific tenant. The tenant must not have an existing active trial period. This creates a subscription with trial status.",
-     *     tags={"Subscription Plans"},
+     *     tags={"Central - Subscription Plans"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="tenant_id",
@@ -805,7 +805,7 @@ class TenantController extends Controller
      *     path="/api/v1/central/tenants/{tenant_id}/subscriptions",
      *     summary="Get tenant subscriptions",
      *     description="Retrieves all subscription records for a specific tenant, including active, trial, expired, and cancelled subscriptions. Returns detailed information about each subscription period, payment details, and status.",
-     *     tags={"Subscription Plans"},
+     *     tags={"Central - Subscription Plans"},
      *     security={{"sanctum": {}}},
      *     @OA\Response(
      *         response=200,

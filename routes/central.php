@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
+use App\Http\Controllers\Api\Central\Customer\CustomerAuthController;
+use App\Http\Controllers\Api\Central\Customer\CustomerProfileController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
@@ -37,6 +39,15 @@ Route::prefix('v1/central')->group(function () {
         Route::get('/products', [MarketplaceProductController::class, 'index']);
         Route::get('/products/{slug}', [MarketplaceProductController::class, 'show']);
     });
+
+    // Customer Auth routes
+    Route::prefix('marketplace/auth')->group(function () {
+        Route::post('/register',               [CustomerAuthController::class, 'register']);
+        Route::post('/login',                  [CustomerAuthController::class, 'login']);
+        Route::post('/login/verify',  [CustomerAuthController::class, 'verifyLoginOtp']);
+        Route::post('/reset-password',         [CustomerAuthController::class, 'forgotPassword']);
+        Route::post('/reset-password/confirm', [CustomerAuthController::class, 'resetPassword']);
+    });
 });
 
 // Protected routes (requires authentication)
@@ -54,6 +65,18 @@ Route::prefix('v1/central')
                 Route::post('/create', [AuthController::class, 'createAdmin']);
                 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
             });
+        });
+
+        // Customer Auth
+        Route::prefix('marketplace/auth')->group(function () {
+            Route::post('/logout',                   [CustomerAuthController::class, 'logout']);
+            Route::post('/update-password',          [CustomerAuthController::class, 'initiateUpdatePassword']);
+            Route::post('/update-password/confirm',  [CustomerAuthController::class, 'confirmUpdatePassword']);
+            Route::post('/verify-email',             [CustomerAuthController::class, 'sendEmailVerification']);
+            Route::post('/verify-email/confirm', [CustomerAuthController::class, 'confirmEmailVerification']);
+            Route::post('/verify-phone',             [CustomerAuthController::class, 'sendPhoneVerification']);
+            Route::post('/verify-phone/confirm', [CustomerAuthController::class, 'confirmPhoneVerification']);
+            
         });
 
         // Tenant management
@@ -80,6 +103,21 @@ Route::prefix('v1/central')
             Route::post('/{id}/approve', [BusinessReviewController::class, 'approve']);
             Route::post('/{id}/reject', [BusinessReviewController::class, 'reject']);
             Route::post('/{id}/verify', [BusinessReviewController::class, 'verify']);
+        });
+
+        // Customer Profile
+        Route::prefix('customer')->group(function () {
+            Route::get('/profile',   [CustomerProfileController::class, 'profile']);
+            Route::patch('/profile', [CustomerProfileController::class, 'updateProfile']);
+            Route::post('/profile/picture', [CustomerProfileController::class, 'updateProfilePicture']);
+
+            // Customer Delivery addresses
+            Route::prefix('delivery-addresses')->group(function () {
+                Route::get('/',        [CustomerProfileController::class, 'addresses']);
+                Route::post('/',       [CustomerProfileController::class, 'storeAddress']);
+                Route::patch('/{id}',  [CustomerProfileController::class, 'updateAddress']);
+                Route::delete('/{id}', [CustomerProfileController::class, 'deleteAddress']);
+            });
         });
     });
 

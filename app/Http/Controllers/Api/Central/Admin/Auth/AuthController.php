@@ -29,7 +29,7 @@ class AuthController extends Controller
      *     summary="Admin Login - Step 1 (Send OTP)",
      *     description="Validate admin credentials and send OTP code to email. This is the first step of 2FA authentication.",
      *     operationId="adminLogin",
-     *     tags={"Central DB Admin Authentication"},
+     *     tags={"Central - Admin - Auth"},
      *     @OA\RequestBody(
      *         required=true,
      *         description="Admin credentials",
@@ -101,7 +101,7 @@ class AuthController extends Controller
      *     summary="Admin Login - Step 2 (Verify OTP)",
      *     description="Verify the OTP code sent to email and complete authentication. Returns bearer token on success.",
      *     operationId="verifyOtp",
-     *     tags={"Central DB Admin Authentication"},
+     *     tags={"Central - Admin - Auth"},
      *     @OA\RequestBody(
      *         required=true,
      *         description="OTP verification data",
@@ -173,7 +173,7 @@ class AuthController extends Controller
      *     summary="Resend OTP Code",
      *     description="Request a new OTP code if the previous one expired or was lost. This invalidates any existing OTP.",
      *     operationId="resendOtp",
-     *     tags={"Central DB Admin Authentication"},
+     *     tags={"Central - Admin - Auth"},
      *     @OA\RequestBody(
      *         required=true,
      *         description="Email address to resend OTP",
@@ -227,7 +227,7 @@ class AuthController extends Controller
      *     summary="Create New Admin User",
      *     description="Create a new admin or support user. Requires admin role.",
      *     operationId="createAdmin",
-     *     tags={"Admin Management"},
+     *     tags={"Central - Admin - Management"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -306,7 +306,7 @@ class AuthController extends Controller
      *     summary="Reset Admin Password",
      *     description="Reset password for another admin user. Requires admin role. All existing tokens for the target admin will be revoked.",
      *     operationId="resetAdminPassword",
-     *     tags={"Admin Management"},
+     *     tags={"Central - Admin - Management"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -377,7 +377,7 @@ class AuthController extends Controller
      *     summary="Admin Logout",
      *     description="Logout current admin user by revoking the current access token.",
      *     operationId="adminLogout",
-     *     tags={"Central DB Admin Authentication"},
+     *     tags={"Central - Admin - Auth"},
      *     security={{"sanctum": {}}},
      *     @OA\Response(
      *         response=200,
@@ -412,7 +412,7 @@ class AuthController extends Controller
      *     summary="Get Current Admin",
      *     description="Get details of the currently authenticated admin user.",
      *     operationId="getCurrentAdmin",
-     *     tags={"Central DB Admin Authentication"},
+     *     tags={"Central - Admin - Auth"},
      *     security={{"sanctum": {}}},
      *     @OA\Response(
      *         response=200,
