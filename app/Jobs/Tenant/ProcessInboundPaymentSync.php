@@ -18,6 +18,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ProcessInboundPaymentSync implements ShouldQueue
@@ -41,16 +42,21 @@ class ProcessInboundPaymentSync implements ShouldQueue
         StockReservationService $reservationService,
         ProductBatchService $batchService,
     ): void {
-        $orderId      = $this->paymentPayload['order_id'];
-        $orderNumber  = $this->paymentPayload['order_number'];
-        $items        = $this->paymentPayload['items'] ?? [];
+        $orderId        = $this->paymentPayload['order_id'];
+        $orderNumber    = $this->paymentPayload['order_number'];
+        $items          = $this->paymentPayload['items'] ?? [];
+        $outboundSyncId = $this->paymentPayload['_outbound_sync_id'] ?? null;
 
         // Idempotency: if a marketplace sale already exists for this order, skip entirely.
         if (MarketplaceSale::where('central_order_id', $orderId)->exists()) {
+            $existingSale = MarketplaceSale::where('central_order_id', $orderId)->first();
+
             Log::info('Marketplace sale already exists for order — skipping (idempotent)', [
                 'order_id'     => $orderId,
                 'order_number' => $orderNumber,
             ]);
+
+            $this->respondToCentral($orderId, 'completed', null, $outboundSyncId, $existingSale?->id, 'marketplace_sales');
 
             return;
         }
@@ -78,6 +84,8 @@ class ProcessInboundPaymentSync implements ShouldQueue
             );
         }
 
+        $sale = null;
+
         DB::transaction(function () use (
             $orderId,
             $orderNumber,
@@ -90,6 +98,7 @@ class ProcessInboundPaymentSync implements ShouldQueue
             $activeReservations,
             $reservationService,
             $batchService,
+            &$sale,
         ) {
             // For COD, sale is created with PENDING payment — cash is collected on delivery.
             // For all other methods, payment has already been confirmed.
@@ -143,10 +152,10 @@ class ProcessInboundPaymentSync implements ShouldQueue
                         if ($bundle) {
                             foreach ($bundle->items as $bundleItem) {
                                 $batchService->depleteBatchesFIFO(
-                                    storeId:            $storeId,
-                                    productId:          $bundleItem->product_id,
-                                    variantId:          $bundleItem->product_variant_id,
-                                    quantityInBaseUom:  $bundleItem->quantity_in_base_uom * (float) $item['quantity'],
+                                    storeId:           $storeId,
+                                    productId:         $bundleItem->product_id,
+                                    variantId:         $bundleItem->product_variant_id,
+                                    quantityInBaseUom: $bundleItem->quantity_in_base_uom * (float) $item['quantity'],
                                 );
                             }
                         }
@@ -161,6 +170,8 @@ class ProcessInboundPaymentSync implements ShouldQueue
                 }
             }
         });
+
+        $this->respondToCentral($orderId, 'completed', null, $outboundSyncId, $sale?->id, 'marketplace_sales');
 
         Log::info('Inbound payment sync processed — marketplace sale created', [
             'order_id'     => $orderId,
@@ -182,11 +193,54 @@ class ProcessInboundPaymentSync implements ShouldQueue
         };
     }
 
+    private function respondToCentral(
+        ?int $orderId,
+        string $status,
+        ?string $reason = null,
+        ?int $outboundSyncId = null,
+        ?int $tenantRecordId = null,
+        ?string $tenantTable = null,
+    ): void {
+        if (! $outboundSyncId) {
+            return;
+        }
+
+        $centralUrl = config('services.central_api.url') . '/api/v1/central/sync/inbound/outbound-sync-ack';
+        $token      = config('services.central_api.token');
+
+        try {
+            Http::withToken($token)
+                ->timeout(30)
+                ->post($centralUrl, [
+                    'outbound_sync_id' => $outboundSyncId,
+                    'tenant_id'        => tenant()->id ?? null,
+                    'status'           => $status,
+                    'reason'           => $reason,
+                    'tenant_record_id' => $tenantRecordId,
+                    'tenant_table'     => $tenantTable,
+                    'tenant_response'  => ['order_id' => $orderId],
+                ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send outbound sync ack for payment', [
+                'order_id'         => $orderId,
+                'outbound_sync_id' => $outboundSyncId,
+                'error'            => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function failed(\Throwable $exception): void
     {
+        $orderId        = $this->paymentPayload['order_id'] ?? null;
+        $outboundSyncId = $this->paymentPayload['_outbound_sync_id'] ?? null;
+
         Log::error('ProcessInboundPaymentSync job failed', [
-            'order_id' => $this->paymentPayload['order_id'] ?? null,
+            'order_id' => $orderId,
             'error'    => $exception->getMessage(),
         ]);
+
+        if ($outboundSyncId) {
+            $this->respondToCentral($orderId, 'failed', $exception->getMessage(), $outboundSyncId);
+        }
     }
 }

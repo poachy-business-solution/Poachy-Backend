@@ -87,7 +87,8 @@ class ProcessCentralOutboundSync extends Command
                     continue;
                 }
 
-                $payload = $entry->payload;
+                $payload                      = $entry->payload;
+                $payload['_outbound_sync_id'] = $entry->id;
 
                 $tenant->run(function () use ($jobClass, $payload) {
                     $jobClass::dispatch($payload)->onQueue('sync-high');

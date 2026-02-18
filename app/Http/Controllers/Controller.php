@@ -74,7 +74,26 @@ namespace App\Http\Controllers;
  *     name="Central - Marketplace - Products",
  *     description="Marketplace products management endpoints."
  * )
+ * 
+ *  * @OA\Tag(
+ *     name="Central - Customer - Marketplace - Cart",
+ *     description="Shopping cart management endpoints for the marketplace."
+ * )
  *
+ * @OA\Tag(
+ *     name="Central - Customer - Marketplace - Checkout",
+ *     description="Checkout processing endpoints for submitting carts into orders."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Customer - Marketplace - Orders",
+ *     description="Order management endpoints for authenticated customers."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Customer - Marketplace - Payment",
+ *     description="Payment processing and status endpoints for marketplace orders."
+ * )
  *
  * 
  */

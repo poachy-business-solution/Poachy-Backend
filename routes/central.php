@@ -173,5 +173,8 @@ Route::prefix('v1/central')->group(function () {
         // Inbound order sync (from tenants)
         Route::post('inbound/order-confirmation', [SyncController::class, 'receiveOrderConfirmation']);
         Route::post('inbound/order-status-update', [SyncController::class, 'receiveOrderStatusUpdate']);
+
+        // Generic outbound sync acknowledgment (payment and cancellation flows)
+        Route::post('inbound/outbound-sync-ack', [SyncController::class, 'acknowledgeOutboundSync']);
     });
 });

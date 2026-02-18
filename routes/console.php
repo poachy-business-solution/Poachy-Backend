@@ -71,6 +71,13 @@ Schedule::command('sync:process-outbound')->everyMinute()
     ->onOneServer()
     ->name('process-central-outbound-sync');
 
+// Marketplace: Monitor stuck delivered outbound sync entries every 30 minutes
+Schedule::command('sync:monitor-delivered')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('monitor-delivered-outbound-sync');
+
 // Clean up stale syncs every hour
 Schedule::command('sync:cleanup-stale')->hourly();
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Sync\InboundBundleSyncRequest;
 use App\Http\Requests\Central\Sync\InboundOrderConfirmationRequest;
 use App\Http\Requests\Central\Sync\InboundOrderStatusUpdateRequest;
+use App\Http\Requests\Central\Sync\InboundOutboundSyncAckRequest;
 use App\Http\Requests\Central\Sync\InboundProductSyncRequest;
 use App\Http\Requests\Central\Sync\InboundVariantSyncRequest;
 use App\Http\Responses\ApiResponse;
@@ -16,6 +17,7 @@ use App\Jobs\Central\ProcessInboundVariantSync;
 use App\Jobs\Central\ProcessTenantOrderConfirmation;
 use App\Models\MarketplaceOrder;
 use App\Models\SyncQueueInbound;
+use App\Models\SyncQueueOutbound;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -405,10 +407,20 @@ class SyncController extends Controller
             $validated['tenant_response'] ?? [],
         )->onQueue('sync-high');
 
+        if (! empty($validated['outbound_sync_id'])) {
+            $this->closeOutboundSyncEntry(
+                outboundSyncId: $validated['outbound_sync_id'],
+                tenantId:       $validated['tenant_id'],
+                status:         $validated['status'] === 'confirmed' ? 'completed' : 'failed',
+                reason:         $validated['reason'] ?? null,
+            );
+        }
+
         Log::info('Order confirmation received from tenant', [
-            'order_id'  => $orderId,
-            'tenant_id' => $validated['tenant_id'],
-            'status'    => $validated['status'],
+            'order_id'         => $orderId,
+            'tenant_id'        => $validated['tenant_id'],
+            'status'           => $validated['status'],
+            'outbound_sync_id' => $validated['outbound_sync_id'] ?? null,
         ]);
 
         return ApiResponse::success(
@@ -456,5 +468,72 @@ class SyncController extends Controller
             message: 'Order status updated',
             data: ['order_id' => $orderId, 'fulfillment_status' => $fulfillmentStatus->value],
         );
+    }
+
+    /**
+     * Receive generic outbound sync acknowledgment from tenant (payment and cancellation flows).
+     */
+    public function acknowledgeOutboundSync(InboundOutboundSyncAckRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $this->closeOutboundSyncEntry(
+            outboundSyncId: $validated['outbound_sync_id'],
+            tenantId:       $validated['tenant_id'],
+            status:         $validated['status'],
+            reason:         $validated['reason'] ?? null,
+            tenantRecordId: $validated['tenant_record_id'] ?? null,
+            tenantTable:    $validated['tenant_table'] ?? null,
+        );
+
+        Log::info('Outbound sync ack received from tenant', [
+            'outbound_sync_id' => $validated['outbound_sync_id'],
+            'tenant_id'        => $validated['tenant_id'],
+            'status'           => $validated['status'],
+        ]);
+
+        return ApiResponse::success(
+            message: 'Outbound sync acknowledgment received',
+            data: ['outbound_sync_id' => $validated['outbound_sync_id'], 'status' => $validated['status']],
+            status: 202,
+        );
+    }
+
+    private function closeOutboundSyncEntry(
+        int $outboundSyncId,
+        string $tenantId,
+        string $status,
+        ?string $reason = null,
+        ?int $tenantRecordId = null,
+        ?string $tenantTable = null,
+    ): void {
+        $entry = SyncQueueOutbound::on('central')->find($outboundSyncId);
+
+        if (! $entry) {
+            Log::warning('closeOutboundSyncEntry: entry not found', ['outbound_sync_id' => $outboundSyncId]);
+
+            return;
+        }
+
+        if ($entry->tenant_id !== $tenantId) {
+            Log::warning('closeOutboundSyncEntry: tenant_id mismatch', [
+                'outbound_sync_id' => $outboundSyncId,
+                'expected'         => $entry->tenant_id,
+                'provided'         => $tenantId,
+            ]);
+
+            return;
+        }
+
+        // Only close entries that are currently in delivered status — prevents double-marking on retries
+        if ($entry->status !== 'delivered') {
+            return;
+        }
+
+        if ($status === 'completed') {
+            $entry->markAsCompleted($tenantRecordId, $tenantTable);
+        } else {
+            $entry->markAsFailed($reason ?? 'Tenant reported failure');
+        }
     }
 }

@@ -115,6 +115,13 @@ class SyncQueueOutbound extends Model
             ->where('expires_at', '<', now());
     }
 
+    public function scopeStuckDelivered($query, int $timeoutMinutes = 30)
+    {
+        return $query->where('status', 'delivered')
+            ->where('delivered_at', '<', now()->subMinutes($timeoutMinutes))
+            ->whereNull('lock_token');
+    }
+
     // =========================================================================
     // Helper Methods
     // =========================================================================

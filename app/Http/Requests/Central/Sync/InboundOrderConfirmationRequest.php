@@ -21,7 +21,8 @@ class InboundOrderConfirmationRequest extends FormRequest
             'order_id'        => ['required', 'integer'],
             'status'          => ['required', 'string', 'in:confirmed,failed'],
             'reason'          => ['nullable', 'string', 'max:500'],
-            'tenant_response' => ['nullable', 'array'],
+            'tenant_response'  => ['nullable', 'array'],
+            'outbound_sync_id' => ['nullable', 'integer'],
         ];
     }
 
