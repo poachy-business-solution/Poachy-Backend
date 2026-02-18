@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MarketplaceProduct extends Model
@@ -87,6 +88,16 @@ class MarketplaceProduct extends Model
     public function marketplaceBrand(): BelongsTo
     {
         return $this->belongsTo(MarketplaceBrand::class, 'marketplace_brand_id');
+    }
+
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(ShoppingCartItem::class, 'marketplace_product_id');
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(MarketplaceOrderItem::class, 'marketplace_product_id');
     }
 
     // Scopes

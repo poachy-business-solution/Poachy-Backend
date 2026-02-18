@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers\Api\Central\Sync;
 
+use App\Enums\Central\OrderFulfillmentStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Central\Sync\InboundProductSyncRequest;
 use App\Http\Requests\Central\Sync\InboundBundleSyncRequest;
+use App\Http\Requests\Central\Sync\InboundOrderConfirmationRequest;
+use App\Http\Requests\Central\Sync\InboundOrderStatusUpdateRequest;
+use App\Http\Requests\Central\Sync\InboundProductSyncRequest;
 use App\Http\Requests\Central\Sync\InboundVariantSyncRequest;
 use App\Http\Responses\ApiResponse;
 use App\Jobs\Central\ProcessInboundBundleSync;
 use App\Jobs\Central\ProcessInboundProductSync;
 use App\Jobs\Central\ProcessInboundVariantSync;
+use App\Jobs\Central\ProcessTenantOrderConfirmation;
+use App\Models\MarketplaceOrder;
 use App\Models\SyncQueueInbound;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -371,6 +377,84 @@ class SyncController extends Controller
                 'error_message' => $syncQueue->error_message,
                 'central_record_id' => $syncQueue->central_record_id,
             ]
+        );
+    }
+
+    /**
+     * Receive order confirmation/failure from tenant.
+     */
+    public function receiveOrderConfirmation(InboundOrderConfirmationRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $orderId = $validated['order_id'];
+
+        $order = MarketplaceOrder::on('central')->find($orderId);
+
+        if (! $order) {
+            return ApiResponse::notFound('Order not found');
+        }
+
+        if ($order->tenant_id !== $validated['tenant_id']) {
+            return ApiResponse::error('Tenant ID mismatch', null, 403);
+        }
+
+        ProcessTenantOrderConfirmation::dispatch(
+            $orderId,
+            $validated['status'],
+            $validated['reason'] ?? null,
+            $validated['tenant_response'] ?? [],
+        )->onQueue('sync-high');
+
+        Log::info('Order confirmation received from tenant', [
+            'order_id'  => $orderId,
+            'tenant_id' => $validated['tenant_id'],
+            'status'    => $validated['status'],
+        ]);
+
+        return ApiResponse::success(
+            message: 'Order confirmation received',
+            data: ['order_id' => $orderId, 'status' => $validated['status']],
+            status: 202,
+        );
+    }
+
+    /**
+     * Receive order fulfillment status update from tenant.
+     */
+    public function receiveOrderStatusUpdate(InboundOrderStatusUpdateRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $orderId = $validated['order_id'];
+
+        $order = MarketplaceOrder::on('central')
+            ->with('items')
+            ->find($orderId);
+
+        if (! $order) {
+            return ApiResponse::notFound('Order not found');
+        }
+
+        if ($order->tenant_id !== $validated['tenant_id']) {
+            return ApiResponse::error('Tenant ID mismatch', null, 403);
+        }
+
+        $fulfillmentStatus = OrderFulfillmentStatus::from($validated['fulfillment_status']);
+
+        $order->items()->update(['fulfillment_status' => $fulfillmentStatus]);
+
+        if ($validated['notes'] ?? null) {
+            $order->update(['merchant_notes' => $validated['notes']]);
+        }
+
+        Log::info('Order fulfillment status updated by tenant', [
+            'order_id'           => $orderId,
+            'tenant_id'          => $validated['tenant_id'],
+            'fulfillment_status' => $fulfillmentStatus->value,
+        ]);
+
+        return ApiResponse::success(
+            message: 'Order status updated',
+            data: ['order_id' => $orderId, 'fulfillment_status' => $fulfillmentStatus->value],
         );
     }
 }

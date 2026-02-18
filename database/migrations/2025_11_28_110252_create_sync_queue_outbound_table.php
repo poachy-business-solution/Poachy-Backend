@@ -37,7 +37,9 @@ return new class extends Migration
                 'payment_confirmed',
                 'delivery_update',
                 'review_posted',
-                'cancel'
+                'cancel',
+                'reserve_inventory',
+                'release_reservation'
             ])->default('create');
 
             // ============================================

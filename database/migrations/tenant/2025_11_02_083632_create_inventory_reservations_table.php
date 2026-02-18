@@ -27,7 +27,7 @@ return new class extends Migration
             $table->text('cancellation_reason')->nullable();
             $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('restrict');
 
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
 
             // Composite index for cleanup jobs (expired + active)
             $table->index(['reserved_until', 'status'], 'idx_cleanup');

@@ -76,7 +76,11 @@ class StockReservationService
             'tenant_id' => tenant()->id ?? 'system',
         ]);
 
-        return $reservations->fresh(['inventory.product', 'inventory.productVariant', 'inventory.store']);
+        $reservations->each(function (InventoryReservation $reservation) {
+            $reservation->load(['inventory.product', 'inventory.productVariant', 'inventory.store']);
+        });
+
+        return $reservations;
     }
 
     /**
@@ -375,6 +379,42 @@ class StockReservationService
         ]);
 
         return $releasedCount;
+    }
+
+    /**
+     * Confirm all active reservations for a reference (sale confirmed — convert to movements).
+     * Call this when a marketplace order is paid and inventory should be committed.
+     *
+     * @return int Number of reservations confirmed
+     */
+    public function confirmAllReservationsForReference(
+        string $referenceType,
+        int $referenceId,
+    ): int {
+        $reservations = $this->getReservationsByReference($referenceType, $referenceId)
+            ->where('status', ReservationStatus::ACTIVE);
+
+        $confirmedCount = 0;
+
+        foreach ($reservations as $reservation) {
+            try {
+                $this->confirmReservation($reservation->id);
+                $confirmedCount++;
+            } catch (\Exception $e) {
+                Log::error('Failed to confirm reservation', [
+                    'reservation_id' => $reservation->id,
+                    'error'          => $e->getMessage(),
+                ]);
+            }
+        }
+
+        Log::info('Confirmed all reservations for reference', [
+            'reference_type'  => $referenceType,
+            'reference_id'    => $referenceId,
+            'confirmed_count' => $confirmedCount,
+        ]);
+
+        return $confirmedCount;
     }
 
     /**

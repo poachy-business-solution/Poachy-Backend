@@ -57,6 +57,16 @@ class MarketplaceCustomer extends Model
         return $this->hasMany(CustomerAddress::class, 'customer_id');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(MarketplaceOrder::class, 'customer_id');
+    }
+
+    public function carts(): HasMany
+    {
+        return $this->hasMany(ShoppingCart::class, 'customer_id');
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================

@@ -5,7 +5,12 @@ use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
 use App\Http\Controllers\Api\Central\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\Central\Customer\CustomerProfileController;
+use App\Http\Controllers\Api\Central\Marketplace\CheckoutController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplacePaymentController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
+use App\Http\Controllers\Api\Central\Marketplace\ShoppingCartController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +43,24 @@ Route::prefix('v1/central')->group(function () {
     Route::prefix('marketplace')->group(function () {
         Route::get('/products', [MarketplaceProductController::class, 'index']);
         Route::get('/products/{slug}', [MarketplaceProductController::class, 'show']);
+
+        // Payment webhooks / callbacks (public — no auth)
+        Route::post('/payments/webhook', [MarketplacePaymentController::class, 'webhook']);
+        Route::post('/payments/mpesa/callback', [MarketplacePaymentController::class, 'mpesaCallback']);
+
+        // Shopping cart (public — guests can use cart, auth required at checkout)
+        Route::prefix('cart')->group(function () {
+            Route::get('/', [ShoppingCartController::class, 'show']);
+            Route::post('/items', [ShoppingCartController::class, 'addItem']);
+            Route::patch('/items/{id}', [ShoppingCartController::class, 'updateItem']);
+            Route::delete('/items/{id}', [ShoppingCartController::class, 'removeItem']);
+            Route::delete('/', [ShoppingCartController::class, 'clear']);
+            Route::post('/refresh-prices', [ShoppingCartController::class, 'refreshPrices']);
+        });
+
+        // Checkout (public route — auth checked in controller)
+        Route::post('/checkout/validate', [CheckoutController::class, 'validate']);
+        Route::post('/checkout', [CheckoutController::class, 'initiate']);
     });
 
     // Customer Auth routes
@@ -76,7 +99,6 @@ Route::prefix('v1/central')
             Route::post('/verify-email/confirm', [CustomerAuthController::class, 'confirmEmailVerification']);
             Route::post('/verify-phone',             [CustomerAuthController::class, 'sendPhoneVerification']);
             Route::post('/verify-phone/confirm', [CustomerAuthController::class, 'confirmPhoneVerification']);
-            
         });
 
         // Tenant management
@@ -103,6 +125,21 @@ Route::prefix('v1/central')
             Route::post('/{id}/approve', [BusinessReviewController::class, 'approve']);
             Route::post('/{id}/reject', [BusinessReviewController::class, 'reject']);
             Route::post('/{id}/verify', [BusinessReviewController::class, 'verify']);
+        });
+
+        // Marketplace (authenticated)
+        Route::prefix('marketplace')->group(function () {
+            // Orders
+            Route::get('/orders', [MarketplaceOrderController::class, 'index']);
+            Route::get('/orders/{orderNumber}', [MarketplaceOrderController::class, 'show']);
+            Route::post('/orders/{id}/cancel', [MarketplaceOrderController::class, 'cancel']);
+
+            // Payments
+            Route::post('/orders/{id}/payment', [MarketplacePaymentController::class, 'initiate']);
+            Route::get('/orders/{id}/payment', [MarketplacePaymentController::class, 'status']);
+
+            // Delivery
+            Route::get('/orders/{id}/delivery', [MarketplaceDeliveryController::class, 'status']);
         });
 
         // Customer Profile
@@ -132,5 +169,9 @@ Route::prefix('v1/central')->group(function () {
         Route::post('inbound/variant', [SyncController::class, 'receiveVariantSync']);
         Route::post('inbound/bundle', [SyncController::class, 'receiveBundleSync']);
         Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);
+
+        // Inbound order sync (from tenants)
+        Route::post('inbound/order-confirmation', [SyncController::class, 'receiveOrderConfirmation']);
+        Route::post('inbound/order-status-update', [SyncController::class, 'receiveOrderStatusUpdate']);
     });
 });
