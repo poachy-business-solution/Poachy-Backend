@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +28,10 @@ class MarketplaceOrderItemResource extends JsonResource
             'discount_amount'        => (float) $this->discount_amount,
             'subtotal'               => (float) $this->subtotal,
             'fulfillment_status'     => $this->fulfillment_status->value,
+            'seller'                 => $this->when(
+                $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,
+                fn () => BusinessHelper::getBusinessSummary($this->marketplaceProduct->tenant_id)
+            ),
             'product'                => $this->when(
                 $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,
                 fn () => [

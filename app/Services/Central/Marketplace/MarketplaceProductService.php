@@ -82,6 +82,28 @@ class MarketplaceProductService
         }
     }
 
+    /**
+     * Atomically increment the order_count for a product.
+     * Called asynchronously after a successful payment so popular products
+     * bubble up in sort-by-orders queries without affecting response time.
+     */
+    public function incrementOrderCount(int $productId): void
+    {
+        try {
+            DB::connection('central')
+                ->table('marketplace_products')
+                ->where('id', $productId)
+                ->increment('order_count');
+
+            Cache::tags([self::CACHE_TAG])->flush();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to increment marketplace product order count', [
+                'product_id' => $productId,
+                'error'      => $e->getMessage(),
+            ]);
+        }
+    }
+
     // =========================================================================
     // Private helpers
     // =========================================================================

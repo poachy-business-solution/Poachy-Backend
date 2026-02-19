@@ -213,7 +213,7 @@ class CheckoutController extends Controller
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="order_number", type="string", example="MKT-ORD-2026-000001"),
      *                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
-     *                     @OA\Property(property="merchant_name", type="string", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                     @OA\Property(property="merchant_name", type="string", example="Tech Haven Electronics Solutions"),
      *                     @OA\Property(property="order_status", type="string", example="pending"),
      *                     @OA\Property(property="order_status_label", type="string", example="Pending"),
      *                     @OA\Property(property="reservation_status", type="string", example="pending"),

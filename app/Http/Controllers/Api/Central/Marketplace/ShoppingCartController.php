@@ -69,6 +69,15 @@ class ShoppingCartController extends Controller
      *                                 @OA\Property(property="price_changed", type="boolean", example=false),
      *                                 @OA\Property(property="line_total", type="number", format="float", example=90000),
      *                                 @OA\Property(
+     *                                     property="seller",
+     *                                     type="object",
+     *                                     nullable=true,
+     *                                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                                     @OA\Property(property="business_name", type="string", example="Tech Haven Electronics Solutions"),
+     *                                     @OA\Property(property="logo", type="string", nullable=true, example="business/logos/7cjtDAZssxGboFSLkiqEGqpG1f06dkzRQ9bz7JFI.jpg"),
+     *                                     @OA\Property(property="is_verified", type="boolean", example=true)
+     *                                 ),
+     *                                 @OA\Property(
      *                                     property="product",
      *                                     type="object",
      *                                     @OA\Property(property="id", type="integer", example=2),
@@ -164,6 +173,15 @@ class ShoppingCartController extends Controller
      *                 @OA\Property(property="current_price", type="number", format="float", example=90000),
      *                 @OA\Property(property="price_changed", type="boolean", example=false),
      *                 @OA\Property(property="line_total", type="number", format="float", example=180000),
+     *                 @OA\Property(
+     *                     property="seller",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                     @OA\Property(property="business_name", type="string", example="Tech Haven Electronics Solutions"),
+     *                     @OA\Property(property="logo", type="string", nullable=true, example="business/logos/7cjtDAZssxGboFSLkiqEGqpG1f06dkzRQ9bz7JFI.jpg"),
+     *                     @OA\Property(property="is_verified", type="boolean", example=true)
+     *                 ),
      *                 @OA\Property(
      *                     property="product",
      *                     type="object",
@@ -285,6 +303,15 @@ class ShoppingCartController extends Controller
      *                 @OA\Property(property="current_price", type="number", format="float", example=90000),
      *                 @OA\Property(property="price_changed", type="boolean", example=false),
      *                 @OA\Property(property="line_total", type="number", format="float", example=90000),
+     *                 @OA\Property(
+     *                     property="seller",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                     @OA\Property(property="business_name", type="string", example="Tech Haven Electronics Solutions"),
+     *                     @OA\Property(property="logo", type="string", nullable=true, example="business/logos/7cjtDAZssxGboFSLkiqEGqpG1f06dkzRQ9bz7JFI.jpg"),
+     *                     @OA\Property(property="is_verified", type="boolean", example=true)
+     *                 ),
      *                 @OA\Property(
      *                     property="product",
      *                     type="object",

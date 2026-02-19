@@ -17,6 +17,7 @@ class MarketplacePaymentService
 {
     public function __construct(
         private readonly MpesaService $mpesaService,
+        private readonly MarketplaceProductService $productService,
     ) {}
 
     /**
@@ -263,6 +264,15 @@ class MarketplacePaymentService
         $order->update(['order_status' => OrderStatus::Confirmed]);
 
         ProcessPaymentConfirmation::dispatch($order->id);
+
+        // Increment order counts asynchronously — non-blocking, best-effort
+        $productIds = $order->items()->pluck('marketplace_product_id')->all();
+
+        dispatch(function () use ($productIds) {
+            foreach ($productIds as $productId) {
+                $this->productService->incrementOrderCount($productId);
+            }
+        })->afterResponse();
 
         Log::info('Payment confirmed', [
             'order_id'   => $order->id,

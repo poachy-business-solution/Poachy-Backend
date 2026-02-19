@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,6 +36,9 @@ class MarketplaceProductResource extends JsonResource
                 'code' => $this->base_uom_code,
                 'name' => $this->base_uom_name,
             ],
+
+            // ── Seller ──────────────────────────────────────────────────────
+            'seller' => BusinessHelper::getBusinessSummary($this->tenant_id),
 
             // ── Category (marketplace preferred, tenant fallback) ─────────────
             'category'         => $this->resolveCategory(),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,10 @@ class ShoppingCartItemResource extends JsonResource
             'current_price'          => (float) $this->current_price,
             'price_changed'          => $this->isPriceChanged(),
             'line_total'             => $this->getLineTotal(),
+            'seller'                 => $this->when(
+                $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,
+                fn () => BusinessHelper::getBusinessSummary($this->marketplaceProduct->tenant_id)
+            ),
             'product'                => $this->when(
                 $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,
                 fn () => [

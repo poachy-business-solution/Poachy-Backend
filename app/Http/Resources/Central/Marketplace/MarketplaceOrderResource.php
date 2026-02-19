@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,7 +14,7 @@ class MarketplaceOrderResource extends JsonResource
             'id'                    => $this->id,
             'order_number'          => $this->order_number,
             'tenant_id'             => $this->tenant_id,
-            'merchant_name'         => $this->merchant_name,
+            'merchant_name'         => BusinessHelper::getBusinessName($this->tenant_id) ?? $this->merchant_name,
             'order_status'          => $this->order_status->value,
             'order_status_label'    => $this->order_status->label(),
             'reservation_status'    => $this->reservation_status->value,

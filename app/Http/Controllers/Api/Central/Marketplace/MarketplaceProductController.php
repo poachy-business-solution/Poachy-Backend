@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Marketplace\ListMarketplaceProductsRequest;
 use App\Http\Resources\Central\Marketplace\MarketplaceProductCollection;
@@ -14,7 +15,7 @@ use Illuminate\Http\JsonResponse;
  * Public-facing marketplace product endpoints.
  *
  * No authentication is required — these power the consumer-facing website.
-*/
+ */
 class MarketplaceProductController extends Controller
 {
     public function __construct(
@@ -142,6 +143,15 @@ class MarketplaceProductController extends Controller
      *                             @OA\Property(property="name", type="string", example="Piece")
      *                         ),
      *                         @OA\Property(
+     *                             property="seller",
+     *                             type="object",
+     *                             nullable=true,
+     *                             @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                             @OA\Property(property="business_name", type="string", example="Tech Haven Electronics Solutions"),
+     *                             @OA\Property(property="logo", type="string", nullable=true, example="business/logos/7cjtDAZssxGboFSLkiqEGqpG1f06dkzRQ9bz7JFI.jpg"),
+     *                             @OA\Property(property="is_verified", type="boolean", example=true)
+     *                         ),
+     *                         @OA\Property(
      *                             property="category",
      *                             type="object",
      *                             @OA\Property(property="id", type="integer", example=1),
@@ -216,7 +226,11 @@ class MarketplaceProductController extends Controller
      */
     public function index(ListMarketplaceProductsRequest $request): JsonResponse
     {
-        $paginator  = $this->productService->listActiveProducts($request->validated());
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginator */
+        $paginator = $this->productService->listActiveProducts($request->validated());
+
+        BusinessHelper::warmCache($paginator->getCollection()->pluck('tenant_id')->all());
+
         $collection = new MarketplaceProductCollection($paginator);
 
         return ApiResponse::paginated($collection, 'Marketplace products retrieved successfully');
@@ -259,6 +273,15 @@ class MarketplaceProductController extends Controller
      *                     type="object",
      *                     @OA\Property(property="code", type="string", example="pcs"),
      *                     @OA\Property(property="name", type="string", example="Piece")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="seller",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
+     *                     @OA\Property(property="business_name", type="string", example="Tech Haven Electronics Solutions"),
+     *                     @OA\Property(property="logo", type="string", nullable=true, example="business/logos/7cjtDAZssxGboFSLkiqEGqpG1f06dkzRQ9bz7JFI.jpg"),
+     *                     @OA\Property(property="is_verified", type="boolean", example=true)
      *                 ),
      *                 @OA\Property(
      *                     property="category",
