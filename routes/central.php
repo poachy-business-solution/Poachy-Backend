@@ -168,6 +168,7 @@ Route::prefix('v1/central')->group(function () {
         Route::post('inbound/product', [SyncController::class, 'receiveProductSync']);
         Route::post('inbound/variant', [SyncController::class, 'receiveVariantSync']);
         Route::post('inbound/bundle', [SyncController::class, 'receiveBundleSync']);
+        Route::post('inbound/inventory-count', [SyncController::class, 'receiveInventoryCountSync']);
         Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);
 
         // Inbound order sync (from tenants)

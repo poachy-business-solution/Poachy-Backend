@@ -136,12 +136,12 @@ class StockReservationService
             'status' => ReservationStatus::ACTIVE,
         ]);
 
-        // Update inventory.quantity_reserved
-        $inventory->increment('quantity_reserved', $quantityInBaseUom);
-
-        // Recalculate quantity_available
+        // Update quantity_reserved and recalculate quantity_available in a single update
+        // to prevent the observer from firing with an intermediate state
+        $newReserved = $inventory->quantity_reserved + $quantityInBaseUom;
         $inventory->update([
-            'quantity_available' => max(0, $inventory->quantity_on_hand - $inventory->quantity_reserved)
+            'quantity_reserved'  => $newReserved,
+            'quantity_available' => max(0, $inventory->quantity_on_hand - $newReserved),
         ]);
 
         return $reservation;
@@ -179,12 +179,12 @@ class StockReservationService
             // Update reservation status
             $reservation->cancel($reason, $cancelledBy ?? Auth::id());
 
-            // Decrement quantity_reserved
-            $inventory->decrement('quantity_reserved', $reservation->quantity_reserved);
-
-            // Recalculate quantity_available
+            // Release quantity_reserved and recalculate quantity_available in a single update
+            // to prevent the observer from firing with an intermediate state
+            $newReserved = max(0, $inventory->quantity_reserved - $reservation->quantity_reserved);
             $inventory->update([
-                'quantity_available' => max(0, $inventory->quantity_on_hand - $inventory->quantity_reserved)
+                'quantity_reserved'  => $newReserved,
+                'quantity_available' => max(0, $inventory->quantity_on_hand - $newReserved),
             ]);
 
             Log::info('Reservation released', [
@@ -243,12 +243,16 @@ class StockReservationService
             // Mark reservation as fulfilled
             $reservation->markAsFulfilled();
 
-            // Decrement quantity_reserved (movement already decremented quantity_on_hand)
-            $inventory->decrement('quantity_reserved', $reservation->quantity_reserved);
+            // Re-fetch inventory to get the quantity_on_hand updated by recordMovement(),
+            // which uses its own internal copy of the model
+            $inventory->refresh();
 
-            // Recalculate quantity_available
+            // Release quantity_reserved and recalculate quantity_available in a single update
+            // to prevent the observer from firing with an intermediate state
+            $newReserved = max(0, $inventory->quantity_reserved - $reservation->quantity_reserved);
             $inventory->update([
-                'quantity_available' => max(0, $inventory->quantity_on_hand - $inventory->quantity_reserved)
+                'quantity_reserved'  => $newReserved,
+                'quantity_available' => max(0, $inventory->quantity_on_hand - $newReserved),
             ]);
 
             Log::info('Reservation confirmed and converted to movement', [

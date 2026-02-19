@@ -172,35 +172,63 @@ class PurchaseOrderObserver
     {
         $user = Auth::user()?->name ?? 'System';
 
-        // Status change
+        // Status change (most common critical change when sending PO)
         if (isset($changes['status'])) {
-            $oldStatus = $purchaseOrder->getOriginal('status');
-            $newStatus = $changes['status'];
-            return "{$user} changed purchase order {$purchaseOrder->po_number} status from {$oldStatus} to {$newStatus}";
+            $old = $this->formatStatus($purchaseOrder->getOriginal('status'));
+            $new = $this->formatStatus($changes['status']);
+
+            return "{$user} changed purchase order {$purchaseOrder->po_number} status from {$old} to {$new}";
         }
 
         // Payment status change
         if (isset($changes['payment_status'])) {
-            $oldStatus = $purchaseOrder->getOriginal('payment_status');
-            $newStatus = $changes['payment_status'];
-            return "{$user} changed purchase order {$purchaseOrder->po_number} payment status from {$oldStatus} to {$newStatus}";
+            $old = $this->formatStatus($purchaseOrder->getOriginal('payment_status'));
+            $new = $this->formatStatus($changes['payment_status']);
+
+            return "{$user} changed purchase order {$purchaseOrder->po_number} payment status from {$old} to {$new}";
         }
 
         // Total amount change
         if (isset($changes['total_amount'])) {
-            $oldAmount = number_format($purchaseOrder->getOriginal('total_amount'), 2);
-            $newAmount = number_format($changes['total_amount'], 2);
+            $oldAmount = number_format($purchaseOrder->getOriginal('total_amount') ?? 0, 2);
+            $newAmount = number_format($changes['total_amount'] ?? 0, 2);
+
             return "{$user} changed purchase order {$purchaseOrder->po_number} total from KES {$oldAmount} to KES {$newAmount}";
         }
 
-        // Approval
-        if (isset($changes['approved_by']) && $changes['approved_by']) {
-            return "{$user} approved purchase order {$purchaseOrder->po_number}";
+        // Approval (when approved_by is set from null → value)
+        if (isset($changes['approved_by']) && $changes['approved_by'] && !$purchaseOrder->getOriginal('approved_by')) {
+            $approver = $changes['approved_by'] instanceof \Illuminate\Database\Eloquent\Model
+                ? $changes['approved_by']->name ?? 'someone'
+                : 'someone';
+
+            return "{$user} approved purchase order {$purchaseOrder->po_number} (approved by {$approver})";
         }
 
-        // Generic update
+        // Generic fallback for any other critical change
         $changedFields = implode(', ', array_keys($changes));
         return "{$user} updated purchase order {$purchaseOrder->po_number} ({$changedFields})";
+    }
+
+    /**
+     * Helper to safely format status-like values (string or enum)
+     */
+    private function formatStatus(mixed $status): string
+    {
+        if ($status instanceof \App\Enums\Tenant\PurchaseOrderStatus) {
+            return $status->label();           // nicest for humans: "Sent to Supplier"
+            // or: return $status->value;      // shorter: "sent"
+        }
+
+        if (is_string($status)) {
+            return $status;                     // plain string column
+        }
+
+        if ($status === null) {
+            return 'unset';
+        }
+
+        return (string) $status ?: 'unknown';
     }
 
     /**
