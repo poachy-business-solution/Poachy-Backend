@@ -100,6 +100,17 @@ class MarketplaceProduct extends Model
         return $this->hasMany(MarketplaceOrderItem::class, 'marketplace_product_id');
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'marketplace_product_id');
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'marketplace_product_id')
+            ->where('status', \App\Enums\Central\ReviewStatus::Approved);
+    }
+
     // Scopes
 
     public function scopeActive($query)

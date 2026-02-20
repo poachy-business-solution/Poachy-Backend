@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\Central\ReviewStatus;
+use App\Models\MerchantReview;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
@@ -18,11 +21,16 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     protected $fillable = [
         'data',
+        'average_rating',
+        'review_count',
     ];
 
     protected $casts = [
-        'data' => 'array',
+        'data'           => 'array',
+        'average_rating' => 'decimal:2',
+        'review_count'   => 'integer',
     ];
+    
 
     // Relationships
 
@@ -46,6 +54,17 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasOne(BusinessSubscription::class, 'tenant_id', 'id')
             ->whereIn('status', ['active', 'trial'])
             ->latest('start_date');
+    }
+
+    public function merchantReviews(): HasMany
+    {
+        return $this->hasMany(MerchantReview::class, 'tenant_id', 'id');
+    }
+
+    public function approvedMerchantReviews(): HasMany
+    {
+        return $this->hasMany(MerchantReview::class, 'tenant_id', 'id')
+            ->where('status', ReviewStatus::Approved);
     }
 
     // Tenancy Methods

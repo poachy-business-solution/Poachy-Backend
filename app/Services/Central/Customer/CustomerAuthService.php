@@ -53,7 +53,7 @@ class CustomerAuthService
             ]);
 
             // 3. Send email verification OTP
-            $this->otpService->generateAndSend($user, CustomerOtpService::TYPE_VERIFY_EMAIL);
+            // $this->otpService->generateAndSend($user, CustomerOtpService::TYPE_VERIFY_EMAIL);
 
             return $customer->load('user');
         });

@@ -10,8 +10,13 @@ use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplacePaymentController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
+use App\Http\Controllers\Api\Central\Marketplace\MerchantReviewController;
+use App\Http\Controllers\Api\Central\Marketplace\ProductReviewController;
+use App\Http\Controllers\Api\Central\Marketplace\ReviewModerationController;
+use App\Http\Controllers\Api\Central\Marketplace\ReviewVoteController;
 use App\Http\Controllers\Api\Central\Marketplace\ShoppingCartController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
+use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +52,13 @@ Route::prefix('v1/central')->group(function () {
         // Payment webhooks / callbacks (public — no auth)
         Route::post('/payments/webhook', [MarketplacePaymentController::class, 'webhook']);
         Route::post('/payments/mpesa/callback', [MarketplacePaymentController::class, 'mpesaCallback']);
+
+        // Reviews (public — anyone can read approved reviews)
+        Route::prefix('')->group(function () {
+            Route::get('/products/{productId}/reviews', [ProductReviewController::class, 'index']);
+            Route::get('/merchants/{tenantId}/reviews', [MerchantReviewController::class, 'index']);
+            Route::get('/reviews/{id}', [ProductReviewController::class, 'show']);
+        });
 
         // Shopping cart (public — guests can use cart, auth required at checkout)
         Route::prefix('cart')->group(function () {
@@ -116,6 +128,14 @@ Route::prefix('v1/central')
             // subscription period management
             Route::post('/tenants/{tenant_id}/trial-period', [TenantController::class, 'startTrialPeriod']);
             Route::get('/tenants/{tenant_id}/subscriptions', [TenantController::class, 'subscriptions']);
+
+            // Review Moderation Queue
+            Route::prefix('marketplace')->group(function () {
+                Route::get('/pending-reviews', [ReviewModerationController::class, 'pendingReviews']);
+                Route::get('/flagged-reviews', [ReviewModerationController::class, 'flaggedReviews']);
+                Route::post('/product-reviews/{id}/moderate', [ReviewModerationController::class, 'moderateProductReview']);
+                Route::post('/merchant-reviews/{id}/moderate', [ReviewModerationController::class, 'moderateMerchantReview']);
+            });
         });
 
         // Business Details Review
@@ -140,6 +160,21 @@ Route::prefix('v1/central')
 
             // Delivery
             Route::get('/orders/{id}/delivery', [MarketplaceDeliveryController::class, 'status']);
+
+            // Product Reviews
+            Route::post('/products/{productId}/reviews', [ProductReviewController::class, 'store']);
+            Route::delete('/reviews/{id}', [ProductReviewController::class, 'destroy']);
+
+            // Merchant Reviews
+            Route::post('/orders/{orderId}/merchant-review', [MerchantReviewController::class, 'store']);
+
+            // Review Votes
+            Route::post('/reviews/{reviewType}/{id}/vote', [ReviewVoteController::class, 'store']);
+            Route::delete('/reviews/{reviewType}/{id}/vote', [ReviewVoteController::class, 'destroy']);
+
+            // Customer Flagging
+            Route::post('/product-reviews/{id}/flag', [ReviewModerationController::class, 'flagProductReview']);
+            Route::post('/merchant-reviews/{id}/flag', [ReviewModerationController::class, 'flagMerchantReview']);
         });
 
         // Customer Profile
@@ -177,5 +212,8 @@ Route::prefix('v1/central')->group(function () {
 
         // Generic outbound sync acknowledgment (payment and cancellation flows)
         Route::post('inbound/outbound-sync-ack', [SyncController::class, 'acknowledgeOutboundSync']);
+
+        // Merchant review responses (tenant → central)
+        Route::post('inbound/product-review-response', [MerchantReviewResponseController::class, 'store']);
     });
 });

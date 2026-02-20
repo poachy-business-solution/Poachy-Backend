@@ -46,6 +46,8 @@ use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
 use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
+use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
+use App\Http\Controllers\Api\Tenant\Sync\ApprovedReviewSyncController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -69,6 +71,11 @@ Route::prefix('v1/tenant')->group(function () {
         Route::post('/verify-otp', [TenantAuthController::class, 'verifyOtp']); // Step 2: Verify OTP & get token
         Route::post('/resend-otp', [TenantAuthController::class, 'resendOtp']); // Resend OTP
         Route::post('/change-password', [TenantAuthController::class, 'changePassword']); // First-time password change
+    });
+
+    // Sync endpoints (from Central)
+    Route::prefix('sync/inbound')->group(function () {
+        Route::post('/approved-review', [ApprovedReviewSyncController::class, 'store']);
     });
 });
 
@@ -594,6 +601,14 @@ Route::prefix('v1/tenant')
             Route::get('/grouped-summary', [AuditLogController::class, 'groupedSummary']);
             Route::get('/recent-activity', [AuditLogController::class, 'recentActivity']);
             Route::get('/available-filters', [AuditLogController::class, 'availableFilters']);
+        });
+
+        // Product Reviews & Merchant Responses
+        Route::prefix('reviews')->group(function () {
+            Route::get('/', [ReviewController::class, 'index']);
+            Route::get('/{id}', [ReviewController::class, 'show']);
+            Route::post('/{id}/respond', [ReviewController::class, 'respond']);
+            Route::patch('/{id}/respond', [ReviewController::class, 'updateResponse']);
         });
     });
 

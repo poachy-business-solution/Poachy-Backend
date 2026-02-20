@@ -94,6 +94,36 @@ namespace App\Http\Controllers;
  *     name="Central - Customer - Marketplace - Payment",
  *     description="Payment processing and status endpoints for marketplace orders."
  * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Reviews - Products",
+ *     description="Product review management endpoints."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Reviews - Merchants",
+ *     description="Merchant/tenant review management endpoints. Customers can submit reviews for merchants based on completed orders."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Admin - Moderate Reviews",
+ *     description="Administrative review moderation endpoints. Admins can list pending/flagged reviews and moderate both product and merchant reviews."
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Reviews - Votes",
+ *     description="Review voting endpoints for helpful/not-helpful votes."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Reviews - Flag",
+ *     description="Review flagging endpoints for reporting inappropriate content."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Tenant - Product Reviews",
+ *     description="Tenant-side product review management endpoints. Merchants can view reviews synced from the central marketplace."
+ * )
  *
  * 
  */

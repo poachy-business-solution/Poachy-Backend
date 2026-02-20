@@ -29,7 +29,7 @@ class CustomerAuthController extends Controller
      * @OA\Post(
      *     path="/api/v1/central/marketplace/auth/register",
      *     summary="Register a new customer account",
-     *     description="Creates a new customer account in the marketplace. Sends an email verification OTP upon successful registration. Customer account will be inactive until email is verified.",
+     *     description="Creates a new customer account in the marketplace.",
      *     operationId="registerCustomer",
      *     tags={"Central - Customer - Auth"},
      *     @OA\RequestBody(
@@ -182,7 +182,7 @@ class CustomerAuthController extends Controller
         $customer = $this->authService->register($request->validated());
 
         return ApiResponse::created(
-            'Registration successful. Please check your email for a verification code.',
+            'Registration successful.',
             new CustomerResource($customer),
         );
     }

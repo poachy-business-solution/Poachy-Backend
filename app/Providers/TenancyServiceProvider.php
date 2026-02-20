@@ -197,6 +197,12 @@ class TenancyServiceProvider extends ServiceProvider
                 'tenant_id' => $event->tenant->id,
             ]);
         });
+
+        // Tenant review response sync
+        Event::listen(
+            \App\Events\Tenant\MerchantReviewResponseCreated::class,
+            \App\Listeners\Tenant\EnqueueMerchantReviewResponseSync::class
+        );
     }
 
     protected function mapRoutes()

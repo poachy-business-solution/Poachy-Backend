@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\ProductReview;
+use App\Models\MerchantReview;
+use App\Models\ReviewVote;
 
 class MarketplaceCustomer extends Model
 {
@@ -65,6 +68,21 @@ class MarketplaceCustomer extends Model
     public function carts(): HasMany
     {
         return $this->hasMany(ShoppingCart::class, 'customer_id');
+    }
+
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'customer_id');
+    }
+
+    public function merchantReviews(): HasMany
+    {
+        return $this->hasMany(MerchantReview::class, 'customer_id');
+    }
+
+    public function reviewVotes(): HasMany
+    {
+        return $this->hasMany(ReviewVote::class, 'customer_id');
     }
 
     // =========================================================================
