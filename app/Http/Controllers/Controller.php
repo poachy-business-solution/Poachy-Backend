@@ -96,6 +96,11 @@ namespace App\Http\Controllers;
  * )
  * 
  * @OA\Tag(
+ *     name="Central - Customer - Marketplace - Wishlist",
+ *     description="Customer wishlist management endpoints."
+ * )
+ * 
+ * @OA\Tag(
  *     name="Central - Reviews - Products",
  *     description="Product review management endpoints."
  * )
@@ -118,6 +123,11 @@ namespace App\Http\Controllers;
  * @OA\Tag(
  *     name="Central - Reviews - Flag",
  *     description="Review flagging endpoints for reporting inappropriate content."
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Tenant Profiles",
+ *     description="Tenant profile aggregation endpoints providing comprehensive merchant analytics."
  * )
  *
  * @OA\Tag(

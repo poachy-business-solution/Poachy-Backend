@@ -85,6 +85,11 @@ class MarketplaceCustomer extends Model
         return $this->hasMany(ReviewVote::class, 'customer_id');
     }
 
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'customer_id');
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\Central\MarketplaceProductObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy([MarketplaceProductObserver::class])]
 class MarketplaceProduct extends Model
 {
     use HasFactory, SoftDeletes;
@@ -109,6 +112,11 @@ class MarketplaceProduct extends Model
     {
         return $this->hasMany(ProductReview::class, 'marketplace_product_id')
             ->where('status', \App\Enums\Central\ReviewStatus::Approved);
+    }
+
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'marketplace_product_id');
     }
 
     // Scopes

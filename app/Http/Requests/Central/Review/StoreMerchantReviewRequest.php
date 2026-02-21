@@ -16,8 +16,8 @@ class StoreMerchantReviewRequest extends FormRequest
     {
         return [
             'overall_rating'         => ['required', 'numeric', new ValidRatingIncrement],
-            'product_quality_rating' => ['required', 'numeric', new ValidRatingIncrement],
-            'delivery_rating'        => ['required', 'numeric', new ValidRatingIncrement],
+            'product_quality_rating' => ['nullable', 'numeric', new ValidRatingIncrement],
+            'delivery_rating'        => ['nullable', 'numeric', new ValidRatingIncrement],
             'service_rating'         => ['nullable', 'numeric', new ValidRatingIncrement],
             'review_text'            => ['required', 'string', 'min:10', 'max:2000'],
         ];
@@ -27,8 +27,8 @@ class StoreMerchantReviewRequest extends FormRequest
     {
         return [
             'overall_rating.required'         => 'An overall rating is required.',
-            'product_quality_rating.required' => 'A product quality rating is required.',
-            'delivery_rating.required'        => 'A delivery rating is required.',
+            // 'product_quality_rating.required' => 'A product quality rating is required.',
+            // 'delivery_rating.required'        => 'A delivery rating is required.',
             'review_text.required'            => 'Review text is required.',
             'review_text.min'                 => 'Review text must be at least 10 characters.',
             'review_text.max'                 => 'Review text may not exceed 2,000 characters.',

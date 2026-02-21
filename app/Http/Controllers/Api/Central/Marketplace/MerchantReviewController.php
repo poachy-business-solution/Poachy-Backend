@@ -145,7 +145,7 @@ class MerchantReviewController extends Controller
      *         required=true,
      *         description="Merchant review data",
      *         @OA\JsonContent(
-     *             required={"overall_rating", "product_quality_rating", "delivery_rating", "review_text"},
+     *             required={"overall_rating", "review_text"},
      *             @OA\Property(
      *                 property="overall_rating",
      *                 type="number",

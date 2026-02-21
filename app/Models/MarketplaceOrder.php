@@ -6,6 +6,8 @@ use App\Enums\Central\FulfillmentType;
 use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
+use App\Observers\Central\MarketplaceOrderObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy([MarketplaceOrderObserver::class])]
 class MarketplaceOrder extends Model
 {
     use SoftDeletes;

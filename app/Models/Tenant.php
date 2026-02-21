@@ -21,14 +21,10 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     protected $fillable = [
         'data',
-        'average_rating',
-        'review_count',
     ];
 
     protected $casts = [
-        'data'           => 'array',
-        'average_rating' => 'decimal:2',
-        'review_count'   => 'integer',
+        'data' => 'array',
     ];
     
 
@@ -65,6 +61,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         return $this->hasMany(MerchantReview::class, 'tenant_id', 'id')
             ->where('status', ReviewStatus::Approved);
+    }
+
+    public function profile()
+    {
+        return $this->hasOne(TenantProfile::class, 'tenant_id', 'id');
     }
 
     // Tenancy Methods

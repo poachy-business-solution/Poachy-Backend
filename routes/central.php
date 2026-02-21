@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\Central\Marketplace\ProductReviewController;
 use App\Http\Controllers\Api\Central\Marketplace\ReviewModerationController;
 use App\Http\Controllers\Api\Central\Marketplace\ReviewVoteController;
 use App\Http\Controllers\Api\Central\Marketplace\ShoppingCartController;
+use App\Http\Controllers\Api\Central\Marketplace\TenantProfileController;
+use App\Http\Controllers\Api\Central\Marketplace\WishlistController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
@@ -175,6 +177,17 @@ Route::prefix('v1/central')
             // Customer Flagging
             Route::post('/product-reviews/{id}/flag', [ReviewModerationController::class, 'flagProductReview']);
             Route::post('/merchant-reviews/{id}/flag', [ReviewModerationController::class, 'flagMerchantReview']);
+
+            // Wishlist
+            Route::prefix('wishlist')->group(function () {
+                Route::get('/', [WishlistController::class, 'index']);
+                Route::get('/summary', [WishlistController::class, 'summary']);
+                Route::post('/', [WishlistController::class, 'store']);
+                Route::patch('/{id}', [WishlistController::class, 'update']);
+                Route::delete('/{id}', [WishlistController::class, 'destroy']);
+                Route::delete('/', [WishlistController::class, 'clear']);
+                Route::post('/{id}/move-to-cart', [WishlistController::class, 'moveToCart']);
+            });
         });
 
         // Customer Profile
@@ -190,6 +203,12 @@ Route::prefix('v1/central')
                 Route::patch('/{id}',  [CustomerProfileController::class, 'updateAddress']);
                 Route::delete('/{id}', [CustomerProfileController::class, 'deleteAddress']);
             });
+        });
+
+        // Tenant profiles
+        Route::prefix('tenant-profiles')->group(function () {
+            Route::get('/', [TenantProfileController::class, 'index']);
+            Route::get('/{tenantId}', [TenantProfileController::class, 'show']);
         });
     });
 
