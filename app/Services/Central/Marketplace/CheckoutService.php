@@ -9,6 +9,7 @@ use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderFulfillmentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
+use App\Events\Central\Marketplace\CheckoutCompleted;
 use App\Jobs\Central\ProcessCheckoutReservation;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderDelivery;
@@ -142,6 +143,14 @@ class CheckoutService
             'orders_created'  => $orders->count(),
             'idempotency_key' => $idempotencyKey,
         ]);
+
+        // Fire analytics event AFTER transaction commits
+        event(new CheckoutCompleted(
+            cart: $cart->fresh(),
+            orders: $orders,
+            customer: $cart->customer,
+            sessionId: $cart->session_id,
+        ));
 
         $orderIds = $orders->pluck('id');
 

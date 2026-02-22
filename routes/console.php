@@ -1,11 +1,15 @@
 <?php
 
 use App\Jobs\Central\AbandonCartJob;
+use App\Jobs\Central\Analytics\CleanupOldAnalyticsDataJob;
+use App\Jobs\Central\Analytics\SendAbandonedCartEmailJob;
+use App\Jobs\Central\Analytics\SendAbandonedCartSMSJob;
 use App\Jobs\Central\ExpireCartsJob;
 use App\Jobs\Central\MonitorPaymentDeadlines;
 use App\Jobs\Central\MonitorReservationTimeouts;
 use App\Jobs\Tenant\CheckBatchExpiriesJob;
 use App\Jobs\Tenant\CheckStockLevelsJob;
+use App\Services\Central\Marketplace\Analytics\AbandonedCartService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -84,6 +88,40 @@ Schedule::command('sync:cleanup-stale')->hourly();
 // Clean up old completed syncs daily
 Schedule::command('sync:cleanup-completed --days=30')->dailyAt('02:00');
 
+// Analytics: Send abandoned cart recovery emails hourly
+Schedule::call(function () {
+    $service = app(AbandonedCartService::class);
+    $eligibleCarts = $service->getEmailEligibleCarts(now()->subHour());
+
+    foreach ($eligibleCarts as $cart) {
+        SendAbandonedCartEmailJob::dispatch($cart['cart_id']);
+    }
+})->hourly()
+    ->name('send-abandoned-cart-emails')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// Analytics: Send abandoned cart recovery SMS hourly
+Schedule::call(function () {
+    $service = app(AbandonedCartService::class);
+    $eligibleCarts = $service->getSMSEligibleCarts(now()->subHour());
+
+    foreach ($eligibleCarts as $cart) {
+        SendAbandonedCartSMSJob::dispatch($cart['cart_id']);
+    }
+})->hourly()
+    ->name('send-abandoned-cart-sms')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// Analytics: Cleanup old analytics data weekly
+Schedule::job(new CleanupOldAnalyticsDataJob)
+    ->weekly()
+    ->saturdays()
+    ->at('03:00')
+    ->name('cleanup-old-analytics-data')
+    ->withoutOverlapping()
+    ->onOneServer();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

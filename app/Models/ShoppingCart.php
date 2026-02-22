@@ -64,6 +64,11 @@ class ShoppingCart extends Model
         return $this->belongsTo(MarketplaceOrder::class, 'converted_order_id');
     }
 
+    public function checkoutSessions(): HasMany
+    {
+        return $this->hasMany(CheckoutSession::class, 'cart_id');
+    }
+
     // =========================================================================
     // Scopes
     // =========================================================================

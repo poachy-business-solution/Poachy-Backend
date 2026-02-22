@@ -6,6 +6,9 @@ use App\Enums\Central\MarketplacePaymentMethod;
 use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
+use App\Events\Central\Marketplace\PaymentAttempted;
+use App\Events\Central\Marketplace\PaymentCompleted;
+use App\Events\Central\Marketplace\PaymentFailed;
 use App\Jobs\Central\ProcessOrderCancellation;
 use App\Jobs\Central\ProcessPaymentConfirmation;
 use App\Models\MarketplaceOrder;
@@ -119,6 +122,13 @@ class MarketplacePaymentService
             'checkout_request_id' => $stkResult['checkout_request_id'],
         ]);
 
+        // Fire analytics event for payment attempt
+        event(new PaymentAttempted(
+            order: $order,
+            payment: $payment->fresh(),
+            paymentMethod: MarketplacePaymentMethod::Mpesa->value,
+        ));
+
         return [
             'payment'      => $payment->fresh(),
             'message'      => 'STK push sent. Please complete payment on your phone.',
@@ -141,6 +151,13 @@ class MarketplacePaymentService
         MarketplaceOrderPayment $payment,
     ): array {
         $codReference = 'COD-' . $order->order_number . '-' . now()->timestamp;
+
+        // Fire analytics event for payment attempt (COD)
+        event(new PaymentAttempted(
+            order: $order,
+            payment: $payment,
+            paymentMethod: MarketplacePaymentMethod::CashOnDelivery->value,
+        ));
 
         $this->confirmPayment($payment, $codReference);
 
@@ -280,6 +297,12 @@ class MarketplacePaymentService
             'amount'     => $payment->amount,
             'method'     => $payment->payment_method->value,
         ]);
+
+        // Fire analytics event for payment completion
+        event(new PaymentCompleted(
+            order: $order,
+            payment: $payment->fresh(),
+        ));
     }
 
     /**
@@ -297,6 +320,13 @@ class MarketplacePaymentService
             'payment_id' => $payment->id,
             'reason'     => $reason,
         ]);
+
+        // Fire analytics event for payment failure
+        event(new PaymentFailed(
+            order: $payment->order,
+            payment: $payment->fresh(),
+            failureReason: $reason,
+        ));
     }
 
     /**

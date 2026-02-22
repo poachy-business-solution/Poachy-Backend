@@ -5,6 +5,12 @@ use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
 use App\Http\Controllers\Api\Central\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\Central\Customer\CustomerProfileController;
+use App\Http\Controllers\Api\Central\Marketplace\Analytics\AbandonedCartController;
+use App\Http\Controllers\Api\Central\Marketplace\Analytics\CustomerJourneyController;
+use App\Http\Controllers\Api\Central\Marketplace\Analytics\FunnelController;
+use App\Http\Controllers\Api\Central\Marketplace\Analytics\ProductAnalyticsController;
+use App\Http\Controllers\Api\Central\Marketplace\Analytics\SearchAnalyticsController;
+use App\Http\Controllers\Api\Central\Marketplace\AnalyticsTrackingController;
 use App\Http\Controllers\Api\Central\Marketplace\CheckoutController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
@@ -75,6 +81,16 @@ Route::prefix('v1/central')->group(function () {
         // Checkout (public route — auth checked in controller)
         Route::post('/checkout/validate', [CheckoutController::class, 'validate']);
         Route::post('/checkout', [CheckoutController::class, 'initiate']);
+
+        // Analytics tracking (public — rate limited)
+        Route::prefix('analytics')
+            ->middleware(['throttle:analytics'])
+            ->group(function () {
+                Route::post('/product-view', [AnalyticsTrackingController::class, 'trackProductView']);
+                Route::patch('/product-view/{sessionId}/{productId}', [AnalyticsTrackingController::class, 'updateProductView']);
+                Route::post('/search', [AnalyticsTrackingController::class, 'trackSearch']);
+                Route::post('/event', [AnalyticsTrackingController::class, 'trackEvent']);
+            });
     });
 
     // Customer Auth routes
@@ -209,6 +225,35 @@ Route::prefix('v1/central')
         Route::prefix('tenant-profiles')->group(function () {
             Route::get('/', [TenantProfileController::class, 'index']);
             Route::get('/{tenantId}', [TenantProfileController::class, 'show']);
+        });
+
+        // Analytics reporting - admin access recommended
+        Route::prefix('reports')->middleware(['role:admin'])->group(function () {
+            // Funnel analytics
+            Route::get('/funnel', [FunnelController::class, 'index']);
+            Route::get('/funnel/abandonment', [FunnelController::class, 'abandonment']);
+            Route::get('/funnel/by-device', [FunnelController::class, 'byDevice']);
+            Route::get('/funnel/time-to-purchase', [FunnelController::class, 'timeToPurchase']);
+
+            // Product analytics
+            Route::get('/products/top', [ProductAnalyticsController::class, 'top']);
+            Route::get('/products/{productId}', [ProductAnalyticsController::class, 'show']);
+            Route::get('/products/{productId}/referrers', [ProductAnalyticsController::class, 'referrers']);
+
+            // Search analytics
+            Route::get('/search/zero-results', [SearchAnalyticsController::class, 'zeroResults']);
+            Route::get('/search/popular', [SearchAnalyticsController::class, 'popular']);
+            Route::get('/search/metrics', [SearchAnalyticsController::class, 'metrics']);
+            Route::get('/search/refinements', [SearchAnalyticsController::class, 'refinements']);
+
+            // Customer journey
+            Route::get('/journey/{sessionUuid}', [CustomerJourneyController::class, 'show']);
+            Route::get('/journey/paths', [CustomerJourneyController::class, 'paths']);
+
+            // Abandoned cart analytics
+            Route::get('/abandoned-carts/stats', [AbandonedCartController::class, 'stats']);
+            Route::get('/abandoned-carts/email-eligible', [AbandonedCartController::class, 'emailEligible']);
+            Route::get('/abandoned-carts/sms-eligible', [AbandonedCartController::class, 'smsEligible']);
         });
     });
 

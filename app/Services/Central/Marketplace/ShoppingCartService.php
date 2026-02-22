@@ -3,6 +3,8 @@
 namespace App\Services\Central\Marketplace;
 
 use App\Enums\Central\CartStatus;
+use App\Events\Central\Marketplace\CartItemAdded;
+use App\Events\Central\Marketplace\CartItemRemoved;
 use App\Models\MarketplaceProduct;
 use App\Models\ShoppingCart;
 use App\Models\ShoppingCartItem;
@@ -70,7 +72,7 @@ class ShoppingCartService
             throw new \RuntimeException('Product is currently out of stock.');
         }
 
-        return DB::connection('central')->transaction(function () use ($cart, $product, $data) {
+        $item = DB::connection('central')->transaction(function () use ($cart, $product, $data) {
             $existingItem = $cart->items()
                 ->where('marketplace_product_id', $product->id)
                 ->lockForUpdate()
@@ -101,6 +103,16 @@ class ShoppingCartService
                 'updated_at'             => now(),
             ]);
         });
+
+        // Fire analytics event AFTER transaction commits
+        event(new CartItemAdded(
+            cart: $cart->fresh(),
+            item: $item,
+            customer: $cart->customer,
+            sessionId: $cart->session_id,
+        ));
+
+        return $item;
     }
 
     /**
@@ -133,8 +145,23 @@ class ShoppingCartService
      */
     public function removeItem(ShoppingCart $cart, int $itemId): void
     {
-        $cart->items()->where('id', $itemId)->delete();
-        $cart->touch();
+        // Get the item before deletion for analytics
+        $item = $cart->items()->find($itemId);
+
+        if ($item) {
+            $removedProductId = $item->marketplace_product_id;
+
+            $cart->items()->where('id', $itemId)->delete();
+            $cart->touch();
+
+            // Fire analytics event AFTER deletion
+            event(new CartItemRemoved(
+                cart: $cart->fresh(),
+                removedProductId: $removedProductId,
+                customer: $cart->customer,
+                sessionId: $cart->session_id,
+            ));
+        }
     }
 
     /**

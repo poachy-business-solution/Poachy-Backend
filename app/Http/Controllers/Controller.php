@@ -129,6 +129,11 @@ namespace App\Http\Controllers;
  *     name="Central - Tenant Profiles",
  *     description="Tenant profile aggregation endpoints providing comprehensive merchant analytics."
  * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Analytics - Marketplace",
+ *     description="Analytics tracking endpoints for monitoring user behavior and engagement."
+ * )
  *
  * @OA\Tag(
  *     name="Tenant - Product Reviews",
