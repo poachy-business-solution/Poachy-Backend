@@ -134,6 +134,21 @@ namespace App\Http\Controllers;
  *     name="Central - Analytics - Marketplace",
  *     description="Analytics tracking endpoints for monitoring user behavior and engagement."
  * )
+ * 
+ * @OA\Tag(
+ *     name="Central - Analytics - Funnel",
+ *     description="Conversion funnel analytics for tracking customer journey from product view to order completion."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Analytics - Product Performance",
+ *     description="Product-level performance analytics tracking views, engagement, and conversions."
+ * )
+ *
+ * @OA\Tag(
+ *     name="Central - Analytics - Search Queries",
+ *     description="Search analytics for understanding customer search behavior and catalog gaps."
+ * )
  *
  * @OA\Tag(
  *     name="Tenant - Product Reviews",
