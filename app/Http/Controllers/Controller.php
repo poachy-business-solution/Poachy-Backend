@@ -151,6 +151,11 @@ namespace App\Http\Controllers;
  * )
  *
  * @OA\Tag(
+ *     name="Tenant - Inventory Reservations",
+ *     description="Tenant inventory reservation from Central Marketplace orders."
+ * )
+ * 
+ * @OA\Tag(
  *     name="Tenant - Delivery Zones",
  *     description="Tenant delivery zone management for configuring delivery coverage areas and pricing."
  * )

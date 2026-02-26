@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Tenant\Expenses\ExpenseController;
 use App\Http\Controllers\Api\Tenant\Inventory\ExpiryAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
+use App\Http\Controllers\Api\Tenant\Inventory\InventoryReservationController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryWasteController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
@@ -261,6 +262,11 @@ Route::prefix('v1/tenant')
             Route::get('/{id}', [InventoryMovementController::class, 'show']);
             Route::post('/adjustment', [InventoryMovementController::class, 'createAdjustment']);
             Route::post('/damage', [InventoryMovementController::class, 'createDamage']);
+        });
+
+        Route::prefix('inventory-reservations')->group(function () {
+            Route::get('/', [InventoryReservationController::class, 'index']);
+            Route::get('/{id}', [InventoryReservationController::class, 'show']);
         });
 
         // Stock Transfers Routes

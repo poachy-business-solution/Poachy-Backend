@@ -306,13 +306,62 @@ class InventoryService
             $query->byType($filters['movement_type']);
         }
 
-        if (!empty($filters['from_date']) || !empty($filters['to_date'])) {
-            $query->byDateRange($filters['from_date'] ?? null, $filters['to_date'] ?? null);
+        $fromDate = $filters['from_date'] ?? null;
+        $toDate = $filters['to_date'] ?? null;
+
+        if ($fromDate === null && $toDate === null) {
+            $fromDate = now()->subDays(6)->toDateString();
+            $toDate = now()->toDateString();
         }
+
+        $query->byDateRange($fromDate, $toDate);
 
         $perPage = $filters['per_page'] ?? 20;
 
         return $query->recent()->paginate($perPage);
+    }
+
+    /**
+     * Get inventory reservations with optional filters.
+     *
+     * @param array<string, mixed> $filters
+     */
+    public function getInventoryReservations(array $filters = []): LengthAwarePaginator
+    {
+        $query = \App\Models\Tenant\InventoryReservation::withDetails()
+            ->with('cancelledBy:id,name');
+
+        if (!empty($filters['store_id'])) {
+            $query->byStore($filters['store_id']);
+        }
+
+        if (!empty($filters['product_id'])) {
+            $query->byProduct($filters['product_id']);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        $fromDate = $filters['from_date'] ?? null;
+        $toDate = $filters['to_date'] ?? null;
+
+        if ($fromDate === null && $toDate === null) {
+            $fromDate = now()->subDays(6)->toDateString();
+            $toDate = now()->toDateString();
+        }
+
+        if ($fromDate) {
+            $query->whereDate('created_at', '>=', $fromDate);
+        }
+
+        if ($toDate) {
+            $query->whereDate('created_at', '<=', $toDate);
+        }
+
+        $perPage = $filters['per_page'] ?? 20;
+
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
     /**
