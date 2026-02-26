@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sync\ApprovedReviewSyncController;
+use App\Http\Controllers\Api\Tenant\Sync\TenantSyncAckController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -78,6 +79,7 @@ Route::prefix('v1/tenant')->group(function () {
     // Sync endpoints (from Central)
     Route::prefix('sync/inbound')->group(function () {
         Route::post('/approved-review', [ApprovedReviewSyncController::class, 'store']);
+        Route::post('/delivery-zone-ack', [TenantSyncAckController::class, 'receiveDeliveryZoneAck']);
     });
 });
 

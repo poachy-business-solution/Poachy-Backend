@@ -14,6 +14,7 @@ class TenantDeliveryZone extends Model
 
     protected $fillable = [
         'tenant_id',
+        'tenant_zone_id',
         'zone_name',
         'zone_type',
         'cities',
@@ -32,6 +33,8 @@ class TenantDeliveryZone extends Model
         'supported_methods',
         'priority',
         'is_active',
+        'last_synced_at',
+        'sync_status',
     ];
 
     protected function casts(): array
@@ -50,6 +53,7 @@ class TenantDeliveryZone extends Model
             'radius_km'                => 'integer',
             'priority'                 => 'integer',
             'is_active'                => 'boolean',
+            'last_synced_at'           => 'datetime',
         ];
     }
 

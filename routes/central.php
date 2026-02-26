@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
+use App\Http\Controllers\Api\Central\Admin\Tenant\TenantDeliveryZoneController;
 use App\Http\Controllers\Api\Central\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\Central\Customer\CustomerProfileController;
 use App\Http\Controllers\Api\Central\Marketplace\Analytics\AbandonedCartController;
@@ -151,6 +152,10 @@ Route::prefix('v1/central')
             Route::post('/tenants/{tenant_id}/trial-period', [TenantController::class, 'startTrialPeriod']);
             Route::get('/tenants/{tenant_id}/subscriptions', [TenantController::class, 'subscriptions']);
 
+            // Tenant Delivery Zones
+            Route::get('/tenant-delivery-zones', [TenantDeliveryZoneController::class, 'index']);
+            Route::get('/tenant-delivery-zones/{id}', [TenantDeliveryZoneController::class, 'show']);
+
             // Review Moderation Queue
             Route::prefix('marketplace')->group(function () {
                 Route::get('/pending-reviews', [ReviewModerationController::class, 'pendingReviews']);
@@ -272,6 +277,7 @@ Route::prefix('v1/central')->group(function () {
         Route::post('inbound/variant', [SyncController::class, 'receiveVariantSync']);
         Route::post('inbound/bundle', [SyncController::class, 'receiveBundleSync']);
         Route::post('inbound/inventory-count', [SyncController::class, 'receiveInventoryCountSync']);
+        Route::post('inbound/delivery-zone', [SyncController::class, 'receiveDeliveryZoneSync']);
         Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);
 
         // Inbound order sync (from tenants)

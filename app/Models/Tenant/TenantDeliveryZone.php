@@ -2,9 +2,12 @@
 
 namespace App\Models\Tenant;
 
+use App\Observers\Tenant\DeliveryZoneObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy([DeliveryZoneObserver::class])]
 class TenantDeliveryZone extends Model
 {
     use HasFactory;

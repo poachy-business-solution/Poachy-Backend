@@ -19,8 +19,12 @@ Once you have the answers, follow the rules and scaffold steps below exactly.
 Model Observer → SyncService → Event → Listener ($afterCommit=true)
 → SyncQueueOutbound (tenant DB) → Outbound Job (HTTP POST)
 → Central API Endpoint → Form Request → SyncController
-→ SyncQueueInbound (central DB) → Inbound Job → Marketplace Model
+→ SyncQueueInbound (central DB) → Inbound Job → Central Model
+→ ACK back to tenant (POST /api/v1/tenant/sync/inbound/{entity}-ack)   ← optional, use when tenant needs confirmation
+→ Tenant ACK Controller → SyncQueueOutbound.central_record_id updated
 ```
+
+**ACK callback rule:** Add the central → tenant ACK when the tenant needs to know the processing result (e.g. it needs `central_record_id` for future operations, or failure must be surfaced). Skip it for stateless syncs (e.g. inventory counts where the tenant never queries central back). See DeliveryZone as the reference pattern for ACK-enabled syncs.
 
 ### Central → Tenant (inbound)
 
@@ -71,7 +75,7 @@ There are **two** `SyncQueueOutbound` models. Using the wrong one corrupts data.
 
 ---
 
-## Tenant → Central: 14 Scaffold Steps (follow in order)
+## Tenant → Central: 16 Scaffold Steps (follow in order)
 
 ### Step 1 — DTO `app/DataTransferObjects/Sync/{Entity}SyncDTO.php`
 
@@ -147,32 +151,42 @@ There are **two** `SyncQueueOutbound` models. Using the wrong one corrupts data.
 ### Step 9 — Inbound Job `app/Jobs/Central/ProcessInbound{Entity}Sync.php`
 
 - Timeout: 180s | tries: 3 | backoff: [60, 300, 900]
-- Status flow: `pending → processing → validating → mapping → syncing → completed`
-- Acquire lock, validate DTO, use `MarketplaceMappingService` for category/brand mapping
+- Status flow: `pending → processing → validating → syncing → completed` (add `mapping` step only if entity requires `MarketplaceMappingService`)
+- Acquire lock; check stale (`markAsCompleted` flow aborts early); deserialize DTO
+- Use `MarketplaceMappingService` for category/brand mapping **only when applicable** (e.g. products/variants — not delivery zones)
 - Find existing record by `(tenant_id, tenant_{entity}_id)` — update if exists, create if not
 - Mark as `stale` if `expires_at` exceeded before processing
 - Error codes: VALIDATION_ERROR | MAPPING_ERROR | DUPLICATE_ERROR | SYNC_ERROR | JOB_FAILED
-- **`markAsCompleted()` — CRITICAL:** signature is `markAsCompleted(?int $centralRecordId = null, ?string $centralTable = null)`:
-  - Job **creates** a new central record → `$syncQueue->markAsCompleted(centralRecordId: $model->id, centralTable: 'marketplace_products')`
+- **`markAsCompleted()` on `SyncQueueInbound` — CRITICAL:** signature is `markAsCompleted(?int $centralRecordId = null, ?string $centralTable = null)`:
+  - Job **creates** a new central record → `$syncQueue->markAsCompleted(centralRecordId: $model->id, centralTable: 'tenant_delivery_zones')`
   - Job **updates** an existing record (no new record) → `$syncQueue->markAsCompleted()` — no arguments, never pass an array
-- **Pattern:** `app/Jobs/Central/ProcessInboundProductSync.php`
+- **Note:** `SyncQueueOutbound::markAsCompleted()` has a different signature (`?array $response = null`). Don't conflate the two.
+- If ACK is needed (Step 15), fire it in the `finally` block after all processing — always on final success or permanent failure
+- **Pattern:** `app/Jobs/Central/ProcessInboundProductSync.php` (with mapping) | `app/Jobs/Central/ProcessInboundDeliveryZoneSync.php` (without mapping, with ACK)
 
-### Step 10 — Central Service `app/Services/Central/Sync/Marketplace{Entity}SyncService.php`
+### Step 10 — Central Service `app/Services/Central/Sync/{Prefix}{Entity}SyncService.php`
 
+- **Naming convention:** Use `Marketplace{Entity}SyncService` when the central model is a `Marketplace*` model (e.g. `MarketplaceProduct`). Use `Tenant{Entity}SyncService` when the central model is a `Tenant*` model (e.g. `TenantDeliveryZone`). Never use `Marketplace` prefix for non-marketplace entities.
 - `create{Entity}(DTO $dto): Model`
-- `update{Entity}(Model $existing, DTO $dto): Model`
-- `delete{Entity}(DTO $dto): void`
-- **Pattern:** `app/Services/Central/Sync/MarketplaceSyncService.php`
+- `update{Entity}(DTO $dto): Model` — if record not found, create it (handles out-of-order delivery)
+- `delete{Entity}(DTO $dto): void` — if record not found, log warning + return silently (idempotent)
+- **Pattern (marketplace entities):** `app/Services/Central/Sync/MarketplaceSyncService.php`
+- **Pattern (tenant entities):** `app/Services/Central/Sync/TenantDeliveryZoneSyncService.php`
 
-### Step 11 — Central Migration (only if new entity type)
+### Step 11 — Central Migration (only if new entity type or missing sync columns)
 
-- File: `database/migrations/{timestamp}_create_marketplace_{entities}_table.php`
-- Must include: `id`, `tenant_id` (FK → tenants), `tenant_{entity}_id`
-- Unique constraint on `(tenant_id, tenant_{entity}_id)`
-- Follow `MarketplaceProduct` column conventions
-- Run: `vendor/bin/sail artisan migrate`
+- **New table:** `database/migrations/{timestamp}_create_{entities}_table.php`
+  - Must include: `id`, `tenant_id` (FK → tenants), `tenant_{entity}_id`
+  - Unique constraint on `(tenant_id, tenant_{entity}_id)`
+  - Follow `MarketplaceProduct` column conventions
+- **Existing table without sync columns:** Create an ALTER migration instead — `database/migrations/{timestamp}_add_sync_fields_to_{entities}_table.php`
+  - Add: `tenant_{entity}_id` (unsignedBigInteger, nullable), `last_synced_at` (timestamp, nullable), `sync_status` (string, nullable)
+  - Add unique constraint: `['tenant_id', 'tenant_{entity}_id']`
+  - Use nullable columns so existing rows are not broken
+  - Set `protected $connection = 'central'` on the migration class
+- Run: `php artisan migrate`
 
-### Step 12 — Route `routes/central.php` (inside sync group ~lines 165-179)
+### Step 12 — Route `routes/central.php` (inside sync group ~lines 268-290)
 
 ```php
 Route::post('inbound/{entity}', [SyncController::class, 'receive{Entity}Sync']);
@@ -180,11 +194,65 @@ Route::post('inbound/{entity}', [SyncController::class, 'receive{Entity}Sync']);
 
 ### Step 13 — Register Observer
 
-Add to `app/Providers/AppServiceProvider.php` (or `TenancyServiceProvider.php` if tenant-scoped).
+**Do NOT use `AppServiceProvider` or `TenancyServiceProvider`.**
+Use the `#[ObservedBy]` PHP 8 attribute directly on the tenant model:
+
+```php
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\Tenant\{Entity}Observer;
+
+#[ObservedBy([{Entity}Observer::class])]
+class {Entity} extends Model { ... }
+```
 
 ### Step 14 — Register Event/Listener
 
-Add mapping to `app/Providers/EventServiceProvider.php`.
+**No manual registration needed.** Laravel 11+ auto-discovers listeners in `app/Listeners/` by scanning the first parameter type hint of public methods. As long as the listener's `handle(YourEvent $event)` signature is type-hinted, it will be registered automatically.
+
+Do NOT add entries to `EventServiceProvider` or `AppServiceProvider` — doing so causes double-registration.
+
+### Step 15 — ACK Controller + Route (only if ACK is needed)
+
+**Skip this step if the sync is stateless (e.g. inventory counts).**
+Add when the tenant needs confirmation of central processing (e.g. `central_record_id` for future use, or failure surfacing).
+
+`app/Http/Controllers/Api/Tenant/Sync/TenantSyncAckController.php`:
+- Add method `receive{Entity}Ack({Entity}SyncAckRequest $request): JsonResponse`
+- Find `App\Models\Tenant\SyncQueueOutbound` by `outbound_sync_queue_id`
+- If `status=completed`: update `central_record_id`, `central_table`, merge `sync_response`
+- If `status=failed`: call `markAsFailed(reason, 'CENTRAL_PROCESSING_FAILED', [...])`
+- Return `200 OK`
+
+`app/Http/Requests/Tenant/Sync/{Entity}SyncAckRequest.php`:
+- Rules: `outbound_sync_queue_id` (required|int), `status` (in:completed,failed), `central_{entity}_id` (required_if:status,completed|int), `reason` (nullable|string)
+
+**Pattern:** `app/Http/Controllers/Api/Tenant/Sync/TenantSyncAckController.php` + `app/Http/Requests/Tenant/Sync/DeliveryZoneSyncAckRequest.php`
+
+### Step 16 — ACK Route (only if ACK is needed)
+
+`routes/tenant.php` — inside the existing `sync/inbound` group:
+
+```php
+Route::post('/{entity}-ack', [TenantSyncAckController::class, 'receive{Entity}Ack']);
+```
+
+Central inbound job must call back to the tenant in its `finally` block:
+
+```php
+// In ProcessInbound{Entity}Sync::ackTenant()
+$tenant = Tenant::on('central')->find($syncQueue->tenant_id);
+$domain = $tenant->domains()->first();
+$scheme = app()->environment('local') ? 'http://' : 'https://';
+$tenantUrl = $scheme . $domain->domain;
+
+Http::withToken(config('services.tenant_api.token'))
+    ->post($tenantUrl . '/api/v1/tenant/sync/inbound/{entity}-ack', [
+        'outbound_sync_queue_id' => $tenantOutboundSyncId,  // from $syncQueue->metadata['sync_queue_id_from_tenant']
+        'status'                 => $ackStatus,
+        'central_{entity}_id'   => $centralEntityId,
+        'reason'                 => $reason,
+    ]);
+```
 
 ---
 
@@ -270,6 +338,7 @@ Add to `routes/tenant.php`.
 - **Variants:** `is_active=true`, `online_price>0`, parent product must pass product checks
 - **Bundles:** `is_available_online=true`, `is_active=true`, `online_price>0`, `base_uom_id`, `tax_rate_id`, min 2 active items
 - **InventoryCount:** `product.is_available_online=true && product.is_active=true` — checked in `InventoryObserver.updated()` only
+- **DeliveryZone:** No eligibility gate — all zones are always sync-worthy. Observer fires for every `created`, `updated`, and `deleted` event.
 - **New entities:** Define eligibility rules in the Observer before firing the event
 
 ### Lock Mechanism
@@ -309,15 +378,20 @@ Add to `routes/tenant.php`.
 | Outbound Job (tenant) | `app/Jobs/Tenant/ProcessOutboundProductSync.php` |
 | Form Request | `app/Http/Requests/Central/Sync/InboundProductSyncRequest.php` |
 | SyncController | `app/Http/Controllers/Api/Central/Sync/SyncController.php` |
-| Inbound Job (central) | `app/Jobs/Central/ProcessInboundProductSync.php` |
-| Central Sync Service | `app/Services/Central/Sync/MarketplaceSyncService.php` |
+| Inbound Job (central, with mapping) | `app/Jobs/Central/ProcessInboundProductSync.php` |
+| Inbound Job (central, with ACK, no mapping) | `app/Jobs/Central/ProcessInboundDeliveryZoneSync.php` |
+| Central Sync Service (Marketplace entities) | `app/Services/Central/Sync/MarketplaceSyncService.php` |
+| Central Sync Service (Tenant entities) | `app/Services/Central/Sync/TenantDeliveryZoneSyncService.php` |
+| ACK Controller | `app/Http/Controllers/Api/Tenant/Sync/TenantSyncAckController.php` |
+| ACK Form Request | `app/Http/Requests/Tenant/Sync/DeliveryZoneSyncAckRequest.php` |
 | OutboundSyncService | `app/Services/Central/Marketplace/OutboundSyncService.php` |
 | Outbound Enum | `app/Enums/Central/OutboundSyncAction.php` |
 | Central Queue Model | `app/Models/SyncQueueOutbound.php` |
 | Tenant Queue Model | `app/Models/Tenant/SyncQueueOutbound.php` |
 | Inbound Queue Model | `app/Models/SyncQueueInbound.php` |
 | Tenant Inbound Job | `app/Jobs/Tenant/ProcessInboundOrderSync.php` |
-| Routes | `routes/central.php` (sync group ~lines 165-180) |
+| Routes (central sync group) | `routes/central.php` (~lines 268-290) |
+| Routes (tenant sync group) | `routes/tenant.php` (sync/inbound group) |
 
 **Implemented syncs (use as additional patterns):**
 
@@ -330,6 +404,7 @@ Add to `routes/tenant.php`.
 | MarketplaceOrder (reservation) | Central → Tenant | reserve_inventory | `sync-critical` | `ProcessCheckoutReservation` job | `OutboundSyncService::queueOrderSync()`, `ProcessInboundOrderSync` |
 | MarketplaceOrder (payment) | Central → Tenant | payment_confirmed | `sync-critical` | `ProcessPaymentConfirmation` job | `OutboundSyncService::queuePaymentSync()`, `ProcessInboundPaymentSync` |
 | MarketplaceOrder (cancellation) | Central → Tenant | cancel | `sync-critical` | `ProcessOrderCancellation` job | `OutboundSyncService::queueCancellationSync()`, `ProcessInboundCancellationSync` |
+| DeliveryZone | Tenant → Central | create, update, delete | `sync-high` | `DeliveryZoneObserver` (no eligibility gate) | `DeliveryZoneSyncDTO`, `ProcessOutboundDeliveryZoneSync`, `ProcessInboundDeliveryZoneSync`, `TenantDeliveryZoneSyncService`, `TenantSyncAckController::receiveDeliveryZoneAck` |
 
 ---
 
