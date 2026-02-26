@@ -46,9 +46,6 @@ class SubmitBusinessDetailsRequest extends FormRequest
 
             'delivery_info' => ['nullable', 'array'],
             'delivery_info.available' => ['sometimes', 'boolean'],
-            'delivery_info.areas' => ['sometimes', 'array'],
-            'delivery_info.fee' => ['sometimes', 'numeric', 'min:0'],
-            'delivery_info.free_delivery_threshold' => ['sometimes', 'numeric', 'min:0'],
 
             'settings' => ['nullable', 'array'],
             'settings.currency' => ['sometimes', 'string', 'size:3'], // KES, USD, etc.

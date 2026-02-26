@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
 use App\Http\Controllers\Api\Tenant\Budget\BudgetController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
+use App\Http\Controllers\Api\Tenant\Business\DeliverySettingsController;
+use App\Http\Controllers\Api\Tenant\Business\DeliveryZoneController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerCreditTransactionController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
@@ -652,6 +654,19 @@ Route::prefix('v1/tenant')
                 Route::patch('/delivery-info', [BusinessDetailsController::class, 'updateDeliveryInfo']);
                 Route::patch('/settings', [BusinessDetailsController::class, 'updateSettings']);
                 Route::patch('/social-media', [BusinessDetailsController::class, 'updateSocialMedia']);
+
+                // Delivery Zones
+                Route::prefix('delivery-zones')->group(function () {
+                    Route::get('/', [DeliveryZoneController::class, 'index']);
+                    Route::post('/', [DeliveryZoneController::class, 'store']);
+                    Route::post('/reorder', [DeliveryZoneController::class, 'reorder']);
+                    Route::get('/{id}', [DeliveryZoneController::class, 'show']);
+                    Route::patch('/{id}', [DeliveryZoneController::class, 'update']);
+                    Route::delete('/{id}', [DeliveryZoneController::class, 'destroy']);                    
+                });
+
+                // Delivery Settings (toggle zones on/off)
+                Route::post('/delivery-settings/toggle-zones', [DeliverySettingsController::class, 'toggleZones']);
             });
         });
     });

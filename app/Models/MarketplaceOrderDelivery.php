@@ -16,6 +16,9 @@ class MarketplaceOrderDelivery extends Model
     protected $fillable = [
         'order_id',
         'delivery_method',
+        'zone_id',
+        'zone_name',
+        'delivery_fee',
         'delivery_status',
         'courier_company',
         'courier_name',
@@ -43,6 +46,8 @@ class MarketplaceOrderDelivery extends Model
         return [
             'delivery_method'         => DeliveryMethod::class,
             'delivery_status'         => DeliveryStatus::class,
+            'zone_id'                 => 'integer',
+            'delivery_fee'            => 'decimal:2',
             'estimated_pickup_time'   => 'datetime',
             'actual_pickup_time'      => 'datetime',
             'estimated_delivery_time' => 'datetime',

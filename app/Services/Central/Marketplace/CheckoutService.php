@@ -11,6 +11,7 @@ use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
 use App\Events\Central\Marketplace\CheckoutCompleted;
 use App\Jobs\Central\ProcessCheckoutReservation;
+use App\Models\CustomerAddress;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderDelivery;
 use App\Models\MarketplaceOrderItem;
@@ -28,7 +29,8 @@ class CheckoutService
     private const PAYMENT_DEADLINE_MINUTES = 35;
 
     public function __construct(
-        private ShoppingCartService $cartService
+        private ShoppingCartService $cartService,
+        private DeliveryFeeService $deliveryFeeService,
     ) {}
 
     /**
@@ -279,74 +281,104 @@ class CheckoutService
         string $idempotencyKey,
         ?int $customerId
     ): MarketplaceOrder {
-        $totals = $this->calculateOrderTotals($items);
+        $totals          = $this->calculateOrderTotals($items);
+        $fulfillmentType = FulfillmentType::tryFrom($checkoutData['fulfillment_type'] ?? 'delivery');
+
+        // ── Delivery fee calculation ──────────────────────────────────────────
+        $deliveryFee        = 0.0;
+        $deliveryFeeDetails = null;
+        $deliveryMethod     = DeliveryMethod::Standard;
+
+        if ($fulfillmentType === FulfillmentType::Delivery) {
+            $deliveryAddressId = $checkoutData['delivery_address_id'] ?? null;
+
+            if (! $deliveryAddressId) {
+                throw new \RuntimeException('A delivery address is required for delivery orders.');
+            }
+
+            $deliveryAddress = CustomerAddress::on('central')->find($deliveryAddressId);
+
+            if (! $deliveryAddress) {
+                throw new \RuntimeException('The selected delivery address could not be found.');
+            }
+
+            $deliveryMethod     = DeliveryMethod::tryFrom($checkoutData['delivery_method'] ?? 'standard') ?? DeliveryMethod::Standard;
+            $deliveryFeeDetails = $this->deliveryFeeService->calculateDeliveryFee(
+                $tenantId,
+                $deliveryAddress,
+                $deliveryMethod,
+                $totals['subtotal'],
+            );
+            $deliveryFee = $deliveryFeeDetails['fee'];
+        }
 
         $firstProduct = $items->first()->marketplaceProduct;
 
         $order = MarketplaceOrder::create([
-            'order_number'              => MarketplaceOrder::generateOrderNumber(),
-            'customer_id'               => $customerId,
-            'delivery_address_id'       => $checkoutData['delivery_address_id'] ?? null,
-            'tenant_id'                 => $tenantId,
-            'merchant_name'             => $firstProduct->tenant_id,
-            'subtotal'                  => $totals['subtotal'],
-            'tax_amount'                => $totals['tax_amount'],
-            'discount_amount'           => 0,
-            'delivery_fee'              => 0,
-            'total_amount'              => $totals['total_amount'],
-            'fulfillment_type'          => $checkoutData['fulfillment_type'] ?? FulfillmentType::Delivery->value,
-            'order_status'              => OrderStatus::Pending,
-            'reservation_status'        => ReservationStatus::Pending,
-            'reservation_expires_at'    => now()->addMinutes(self::RESERVATION_EXPIRY_MINUTES),
-            'payment_deadline_at'       => now()->addMinutes(self::PAYMENT_DEADLINE_MINUTES),
-            'customer_notes'            => $checkoutData['customer_notes'] ?? null,
-            'checkout_idempotency_key'  => $idempotencyKey,
+            'order_number'             => MarketplaceOrder::generateOrderNumber(),
+            'customer_id'              => $customerId,
+            'delivery_address_id'      => $checkoutData['delivery_address_id'] ?? null,
+            'tenant_id'                => $tenantId,
+            'merchant_name'            => $firstProduct->tenant_id,
+            'subtotal'                 => $totals['subtotal'],
+            'tax_amount'               => $totals['tax_amount'],
+            'discount_amount'          => 0,
+            'delivery_fee'             => $deliveryFee,
+            'total_amount'             => round($totals['total_amount'] + $deliveryFee, 2),
+            'fulfillment_type'         => $fulfillmentType->value,
+            'order_status'             => OrderStatus::Pending,
+            'reservation_status'       => ReservationStatus::Pending,
+            'reservation_expires_at'   => now()->addMinutes(self::RESERVATION_EXPIRY_MINUTES),
+            'payment_deadline_at'      => now()->addMinutes(self::PAYMENT_DEADLINE_MINUTES),
+            'customer_notes'           => $checkoutData['customer_notes'] ?? null,
+            'checkout_idempotency_key' => $idempotencyKey,
         ]);
 
         // Create order items with immutable price snapshots
         foreach ($items as $item) {
-            $product = $item->marketplaceProduct;
+            $product      = $item->marketplaceProduct;
             $lineSubtotal = (float) $item->quantity * (float) $item->unit_price;
-            $lineTax = $lineSubtotal * ((float) ($product->tax_rate ?? 0) / 100);
+            $lineTax      = $lineSubtotal * ((float) ($product->tax_rate ?? 0) / 100);
 
             MarketplaceOrderItem::create([
-                'order_id'              => $order->id,
+                'order_id'               => $order->id,
                 'marketplace_product_id' => $product->id,
-                'tenant_product_id'     => $product->tenant_product_id,
-                'tenant_variant_id'     => $product->tenant_variant_id,
-                'tenant_bundle_id'      => $product->tenant_bundle_id,
-                'product_name'          => $product->name,
-                'product_sku'           => $product->sku,
-                'variant_name'          => null,
-                'uom_code'              => $product->base_uom_code,
-                'uom_name'              => $product->base_uom_name,
-                'quantity'              => $item->quantity,
-                'quantity_in_base_uom'  => $item->quantity,
-                'unit_price'            => $item->unit_price,
-                'tax_rate'              => $product->tax_rate ?? 0,
-                'tax_amount'            => round($lineTax, 2),
-                'discount_amount'       => 0,
-                'subtotal'              => round($lineSubtotal + $lineTax, 2),
-                'fulfillment_status'    => OrderFulfillmentStatus::Pending,
+                'tenant_product_id'      => $product->tenant_product_id,
+                'tenant_variant_id'      => $product->tenant_variant_id,
+                'tenant_bundle_id'       => $product->tenant_bundle_id,
+                'product_name'           => $product->name,
+                'product_sku'            => $product->sku,
+                'variant_name'           => null,
+                'uom_code'               => $product->base_uom_code,
+                'uom_name'               => $product->base_uom_name,
+                'quantity'               => $item->quantity,
+                'quantity_in_base_uom'   => $item->quantity,
+                'unit_price'             => $item->unit_price,
+                'tax_rate'               => $product->tax_rate ?? 0,
+                'tax_amount'             => round($lineTax, 2),
+                'discount_amount'        => 0,
+                'subtotal'               => round($lineSubtotal + $lineTax, 2),
+                'fulfillment_status'     => OrderFulfillmentStatus::Pending,
             ]);
         }
 
-        // Create pending payment record
+        // Create pending payment record (total now includes delivery fee)
         MarketplaceOrderPayment::create([
             'order_id'       => $order->id,
             'payment_method' => $checkoutData['payment_method'] ?? MarketplacePaymentMethod::Mpesa->value,
-            'amount'         => $totals['total_amount'],
+            'amount'         => $order->total_amount,
             'payment_status' => MarketplacePaymentStatus::Pending,
             'initiated_at'   => now(),
         ]);
 
         // Create delivery record if fulfillment type is delivery
-        $fulfillmentType = FulfillmentType::tryFrom($checkoutData['fulfillment_type'] ?? 'delivery');
-
         if ($fulfillmentType === FulfillmentType::Delivery) {
             MarketplaceOrderDelivery::create([
                 'order_id'        => $order->id,
-                'delivery_method' => DeliveryMethod::Standard,
+                'delivery_method' => $deliveryMethod,
+                'zone_id'         => $deliveryFeeDetails['zone_id'] ?? null,
+                'zone_name'       => $deliveryFeeDetails['zone_name'] ?? null,
+                'delivery_fee'    => $deliveryFee,
             ]);
         }
 

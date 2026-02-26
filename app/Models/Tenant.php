@@ -68,6 +68,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasOne(TenantProfile::class, 'tenant_id', 'id');
     }
 
+    public function deliveryZones()
+    {
+        return $this->hasMany(TenantDeliveryZone::class, 'tenant_id', 'id');
+    }
+
     // Tenancy Methods
 
     public function getTenantKeyName(): string

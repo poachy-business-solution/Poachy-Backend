@@ -66,12 +66,9 @@ class BusinessDetailsController extends Controller
      *                 @OA\Property(
      *                     property="delivery_info",
      *                     type="object",
-     *                     description="Delivery service information",
+     *                     description="Delivery availability. Fees and areas are managed via delivery zones.",
      *                     example={
-     *                         "available": true,
-     *                         "areas": {"Nairobi", "Kiambu", "Machakos", "Kajiado"},
-     *                         "fee": 200,
-     *                         "free_delivery_threshold": 5000
+     *                         "available": true
      *                     }
      *                 ),
      *                 @OA\Property(
@@ -149,10 +146,8 @@ class BusinessDetailsController extends Controller
      *                     property="delivery_info",
      *                     type="object",
      *                     example={
-     *                         "available": "1",
-     *                         "areas": {"Nairobi", "Kiambu", "Machakos", "Kajiado"},
-     *                         "fee": "200",
-     *                         "free_delivery_threshold": "5000"
+     *                         "available": true,
+     *                         "zones_enabled": false
      *                     }
      *                 ),
      *                 @OA\Property(
@@ -484,7 +479,7 @@ class BusinessDetailsController extends Controller
      * @OA\Patch(
      *     path="/api/v1/tenant/business-details/delivery-info",
      *     summary="Update delivery information",
-     *     description="Update delivery settings. Only provided fields will be updated, other fields remain unchanged. You can update all fields at once or just specific fields.",
+     *     description="Update delivery availability. Use `available` to enable or disable delivery for the business. Use `zones_enabled` to switch between zone-based fee calculation and free delivery (default until zones are configured). Fees and areas are managed through delivery zones.",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
@@ -493,42 +488,9 @@ class BusinessDetailsController extends Controller
      *             @OA\Property(
      *                 property="delivery_info",
      *                 type="object",
-     *                 description="Delivery information object containing field(s) to update"
-     *             ),
-     *             @OA\Property(
-     *                 property="example_all_fields",
-     *                 type="object",
-     *                 description="Example: Update all fields",
-     *                 example={
-     *                     "delivery_info": {
-     *                         "available": true,
-     *                         "areas": {"Nairobi", "Kiambu", "Machakos"},
-     *                         "fee": 200,
-     *                         "free_delivery_threshold": 5000,
-     *                         "estimated_time": "1-3 business days"
-     *                     }
-     *                 }
-     *             ),
-     *             @OA\Property(
-     *                 property="example_partial",
-     *                 type="object",
-     *                 description="Example: Update only specific fields",
-     *                 example={
-     *                     "delivery_info": {
-     *                         "fee": 250,
-     *                         "free_delivery_threshold": 6000
-     *                     }
-     *                 }
-     *             ),
-     *             @OA\Property(
-     *                 property="example_disable",
-     *                 type="object",
-     *                 description="Example: Disable delivery",
-     *                 example={
-     *                     "delivery_info": {
-     *                         "available": false
-     *                     }
-     *                 }
+     *                 description="Delivery configuration",
+     *                 @OA\Property(property="available", type="boolean", example=true, description="Whether this merchant offers delivery"),
+     *                 @OA\Property(property="zones_enabled", type="boolean", example=false, description="Whether zone-based fee calculation is active. Manage zones via the delivery-zones endpoints.")
      *             )
      *         )
      *     ),
@@ -554,7 +516,7 @@ class BusinessDetailsController extends Controller
      *                 property="errors",
      *                 type="object",
      *                 example={
-     *                     "delivery_info.fee": {"Delivery fee must be a number."}
+     *                     "delivery_info.available": {"Delivery availability must be true or false."}
      *                 }
      *             )
      *         )

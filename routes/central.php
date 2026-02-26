@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Central\Marketplace\Analytics\ProductAnalyticsContr
 use App\Http\Controllers\Api\Central\Marketplace\Analytics\SearchAnalyticsController;
 use App\Http\Controllers\Api\Central\Marketplace\AnalyticsTrackingController;
 use App\Http\Controllers\Api\Central\Marketplace\CheckoutController;
+use App\Http\Controllers\Api\Central\Marketplace\DeliveryFeeController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplacePaymentController;
@@ -81,6 +82,9 @@ Route::prefix('v1/central')->group(function () {
         // Checkout (public route — auth checked in controller)
         Route::post('/checkout/validate', [CheckoutController::class, 'validate']);
         Route::post('/checkout', [CheckoutController::class, 'initiate']);
+
+        // Delivery fee preview
+        Route::post('/delivery/preview', [DeliveryFeeController::class, 'preview']);
 
         // Analytics tracking (public — rate limited)
         Route::prefix('analytics')

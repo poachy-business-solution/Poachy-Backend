@@ -151,6 +151,11 @@ namespace App\Http\Controllers;
  * )
  *
  * @OA\Tag(
+ *     name="Tenant - Delivery Zones",
+ *     description="Tenant delivery zone management for configuring delivery coverage areas and pricing."
+ * )
+ *
+ * @OA\Tag(
  *     name="Tenant - Product Reviews",
  *     description="Tenant-side product review management endpoints. Merchants can view reviews synced from the central marketplace."
  * )
