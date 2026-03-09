@@ -171,8 +171,8 @@ class CheckoutController extends Controller
      *             @OA\Property(
      *                 property="delivery_address_id",
      *                 type="integer",
-     *                 description="ID of the delivery address (required when fulfillment_type is 'delivery')",
-     *                 example=1,
+     *                 description="ID of the delivery address. Required when fulfillment_type is 'delivery'.",
+     *                 example=3,
      *                 nullable=true
      *             ),
      *             @OA\Property(
@@ -180,26 +180,34 @@ class CheckoutController extends Controller
      *                 type="string",
      *                 description="How the order will be fulfilled",
      *                 enum={"pickup", "delivery"},
-     *                 example="pickup"
+     *                 example="delivery"
+     *             ),
+     *             @OA\Property(
+     *                 property="delivery_method",
+     *                 type="string",
+     *                 description="Delivery speed tier. Required when fulfillment_type is 'delivery'. Ignored for pickup orders.",
+     *                 enum={"standard", "express", "scheduled"},
+     *                 example="standard",
+     *                 nullable=true
      *             ),
      *             @OA\Property(
      *                 property="payment_method",
      *                 type="string",
      *                 description="Payment method for the order",
      *                 enum={"mpesa", "card", "cash_on_delivery", "bank_transfer"},
-     *                 example="mpesa"
+     *                 example="cash_on_delivery"
      *             ),
      *             @OA\Property(
      *                 property="customer_notes",
      *                 type="string",
      *                 description="Optional notes from the customer for the order",
-     *                 example="First time order",
+     *                 example="Please call before delivery",
      *                 nullable=true
      *             )
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Checkout completed. One or more orders created.",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -210,8 +218,8 @@ class CheckoutController extends Controller
      *                 description="Array of created orders, one per merchant/tenant",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="order_number", type="string", example="MKT-ORD-2026-000001"),
+     *                     @OA\Property(property="id", type="integer", example=14),
+     *                     @OA\Property(property="order_number", type="string", example="MKT-ORD-2026-000014"),
      *                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
      *                     @OA\Property(property="merchant_name", type="string", example="Tech Haven Electronics Solutions"),
      *                     @OA\Property(property="order_status", type="string", example="pending"),
@@ -221,16 +229,16 @@ class CheckoutController extends Controller
      *                         property="fulfillment_type",
      *                         type="string",
      *                         enum={"pickup", "delivery"},
-     *                         example="pickup"
+     *                         example="delivery"
      *                     ),
-     *                     @OA\Property(property="subtotal", type="number", format="float", example=180000),
-     *                     @OA\Property(property="tax_amount", type="number", format="float", example=18000),
+     *                     @OA\Property(property="subtotal", type="number", format="float", example=595),
+     *                     @OA\Property(property="tax_amount", type="number", format="float", example=59.5),
      *                     @OA\Property(property="discount_amount", type="number", format="float", example=0),
-     *                     @OA\Property(property="delivery_fee", type="number", format="float", example=0),
-     *                     @OA\Property(property="total_amount", type="number", format="float", example=198000),
-     *                     @OA\Property(property="customer_notes", type="string", nullable=true, example="First time order"),
+     *                     @OA\Property(property="delivery_fee", type="number", format="float", example=200),
+     *                     @OA\Property(property="total_amount", type="number", format="float", example=854.5),
+     *                     @OA\Property(property="customer_notes", type="string", nullable=true, example="Please call before delivery"),
      *                     @OA\Property(property="cancellation_reason", type="string", nullable=true, example=null),
-     *                     @OA\Property(property="payment_deadline_at", type="string", format="date-time", example="2026-02-17T11:05:18+03:00"),
+     *                     @OA\Property(property="payment_deadline_at", type="string", format="date-time", example="2026-03-09T14:20:49+03:00"),
      *                     @OA\Property(property="can_be_cancelled", type="boolean", example=true),
      *                     @OA\Property(property="can_accept_payment", type="boolean", example=false),
      *                     @OA\Property(
@@ -238,34 +246,34 @@ class CheckoutController extends Controller
      *                         type="array",
      *                         @OA\Items(
      *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="marketplace_product_id", type="integer", example=2),
-     *                             @OA\Property(property="product_name", type="string", example="TCL 55 4K UHD Smart LED TV"),
-     *                             @OA\Property(property="product_sku", type="string", example="ELEC-DELL-56QT"),
+     *                             @OA\Property(property="id", type="integer", example=15),
+     *                             @OA\Property(property="marketplace_product_id", type="integer", example=6),
+     *                             @OA\Property(property="product_name", type="string", example="Fresh Pasteurised Milk 1L"),
+     *                             @OA\Property(property="product_sku", type="string", example="GROC-BROO-SHR9"),
      *                             @OA\Property(property="variant_name", type="string", nullable=true, example=null),
      *                             @OA\Property(
      *                                 property="uom",
      *                                 type="object",
-     *                                 @OA\Property(property="code", type="string", example="pair"),
-     *                                 @OA\Property(property="name", type="string", example="Pair")
+     *                                 @OA\Property(property="code", type="string", example="pcs"),
+     *                                 @OA\Property(property="name", type="string", example="Piece")
      *                             ),
-     *                             @OA\Property(property="quantity", type="integer", example=2),
-     *                             @OA\Property(property="quantity_in_base_uom", type="integer", example=2),
-     *                             @OA\Property(property="unit_price", type="number", format="float", example=90000),
+     *                             @OA\Property(property="quantity", type="integer", example=1),
+     *                             @OA\Property(property="quantity_in_base_uom", type="integer", example=1),
+     *                             @OA\Property(property="unit_price", type="number", format="float", example=135),
      *                             @OA\Property(property="tax_rate", type="number", format="float", example=10),
-     *                             @OA\Property(property="tax_amount", type="number", format="float", example=18000),
+     *                             @OA\Property(property="tax_amount", type="number", format="float", example=13.5),
      *                             @OA\Property(property="discount_amount", type="number", format="float", example=0),
-     *                             @OA\Property(property="subtotal", type="number", format="float", example=198000),
+     *                             @OA\Property(property="subtotal", type="number", format="float", example=148.5),
      *                             @OA\Property(property="fulfillment_status", type="string", example="pending")
      *                         )
      *                     ),
      *                     @OA\Property(
      *                         property="payment",
      *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="payment_method", type="string", example="mpesa"),
+     *                         @OA\Property(property="id", type="integer", example=14),
+     *                         @OA\Property(property="payment_method", type="string", enum={"mpesa", "card", "cash_on_delivery", "bank_transfer"}, example="cash_on_delivery"),
      *                         @OA\Property(property="payment_provider", type="string", nullable=true, example=null),
-     *                         @OA\Property(property="amount", type="number", format="float", example=198000),
+     *                         @OA\Property(property="amount", type="number", format="float", example=854.5),
      *                         @OA\Property(property="payment_status", type="string", example="pending"),
      *                         @OA\Property(property="transaction_reference", type="string", nullable=true, example=null),
      *                         @OA\Property(property="provider_reference", type="string", nullable=true, example=null),
@@ -278,17 +286,23 @@ class CheckoutController extends Controller
      *                     @OA\Property(
      *                         property="delivery",
      *                         nullable=true,
-     *                         description="Delivery details — null for pickup orders",
+     *                         description="Delivery details — present for delivery orders, null for pickup orders",
      *                         oneOf={
      *                             @OA\Schema(
      *                                 type="object",
-     *                                 description="Present for delivery orders",
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="delivery_method", type="string", example="standard"),
+     *                                 description="Present when fulfillment_type is 'delivery'",
+     *                                 @OA\Property(property="id", type="integer", example=8),
+     *                                 @OA\Property(
+     *                                     property="delivery_method",
+     *                                     type="string",
+     *                                     enum={"standard", "express", "scheduled"},
+     *                                     example="standard"
+     *                                 ),
      *                                 @OA\Property(property="delivery_status", type="string", example="pending"),
      *                                 @OA\Property(
      *                                     property="courier",
      *                                     type="object",
+     *                                     description="Assigned courier — null until dispatched",
      *                                     @OA\Property(property="company", type="string", nullable=true, example=null),
      *                                     @OA\Property(property="name", type="string", nullable=true, example=null),
      *                                     @OA\Property(property="phone", type="string", nullable=true, example=null)
@@ -296,12 +310,14 @@ class CheckoutController extends Controller
      *                                 @OA\Property(
      *                                     property="tracking",
      *                                     type="object",
+     *                                     description="Tracking info — null until courier is assigned",
      *                                     @OA\Property(property="number", type="string", nullable=true, example=null),
      *                                     @OA\Property(property="url", type="string", nullable=true, example=null)
      *                                 ),
      *                                 @OA\Property(
      *                                     property="timing",
      *                                     type="object",
+     *                                     description="Pickup and delivery timestamps — null until set by courier",
      *                                     @OA\Property(property="estimated_pickup", type="string", format="date-time", nullable=true, example=null),
      *                                     @OA\Property(property="actual_pickup", type="string", format="date-time", nullable=true, example=null),
      *                                     @OA\Property(property="estimated_delivery", type="string", format="date-time", nullable=true, example=null),
@@ -311,7 +327,12 @@ class CheckoutController extends Controller
      *                                 @OA\Property(property="delivery_issues", type="string", nullable=true, example=null),
      *                                 @OA\Property(property="delivery_attempts", type="integer", example=0)
      *                             ),
-     *                             @OA\Schema(type="object", nullable=true, example=null)
+     *                             @OA\Schema(
+     *                                 type="object",
+     *                                 nullable=true,
+     *                                 description="Null for pickup orders",
+     *                                 example=null
+     *                             )
      *                         }
      *                     ),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-02-17T10:30:18+03:00"),

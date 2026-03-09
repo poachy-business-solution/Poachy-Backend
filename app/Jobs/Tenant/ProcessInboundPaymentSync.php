@@ -142,30 +142,44 @@ class ProcessInboundPaymentSync implements ShouldQueue
                 $reservationService->confirmAllReservationsForReference('MarketplaceOrder', $orderId);
             }
 
-            // Deplete batches via FIFO for each line item
+            // Pre-load batch tracking flags for all non-bundle products in one query
+            $nonBundleProductIds = collect($items)
+                ->filter(fn ($item) => !($item['tenant_bundle_id'] ?? null))
+                ->pluck('tenant_product_id')
+                ->unique()
+                ->values();
+
+            $batchTrackingMap = Product::whereIn('id', $nonBundleProductIds)
+                ->pluck('requires_batch_tracking', 'id');
+
+            // Deplete batches via FIFO — only for products that require batch tracking
             if ($storeId) {
                 foreach ($items as $item) {
                     if ($item['tenant_bundle_id'] ?? null) {
-                        // Bundles: expand to components and deplete each
+                        // Bundles: expand to components and deplete each batch-tracked component
                         $bundle = ProductBundle::with('items.product')->find($item['tenant_bundle_id']);
 
                         if ($bundle) {
                             foreach ($bundle->items as $bundleItem) {
-                                $batchService->depleteBatchesFIFO(
-                                    storeId:           $storeId,
-                                    productId:         $bundleItem->product_id,
-                                    variantId:         $bundleItem->product_variant_id,
-                                    quantityInBaseUom: $bundleItem->quantity_in_base_uom * (float) $item['quantity'],
-                                );
+                                if ($bundleItem->product->requires_batch_tracking) {
+                                    $batchService->depleteBatchesFIFO(
+                                        storeId:           $storeId,
+                                        productId:         $bundleItem->product_id,
+                                        variantId:         $bundleItem->product_variant_id,
+                                        quantityInBaseUom: $bundleItem->quantity_in_base_uom * (float) $item['quantity'],
+                                    );
+                                }
                             }
                         }
                     } else {
-                        $batchService->depleteBatchesFIFO(
-                            storeId:           $storeId,
-                            productId:         $item['tenant_product_id'],
-                            variantId:         $item['tenant_variant_id'] ?? null,
-                            quantityInBaseUom: (float) $item['quantity'],
-                        );
+                        if ($batchTrackingMap[$item['tenant_product_id']] ?? false) {
+                            $batchService->depleteBatchesFIFO(
+                                storeId:           $storeId,
+                                productId:         $item['tenant_product_id'],
+                                variantId:         $item['tenant_variant_id'] ?? null,
+                                quantityInBaseUom: (float) $item['quantity'],
+                            );
+                        }
                     }
                 }
             }

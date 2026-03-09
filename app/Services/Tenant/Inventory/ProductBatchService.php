@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Inventory;
 
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\PurchaseOrder;
+use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use Illuminate\Support\Collection;
@@ -63,39 +64,49 @@ class ProductBatchService
                     );
                 }
 
-                // Create batch
-                $batch = $this->createBatchFromPurchaseOrderItem(
-                    purchaseOrder: $po,
-                    poItem: $poItem,
-                    quantityReceived: $quantityReceiving,
-                    manufactureDate: $receiveData['manufacture_date'] ?? null,
-                    expiryDate: $receiveData['expiry_date'] ?? null,
-                    notes: $receiveData['notes'] ?? null
-                );
+                $batchId = null;
 
-                $createdBatches->push($batch);
+                if ($poItem->product->requiresBatchTracking()) {
+                    // Batch-tracked: create batch and update inventory through it
+                    $batch = $this->createBatchFromPurchaseOrderItem(
+                        purchaseOrder: $po,
+                        poItem: $poItem,
+                        quantityReceived: $quantityReceiving,
+                        manufactureDate: $receiveData['manufacture_date'] ?? null,
+                        expiryDate: $receiveData['expiry_date'] ?? null,
+                        notes: $receiveData['notes'] ?? null
+                    );
 
-                // Update inventory
-                $this->updateInventoryFromBatch($batch);
+                    $createdBatches->push($batch);
+                    $this->updateInventoryFromBatch($batch);
 
-                // Update PO item quantities
+                    $quantityInBaseUom = $batch->quantity_received_in_base_uom;
+                    $batchId = $batch->id;
+                } else {
+                    // Non-batch-tracked: directly increment inventory, no batch record created
+                    $conversionFactor = $this->getConversionToBaseUom($poItem->uom_id, $poItem->product_id);
+                    $quantityInBaseUom = $quantityReceiving * $conversionFactor;
+
+                    $this->updateInventoryDirectly($po, $poItem, $quantityReceiving, $quantityInBaseUom);
+                }
+
+                // Update PO item quantities — common to both paths
                 $newQuantityReceived = $poItem->quantity_received + $quantityReceiving;
-                $newQuantityReceivedInBaseUom = $poItem->quantity_received_in_base_uom + $batch->quantity_received_in_base_uom;
 
                 $poItem->update([
                     'quantity_received' => $newQuantityReceived,
-                    'quantity_received_in_base_uom' => $newQuantityReceivedInBaseUom,
+                    'quantity_received_in_base_uom' => $poItem->quantity_received_in_base_uom + $quantityInBaseUom,
                 ]);
 
                 // Update item status based on quantities
                 $poItem->updateStatus();
 
                 Log::info('PO item received', [
-                    'po_item_id' => $poItem->id,
+                    'po_item_id'       => $poItem->id,
                     'quantity_received' => $quantityReceiving,
-                    'total_received' => $newQuantityReceived,
-                    'item_status' => $poItem->fresh()->status->value,
-                    'batch_id' => $batch->id,
+                    'total_received'   => $newQuantityReceived,
+                    'item_status'      => $poItem->fresh()->status->value,
+                    'batch_id'         => $batchId,
                 ]);
             }
 
@@ -223,6 +234,43 @@ class ProductBatchService
             'store_id' => $batch->store_id,
             'product_id' => $batch->product_id,
             'quantity_added' => $batch->quantity_received_in_base_uom,
+        ]);
+    }
+
+    /**
+     * Directly increment inventory for a non-batch-tracked product receipt.
+     *
+     * Records a PURCHASE movement without creating a ProductBatch record.
+     * Quantity is passed in purchase UOM; InventoryMovementService handles
+     * the conversion to base UOM internally, matching the behaviour of
+     * updateInventoryFromBatch().
+     */
+    private function updateInventoryDirectly(
+        PurchaseOrder $po,
+        PurchaseOrderItem $poItem,
+        float $quantityReceived,
+        float $quantityInBaseUom
+    ): void {
+        $movementService = app(InventoryMovementService::class);
+
+        $movementService->recordMovement([
+            'store_id'       => $po->store_id,
+            'product_id'     => $poItem->product_id,
+            'variant_id'     => $poItem->product_variant_id,
+            'movement_type'  => \App\Enums\Tenant\InventoryMovementType::PURCHASE,
+            'uom_id'         => $poItem->uom_id,
+            'quantity'       => $quantityReceived,
+            'unit_cost'      => $poItem->unit_cost,
+            'reference_type' => PurchaseOrder::class,
+            'reference_id'   => $po->id,
+            'notes'          => "Goods received (no batch tracking) - PO {$po->po_number}",
+        ]);
+
+        Log::info('Inventory updated directly (no batch)', [
+            'po_id'          => $po->id,
+            'po_number'      => $po->po_number,
+            'product_id'     => $poItem->product_id,
+            'quantity_added'  => $quantityInBaseUom,
         ]);
     }
 

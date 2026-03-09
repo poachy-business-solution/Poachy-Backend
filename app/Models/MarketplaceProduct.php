@@ -155,7 +155,7 @@ class MarketplaceProduct extends Model
 
     public function isInStock(): bool
     {
-        return $this->stock_status === 'in_stock' && $this->available_quantity > 0;
+        return $this->stock_status !== 'out_of_stock' && $this->available_quantity > 0;
     }
 
     public function incrementViewCount(): void

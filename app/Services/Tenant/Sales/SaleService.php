@@ -13,6 +13,7 @@ use App\Models\Tenant\PromotionUsage;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SalePayment;
+use App\Models\Tenant\Product;
 use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Sales\CreditService;
@@ -465,34 +466,46 @@ class SaleService
     {
         $itemsForInventory = [];
 
+        // Pre-load batch tracking flags for all non-bundle products in one query
+        $nonBundleProductIds = collect($lineItems)
+            ->filter(fn ($item) => !$item['bundle_id'])
+            ->pluck('product_id')
+            ->unique()
+            ->values();
+
+        $batchTrackingMap = Product::whereIn('id', $nonBundleProductIds)
+            ->pluck('requires_batch_tracking', 'id');
+
         foreach ($lineItems as $item) {
             if ($item['bundle_id']) {
                 $bundle = \App\Models\Tenant\ProductBundle::with('items')->find($item['bundle_id']);
 
                 foreach ($bundle->items as $bundleItem) {
                     $itemsForInventory[] = [
-                        'store_id' => $sale->store_id,
-                        'product_id' => $bundleItem->product_id,
-                        'variant_id' => $bundleItem->product_variant_id,
-                        'quantity' => $bundleItem->quantity_in_base_uom * $item['quantity'],
-                        'uom_id' => $bundleItem->product->base_uom_id,
-                        'unit_cost' => $this->getAverageCost(
+                        'store_id'              => $sale->store_id,
+                        'product_id'            => $bundleItem->product_id,
+                        'variant_id'            => $bundleItem->product_variant_id,
+                        'quantity'              => $bundleItem->quantity_in_base_uom * $item['quantity'],
+                        'uom_id'                => $bundleItem->product->base_uom_id,
+                        'unit_cost'             => $this->getAverageCost(
                             $sale->store_id,
                             $bundleItem->product_id,
                             $bundleItem->product_variant_id
                         ),
-                        'notes' => "Bundle component sale - {$sale->sale_number}",
+                        'requires_batch_tracking' => $bundleItem->product->requires_batch_tracking,
+                        'notes'                 => "Bundle component sale - {$sale->sale_number}",
                     ];
                 }
             } else {
                 $itemsForInventory[] = [
-                    'store_id' => $sale->store_id,
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'],
-                    'quantity' => $item['quantity'],
-                    'uom_id' => $item['uom_id'],
-                    'unit_cost' => $item['unit_cost'],
-                    'notes' => "Sale - {$sale->sale_number}",
+                    'store_id'              => $sale->store_id,
+                    'product_id'            => $item['product_id'],
+                    'variant_id'            => $item['variant_id'],
+                    'quantity'              => $item['quantity'],
+                    'uom_id'                => $item['uom_id'],
+                    'unit_cost'             => $item['unit_cost'],
+                    'requires_batch_tracking' => (bool) ($batchTrackingMap[$item['product_id']] ?? false),
+                    'notes'                 => "Sale - {$sale->sale_number}",
                 ];
             }
         }
@@ -500,12 +513,14 @@ class SaleService
         $this->inventoryMovementService->recordSale($sale->id, $itemsForInventory);
 
         foreach ($itemsForInventory as $item) {
-            $this->productBatchService->depleteBatchesFIFO(
-                $item['store_id'],
-                $item['product_id'],
-                $item['variant_id'],
-                $item['quantity']
-            );
+            if ($item['requires_batch_tracking']) {
+                $this->productBatchService->depleteBatchesFIFO(
+                    $item['store_id'],
+                    $item['product_id'],
+                    $item['variant_id'],
+                    $item['quantity']
+                );
+            }
         }
     }
 
