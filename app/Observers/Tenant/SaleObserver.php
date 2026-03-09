@@ -226,7 +226,9 @@ class SaleObserver
         if (isset($changes['payment_status'])) {
             $oldStatus = $sale->getOriginal('payment_status');
             $newStatus = $changes['payment_status'];
-            return "{$user} changed sale {$sale->sale_number} payment status from {$oldStatus} to {$newStatus}";
+            $oldStatusStr = $oldStatus instanceof \BackedEnum ? $oldStatus->value : $oldStatus;
+            $newStatusStr = $newStatus instanceof \BackedEnum ? $newStatus->value : $newStatus;
+            return "{$user} changed sale {$sale->sale_number} payment status from {$oldStatusStr} to {$newStatusStr}";
         }
 
         // Total amount change
@@ -240,7 +242,9 @@ class SaleObserver
         if (isset($changes['payment_method'])) {
             $oldMethod = $sale->getOriginal('payment_method');
             $newMethod = $changes['payment_method'];
-            return "{$user} changed sale {$sale->sale_number} payment method from {$oldMethod} to {$newMethod}";
+            $oldMethodStr = $oldMethod instanceof \BackedEnum ? $oldMethod->value : $oldMethod;
+            $newMethodStr = $newMethod instanceof \BackedEnum ? $newMethod->value : $newMethod;
+            return "{$user} changed sale {$sale->sale_number} payment method from {$oldMethodStr} to {$newMethodStr}";
         }
 
         // Amount paid change

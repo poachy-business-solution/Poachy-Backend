@@ -3,22 +3,23 @@
 namespace App\Services\Tenant\Sales;
 
 use App\Enums\Tenant\CreditTransactionType;
-use App\Enums\Tenant\InventoryMovementType;
+use App\Enums\Tenant\LoyaltyTransactionType;
+use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\RefundMethod;
 use App\Enums\Tenant\RefundReason;
 use App\Enums\Tenant\RefundStatus;
-use App\Enums\Tenant\SaleStatus;
 use App\Events\Tenant\Sales\RefundCompleted;
 use App\Events\Tenant\Sales\RefundInitiated;
 use App\Models\Tenant\Customer;
+use App\Models\Tenant\CustomerCreditTransaction;
+use App\Models\Tenant\LoyaltyTransaction;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SaleRefund;
 use App\Models\Tenant\SaleRefundItem;
-use App\Models\Tenant\TenantSalesSettings;
+use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,545 +31,483 @@ class RefundService
         protected InventoryMovementService $inventoryMovementService,
         protected ProductBatchService $batchService,
         protected LoyaltyService $loyaltyService,
-        protected CreditService $creditService
+        protected CreditService $creditService,
+        protected ShiftSalesSummaryService $shiftSalesSummaryService
     ) {}
 
     /**
-     * Initiate a refund request
+     * Process a refund for a sale inline (authorize + complete in one step).
+     *
+     * @param  Sale  $sale
+     * @param  array{
+     *   store_id: int,
+     *   reason: string,
+     *   refund_method: string,
+     *   notes: string|null,
+     *   items: array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float}>
+     * }  $data
+     * @return SaleRefund
+     *
+     * @throws ValidationException
      */
-    public function initiateRefund(
-        Sale $sale,
-        array $items,
-        RefundReason $reason,
-        ?string $notes = null
-    ): SaleRefund {
-        // Validate refund is allowed
-        $this->validateRefundAllowed($sale);
+    public function processRefund(Sale $sale, array $data): SaleRefund
+    {
+        return DB::transaction(function () use ($sale, $data) {
+            $this->assertRefundsEnabled();
+            $this->assertSaleIsRefundable($sale);
 
-        // Validate items
-        $this->validateRefundItems($sale, $items);
+            $reason = RefundReason::from($data['reason']);
+            $refundMethod = RefundMethod::from($data['refund_method']);
 
-        return DB::transaction(function () use ($sale, $items, $reason, $notes) {
-            $settings = TenantSalesSettings::current();
+            // Validate items and collect SaleItem records
+            $itemsData = $this->validateAndCollectItems($sale, $data['items']);
 
-            // Calculate refund amounts
-            $refundCalculation = $this->calculateRefundAmount($sale, $items);
+            $totalRefundAmount = collect($itemsData)->sum('refund_amount');
 
-            // Determine initial status
-            $initialStatus = RefundStatus::PENDING;
-            if (!$settings->refund_requires_approval) {
-                $initialStatus = RefundStatus::APPROVED;
-            } elseif (
-                $settings->refund_approval_threshold &&
-                $refundCalculation['total_refund'] < $settings->refund_approval_threshold
-            ) {
-                $initialStatus = RefundStatus::APPROVED;
-            }
-
-            // Create refund record
+            // Create the SaleRefund header
             $refund = SaleRefund::create([
-                'refund_number' => SaleRefund::generateRefundNumber($sale->store_id),
                 'original_sale_id' => $sale->id,
-                'store_id' => $sale->store_id,
+                'store_id' => $data['store_id'],
                 'customer_id' => $sale->customer_id,
-                'refund_date' => now(),
-                'refund_amount' => $refundCalculation['total_refund'],
+                'refund_date' => now()->toDateString(),
+                'refund_amount' => $totalRefundAmount,
+                'refund_method' => $refundMethod,
                 'reason' => $reason,
-                'status' => $initialStatus,
-                'loyalty_points_to_reverse' => $refundCalculation['loyalty_points_to_reverse'],
+                'notes' => $data['notes'] ?? null,
                 'processed_by' => Auth::id(),
-                'notes' => $notes,
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'status' => RefundStatus::PROCESSING,
             ]);
 
-            // Create refund items
-            foreach ($items as $itemData) {
-                $saleItem = SaleItem::find($itemData['sale_item_id']);
-                $refundItemData = $refundCalculation['items'][$itemData['sale_item_id']];
-
+            // Create refund line items
+            foreach ($itemsData as $itemData) {
                 SaleRefundItem::create([
                     'refund_id' => $refund->id,
-                    'sale_item_id' => $saleItem->id,
-                    'product_id' => $saleItem->product_id,
-                    'quantity_refunded' => $itemData['quantity'],
-                    'quantity_refunded_in_base_uom' => $refundItemData['quantity_in_base_uom'],
-                    'refund_amount' => $refundItemData['refund_amount'],
-                    'inventory_restored' => false,
+                    'sale_item_id' => $itemData['sale_item']->id,
+                    'product_id' => $itemData['sale_item']->product_id,
+                    'quantity_refunded' => $itemData['quantity_refunded'],
+                    'quantity_refunded_in_base_uom' => $itemData['quantity_refunded_in_base_uom'],
+                    'refund_amount' => $itemData['refund_amount'],
                 ]);
             }
 
-            event(new RefundInitiated($refund));
+            // Restore inventory
+            $this->restoreInventory($refund, $itemsData, $reason);
 
-            Log::info('Refund initiated', [
-                'tenant_id' => tenant()->id,
-                'refund_id' => $refund->id,
-                'sale_id' => $sale->id,
-                'amount' => $refund->refund_amount,
-                'status' => $initialStatus->value,
-            ]);
+            // Reverse loyalty points proportionally
+            $this->reverseLoyaltyPoints($sale, $itemsData, $refund);
 
-            // If auto-approved, process immediately
-            if ($initialStatus === RefundStatus::APPROVED) {
-                // Return fresh refund, processing happens in next step
-            }
+            // Handle payment method side effects
+            $this->handleRefundMethod($refundMethod, $sale, $refund, $totalRefundAmount);
 
-            return $refund->fresh(['items', 'originalSale']);
-        });
-    }
+            // Update shift summary
+            $this->updateShiftSummary($sale, $totalRefundAmount);
 
-    /**
-     * Approve a pending refund
-     */
-    public function approveRefund(SaleRefund $refund, ?string $notes = null): SaleRefund
-    {
-        if ($refund->status !== RefundStatus::PENDING) {
-            throw ValidationException::withMessages([
-                'refund' => ['Refund is not pending approval.'],
-            ]);
-        }
+            // Update sale payment status
+            $this->updateSaleStatus($sale);
 
-        $refund->update([
-            'status' => RefundStatus::APPROVED,
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'notes' => $notes ? ($refund->notes . "\n\nApproval: " . $notes) : $refund->notes,
-        ]);
-
-        Log::info('Refund approved', [
-            'tenant_id' => tenant()->id,
-            'refund_id' => $refund->id,
-            'approved_by' => Auth::id(),
-        ]);
-
-        return $refund->fresh();
-    }
-
-    /**
-     * Reject a pending refund
-     */
-    public function rejectRefund(SaleRefund $refund, string $reason): SaleRefund
-    {
-        if ($refund->status !== RefundStatus::PENDING) {
-            throw ValidationException::withMessages([
-                'refund' => ['Refund is not pending approval.'],
-            ]);
-        }
-
-        $refund->update([
-            'status' => RefundStatus::REJECTED,
-            'rejection_reason' => $reason,
-            'notes' => $refund->notes . "\n\nRejection: " . $reason,
-        ]);
-
-        Log::info('Refund rejected', [
-            'tenant_id' => tenant()->id,
-            'refund_id' => $refund->id,
-            'reason' => $reason,
-        ]);
-
-        return $refund->fresh();
-    }
-
-    /**
-     * Process approved refund
-     */
-    public function processRefund(
-        SaleRefund $refund,
-        RefundMethod $method,
-        ?string $paymentReference = null
-    ): SaleRefund {
-        if (!$refund->status->canBeProcessed()) {
-            throw ValidationException::withMessages([
-                'refund' => ['Refund cannot be processed in current status.'],
-            ]);
-        }
-
-        return DB::transaction(function () use ($refund, $method, $paymentReference) {
-            $refund = SaleRefund::with(['items', 'originalSale.items'])->lockForUpdate()->find($refund->id);
-
-            $refund->update(['status' => RefundStatus::PROCESSING]);
-
-            // 1. Restore inventory
-            $this->restoreInventory($refund);
-
-            // 2. Reverse loyalty points
-            $this->reverseLoyaltyPoints($refund);
-
-            // 3. Handle coupon (if full refund)
-            $this->handleCouponReversal($refund);
-
-            // 4. Process refund payment
-            $this->processRefundPayment($refund, $method, $paymentReference);
-
-            // 5. Update original sale status
-            $this->updateOriginalSaleStatus($refund);
-
-            // 6. Finalize refund
+            // Finalize
             $refund->update([
                 'status' => RefundStatus::COMPLETED,
-                'refund_method' => $method,
-                'payment_reference' => $paymentReference,
-                'completed_at' => now(),
+                'processed_at' => now(),
             ]);
 
-            event(new RefundCompleted($refund));
-
-            Log::info('Refund processed', [
+            Log::info('Refund completed', [
                 'tenant_id' => tenant()->id,
                 'refund_id' => $refund->id,
-                'amount' => $refund->refund_amount,
-                'method' => $method->value,
+                'refund_number' => $refund->refund_number,
+                'sale_id' => $sale->id,
+                'amount' => $totalRefundAmount,
             ]);
 
-            return $refund->fresh(['items', 'originalSale']);
+            return $refund->load(['items.saleItem.product', 'originalSale', 'processedBy', 'store', 'customer']);
         });
     }
 
     /**
-     * Calculate refund amount for items
+     * Process an exchange: refund returned items as store credit, then create a new sale
+     * for the exchange items. Both operations run in a single DB transaction.
+     *
+     * @param  Sale  $sale
+     * @param  array{
+     *   store_id: int,
+     *   reason: string,
+     *   notes: string|null,
+     *   items: array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float}>,
+     *   exchange_items: array,
+     *   exchange_payments: array,
+     *   customer_id: int|null,
+     *   coupon_code: string|null
+     * }  $data
+     * @return array{refund: SaleRefund, sale: Sale}
+     *
+     * @throws ValidationException
      */
-    public function calculateRefundAmount(Sale $sale, array $items): array
+    public function processExchange(Sale $originalSale, array $data): array
     {
-        $totalRefund = 0;
-        $itemCalculations = [];
-
-        // Get total sale value for pro-rating cart-level discounts
-        $originalSaleSubtotal = $sale->subtotal;
-        $cartDiscountTotal = ($sale->coupon_discount_amount ?? 0) + ($sale->loyalty_discount_amount ?? 0);
-
-        foreach ($items as $itemData) {
-            $saleItem = $sale->items()->find($itemData['sale_item_id']);
-
-            if (!$saleItem) {
-                throw ValidationException::withMessages([
-                    'items' => ["Sale item {$itemData['sale_item_id']} not found."],
-                ]);
-            }
-
-            // Validate quantity
-            $maxRefundable = $saleItem->refundable_quantity;
-            if ($itemData['quantity'] > $maxRefundable) {
-                throw ValidationException::withMessages([
-                    'items' => ["Cannot refund more than {$maxRefundable} units of {$saleItem->display_name}."],
-                ]);
-            }
-
-            // Calculate this item's proportion of the cart
-            $itemProportion = $saleItem->subtotal / $originalSaleSubtotal;
-
-            // Pro-rate cart discounts
-            $proRatedCartDiscount = $cartDiscountTotal * $itemProportion;
-
-            // Calculate refund for requested quantity
-            $quantityProportion = $itemData['quantity'] / $saleItem->quantity;
-            $itemRefund = ($saleItem->subtotal - $proRatedCartDiscount) * $quantityProportion;
-
-            // Add pro-rated tax
-            $itemRefund += ($saleItem->tax_amount * $quantityProportion);
-
-            // Calculate quantity in base UOM
-            $quantityInBaseUom = $saleItem->quantity_in_base_uom * $quantityProportion;
-
-            $itemCalculations[$saleItem->id] = [
-                'quantity' => $itemData['quantity'],
-                'quantity_in_base_uom' => $quantityInBaseUom,
-                'refund_amount' => round($itemRefund, 2),
-                'original_item_total' => $saleItem->line_total,
+        return DB::transaction(function () use ($originalSale, $data) {
+            // Step 1: Process the return as a STORE_CREDIT refund.
+            // This credits the customer's store_credit_balance FIRST,
+            // so SaleService::createSale() can read the balance within this same transaction.
+            $refundData = [
+                'store_id' => $data['store_id'],
+                'reason' => $data['reason'],
+                'refund_method' => RefundMethod::STORE_CREDIT->value,
+                'notes' => $data['notes'] ?? null,
+                'items' => $data['items'],
             ];
 
-            $totalRefund += $itemRefund;
-        }
+            $refund = $this->processRefund($originalSale, $refundData);
 
-        // Calculate loyalty points to reverse (pro-rated)
-        $refundProportion = $totalRefund / ($sale->total_amount ?: 1);
-        $loyaltyPointsToReverse = round($sale->loyalty_points_earned * $refundProportion);
+            // Step 2: Create the exchange sale using the store credit as payment.
+            $newSaleService = app(SaleService::class);
 
-        return [
-            'total_refund' => round($totalRefund, 2),
-            'items' => $itemCalculations,
-            'loyalty_points_to_reverse' => $loyaltyPointsToReverse,
-            'is_full_refund' => $this->isFullRefund($sale, $items),
-        ];
-    }
+            $newSale = $newSaleService->createSale([
+                'store_id' => $data['store_id'],
+                'customer_id' => $originalSale->customer_id,
+                'items' => $data['exchange_items'],
+                'payments' => $data['exchange_payments'],
+                'coupon_code' => $data['coupon_code'] ?? null,
+            ]);
 
-    /**
-     * Get refundable items for a sale
-     */
-    public function getRefundableItems(Sale $sale): Collection
-    {
-        if (!$sale->can_be_refunded) {
-            return collect();
-        }
+            // Step 3: Link the exchange sale to the refund.
+            $refund->update(['exchange_sale_id' => $newSale->id]);
 
-        return $sale->items->filter(function ($item) {
-            return $item->can_be_refunded;
+            return ['refund' => $refund->fresh(), 'sale' => $newSale];
         });
     }
 
-    // ========================================
-    // PRIVATE HELPER METHODS
-    // ========================================
-
     /**
-     * Validate refund is allowed
+     * Cancel a refund that has not yet completed.
+     * Has no side effects — only valid for non-completed refunds.
+     *
+     * @throws ValidationException
      */
-    protected function validateRefundAllowed(Sale $sale): void
+    public function cancelRefund(SaleRefund $refund): SaleRefund
     {
-        $settings = TenantSalesSettings::current();
-        $canRefund = $settings->canRefund($sale);
-
-        if (!$canRefund['allowed']) {
+        if ($refund->status === RefundStatus::COMPLETED) {
             throw ValidationException::withMessages([
-                'sale' => [$canRefund['reason']],
+                'refund' => 'A completed refund cannot be cancelled. The transaction is already finalised.',
             ]);
         }
 
-        if (!$sale->status->canBeRefunded()) {
+        $refund->update(['status' => RefundStatus::CANCELLED]);
+
+        return $refund;
+    }
+
+    // ============================================
+    // PRIVATE HELPERS
+    // ============================================
+
+    private function assertRefundsEnabled(): void
+    {
+        if (!TenantConfiguration::isEnabled('pos.refunds_enabled')) {
             throw ValidationException::withMessages([
-                'sale' => ['This sale cannot be refunded.'],
+                'refund' => 'Refunds are not enabled for this business. Contact your administrator.',
+            ]);
+        }
+    }
+
+    private function assertSaleIsRefundable(Sale $sale): void
+    {
+        if (!$sale->canBeRefunded()) {
+            throw ValidationException::withMessages([
+                'sale' => 'This sale cannot be refunded. It may already be fully refunded or unpaid.',
             ]);
         }
     }
 
     /**
-     * Validate refund items
+     * Validate each refund item against the sale and collect enriched item data.
+     *
+     * @param  Sale  $sale
+     * @param  array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float}>  $items
+     * @return array<array{sale_item: SaleItem, quantity_refunded: float, quantity_refunded_in_base_uom: float, refund_amount: float}>
+     *
+     * @throws ValidationException
      */
-    protected function validateRefundItems(Sale $sale, array $items): void
+    private function validateAndCollectItems(Sale $sale, array $items): array
     {
-        if (empty($items)) {
-            throw ValidationException::withMessages([
-                'items' => ['At least one item must be specified for refund.'],
+        $sale->loadMissing('items');
+        $saleItemIds = $sale->items->pluck('id')->toArray();
+
+        $collected = [];
+
+        foreach ($items as $index => $item) {
+            $saleItemId = $item['sale_item_id'];
+
+            if (!in_array($saleItemId, $saleItemIds)) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.sale_item_id" => "Item ID {$saleItemId} does not belong to this sale.",
+                ]);
+            }
+
+            /** @var SaleItem $saleItem */
+            $saleItem = $sale->items->firstWhere('id', $saleItemId);
+
+            $remaining = SaleRefundItem::getRemainingRefundableQuantity($saleItemId);
+
+            if ($item['quantity_refunded'] > $remaining) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.quantity_refunded" => "Cannot refund {$item['quantity_refunded']} units. Only {$remaining} units remain refundable for this item.",
+                ]);
+            }
+
+            // Scale base UOM quantity proportionally to original
+            $qtyInBaseUom = $saleItem->quantity_in_base_uom > 0
+                ? ($item['quantity_refunded'] / $saleItem->quantity) * $saleItem->quantity_in_base_uom
+                : $item['quantity_refunded'];
+
+            $collected[] = [
+                'sale_item' => $saleItem,
+                'quantity_refunded' => $item['quantity_refunded'],
+                'quantity_refunded_in_base_uom' => $qtyInBaseUom,
+                'refund_amount' => $item['refund_amount'],
+            ];
+        }
+
+        return $collected;
+    }
+
+    /**
+     * Restore inventory for each refund item based on the refund reason.
+     * DEFECTIVE and EXPIRED items are written off (not restored to sellable stock).
+     */
+    private function restoreInventory(SaleRefund $refund, array $itemsData, RefundReason $reason): void
+    {
+        if (!$reason->restoreToInventory()) {
+            Log::info('Inventory not restored — reason is write-off', [
+                'refund_id' => $refund->id,
+                'reason' => $reason->value,
             ]);
-        }
 
-        foreach ($items as $itemData) {
-            if (!isset($itemData['sale_item_id']) || !isset($itemData['quantity'])) {
-                throw ValidationException::withMessages([
-                    'items' => ['Each item must have sale_item_id and quantity.'],
-                ]);
-            }
-
-            $saleItem = $sale->items()->find($itemData['sale_item_id']);
-
-            if (!$saleItem) {
-                throw ValidationException::withMessages([
-                    'items' => ["Item {$itemData['sale_item_id']} does not belong to this sale."],
-                ]);
-            }
-
-            if ($itemData['quantity'] <= 0) {
-                throw ValidationException::withMessages([
-                    'items' => ['Refund quantity must be greater than zero.'],
-                ]);
-            }
-
-            if ($itemData['quantity'] > $saleItem->refundable_quantity) {
-                throw ValidationException::withMessages([
-                    'items' => ["Cannot refund more than {$saleItem->refundable_quantity} of {$saleItem->display_name}."],
-                ]);
-            }
-        }
-    }
-
-    /**
-     * Check if this is a full refund
-     */
-    protected function isFullRefund(Sale $sale, array $items): bool
-    {
-        $itemIds = collect($items)->pluck('sale_item_id');
-        $refundingAllItems = $sale->items->every(function ($item) use ($itemIds, $items) {
-            if (!$itemIds->contains($item->id)) {
-                return false;
-            }
-            $refundItem = collect($items)->firstWhere('sale_item_id', $item->id);
-            return $refundItem['quantity'] >= $item->refundable_quantity;
-        });
-
-        return $refundingAllItems;
-    }
-
-    /**
-     * Restore inventory for refunded items
-     */
-    protected function restoreInventory(SaleRefund $refund): void
-    {
-        foreach ($refund->items as $refundItem) {
-            $saleItem = $refundItem->saleItem;
-
-            // Only restore if reason allows
-            if (!$refund->reason->restoreToInventory()) {
-                // Record as damage instead
-                $this->inventoryMovementService->recordDamage([
-                    'store_id' => $refund->store_id,
-                    'product_id' => $refundItem->product_id,
-                    'variant_id' => $saleItem->product_variant_id,
-                    'uom_id' => $saleItem->uom_id,
-                    'quantity' => $refundItem->quantity_refunded,
-                    'reference_type' => SaleRefund::class,
-                    'reference_id' => $refund->id,
-                    'notes' => "Refund - {$refund->reason->label()}",
-                ]);
-            } else {
-                // Restore to inventory
-                $this->inventoryMovementService->recordReturn([
-                    'store_id' => $refund->store_id,
-                    'product_id' => $refundItem->product_id,
-                    'variant_id' => $saleItem->product_variant_id,
-                    'uom_id' => $saleItem->uom_id,
-                    'quantity' => $refundItem->quantity_refunded,
-                    'reference_type' => SaleRefund::class,
-                    'reference_id' => $refund->id,
-                    'notes' => "Refund from sale #{$refund->originalSale->sale_number}",
-                ]);
-
-                // Restore batch quantities if tracked
-                // (simplified - in production, you'd track which batches the original sale depleted)
-            }
-
-            $refundItem->update(['inventory_restored' => true]);
-        }
-    }
-
-    /**
-     * Reverse loyalty points
-     */
-    protected function reverseLoyaltyPoints(SaleRefund $refund): void
-    {
-        if ($refund->loyalty_points_to_reverse <= 0) {
             return;
         }
 
-        $customer = Customer::find($refund->customer_id);
+        foreach ($itemsData as $itemData) {
+            /** @var SaleItem $saleItem */
+            $saleItem = $itemData['sale_item'];
+
+            try {
+                $this->inventoryMovementService->recordReturn([
+                    'store_id' => $refund->store_id,
+                    'product_id' => $saleItem->product_id,
+                    'variant_id' => $saleItem->product_variant_id,
+                    'uom_id' => $saleItem->uom_id,
+                    'quantity' => $itemData['quantity_refunded'],
+                    'unit_cost' => $saleItem->unit_cost,
+                    'reference_type' => SaleRefund::class,
+                    'reference_id' => $refund->id,
+                    'notes' => "Refund {$refund->refund_number} — {$refund->reason->label()}",
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to restore inventory for refund item', [
+                    'refund_id' => $refund->id,
+                    'sale_item_id' => $saleItem->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * Reverse loyalty points earned on the original sale proportionally per item.
+     * Uses item-level subtotals to calculate the correct proportion.
+     */
+    private function reverseLoyaltyPoints(Sale $sale, array $itemsData, SaleRefund $refund): void
+    {
+        if (!$this->loyaltyService->isEnabled()) {
+            return;
+        }
+
+        if (!$sale->customer_id || $sale->loyalty_points_earned <= 0) {
+            return;
+        }
+
+        $customer = $sale->customer;
         if (!$customer) {
             return;
         }
 
-        $this->loyaltyService->reverseEarnedPoints(
-            $customer,
-            $refund->loyalty_points_to_reverse,
-            SaleRefund::class,
-            $refund->id,
-            "Points reversed for refund #{$refund->refund_number}"
-        );
-
-        $refund->update(['loyalty_points_reversed' => $refund->loyalty_points_to_reverse]);
-    }
-
-    /**
-     * Handle coupon reversal for full refunds
-     */
-    protected function handleCouponReversal(SaleRefund $refund): void
-    {
-        $sale = $refund->originalSale;
-
-        // Only for full refunds
-        if (!$this->isCurrentlyFullRefund($refund)) {
+        $totalSaleSubtotal = (float) $sale->subtotal;
+        if ($totalSaleSubtotal <= 0) {
             return;
         }
 
-        if ($sale->coupon_id) {
-            // Decrement coupon usage
-            $sale->coupon->decrementUsage();
+        $totalPointsToReverse = 0.0;
+
+        foreach ($itemsData as $itemData) {
+            /** @var SaleItem $saleItem */
+            $saleItem = $itemData['sale_item'];
+            $itemSubtotalProportion = (float) $saleItem->subtotal / $totalSaleSubtotal;
+            $qtyProportion = $saleItem->quantity > 0
+                ? $itemData['quantity_refunded'] / (float) $saleItem->quantity
+                : 0;
+
+            $itemPointsToReverse = $itemSubtotalProportion * (float) $sale->loyalty_points_earned * $qtyProportion;
+            $totalPointsToReverse += $itemPointsToReverse;
         }
+
+        $totalPointsToReverse = round($totalPointsToReverse, 2);
+
+        if ($totalPointsToReverse <= 0) {
+            return;
+        }
+
+        // Clamp to the customer's actual balance — never go negative
+        $pointsToDeduct = min($totalPointsToReverse, (float) $customer->loyalty_points);
+
+        if ($pointsToDeduct <= 0) {
+            return;
+        }
+
+        LoyaltyTransaction::create([
+            'customer_id' => $customer->id,
+            'transaction_type' => LoyaltyTransactionType::ADJUSTED,
+            'points' => -$pointsToDeduct,
+            'balance_after' => $customer->loyalty_points - $pointsToDeduct,
+            'reference_type' => SaleRefund::class,
+            'reference_id' => $refund->id,
+            'description' => "Loyalty points reversed for refund {$refund->refund_number}",
+        ]);
+
+        $customer->decrement('loyalty_points', $pointsToDeduct);
+
+        Log::info('Loyalty points reversed for refund', [
+            'refund_id' => $refund->id,
+            'customer_id' => $customer->id,
+            'points_reversed' => $pointsToDeduct,
+        ]);
     }
 
     /**
-     * Check if after this refund, the sale is fully refunded
+     * Handle financial side effects based on the chosen refund method.
+     * Cash / MPESA / card reversals are physical — staff handles the actual money.
+     * STORE_CREDIT and CREDIT_REDUCTION have ledger impacts.
      */
-    protected function isCurrentlyFullRefund(SaleRefund $refund): bool
-    {
-        $sale = $refund->originalSale;
-
-        // Check if all items are fully refunded
-        foreach ($sale->items as $saleItem) {
-            $totalRefunded = $saleItem->refundItems()
-                ->whereHas('refund', function ($q) {
-                    $q->where('status', RefundStatus::COMPLETED);
-                })
-                ->sum('quantity_refunded');
-
-            // Add current refund items
-            $currentRefund = $refund->items()
-                ->where('sale_item_id', $saleItem->id)
-                ->sum('quantity_refunded');
-
-            $totalRefunded += $currentRefund;
-
-            if ($totalRefunded < $saleItem->quantity) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Process refund payment
-     */
-    protected function processRefundPayment(
-        SaleRefund $refund,
+    private function handleRefundMethod(
         RefundMethod $method,
-        ?string $paymentReference
+        Sale $sale,
+        SaleRefund $refund,
+        float $amount
     ): void {
-        $customer = Customer::find($refund->customer_id);
+        if (!$sale->customer_id) {
+            return;
+        }
 
-        switch ($method) {
-            case RefundMethod::CREDIT_REDUCTION:
-                // Apply refund to customer's outstanding debt
-                if ($customer && $customer->current_debt > 0) {
-                    $this->creditService->applyRefundToDebt(
-                        $customer,
-                        $refund->refund_amount,
-                        SaleRefund::class,
-                        $refund->id
-                    );
-                }
-                break;
+        $customer = $sale->customer;
+        if (!$customer) {
+            return;
+        }
 
-            case RefundMethod::STORE_CREDIT:
-                // Add to customer's store credit balance
-                // (This would require a store_credit field on customer)
-                // For now, reduce debt if any, otherwise log
-                if ($customer && $customer->current_debt > 0) {
-                    $this->creditService->applyRefundToDebt(
-                        $customer,
-                        $refund->refund_amount,
-                        SaleRefund::class,
-                        $refund->id
-                    );
-                }
-                break;
+        match ($method) {
+            RefundMethod::STORE_CREDIT => $this->issueStoreCredit($customer, $refund, $amount),
+            RefundMethod::CREDIT_REDUCTION => $this->applyDebtReduction($customer, $refund, $amount),
+            default => null,
+        };
+    }
 
-            case RefundMethod::MPESA:
-            case RefundMethod::CARD_REVERSAL:
-            case RefundMethod::BANK_TRANSFER:
-                // These require async processing
-                // Dispatch job for external payment processing
-                // For now, just log
-                Log::info('External refund payment required', [
-                    'refund_id' => $refund->id,
-                    'method' => $method->value,
-                    'amount' => $refund->refund_amount,
-                ]);
-                break;
+    /**
+     * Add amount to the customer's store credit balance.
+     */
+    private function issueStoreCredit(Customer $customer, SaleRefund $refund, float $amount): void
+    {
+        CustomerCreditTransaction::create([
+            'customer_id' => $customer->id,
+            'transaction_type' => CreditTransactionType::ADJUSTMENT,
+            'amount' => $amount,
+            'balance_after' => $customer->current_debt - $amount,
+            'reference_type' => SaleRefund::class,
+            'reference_id' => $refund->id,
+            'notes' => "Store credit issued for refund {$refund->refund_number}",
+            'created_by' => Auth::id(),
+        ]);
 
-            case RefundMethod::CASH:
-            default:
-                // Cash refund - just record it
-                break;
+        $customer->increment('store_credit_balance', $amount);
+
+        Log::info('Store credit issued for refund', [
+            'refund_id' => $refund->id,
+            'customer_id' => $customer->id,
+            'amount' => $amount,
+        ]);
+    }
+
+    /**
+     * Reduce the customer's outstanding debt balance.
+     */
+    private function applyDebtReduction(Customer $customer, SaleRefund $refund, float $amount): void
+    {
+        $deductible = min($amount, (float) $customer->current_debt);
+
+        if ($deductible <= 0) {
+            return;
+        }
+
+        CustomerCreditTransaction::create([
+            'customer_id' => $customer->id,
+            'transaction_type' => CreditTransactionType::PAYMENT,
+            'amount' => -$deductible,
+            'balance_after' => $customer->current_debt - $deductible,
+            'reference_type' => SaleRefund::class,
+            'reference_id' => $refund->id,
+            'notes' => "Debt reduced via refund {$refund->refund_number}",
+            'created_by' => Auth::id(),
+        ]);
+
+        $customer->decrement('current_debt', $deductible);
+
+        Log::info('Customer debt reduced via refund', [
+            'refund_id' => $refund->id,
+            'customer_id' => $customer->id,
+            'amount_reduced' => $deductible,
+        ]);
+    }
+
+    /**
+     * Update the shift sales summary to reflect the refund.
+     */
+    private function updateShiftSummary(Sale $sale, float $refundAmount): void
+    {
+        if (!$sale->shift_assignment_id) {
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($sale, $refundAmount) {
+                $summary = $this->shiftSalesSummaryService->getOrCreateForShift($sale->shift_assignment_id);
+
+                $summary->total_refunds = ($summary->total_refunds ?? 0) + 1;
+                $summary->total_refund_amount = ($summary->total_refund_amount ?? 0) + $refundAmount;
+                $summary->total_sales_amount = max(0, ($summary->total_sales_amount ?? 0) - $refundAmount);
+                $summary->save();
+            });
+        } catch (\Exception $e) {
+            // Don't block the refund if shift update fails
+            Log::error('Failed to update shift summary for refund', [
+                'sale_id' => $sale->id,
+                'shift_assignment_id' => $sale->shift_assignment_id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
     /**
-     * Update original sale status
+     * Update the sale's payment status after refunding.
+     * Uses the dynamic total_refunded accessor which sums all completed refund amounts.
      */
-    protected function updateOriginalSaleStatus(SaleRefund $refund): void
+    private function updateSaleStatus(Sale $sale): void
     {
-        $sale = $refund->originalSale;
+        // Refresh sale to get latest total_refunded (includes the refund we just created)
+        $sale->refresh();
 
-        if ($this->isCurrentlyFullRefund($refund)) {
-            $sale->update(['status' => SaleStatus::FULLY_REFUNDED]);
-        } else {
-            $sale->update(['status' => SaleStatus::PARTIALLY_REFUNDED]);
+        $totalRefunded = (float) $sale->total_refunded;
+
+        if ($totalRefunded >= (float) $sale->total_amount) {
+            $sale->update(['payment_status' => PaymentStatus::REFUNDED]);
         }
     }
 }

@@ -4,16 +4,21 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\RefundMethod;
 use App\Enums\Tenant\RefundReason;
+use App\Enums\Tenant\RefundStatus;
+use App\Observers\Tenant\SaleRefundObserver;
+use App\Traits\Tenant\HasAuditLogging;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
 
+#[ObservedBy([SaleRefundObserver::class])]
 class SaleRefund extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
     protected $table = 'sale_refunds';
 
@@ -28,28 +33,71 @@ class SaleRefund extends Model
         'reason',
         'notes',
         'processed_by',
+        'status',
+        'approved_by',
+        'approved_at',
+        'processed_at',
+        'exchange_sale_id',
     ];
 
-    protected $casts = [
-        'refund_date' => 'date',
-        'refund_amount' => 'decimal:2',
-        'refund_method' => RefundMethod::class,
-        'reason' => RefundReason::class,
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'refund_date' => 'date',
+            'refund_amount' => 'decimal:2',
+            'refund_method' => RefundMethod::class,
+            'reason' => RefundReason::class,
+            'status' => RefundStatus::class,
+            'approved_at' => 'datetime',
+            'processed_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
+
+    // ============================================
+    // AUDIT LOGGING
+    // ============================================
+
+    public function getAuditableFields(): array
+    {
+        return [
+            'refund_number',
+            'original_sale_id',
+            'refund_amount',
+            'refund_method',
+            'reason',
+            'status',
+            'processed_by',
+            'approved_by',
+        ];
+    }
+
+    public function getCriticalFields(): array
+    {
+        return [
+            'refund_amount',
+            'status',
+            'refund_method',
+            'reason',
+        ];
+    }
 
     // ============================================
     // BOOT
     // ============================================
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
         static::creating(function ($refund) {
             if (!$refund->refund_number) {
                 $refund->refund_number = self::generateRefundNumber($refund->store_id);
+            }
+
+            if (!$refund->refund_date) {
+                $refund->refund_date = now()->toDateString();
             }
         });
     }
@@ -58,41 +106,36 @@ class SaleRefund extends Model
     // RELATIONSHIPS
     // ============================================
 
-    /**
-     * Original sale being refunded
-     */
     public function originalSale(): BelongsTo
     {
         return $this->belongsTo(Sale::class, 'original_sale_id');
     }
 
-    /**
-     * Store where refund was processed
-     */
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
     }
 
-    /**
-     * Customer receiving the refund
-     */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
 
-    /**
-     * User who processed the refund
-     */
     public function processedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
     }
 
-    /**
-     * Refund line items
-     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function exchangeSale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'exchange_sale_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(SaleRefundItem::class, 'refund_id');
@@ -102,49 +145,31 @@ class SaleRefund extends Model
     // ACCESSORS
     // ============================================
 
-    /**
-     * Get formatted refund amount
-     */
     public function getFormattedAmountAttribute(): string
     {
         return 'KES ' . number_format($this->refund_amount, 2);
     }
 
-    /**
-     * Get refund method label
-     */
     public function getRefundMethodLabelAttribute(): string
     {
         return $this->refund_method->label();
     }
 
-    /**
-     * Get reason label
-     */
     public function getReasonLabelAttribute(): string
     {
         return $this->reason->label();
     }
 
-    /**
-     * Get processor name
-     */
     public function getProcessorNameAttribute(): ?string
     {
-        return $this->processedByUser?->name;
+        return $this->processedBy?->name;
     }
 
-    /**
-     * Get total items refunded count
-     */
     public function getTotalItemsCountAttribute(): int
     {
         return $this->items()->count();
     }
 
-    /**
-     * Get total quantity refunded
-     */
     public function getTotalQuantityRefundedAttribute(): float
     {
         return (float) $this->items()->sum('quantity_refunded');
@@ -154,49 +179,41 @@ class SaleRefund extends Model
     // SCOPES
     // ============================================
 
-    /**
-     * Scope to filter by store
-     */
     public function scopeByStore(Builder $query, int $storeId): Builder
     {
         return $query->where('store_id', $storeId);
     }
 
-    /**
-     * Scope to filter by customer
-     */
     public function scopeByCustomer(Builder $query, int $customerId): Builder
     {
         return $query->where('customer_id', $customerId);
     }
 
-    /**
-     * Scope to filter by original sale
-     */
     public function scopeBySale(Builder $query, int $saleId): Builder
     {
         return $query->where('original_sale_id', $saleId);
     }
 
-    /**
-     * Scope to filter by refund method
-     */
     public function scopeByMethod(Builder $query, RefundMethod $method): Builder
     {
         return $query->where('refund_method', $method);
     }
 
-    /**
-     * Scope to filter by reason
-     */
     public function scopeByReason(Builder $query, RefundReason $reason): Builder
     {
         return $query->where('reason', $reason);
     }
 
-    /**
-     * Scope to get refunds within date range
-     */
+    public function scopeByStatus(Builder $query, RefundStatus $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', RefundStatus::COMPLETED);
+    }
+
     public function scopeByDateRange(Builder $query, string $startDate, string $endDate): Builder
     {
         return $query->whereBetween('refund_date', [
@@ -205,17 +222,11 @@ class SaleRefund extends Model
         ]);
     }
 
-    /**
-     * Scope to get refunds from today
-     */
     public function scopeToday(Builder $query): Builder
     {
         return $query->whereDate('refund_date', today());
     }
 
-    /**
-     * Scope to get refunds from this week
-     */
     public function scopeThisWeek(Builder $query): Builder
     {
         return $query->whereBetween('refund_date', [
@@ -224,18 +235,12 @@ class SaleRefund extends Model
         ]);
     }
 
-    /**
-     * Scope to get refunds from this month
-     */
     public function scopeThisMonth(Builder $query): Builder
     {
         return $query->whereMonth('refund_date', now()->month)
             ->whereYear('refund_date', now()->year);
     }
 
-    /**
-     * Scope to search by refund number
-     */
     public function scopeSearch(Builder $query, string $search): Builder
     {
         return $query->where('refund_number', 'like', "%{$search}%")
@@ -249,30 +254,21 @@ class SaleRefund extends Model
     // STATIC METHODS
     // ============================================
 
-    /**
-     * Generate refund number
-     */
-    public static function generateRefundNumber(int $storeId): string
+    public static function generateRefundNumber(?int $storeId = null): string
     {
-        $prefix = TenantSalesSettings::current()->refund_receipt_prefix ?? 'REF';
         $year = now()->year;
+        $month = str_pad(now()->month, 2, '0', STR_PAD_LEFT);
+        $storePrefix = $storeId ? str_pad($storeId, 2, '0', STR_PAD_LEFT) : '00';
 
-        $lastRefund = self::where('store_id', $storeId)
-            ->whereYear('created_at', $year)
-            ->orderByDesc('id')
-            ->first();
+        $count = self::whereYear('created_at', $year)->count() + 1;
+        $sequence = str_pad($count, 6, '0', STR_PAD_LEFT);
 
-        $nextNumber = $lastRefund ? ((int) substr($lastRefund->refund_number, -6)) + 1 : 1;
-
-        return sprintf('%s-%d-%s-%06d', $prefix, $year, str_pad($storeId, 3, '0', STR_PAD_LEFT), $nextNumber);
+        return "REF-{$storePrefix}-{$year}{$month}-{$sequence}";
     }
 
-    /**
-     * Get refund statistics for date range
-     */
     public static function getStatistics(string $startDate, string $endDate, ?int $storeId = null): array
     {
-        $query = self::byDateRange($startDate, $endDate);
+        $query = self::completed()->byDateRange($startDate, $endDate);
 
         if ($storeId) {
             $query->byStore($storeId);
@@ -292,12 +288,10 @@ class SaleRefund extends Model
         ];
     }
 
-    /**
-     * Get refunds summary by reason
-     */
     public static function getSummaryByReason(string $startDate, string $endDate): array
     {
-        return self::byDateRange($startDate, $endDate)
+        return self::completed()
+            ->byDateRange($startDate, $endDate)
             ->select('reason')
             ->selectRaw('COUNT(*) as count')
             ->selectRaw('SUM(refund_amount) as total')

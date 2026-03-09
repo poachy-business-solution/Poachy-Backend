@@ -61,6 +61,17 @@ class TenantConfigurationSeeder extends Seeder
             ],
 
             // ============================================
+            // POS CONFIGURATION
+            // ============================================
+            [
+                'config_key' => 'pos.refunds_enabled',
+                'config_value' => true,
+                'config_type' => 'pos',
+                'config_group' => 'pos',
+                'description' => 'Allow managers and owners to process customer refunds at the POS',
+            ],
+
+            // ============================================
             // INVENTORY WASTE CONFIGURATION
             // ============================================
             [

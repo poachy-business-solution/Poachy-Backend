@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
+use App\Http\Controllers\Api\Tenant\Sales\RefundController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Controllers\Api\Tenant\Sales\ShiftSalesSummaryController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAnalyticsController;
@@ -514,6 +515,20 @@ Route::prefix('v1/tenant')
             Route::get('{sale}', [SaleController::class, 'getSale']);
             Route::get('{sale}/receipt', [SaleController::class, 'generateReceipt']);
             Route::post('{sale}/email-receipt', [SaleController::class, 'emailReceipt']);
+
+            // Refunds
+            Route::get('{sale}/refundable-items', [RefundController::class, 'getRefundableItems']);
+            Route::post('{sale}/refunds', [RefundController::class, 'initiateRefund']);
+            Route::get('{sale}/refunds', [RefundController::class, 'listSaleRefunds']);
+            Route::post('{sale}/exchange', [RefundController::class, 'initiateExchange']);
+        });
+
+        // Refund Management
+        Route::prefix('refunds')->group(function () {
+            Route::get('/', [RefundController::class, 'index']);
+            Route::get('/{refund}', [RefundController::class, 'show']);
+            Route::get('/{refund}/receipt', [RefundController::class, 'generateReceipt']);
+            Route::patch('/{refund}/cancel', [RefundController::class, 'cancel']);
         });
 
         // Loyalty Transactions
