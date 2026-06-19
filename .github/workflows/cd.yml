@@ -1,0 +1,199 @@
+name: CD
+
+# Runs automatically on every push to main (i.e. after a PR merges).
+# Can also be triggered manually for hotfixes or rollbacks.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never cancel a running deploy — let it finish before starting the next one.
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 — Build both Docker images and push to GHCR
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta-app.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ---- App image (PHP-FPM — production stage) ----
+      - name: Extract metadata — app image
+        id: meta-app
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: production
+          push: true
+          tags: ${{ steps.meta-app.outputs.tags }}
+          labels: ${{ steps.meta-app.outputs.labels }}
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+
+      # ---- Nginx image (web stage) ----
+      - name: Extract metadata — nginx image
+        id: meta-nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=short,prefix=nginx-sha-
+            type=raw,value=nginx-latest,enable={{is_default_branch}}
+
+      - name: Build and push nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: web
+          push: true
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
+
+  # ---------------------------------------------------------------------------
+  # Job 2 — Deploy to production server via SSH
+  #
+  # Deployment order:
+  #   1. Pull new images (old containers still serving traffic)
+  #   2. Ensure MySQL + Redis are healthy
+  #   3. Run central migrations (must be additive/backwards-compatible)
+  #   4. Run tenant migrations across all provisioned tenants
+  #   5. Rolling restart of app container — blocks until healthcheck passes
+  #   6. Rebuild Laravel caches inside the new container
+  #   7. Graceful Horizon drain (finish in-flight jobs, then restart workers)
+  #   8. Restart nginx with the new image
+  #   9. Prune old images
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://poachy.com   # update to your actual domain
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          SHORT_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: GHCR_TOKEN,GHCR_USER,SHORT_SHA
+          script: |
+            set -euo pipefail
+            # Update this path to wherever poachy lives on the production server
+            cd /opt/poachy
+
+            # 1. Sync compose files and config from repo (compose + nginx configs only)
+            git pull --ff-only
+
+            # 2. Authenticate to GHCR so we can pull the new images
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # 3. Pin the exact image tag built in this pipeline run.
+            #    This prevents a race where a second deploy starts and overwrites
+            #    the tag while services are still restarting.
+            echo "APP_IMAGE_TAG=sha-${SHORT_SHA:0:7}" > .image-tag.env
+
+            # 4. Pull new images — old containers still serving traffic at this point
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              pull app nginx horizon scheduler
+
+            # 5. Ensure MySQL and Redis are running and healthy before migrations.
+            #    Safe no-op if already healthy; needed if compose config changed and
+            #    they require a restart.
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              up -d --no-deps --wait mysql redis
+
+            # 6. Central migrations (old code still serving — migrations must be
+            #    additive and backwards-compatible with the running version)
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              run --rm --no-deps app php artisan migrate --force
+
+            # 7. Tenant migrations — runs against every provisioned tenant database
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              run --rm --no-deps app php artisan tenants:migrate --force
+
+            # 8. Storage symlink — survives volume remounts on server restarts
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              run --rm --no-deps app php artisan storage:link --force
+
+            # 9. Rolling restart of app — --wait blocks until the healthcheck passes.
+            #    Traffic is only cut over once the new container is healthy.
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              up -d --no-deps --wait app
+
+            # 10. Rebuild Laravel caches AFTER the new container is healthy.
+            #     Doing this post-swap means the new code builds its own cache
+            #     rather than inheriting stale cache from the previous version.
+            docker compose -f docker-compose.prod.yaml exec -T app \
+              php artisan config:cache
+            docker compose -f docker-compose.prod.yaml exec -T app \
+              php artisan route:cache
+            docker compose -f docker-compose.prod.yaml exec -T app \
+              php artisan view:cache
+            docker compose -f docker-compose.prod.yaml exec -T app \
+              php artisan event:cache
+
+            # 11. Graceful Horizon drain — signals workers to finish current jobs
+            #     before shutting down, preventing mid-flight job loss
+            docker compose -f docker-compose.prod.yaml exec -T horizon \
+              php artisan horizon:terminate || true
+
+            # 12. Poll until Horizon is inactive/stopped (max ~150 s)
+            for i in $(seq 1 30); do
+              STATUS=$(docker compose -f docker-compose.prod.yaml \
+                exec -T horizon php artisan horizon:status 2>/dev/null || echo "inactive")
+              echo "Horizon status: $STATUS (attempt $i/30)"
+              echo "$STATUS" | grep -qi "inactive\|stopped" && break
+              sleep 5
+            done
+
+            # 13. Start Horizon and scheduler with the new image
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              up -d --no-deps horizon scheduler
+
+            # 14. Restart nginx with the new image (zero-downtime: nginx restart is instant)
+            docker compose -f docker-compose.prod.yaml --env-file .image-tag.env \
+              up -d --no-deps nginx
+
+            # 15. Reclaim disk — remove dangling images from previous deploys
+            docker image prune -f
+
+            echo "Deploy complete — sha-${SHORT_SHA:0:7}"

@@ -1,82 +1,108 @@
-# Build Stage 1: PHP Base with Composer
-FROM php:8.3-fpm AS base
+# =============================================================
+# Stage 1 — Composer dependencies (no-dev, optimised)
+# =============================================================
+FROM composer:2.8 AS vendor
 
-# Set working directory
-WORKDIR /var/www
+WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    supervisor \
-    nano \
-    git \
+COPY composer.json composer.lock ./
+
+# --ignore-platform-reqs: composer image lacks ext-redis/pcntl/etc.
+# Those extensions are installed in stage 2.
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --ignore-platform-reqs
+
+# =============================================================
+# Stage 2 — PHP-FPM runtime (app container, port 9000)
+# =============================================================
+FROM php:8.4-fpm-alpine AS production
+
+LABEL maintainer="Poachy"
+
+# ---- System packages ----
+RUN apk add --no-cache \
     curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    procps \
-    net-tools \
-    htop \
-    zip \
-    unzip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    libpng \
+    libjpeg-turbo \
+    freetype \
+    icu-libs \
+    libzip \
+    libxml2 \
+    oniguruma \
+    busybox-extras
 
-# Verify that php-fpm is installed
-RUN if ! which php-fpm; then echo "php-fpm not found"; exit 1; fi
+# ---- PHP extensions ----
+RUN apk add --no-cache --virtual .build-deps \
+        libpng-dev libjpeg-turbo-dev freetype-dev \
+        icu-dev libzip-dev libxml2-dev oniguruma-dev \
+        autoconf gcc g++ make \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo_mysql \
+        mbstring \
+        xml \
+        zip \
+        bcmath \
+        intl \
+        gd \
+        opcache \
+        pcntl \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps \
+    && rm -rf /tmp/pear
 
-# install node
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs
+# ---- PHP configuration ----
+COPY docker/php/php.ini                  /usr/local/etc/php/php.ini
+COPY docker/php/www.conf                 /usr/local/etc/php-fpm.d/www.conf
+COPY docker/php/docker-entrypoint.sh     /usr/local/bin/docker-entrypoint.sh
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+WORKDIR /var/www/html
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Copy existing application directory
+# ---- Application files ----
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
 COPY . .
 
-# Copy only Composer files and install dependencies
-RUN composer install --prefer-dist --no-dev --no-interaction --optimize-autoloader
+# Generate optimised classmap now that app/ and all source dirs exist
+RUN composer dump-autoload --optimize --no-dev --no-scripts \
+    && rm /usr/local/bin/composer
 
-# Build Stage 2: Node.js for building frontend assets
-FROM base AS node-builder
+# Remove dev/test directories not needed at runtime
+RUN rm -rf tests/ .github/ docker/
 
-WORKDIR /var/www
+# ---- Permissions ----
+RUN chown -R www-data:www-data \
+        storage/ \
+        bootstrap/cache/ \
+    && chmod -R 775 \
+        storage/ \
+        bootstrap/cache/ \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Copy only the files needed for the front-end build
-COPY package.json package-lock.json /var/www/
-
-# Install Node.js dependencies
-RUN npm install
-
-# Copy application source code (for Vite to run build)
-COPY . .
-
-# Build assets for production using Vite
-RUN npm run build
-
-# Build Stage 3: Final image for production
-FROM base
-
-# Copy built frontend assets from node-builder stage
-COPY --from=node-builder /var/www/public /var/www/public
-COPY --from=node-builder /var/www/resources /var/www/resources
-
-# Set file ownership and permissions for Laravel
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www
-
-# Copy entrypoint script
-COPY ./Docker/entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Copy Supervisor configuration
-COPY ./Docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
-# Use the entrypoint script to start services
-CMD ["/usr/local/bin/entrypoint.sh"]
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 --start-period=20s \
+    CMD sh -c "nc -z localhost 9000 || exit 1"
 
-# CMD ["php-fpm"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["php-fpm"]
+
+# =============================================================
+# Stage 3 — Nginx (nginx container, port 80)
+# Copies only public/ from the production stage so nginx can
+# serve static files without touching the PHP-FPM container.
+# =============================================================
+FROM nginx:1.27-alpine AS web
+
+COPY docker/nginx/nginx.conf          /etc/nginx/nginx.conf
+COPY docker/nginx/conf.d/app.conf     /etc/nginx/conf.d/default.conf
+
+COPY --from=production /var/www/html/public /var/www/html/public
+
+EXPOSE 80

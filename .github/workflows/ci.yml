@@ -1,0 +1,180 @@
+name: CI
+
+# Runs on develop and every feature branch push, and on PRs targeting main.
+# All jobs must pass before a PR can merge.
+on:
+  push:
+    branches: ['develop', 'feature/**']
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true  # cancel stale runs on the same branch when a new push arrives
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Test suite — needs MySQL 8.4 + Redis
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: poachy
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -ppassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    # Job-level env so these values take precedence over whatever .env.example has.
+    # MySQL service root password is hardcoded to "password" — it never leaves CI.
+    env:
+      CENTRAL_DB_HOST: 127.0.0.1
+      CENTRAL_DB_PASSWORD: password
+      TENANT_DB_HOST: 127.0.0.1
+      TENANT_DB_PASSWORD: password
+      REDIS_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql, redis, bcmath, intl, zip, gd, pcntl, mbstring, xml
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: locked
+
+      - name: Configure environment
+        run: |
+          cp .env.example .env
+
+          # Patch central DB — matches the mysql service credentials above
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=central/'          .env
+          sed -i 's/^CENTRAL_DB_HOST=.*/CENTRAL_DB_HOST=127.0.0.1/'   .env
+          sed -i 's/^CENTRAL_DB_PORT=.*/CENTRAL_DB_PORT=3306/'         .env
+          sed -i 's/^CENTRAL_DB_DATABASE=.*/CENTRAL_DB_DATABASE=poachy/' .env
+          sed -i 's/^CENTRAL_DB_USERNAME=.*/CENTRAL_DB_USERNAME=root/' .env
+          sed -i 's/^CENTRAL_DB_PASSWORD=.*/CENTRAL_DB_PASSWORD=password/' .env
+
+          # Patch tenant DB — same MySQL instance, root has CREATE DATABASE privilege
+          sed -i 's/^TENANT_DB_HOST=.*/TENANT_DB_HOST=127.0.0.1/'     .env
+          sed -i 's/^TENANT_DB_PORT=.*/TENANT_DB_PORT=3306/'           .env
+          sed -i 's/^TENANT_DB_USERNAME=.*/TENANT_DB_USERNAME=root/'   .env
+          sed -i 's/^TENANT_DB_PASSWORD=.*/TENANT_DB_PASSWORD=password/' .env
+
+          # Patch Redis
+          sed -i 's/^REDIS_HOST=.*/REDIS_HOST=127.0.0.1/'              .env
+          sed -i 's/^REDIS_PORT=.*/REDIS_PORT=6379/'                   .env
+
+          # Point CENTRAL_DOMAINS at localhost so routing doesn't reject requests
+          sed -i 's/^CENTRAL_DOMAINS=.*/CENTRAL_DOMAINS=localhost/'    .env
+
+          # Use in-process drivers where possible — avoids needing real services for cache
+          sed -i 's/^CACHE_STORE=.*/CACHE_STORE=redis/'                .env
+          sed -i 's/^SESSION_DRIVER=.*/SESSION_DRIVER=redis/'          .env
+          sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/'       .env
+
+      # Tenant feature tests connect directly to MySQL using the hardcoded
+      # database name 'poachy_test' (see BatchTrackingEnforcementTest,
+      # RefundTest). The MySQL service only auto-creates 'poachy', so we
+      # create 'poachy_test' explicitly before the test suite runs.
+      - name: Create tenant test database
+        run: mysql -h 127.0.0.1 -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS poachy_test;"
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run central migrations
+        run: php artisan migrate --force
+
+      # Validates tenant migration files parse correctly.
+      # With no tenants provisioned this is a no-op for data, but it proves
+      # the migration files load without errors.
+      - name: Validate tenant migrations
+        run: php artisan tenants:migrate --force
+
+      - name: Run tests
+        run: php artisan test
+
+  # ---------------------------------------------------------------------------
+  # 2. Production build check
+  #    Builds the Docker image exactly as CD will and verifies the artisan
+  #    cache commands run cleanly inside it. Catches Dockerfile regressions
+  #    and missing env bindings before main is ever touched.
+  #    Uses the same GHA cache scope as CD so this run primes the cache,
+  #    making the real CD build faster.
+  # ---------------------------------------------------------------------------
+  build-check:
+    name: Production Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build production image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: production
+          push: false
+          load: true
+          tags: poachy-build-check:ci
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+
+      - name: Verify artisan cache commands run cleanly inside the image
+        run: |
+          APP_KEY=$(docker run --rm poachy-build-check:ci \
+            php -r "echo 'base64:'.base64_encode(random_bytes(32));")
+
+          docker run --rm \
+            -e APP_KEY="$APP_KEY" \
+            -e APP_ENV=production \
+            -e APP_DEBUG=false \
+            -e DB_CONNECTION=central \
+            -e CENTRAL_DB_HOST=127.0.0.1 \
+            -e CENTRAL_DB_PORT=3306 \
+            -e CENTRAL_DB_DATABASE=poachy \
+            -e CENTRAL_DB_USERNAME=root \
+            -e CENTRAL_DB_PASSWORD=secret \
+            -e TENANT_DB_HOST=127.0.0.1 \
+            -e TENANT_DB_PORT=3306 \
+            -e TENANT_DB_USERNAME=root \
+            -e TENANT_DB_PASSWORD=secret \
+            -e REDIS_HOST=127.0.0.1 \
+            -e CACHE_STORE=redis \
+            -e SESSION_DRIVER=redis \
+            -e QUEUE_CONNECTION=redis \
+            -e CENTRAL_DOMAINS=localhost \
+            poachy-build-check:ci \
+            sh -c "
+              php artisan config:cache &&
+              php artisan route:cache  &&
+              php artisan view:cache   &&
+              php artisan event:cache
+            "
