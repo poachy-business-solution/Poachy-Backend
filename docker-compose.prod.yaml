@@ -1,0 +1,203 @@
+# Production Docker Compose — poachy
+# All secrets come from .env on the server (never committed to git).
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yaml --env-file .image-tag.env up -d
+#
+# The .image-tag.env file is written by the CD pipeline on every deploy:
+#   APP_IMAGE_TAG=sha-<short>
+# When absent (e.g. manual first boot), services fall back to :latest.
+#
+# First-time server setup:
+#   git clone <repo> /opt/poachy && cd /opt/poachy
+#   cp .env.example .env   # fill in all real production values
+#   docker compose -f docker-compose.prod.yaml up -d mysql redis
+#   docker compose -f docker-compose.prod.yaml run --rm app php artisan key:generate
+#   docker compose -f docker-compose.prod.yaml run --rm app php artisan migrate --force
+#   docker compose -f docker-compose.prod.yaml run --rm app php artisan tenants:migrate --force
+#   docker compose -f docker-compose.prod.yaml up -d
+
+# ---------------------------------------------------------------------------
+# Shared image references — both use APP_IMAGE_TAG from .image-tag.env
+# ---------------------------------------------------------------------------
+x-app-image: &app-image
+  image: ghcr.io/godiah/poachy:${APP_IMAGE_TAG:-latest}
+
+x-nginx-image: &nginx-image
+  image: ghcr.io/godiah/poachy:nginx-${APP_IMAGE_TAG:-latest}
+
+# ---------------------------------------------------------------------------
+# Shared volumes mounted into every app-layer container (app, horizon, scheduler).
+# Named volumes persist across image upgrades and container restarts.
+# ---------------------------------------------------------------------------
+x-app-volumes: &app-volumes
+  - 'storage:/var/www/html/storage'
+  - 'cache:/var/www/html/bootstrap/cache'
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # nginx — reverse proxy + static asset server (loopback only)
+  # Binds to 127.0.0.1 so the host-level reverse proxy (Caddy / nginx) is the
+  # only entry point; it handles TLS termination and forwards here over HTTP.
+  # ---------------------------------------------------------------------------
+  nginx:
+    <<: *nginx-image
+    ports:
+      - '127.0.0.1:${APP_PORT:-8080}:80'
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # app — PHP-FPM (port 9000, internal only)
+  # No user: directive — entrypoint runs as root, chowns storage/, then
+  # php-fpm spawns workers as www-data.
+  # ---------------------------------------------------------------------------
+  app:
+    <<: *app-image
+    expose:
+      - '9000'
+    env_file: .env
+    volumes: *app-volumes
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 9000 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # horizon — queue worker (shares app image, no HTTP port)
+  # stop_grace_period gives in-flight jobs time to finish before SIGKILL.
+  # The CD pipeline calls horizon:terminate before restarting this service,
+  # so in practice a graceful drain happens before this period is needed.
+  # ---------------------------------------------------------------------------
+  horizon:
+    <<: *app-image
+    command: php artisan horizon
+    env_file: .env
+    volumes: *app-volumes
+    stop_grace_period: 30s
+    depends_on:
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # scheduler — Laravel cron via schedule:work (shares app image)
+  # ---------------------------------------------------------------------------
+  scheduler:
+    <<: *app-image
+    command: php artisan schedule:work
+    env_file: .env
+    volumes: *app-volumes
+    depends_on:
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # mysql — single instance for both central DB and all tenant DBs
+  # Root user is intentional: Stancl tenancy needs CREATE DATABASE privilege
+  # to auto-provision tenant databases when a new tenant is registered.
+  # Bound to loopback only — connect remotely via SSH tunnel if needed.
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: 'mysql:8.4'
+    ports:
+      - '127.0.0.1:3307:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${CENTRAL_DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${CENTRAL_DB_DATABASE}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: '1'
+    volumes:
+      - 'mysql-data:/var/lib/mysql'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # redis — cache, sessions, and Horizon queues
+  # AOF + periodic RDB snapshots so data survives container restarts.
+  # ---------------------------------------------------------------------------
+  redis:
+    image: 'redis:8-alpine'
+    command: redis-server --appendonly yes --save "900 1" --save "300 10"
+    volumes:
+      - 'redis-data:/data'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+# Explicit network name avoids collisions if other compose projects run on
+# the same host.
+networks:
+  default:
+    name: poachy-prod
+
+volumes:
+  # Application storage — uploaded files, logs, framework cache, symlinks.
+  # Lives outside the container so deploys never wipe user uploads.
+  storage:
+  # bootstrap/cache — compiled config, routes, events.
+  # Pre-warmed by CD after every deploy (artisan *:cache).
+  cache:
+  # Database and queue persistence
+  mysql-data:
+  redis-data:

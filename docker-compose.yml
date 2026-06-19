@@ -1,70 +1,232 @@
+# Development Docker Compose for Poachy
+# Mirrors the production service split (separate app + nginx containers) so
+# local behaviour matches production as closely as possible.
+#
+# Usage:
+#   docker compose up -d                          # standard services
+#   docker compose --profile dev-tools up -d      # include Mailpit
+#
+# First-time setup:
+#   docker network create dbtools                 # shared network (already exists if pokeapay is running)
+#   cp .env.example .env && php artisan key:generate
+#   docker compose up -d
+#   docker compose exec laravel.test php artisan migrate
+#   docker compose exec laravel.test php artisan tenants:migrate
+
+x-common-depends: &common-depends
+  mysql:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
 
 services:
-  webserver:
-    image: nginx:alpine
-    container_name: webserver
-    restart: unless-stopped
-    volumes:
-      - .:/var/www:ro
-      - /etc/letsencrypt:/etc/letsencrypt
-      - ./Docker/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - poachy
 
-  db:
-    image: mysql:5.7
-    container_name: db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_NAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3307:3306"
-    networks:
-      - poachy
-
-  redis:
-    image: redis:alpine
-    container_name: redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - poachy
-
-  app:
-    depends_on:
-      - db
-      - webserver
-      - redis
+  # ---------------------------------------------------------------------------
+  # laravel.test — PHP-FPM (port 9000, code volume-mounted for live editing)
+  # Named laravel.test so ./vendor/bin/sail commands continue to work.
+  # ---------------------------------------------------------------------------
+  laravel.test:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: poachy
-    image: poachy
-    restart: unless-stopped
+      target: production
+    image: poachy/app
+    user: "${WWWUSER:-1000}:${WWWGROUP:-1000}"
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     volumes:
-      - .:/var/www
-      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    ports:
-      - "127.0.0.1:9000:9000"
-    env_file:
-      - ./.env
+      - '.:/var/www/html'
     networks:
-      - poachy
+      sail:
+        # Alias so nginx can reach PHP-FPM as 'app:9000' — same name used
+        # by the prod compose service, keeping the nginx config identical.
+        aliases:
+          - app
+    restart: unless-stopped
+    depends_on:
+      <<: *common-depends
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 9000 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
 
-volumes:
-  mysql_data:
-  redis_data:
+  # ---------------------------------------------------------------------------
+  # nginx — serves the app on APP_PORT (default 80) via fastcgi to laravel.test:9000
+  # Accepts ALL hostnames (catch-all) so both poachy.test and *.poachy.test
+  # tenant subdomains are routed through to the same PHP-FPM app container.
+  # ---------------------------------------------------------------------------
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    image: poachy/web
+    ports:
+      - '${APP_PORT:-80}:80'
+    volumes:
+      # Live public/ so swagger UI and storage symlink changes reflect immediately
+      - './public:/var/www/html/public'
+    networks:
+      - sail
+    restart: unless-stopped
+    depends_on:
+      laravel.test:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # horizon — queue worker (reuses the app image, no HTTP port)
+  # ---------------------------------------------------------------------------
+  horizon:
+    image: poachy/app
+    command: php artisan horizon
+    user: "${WWWUSER:-1000}:${WWWGROUP:-1000}"
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - sail
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      <<: *common-depends
+      laravel.test:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'php', 'artisan', 'horizon:status']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # scheduler — Laravel cron (php artisan schedule:work)
+  # ---------------------------------------------------------------------------
+  scheduler:
+    image: poachy/app
+    command: php artisan schedule:work
+    user: "${WWWUSER:-1000}:${WWWGROUP:-1000}"
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - sail
+    restart: unless-stopped
+    depends_on:
+      <<: *common-depends
+      laravel.test:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # mysql — single instance for central DB + all tenant DBs
+  # Tenant databases (poachy_tenant_*) are auto-created by Stancl tenancy
+  # when you provision a tenant via the API. The root user is used so it has
+  # the CREATE DATABASE privilege needed by Stancl.
+  # Also attached to 'dbtools' so your existing phpMyAdmin can reach it.
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: 'mysql:8.4'
+    ports:
+      - '${FORWARD_DB_PORT:-3307}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${CENTRAL_DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${CENTRAL_DB_DATABASE}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: '1'
+    volumes:
+      - 'sail-mysql:/var/lib/mysql'
+    networks:
+      - sail
+      - dbtools
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # redis — cache, queues, and sessions
+  # ---------------------------------------------------------------------------
+  redis:
+    image: 'redis:8-alpine'
+    command: redis-server --appendonly yes
+    ports:
+      - '${FORWARD_REDIS_PORT:-6379}:6379'
+    volumes:
+      - 'sail-redis:/data'
+    networks:
+      - sail
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # mailpit — catches all outgoing mail locally (dev-tools profile)
+  # Dashboard: http://localhost:${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}
+  # SMTP:      localhost:${FORWARD_MAILPIT_PORT:-1025}
+  # ---------------------------------------------------------------------------
+  mailpit:
+    image: 'axllent/mailpit:latest'
+    ports:
+      - '${FORWARD_MAILPIT_PORT:-1025}:1025'
+      - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
+    networks:
+      - sail
+    restart: unless-stopped
+    profiles:
+      - dev-tools
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
 
 networks:
-  poachy:
+  sail:
+    driver: bridge
+  # External shared network — your existing phpMyAdmin connects to poachy's
+  # mysql container via this network using the alias 'poachy-mysql'.
+  # If it doesn't exist yet: docker network create dbtools
+  dbtools:
+    external: true
+
+volumes:
+  sail-mysql:
+    driver: local
+  sail-redis:
+    driver: local
