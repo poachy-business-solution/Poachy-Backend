@@ -364,7 +364,7 @@ Route::prefix('v1/tenant')
             Route::get('featured', [PromotionController::class, 'featuredPromotions']);
             Route::get('pos',      [PromotionController::class, 'posPromotions']);
             Route::get('website',  [PromotionController::class, 'websitePromotions']);
-            Route::apiResource('/', PromotionController::class)->parameter('', 'promotion');
+            Route::apiResource('/', PromotionController::class)->parameter('', 'promotion')->names('promotions');
             Route::patch('{promotion}/activate',   [PromotionController::class, 'activate']);
             Route::patch('{promotion}/deactivate', [PromotionController::class, 'deactivate']);
             Route::post('{promotion}/banner', [PromotionController::class, 'updateBanner']);

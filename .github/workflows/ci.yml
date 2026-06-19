@@ -96,6 +96,13 @@ jobs:
           sed -i 's/^SESSION_DRIVER=.*/SESSION_DRIVER=redis/'          .env
           sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/'       .env
 
+      # Tenant feature tests connect directly to MySQL using the hardcoded
+      # database name 'poachy_test' (see BatchTrackingEnforcementTest,
+      # RefundTest). The MySQL service only auto-creates 'poachy', so we
+      # create 'poachy_test' explicitly before the test suite runs.
+      - name: Create tenant test database
+        run: mysql -h 127.0.0.1 -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS poachy_test;"
+
       - name: Generate application key
         run: php artisan key:generate
 
