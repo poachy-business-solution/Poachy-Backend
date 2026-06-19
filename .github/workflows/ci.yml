@@ -178,3 +178,35 @@ jobs:
               php artisan view:cache   &&
               php artisan event:cache
             "
+
+  # ---------------------------------------------------------------------------
+  # 3. Auto-merge to main
+  #    Runs only on direct pushes to develop or feature/** (never on PRs, to
+  #    avoid an infinite loop where merging to main triggers another CI run).
+  #    Both gates must pass before the merge is attempted.
+  # ---------------------------------------------------------------------------
+  auto-merge:
+    name: Auto-merge to main
+    needs: [test, build-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/feature/'))
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Merge into main
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git merge --no-ff origin/${{ github.ref_name }} \
+            -m "chore: auto-merge ${{ github.ref_name }} into main after CI passed"
+          git push origin main
