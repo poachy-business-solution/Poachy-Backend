@@ -1,10 +1,10 @@
 name: CI
 
-# Runs on every feature branch push and on PRs targeting main.
+# Runs on develop and every feature branch push, and on PRs targeting main.
 # All jobs must pass before a PR can merge.
 on:
   push:
-    branches: ['feature/**']
+    branches: ['develop', 'feature/**']
   pull_request:
     branches: [main]
 
