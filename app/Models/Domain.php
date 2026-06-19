@@ -15,7 +15,9 @@ class Domain extends BaseDomain
     protected $table = 'domains';
 
     protected $fillable = [
-        'is_primary'
+        'domain',
+        'tenant_id',
+        'is_primary',
     ];
 
     protected function casts(): array

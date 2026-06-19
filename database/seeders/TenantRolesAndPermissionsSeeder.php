@@ -14,6 +14,10 @@ class TenantRolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Ensure Spatie uses the tenant connection, not central (which a prior
+        // seeder may have set earlier in the same process).
+        config(['permission.connection' => 'tenant']);
+
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -93,6 +97,9 @@ class TenantRolesAndPermissionsSeeder extends Seeder
 
         $this->command->info('✓ Created ' . count($permissions) . ' permissions');
 
+        // Flush cache so givePermissionTo() resolves the permissions we just created
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         // Create Roles and Assign Permissions
 
         // 1. OWNER ROLE (Full access)
@@ -101,7 +108,9 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'guard_name' => 'tenant',
         ]);
 
-        $owner->givePermissionTo(Permission::all()); // All permissions
+        $owner->givePermissionTo(
+            Permission::where('guard_name', 'tenant')->get()
+        );
 
         $this->command->info('✓ Created role: Owner (Full access)');
 

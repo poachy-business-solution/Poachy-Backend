@@ -2,21 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+    // WithoutModelEvents intentionally omitted — TenantSeeder relies on the
+    // TenantCreated Eloquent event to trigger Stancl's database creation pipeline.
+    // Suppressing events here would prevent the tenant DB from being created.
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Seed central database
         $this->call([
             BusinessTypeSeeder::class,
             SubscriptionPlanSeeder::class,
@@ -26,7 +21,5 @@ class DatabaseSeeder extends Seeder
             MarketplaceCategorySeeder::class,
             MarketplaceBrandSeeder::class,
         ]);
-
-        // seed tenant database using php artisan tenant:seed
     }
 }

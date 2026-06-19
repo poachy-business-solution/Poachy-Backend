@@ -96,7 +96,7 @@ class TenantSeeder extends Seeder
         ]);
 
         Domain::create([
-            'domain' => 'techhaven.test', // For local development
+            'domain' => 'techhaven.poachy.test', // For local development
             'tenant_id' => $tenant1->id,
         ]);
 

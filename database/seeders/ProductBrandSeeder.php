@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Tenant\ProductBrand;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class ProductBrandSeeder extends Seeder
 {
@@ -61,10 +62,9 @@ class ProductBrandSeeder extends Seeder
 
         foreach ($brands as $brand) {
             ProductBrand::updateOrCreate(
+                ['slug' => Str::slug($brand['name'])],
                 [
                     'name' => $brand['name'],
-                ],
-                [
                     'description' => $brand['description'],
                     'logo_url' => null,
                     'is_active' => true,
