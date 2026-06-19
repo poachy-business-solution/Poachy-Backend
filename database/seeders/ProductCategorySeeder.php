@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Tenant\ProductCategory;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class ProductCategorySeeder extends Seeder
 {
@@ -86,6 +87,7 @@ class ProductCategorySeeder extends Seeder
         foreach ($parents as $parent) {
             $record = ProductCategory::create([
                 'name' => $parent['name'],
+                'slug' => $parent['key'],
                 'description' => $parent['description'],
                 'display_order' => $parent['display_order'],
                 'parent_id' => null,
@@ -152,6 +154,7 @@ class ProductCategorySeeder extends Seeder
         foreach ($children as $child) {
             ProductCategory::create([
                 'name' => $child['name'],
+                'slug' => Str::slug($child['name']),
                 'description' => $child['description'],
                 'parent_id' => $parentIds[$child['parent']],
                 'display_order' => $child['display_order'],

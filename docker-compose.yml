@@ -36,6 +36,10 @@ services:
       - 'host.docker.internal:host-gateway'
     volumes:
       - '.:/var/www/html'
+      # Dev-only OPcache override: validate_timestamps=1 so file edits take
+      # effect immediately without restarting the container.
+      # This file is never copied into the production image.
+      - './docker/php/php-dev.ini:/usr/local/etc/php/conf.d/php-dev.ini'
     networks:
       sail:
         # Alias so nginx can reach PHP-FPM as 'app:9000' — same name used
@@ -210,6 +214,33 @@ services:
     restart: unless-stopped
     profiles:
       - dev-tools
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
+  # phpmyadmin — database GUI (dev-tools profile)
+  # Dashboard: http://localhost:${FORWARD_PHPMYADMIN_PORT:-8080}
+  # Connects directly to the poachy mysql service on the sail network.
+  # ---------------------------------------------------------------------------
+  phpmyadmin:
+    image: 'phpmyadmin:5.2'
+    ports:
+      - '${FORWARD_PHPMYADMIN_PORT:-8080}:80'
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 256M
+    networks:
+      - sail
+    restart: unless-stopped
+    profiles:
+      - dev-tools
+    depends_on:
+      mysql:
+        condition: service_healthy
     logging:
       driver: json-file
       options:

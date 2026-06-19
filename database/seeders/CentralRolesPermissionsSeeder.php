@@ -67,6 +67,9 @@ class CentralRolesPermissionsSeeder extends Seeder
 
         $this->command->info('✓ Created ' . count($permissions) . ' permissions');
 
+        // Flush the cache so givePermissionTo() can find the permissions we just created
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         // Create Roles and Assign Permissions
 
         // 1. ADMIN ROLE
