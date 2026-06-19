@@ -16,18 +16,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Seed central database
+        $this->call([
+            BusinessTypeSeeder::class,
+            SubscriptionPlanSeeder::class,
+            CentralRolesPermissionsSeeder::class,
+            CentralAdminSeeder::class,
+            TenantSeeder::class,
+            MarketplaceCategorySeeder::class,
+            MarketplaceBrandSeeder::class,
         ]);
 
-        Tenant::all()->each(function ($tenant) {
-            $tenant->run(function () {
-                $this->call([
-                ]);
-            });
-        });
+        // seed tenant database using php artisan tenant:seed
     }
 }

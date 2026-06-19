@@ -7,7 +7,7 @@ use Stancl\Tenancy\Database\Models\Tenant;
 
 return [
     'tenant_model' => App\Models\Tenant::class,
-    'id_generator' => null,
+    'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
 
     'domain_model' => App\Models\Domain::class,
 
@@ -16,7 +16,7 @@ return [
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
-    
+
     'central_domains' => explode(',', env('CENTRAL_DOMAINS', 'localhost')),
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
@@ -48,8 +48,8 @@ return [
          * Tenant database names are created like this:
          * prefix + tenant_id + suffix.
          */
-        'prefix' => 'tenant',
-        'suffix' => '',
+        'prefix' => env('TENANT_DB_PREFIX', 'poachy_tenant_'),
+        'suffix' => env('TENANT_DB_SUFFIX', ''),
 
         /**
          * TenantDatabaseManagers are classes that handle the creation & deletion of tenant databases.
@@ -70,6 +70,15 @@ return [
          * want to separate tenant DBs by schemas rather than databases.
          */
             // 'pgsql' => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLSchemaManager::class, // Separate by schema instead of database
+        ],
+    ],
+
+    /**
+     * Tenant identification
+     */
+    'identification' => [
+        'resolvers' => [
+            Stancl\Tenancy\Resolvers\DomainTenantResolver::class => 100,
         ],
     ],
 
@@ -163,7 +172,7 @@ return [
         // Stancl\Tenancy\Features\UserImpersonation::class,
         // Stancl\Tenancy\Features\TelescopeTags::class,
         // Stancl\Tenancy\Features\UniversalRoutes::class,
-        // Stancl\Tenancy\Features\TenantConfig::class, // https://tenancyforlaravel.com/docs/v3/features/tenant-config
+        Stancl\Tenancy\Features\TenantConfig::class, // https://tenancyforlaravel.com/docs/v3/features/tenant-config
         // Stancl\Tenancy\Features\CrossDomainRedirect::class, // https://tenancyforlaravel.com/docs/v3/features/cross-domain-redirect
         // Stancl\Tenancy\Features\ViteBundler::class,
     ],
@@ -190,7 +199,7 @@ return [
      * Parameters used by the tenants:seed command.
      */
     'seeder_parameters' => [
-        '--class' => 'DatabaseSeeder', // root seeder class
+        '--class' => \Database\Seeders\TenantDatabaseSeeder::class,
         // '--force' => true, // This needs to be true to seed tenant databases in production
     ],
 ];
