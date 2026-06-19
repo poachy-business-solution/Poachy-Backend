@@ -98,6 +98,10 @@ jobs:
   deploy:
     name: Deploy to Production
     needs: build
+    # Skips gracefully until the production server is provisioned.
+    # Once the server is ready, set PROD_READY=true under:
+    #   GitHub → Repo Settings → Secrets and variables → Actions → Variables
+    if: vars.PROD_READY == 'true'
     runs-on: ubuntu-latest
     environment:
       name: production
