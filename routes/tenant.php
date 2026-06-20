@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\Tenant\Store\StoreProductController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierPaymentController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
+use App\Http\Controllers\Api\Tenant\Subscription\SubscriptionPaymentController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
 use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
@@ -654,9 +655,12 @@ Route::prefix('v1/tenant')
             Route::get('/status', [TenantAccessController::class, 'checkStatus']);
         });
 
-        // Subscription Information
+        // Subscription Information & Payments
         Route::prefix('subscription')->group(function () {
             Route::get('/info', [TenantAccessController::class, 'subscriptionInfo']);
+            Route::post('/pay/stk', [SubscriptionPaymentController::class, 'payViaSTK']);
+            Route::get('/pay/paybill', [SubscriptionPaymentController::class, 'paybillInstructions']);
+            Route::get('/payment/status', [SubscriptionPaymentController::class, 'status']);
         });
 
         // Business Types & Categories (Helper endpoints)

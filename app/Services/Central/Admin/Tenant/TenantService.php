@@ -32,9 +32,10 @@ class TenantService
         }
 
         try {
-            // Create tenant
+            // Paybill account assignment is handled by the TenantCreated event listener
+            // in TenancyServiceProvider — fires for all creation paths.
             $tenant = Tenant::create([
-                'id' => $tenantId,
+                'id'   => $tenantId,
                 'data' => $tenantData,
             ]);
 
@@ -57,8 +58,9 @@ class TenantService
             }
 
             Log::info('Tenant created successfully', [
-                'tenant_id' => $tenant->id,
-                'domain' => $data['domain'],
+                'tenant_id'             => $tenant->id,
+                'domain'                => $data['domain'],
+                'mpesa_paybill_account' => $tenant->mpesa_paybill_account,
             ]);
 
             return $tenant->fresh(['domains']);

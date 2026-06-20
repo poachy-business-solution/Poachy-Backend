@@ -11,8 +11,8 @@ return [
     |
     */
     'central_api' => [
-        'url' => env('CENTRAL_API_URL', 'http://0.0.0.0:80'),
-        'token' => env('CENTRAL_API_TOKEN', '4Td2G0osKU6r8D5bcV8BX4j3DmpcemV5BkRwwLYoiMHkVshtpf0k2GmS3Vbf2Stj'),
+        'url' => env('CENTRAL_API_URL'),
+        'token' => env('CENTRAL_API_TOKEN'),
         'timeout' => env('CENTRAL_API_TIMEOUT', 60),
     ],
 
@@ -60,4 +60,5 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+
 ];
