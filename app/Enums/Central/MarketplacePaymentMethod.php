@@ -5,6 +5,7 @@ namespace App\Enums\Central;
 enum MarketplacePaymentMethod: string
 {
     case Mpesa          = 'mpesa';
+    case MpesaPaybill   = 'mpesa_paybill';
     case Card           = 'card';
     case CashOnDelivery = 'cash_on_delivery';
     case BankTransfer   = 'bank_transfer';
@@ -15,7 +16,8 @@ enum MarketplacePaymentMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::Mpesa          => 'M-Pesa',
+            self::Mpesa          => 'M-Pesa STK Push',
+            self::MpesaPaybill   => 'M-Pesa Paybill',
             self::Card           => 'Card',
             self::CashOnDelivery => 'Cash on Delivery',
             self::BankTransfer   => 'Bank Transfer',
@@ -36,5 +38,13 @@ enum MarketplacePaymentMethod: string
     public function requiresOnlinePayment(): bool
     {
         return in_array($this, [self::Mpesa, self::Card, self::BankTransfer], true);
+    }
+
+    /**
+     * Whether this method uses Paybill (customer pays via M-Pesa menu, no STK push).
+     */
+    public function isPaybill(): bool
+    {
+        return $this === self::MpesaPaybill;
     }
 }

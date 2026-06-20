@@ -9,10 +9,13 @@ use App\Enums\Central\ReservationStatus;
 use App\Events\Central\Marketplace\PaymentAttempted;
 use App\Events\Central\Marketplace\PaymentCompleted;
 use App\Events\Central\Marketplace\PaymentFailed;
+use App\Exceptions\MpesaException;
 use App\Jobs\Central\ProcessOrderCancellation;
 use App\Jobs\Central\ProcessPaymentConfirmation;
+use App\Models\CentralPaymentLog;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
+use App\Services\Shared\Mpesa\MpesaService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +25,8 @@ class MarketplacePaymentService
         private readonly MpesaService $mpesaService,
         private readonly MarketplaceProductService $productService,
     ) {}
+
+    // =========================================================================
 
     /**
      * Initiate payment for an order.
@@ -54,10 +59,11 @@ class MarketplacePaymentService
         }
 
         return match ($payment->payment_method) {
-            MarketplacePaymentMethod::Mpesa          => $this->initiateMpesaPayment($order, $payment, $paymentData),
+            MarketplacePaymentMethod::Mpesa          => $this->initiateMpesaSTKPayment($order, $payment, $paymentData),
+            MarketplacePaymentMethod::MpesaPaybill   => $this->initiateMpesaPaybillPayment($order, $payment),
             MarketplacePaymentMethod::CashOnDelivery => $this->initiateCashOnDeliveryPayment($order, $payment),
             default                                  => throw new \RuntimeException(
-                "Payment method '{$payment->payment_method->label()}' is not yet available. Please choose M-Pesa or Cash on Delivery."
+                "Payment method '{$payment->payment_method->label()}' is not yet available. Please choose M-Pesa STK, M-Pesa Paybill, or Cash on Delivery."
             ),
         };
     }
@@ -74,7 +80,7 @@ class MarketplacePaymentService
      *
      * @throws \RuntimeException
      */
-    private function initiateMpesaPayment(
+    private function initiateMpesaSTKPayment(
         MarketplaceOrder $order,
         MarketplaceOrderPayment $payment,
         array $paymentData,
@@ -98,12 +104,22 @@ class MarketplacePaymentService
             ];
         }
 
-        $stkResult = $this->mpesaService->initiateSTKPush(
-            phoneNumber:      $phoneNumber,
-            amount:           (float) $payment->amount,
-            accountReference: $order->order_number,
-            transactionDesc:  'Marketplace order payment',
-        );
+        try {
+            $stkResult = $this->mpesaService->initiateSTKPush(
+                phoneNumber:      $phoneNumber,
+                amount:           (float) $payment->amount,
+                accountReference: $order->order_number,
+                transactionDesc:  'Marketplace order payment',
+                callbackUrl:      config('mpesa.stk_callback_url'),
+            );
+        } catch (MpesaException $e) {
+            Log::channel('mpesa')->error('Marketplace STK push failed', [
+                'order_id'   => $order->id,
+                'payment_id' => $payment->id,
+                'error'      => $e->getMessage(),
+            ]);
+            throw $e;
+        }
 
         $payment->update([
             'payment_status'        => MarketplacePaymentStatus::Processing,
@@ -116,13 +132,19 @@ class MarketplacePaymentService
             'initiated_at' => now(),
         ]);
 
-        Log::info('M-Pesa STK push initiated', [
-            'order_id'           => $order->id,
-            'payment_id'         => $payment->id,
+        CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'stk_initiated', [
+            'customer_id'          => $order->customer_id,
+            'amount'               => (float) $payment->amount,
+            'customer_phone'       => $phoneNumber,
+            'transaction_reference' => $stkResult['checkout_request_id'],
+        ]);
+
+        Log::channel('mpesa')->info('Marketplace STK push initiated', [
+            'order_id'            => $order->id,
+            'payment_id'          => $payment->id,
             'checkout_request_id' => $stkResult['checkout_request_id'],
         ]);
 
-        // Fire analytics event for payment attempt
         event(new PaymentAttempted(
             order: $order,
             payment: $payment->fresh(),
@@ -137,6 +159,113 @@ class MarketplacePaymentService
                 'phone_number'        => $phoneNumber,
             ],
         ];
+    }
+
+    /**
+     * Initiate a Paybill payment for a marketplace order.
+     * No API call needed — returns instructions for the customer to pay via M-Pesa menu.
+     *
+     * @return array{payment: MarketplaceOrderPayment, message: string, instructions: array<string, mixed>}
+     */
+    private function initiateMpesaPaybillPayment(
+        MarketplaceOrder $order,
+        MarketplaceOrderPayment $payment,
+    ): array {
+        $credentials = $this->mpesaService->getActiveCredentials();
+
+        CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'paybill_instructions_issued', [
+            'customer_id' => $order->customer_id,
+            'amount'      => (float) $payment->amount,
+        ]);
+
+        event(new PaymentAttempted(
+            order: $order,
+            payment: $payment,
+            paymentMethod: MarketplacePaymentMethod::MpesaPaybill->value,
+        ));
+
+        return [
+            'payment' => $payment,
+            'message' => 'Pay via M-Pesa Paybill. Use the details below.',
+            'instructions' => [
+                'business_number' => $credentials['shortcode'],
+                'account_number'  => $order->order_number,
+                'amount'          => (float) $payment->amount,
+                'expires_at'      => $order->payment_deadline_at?->toIso8601String(),
+            ],
+        ];
+    }
+
+    /**
+     * Process a C2B Paybill confirmation for a marketplace order.
+     * Called by ProcessMpesaC2BConfirmationJob when Safaricom confirms payment.
+     *
+     * @param  array<string, mixed>  $parsedPayload  Output of MpesaService::parseC2BPayload()
+     */
+    public function processC2BConfirmation(array $parsedPayload): MarketplaceOrderPayment
+    {
+        $orderNumber   = $parsedPayload['bill_ref_number'];
+        $transactionId = $parsedPayload['transaction_id'];
+
+        // Idempotency: TransID already completed
+        $existing = MarketplaceOrderPayment::on('central')
+            ->where('provider_reference', $transactionId)
+            ->where('payment_status', MarketplacePaymentStatus::Completed)
+            ->first();
+
+        if ($existing) {
+            Log::channel('mpesa')->info('C2B marketplace confirmation — duplicate ignored', [
+                'transaction_id' => $transactionId,
+                'payment_id'     => $existing->id,
+            ]);
+
+            return $existing;
+        }
+
+        $order = MarketplaceOrder::on('central')
+            ->where('order_number', $orderNumber)
+            ->firstOrFail();
+
+        $payment = $order->payments()
+            ->whereIn('payment_status', [
+                MarketplacePaymentStatus::Pending->value,
+                MarketplacePaymentStatus::Processing->value,
+            ])
+            ->latest()
+            ->firstOrFail();
+
+        CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'c2b_confirmation_received', [
+            'customer_id'          => $order->customer_id,
+            'amount'               => $parsedPayload['amount'],
+            'customer_phone'       => $parsedPayload['phone'],
+            'transaction_reference' => $transactionId,
+            'raw_payload'          => $parsedPayload,
+        ]);
+
+        return DB::connection('central')->transaction(function () use ($order, $payment, $transactionId, $parsedPayload) {
+            $order = MarketplaceOrder::on('central')->lockForUpdate()->find($order->id);
+
+            if ($order->order_status->isTerminal()) {
+                $this->initiateRefund($payment, (float) $payment->amount);
+
+                return $payment->fresh();
+            }
+
+            $this->confirmPayment($payment, $transactionId, $transactionId);
+
+            return $payment->fresh();
+        });
+    }
+
+    /**
+     * Process an STK Push callback from Safaricom for a marketplace order.
+     * This replaces the old handleMpesaCallback (which remains for backward compat).
+     *
+     * @param  array{transaction_reference: string|null, status: string, provider_reference: string|null, failure_reason: string|null, failure_code: string|null}  $parsedPayload
+     */
+    public function processSTKCallback(array $parsedPayload): MarketplaceOrderPayment
+    {
+        return $this->processPaymentWebhook($parsedPayload);
     }
 
     /**
@@ -181,20 +310,7 @@ class MarketplacePaymentService
      */
     public function handleMpesaCallback(array $callbackPayload): MarketplaceOrderPayment
     {
-        if (! $this->mpesaService->validateCallback($callbackPayload)) {
-            Log::warning('Invalid M-Pesa callback received', [
-                'payload' => $callbackPayload,
-            ]);
-
-            throw new \RuntimeException('Invalid callback source.');
-        }
-
-        $webhookData = $this->mpesaService->parseCallbackPayload($callbackPayload);
-
-        Log::info('M-Pesa callback received', [
-            'transaction_reference' => $webhookData['transaction_reference'],
-            'status'                => $webhookData['status'],
-        ]);
+        $webhookData = $this->mpesaService->parseSTKCallbackPayload($callbackPayload);
 
         return $this->processPaymentWebhook($webhookData);
     }

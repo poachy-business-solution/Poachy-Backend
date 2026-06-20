@@ -4,14 +4,16 @@ namespace App\Models;
 
 use App\Enums\Central\ReviewStatus;
 use App\Models\MerchantReview;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Hash;
-use Stancl\Tenancy\Contracts\TenantWithDatabase;
-use Stancl\Tenancy\Database\Concerns\HasDomains;
-use Stancl\Tenancy\Database\Concerns\HasDatabase;
+use App\Observers\Central\TenantObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
+#[ObservedBy([TenantObserver::class])]
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains, HasFactory;
@@ -21,6 +23,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 
     protected $fillable = [
         'data',
+        'mpesa_paybill_account',
     ];
 
     protected $casts = [
@@ -73,6 +76,16 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasMany(TenantDeliveryZone::class, 'tenant_id', 'id');
     }
 
+    /**
+     * Tell Stancl's VirtualColumn which columns exist as real DB columns.
+     * Any attribute NOT listed here gets serialised into the `data` JSON blob.
+     * `mpesa_paybill_account` must be here so it is written as its own column.
+     */
+    public static function getCustomColumns(): array
+    {
+        return ['id', 'mpesa_paybill_account'];
+    }
+
     // Tenancy Methods
 
     public function getTenantKeyName(): string
@@ -98,5 +111,10 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function hasActiveSubscription(): bool
     {
         return $this->activeSubscription()->exists();
+    }
+
+    public function getMpesaAccountNumber(): ?string
+    {
+        return $this->mpesa_paybill_account;
     }
 }

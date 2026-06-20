@@ -148,7 +148,7 @@ class TenancyServiceProvider extends ServiceProvider
         });
 
         // When tenant context ends, reset to default cache key
-        Event::listen(Events\TenancyEnded::class, function (Events\TenancyEnded $event) {
+        Event::listen(Events\TenancyEnded::class, function (Events\TenancyEnded $_event) {
             $permissionRegistrar = app(PermissionRegistrar::class);
 
             // Reset to default cache key
@@ -164,10 +164,11 @@ class TenancyServiceProvider extends ServiceProvider
         // Additional Tenant Events (Optional)
         // ========================================
 
-        // Log when tenant is created
+        // Log when tenant is created (Paybill account is assigned by TenantObserver::creating)
         Event::listen(Events\TenantCreated::class, function (Events\TenantCreated $event) {
             Log::info('New tenant created', [
-                'tenant_id' => $event->tenant->id,
+                'tenant_id'             => $event->tenant->id,
+                'mpesa_paybill_account' => $event->tenant->mpesa_paybill_account,
             ]);
         });
 

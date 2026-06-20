@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\Central\Marketplace\ReviewVoteController;
 use App\Http\Controllers\Api\Central\Marketplace\ShoppingCartController;
 use App\Http\Controllers\Api\Central\Marketplace\TenantProfileController;
 use App\Http\Controllers\Api\Central\Marketplace\WishlistController;
+use App\Http\Controllers\Api\Central\Mpesa\MpesaC2BController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
@@ -54,6 +55,14 @@ Route::prefix('v1/central')->group(function () {
     Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
     Route::get('/subscription-plans/{slug}', [SubscriptionPlanController::class, 'show']);
 
+    // M-Pesa callbacks (public — no auth, Safaricom calls these)
+    Route::prefix('mpesa')->group(function () {
+        Route::post('/c2b/validate', [MpesaC2BController::class, 'validate']);
+        Route::post('/c2b/confirm', [MpesaC2BController::class, 'confirm']);
+        Route::post('/stk/callback', [MpesaC2BController::class, 'stkCallback']);
+        Route::post('/stk/subscription/callback', [MpesaC2BController::class, 'stkSubscriptionCallback']);
+    });
+
     // Marketplace routes
     Route::prefix('marketplace')->group(function () {
         Route::get('/products', [MarketplaceProductController::class, 'index']);
@@ -61,7 +70,6 @@ Route::prefix('v1/central')->group(function () {
 
         // Payment webhooks / callbacks (public — no auth)
         Route::post('/payments/webhook', [MarketplacePaymentController::class, 'webhook']);
-        Route::post('/payments/mpesa/callback', [MarketplacePaymentController::class, 'mpesaCallback']);
 
         // Reviews (public — anyone can read approved reviews)
         Route::prefix('')->group(function () {

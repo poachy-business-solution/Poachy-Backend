@@ -1,3 +1,34 @@
+# Poachy — Project Context
+
+Poachy is a **multi-tenant SaaS REST API** (no Blade/Vite frontend). Two contexts: central (`poachy.test`) for admin, marketplace, subscriptions; tenant (`{slug}.poachy.test`) for POS, inventory, sales, shifts. Built on Laravel 12, Stancl Tenancy (domain-based, per-tenant MySQL DB), Horizon, Sanctum, Spatie Permission.
+
+## Memory — Read Before Acting
+
+Persistent memory lives at `~/.claude/projects/-home-godiah-MyProjects-poachy/memory/`. Read relevant files before starting any feature. Key files:
+
+| File | When to read |
+|---|---|
+| `project-poachy-overview.md` | Any new feature — full domain model, feature list, sync architecture |
+| `project-infrastructure.md` | Docker, CI/CD, .env, GitHub secrets, prod compose |
+| `project-sync-patterns.md` | Any Tenant↔Central sync work — auth tokens, idempotency, queue names, ACK flow, dual-model pattern |
+| `project-codebase-patterns.md` | Any code change — observer registration, `$connection = 'central'`, UOM storage, batch tracking gate |
+| `project-roadmap.md` | Planning features — what's been designed but not yet implemented (serial tracking, wishlist, analytics, cart recovery) |
+| `feedback-sync-design.md` | Sync design — ACK required, delete-of-missing handling, dual SyncQueueOutbound trap |
+| `feedback-testing-db.md` | Writing tests — MySQL only, SQLite PDO not installed |
+| `feedback-dev-workflow.md` | Writing instructions for the user — `php artisan` inside container, `sail artisan` for Claude's own commands |
+| `feedback-customer-comms.md` | Any outbound comms — gate on `accepts_marketing` / `accepts_sms` |
+
+## Critical Rules (Always Apply)
+
+- **No EventServiceProvider** — Laravel 11+ auto-discovers listeners. `#[ObservedBy]` attribute on models for observers.
+- **Dual models** — `App\Models\Tenant\SyncQueueOutbound` ≠ `App\Models\SyncQueueOutbound`. Same for `TenantDeliveryZone`. Check namespace carefully.
+- **Tests use MySQL** — SQLite PDO not installed. Any DB-touching test must use MySQL.
+- **Every Tenant→Central sync needs an ACK callback** — central must notify tenant of `central_record_id` after inbound job completes.
+- **`collect()` returns `Support\Collection`** — not `Eloquent\Collection`. Use `Support\Collection` as type hint when collection is built with `collect()`.
+- **Inventory quantities in base UOM** — always convert via `getConversionToBaseUom()` before writing.
+
+---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
