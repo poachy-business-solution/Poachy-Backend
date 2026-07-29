@@ -16,12 +16,13 @@ class StoreSupplierPersonalDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('suppliers', 'name')->whereNull('deleted_at'),],
+            'name' => ['required', 'string', 'max:255', Rule::unique('suppliers', 'name')->whereNull('deleted_at')],
             'supplier_type' => ['required', 'string', Rule::enum(SupplierType::class)],
             'contact_person' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255', Rule::unique('suppliers', 'email')->whereNull('deleted_at'),],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('suppliers', 'email')->whereNull('deleted_at')],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'tax_id' => ['nullable', 'string', 'max:50'],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['sometimes', 'boolean'],
@@ -33,7 +34,7 @@ class StoreSupplierPersonalDetailsRequest extends FormRequest
         return [
             'name.required' => 'Supplier name is required',
             'supplier_type.required' => 'Supplier type is required',
-            'supplier_type.enum' => 'Invalid supplier type. Must be one of: ' .
+            'supplier_type.enum' => 'Invalid supplier type. Must be one of: '.
                 implode(', ', SupplierType::values()),
             'email.email' => 'Please provide a valid email address',
         ];

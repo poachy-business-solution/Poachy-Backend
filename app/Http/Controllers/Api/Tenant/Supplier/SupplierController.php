@@ -11,12 +11,15 @@ use App\Http\Requests\Tenant\Supplier\UpdateSupplierFinancialDetailsRequest;
 use App\Http\Requests\Tenant\Supplier\UpdateSupplierPersonalDetailsRequest;
 use App\Http\Resources\Tenant\Supplier\SupplierResource;
 use App\Http\Responses\ApiResponse;
+use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Supplier\SupplierService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    use AuthorizesRequests;
+
     public function __construct(
         protected SupplierService $supplierService
     ) {}
@@ -28,57 +31,72 @@ class SupplierController extends Controller
      *     description="Retrieves a list of suppliers with optional filtering, searching, and pagination capabilities.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="supplier_type",
      *         in="query",
      *         description="Filter by supplier type",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"manufacturer", "distributor", "wholesaler", "retailer"}),
      *         example="wholesaler"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search suppliers by name, contact person, email, or phone",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="TechPro"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="paginate",
      *         in="query",
      *         description="Enable pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100),
      *         example=10
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Suppliers retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Suppliers retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="TechPro Manufacturing Ltd"),
      *                     @OA\Property(property="supplier_type", type="string", example="distributor"),
@@ -121,6 +139,7 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -129,6 +148,8 @@ class SupplierController extends Controller
      */
     public function index(IndexSupplierRequest $request): JsonResponse
     {
+        $this->authorize('viewAny', Supplier::class);
+
         try {
             $filters = $request->getFilters();
             $paginate = $request->shouldPaginate();
@@ -148,7 +169,7 @@ class SupplierController extends Controller
                             'total' => $suppliers->total(),
                             'from' => $suppliers->firstItem(),
                             'to' => $suppliers->lastItem(),
-                        ]
+                        ],
                     ]
                 );
             }
@@ -159,7 +180,7 @@ class SupplierController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve suppliers: ' . $e->getMessage()
+                'Failed to retrieve suppliers: '.$e->getMessage()
             );
         }
     }
@@ -171,18 +192,23 @@ class SupplierController extends Controller
      *     description="Retrieves detailed information about a specific supplier including products and product count.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Supplier ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Supplier retrieved successfully"),
      *             @OA\Property(
@@ -219,8 +245,10 @@ class SupplierController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="object")
      *                 ),
+     *
      *                 @OA\Property(property="product_count", type="integer", example=0),
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-12-19T11:55:47.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2025-12-19T12:04:39.000000Z")
@@ -235,6 +263,7 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -247,10 +276,12 @@ class SupplierController extends Controller
      */
     public function show(int $id): JsonResponse
     {
+        $this->authorize('view', Supplier::findOrFail($id));
+
         try {
             $supplier = $this->supplierService->getSupplierById($id, true);
 
-            if (!$supplier) {
+            if (! $supplier) {
                 return ApiResponse::notFound('Supplier not found');
             }
 
@@ -260,7 +291,7 @@ class SupplierController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve supplier: ' . $e->getMessage()
+                'Failed to retrieve supplier: '.$e->getMessage()
             );
         }
     }
@@ -272,10 +303,13 @@ class SupplierController extends Controller
      *     description="Creates a new supplier with contact and business information. Default payment terms is 'cod' and credit limit is 0.00.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name", "supplier_type"},
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, description="Supplier name", example="TechPro Manufacturing Ltd"),
      *             @OA\Property(property="supplier_type", type="string", enum={"manufacturer", "distributor", "wholesaler", "retailer"}, description="Supplier type", example="manufacturer"),
      *             @OA\Property(property="contact_person", type="string", maxLength=255, description="Contact person name", example="Mike Doe"),
@@ -287,10 +321,13 @@ class SupplierController extends Controller
      *             @OA\Property(property="is_active", type="boolean", description="Active status (default: true)", example=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Supplier created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Supplier created successfully"),
      *             @OA\Property(
@@ -330,6 +367,7 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -337,7 +375,9 @@ class SupplierController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -346,9 +386,11 @@ class SupplierController extends Controller
      *                 @OA\Property(
      *                     property="supplier_type",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected supplier type is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -363,6 +405,8 @@ class SupplierController extends Controller
      */
     public function store(StoreSupplierPersonalDetailsRequest $request): JsonResponse
     {
+        $this->authorize('create', Supplier::class);
+
         try {
             $supplier = $this->supplierService->createSupplierPersonalDetails($request->validated());
 
@@ -372,7 +416,7 @@ class SupplierController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to create supplier: ' . $e->getMessage()
+                'Failed to create supplier: '.$e->getMessage()
             );
         }
     }
@@ -384,28 +428,36 @@ class SupplierController extends Controller
      *     description="Updates supplier contact and address information. Only provided fields will be updated.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Supplier ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Personal details to update (all fields are optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="contact_person", type="string", maxLength=255, description="Contact person name", example="John Doe Jr."),
      *             @OA\Property(property="email", type="string", format="email", maxLength=255, description="Email address", example="johnjr@techpro.com"),
      *             @OA\Property(property="phone", type="string", maxLength=20, description="Phone number", example="+254712345679"),
      *             @OA\Property(property="address", type="string", description="Physical address", example="789 New Industrial Park, Nairobi, Kenya")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier personal details updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Supplier personal details updated successfully"),
      *             @OA\Property(
@@ -445,6 +497,7 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -461,6 +514,8 @@ class SupplierController extends Controller
      */
     public function updatePersonalDetails(UpdateSupplierPersonalDetailsRequest $request, int $id): JsonResponse
     {
+        $this->authorize('update', Supplier::findOrFail($id));
+
         try {
             $supplier = $this->supplierService->updateSupplierPersonalDetails($id, $request->validated());
 
@@ -472,7 +527,7 @@ class SupplierController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to update supplier personal details: ' . $e->getMessage()
+                'Failed to update supplier personal details: '.$e->getMessage()
             );
         }
     }
@@ -484,18 +539,23 @@ class SupplierController extends Controller
      *     description="Updates supplier credit limit, payment terms, and bank account details. Only provided fields will be updated.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Supplier ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Financial details to update (all fields are optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="credit_limit", type="number", format="float", minimum=0, description="Credit limit (cannot be negative)", example=1000000.00),
      *             @OA\Property(property="payment_terms", type="string", enum={"cod", "net_7", "net_15", "net_30", "net_60", "net_90"}, description="Payment terms", example="net_30"),
      *             @OA\Property(
@@ -509,10 +569,13 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier financial details updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Supplier financial details updated successfully"),
      *             @OA\Property(
@@ -559,6 +622,7 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -570,24 +634,32 @@ class SupplierController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
      *                 property="errors",
      *                 type="object",
      *                 oneOf={
+     *
      *                     @OA\Schema(
+     *
      *                         @OA\Property(
      *                             property="payment_terms",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="The selected payment terms is invalid.")
      *                         )
      *                     ),
+     *
      *                     @OA\Schema(
+     *
      *                         @OA\Property(
      *                             property="credit_limit",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="Credit limit cannot be negative")
      *                         )
      *                     )
@@ -599,6 +671,8 @@ class SupplierController extends Controller
      */
     public function updateFinancialDetails(UpdateSupplierFinancialDetailsRequest $request, int $id): JsonResponse
     {
+        $this->authorize('update', Supplier::findOrFail($id));
+
         try {
             $supplier = $this->supplierService->updateSupplierFinancialDetails($id, $request->validated());
 
@@ -610,7 +684,7 @@ class SupplierController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to update supplier financial details: ' . $e->getMessage()
+                'Failed to update supplier financial details: '.$e->getMessage()
             );
         }
     }
@@ -622,20 +696,26 @@ class SupplierController extends Controller
      *     description="Toggles the active status of a supplier. If currently active, it will be deactivated and vice versa.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Supplier ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier status toggled successfully",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Supplier deactivated successfully"),
      *                     @OA\Property(
@@ -647,13 +727,16 @@ class SupplierController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Supplier activated successfully")
      *                 )
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -666,6 +749,8 @@ class SupplierController extends Controller
      */
     public function toggleActive(int $id): JsonResponse
     {
+        $this->authorize('update', Supplier::findOrFail($id));
+
         try {
             $result = $this->supplierService->toggleActiveStatus($id);
 
@@ -674,7 +759,7 @@ class SupplierController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to toggle supplier status: ' . $e->getMessage()
+                'Failed to toggle supplier status: '.$e->getMessage()
             );
         }
     }
@@ -686,10 +771,13 @@ class SupplierController extends Controller
      *     description="Retrieves available options for supplier types and payment terms. Useful for populating form dropdowns.",
      *     tags={"Tenant Suppliers"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier options retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
@@ -697,8 +785,10 @@ class SupplierController extends Controller
      *                 @OA\Property(
      *                     property="supplier_types",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="value", type="string", example="manufacturer"),
      *                         @OA\Property(property="label", type="string", example="Manufacturer"),
      *                         @OA\Property(property="description", type="string", example="Produces or manufactures goods directly")
@@ -729,8 +819,10 @@ class SupplierController extends Controller
      *                 @OA\Property(
      *                     property="payment_terms",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="value", type="string", example="cod"),
      *                         @OA\Property(property="label", type="string", example="Cash on Delivery"),
      *                         @OA\Property(property="description", type="string", example="Payment due upon delivery of goods"),
@@ -778,6 +870,7 @@ class SupplierController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
