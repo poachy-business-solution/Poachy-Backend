@@ -32,8 +32,7 @@ class MarketplacePaymentService
      * Initiate payment for an order.
      * Routes to the appropriate handler based on the payment method captured at checkout.
      *
-     * @param array{phone_number?: string} $paymentData
-     *
+     * @param  array{phone_number?: string}  $paymentData
      * @return array{payment: MarketplaceOrderPayment, message: string, instructions?: array<string, mixed>}
      *
      * @throws \RuntimeException
@@ -59,10 +58,10 @@ class MarketplacePaymentService
         }
 
         return match ($payment->payment_method) {
-            MarketplacePaymentMethod::Mpesa          => $this->initiateMpesaSTKPayment($order, $payment, $paymentData),
-            MarketplacePaymentMethod::MpesaPaybill   => $this->initiateMpesaPaybillPayment($order, $payment),
+            MarketplacePaymentMethod::Mpesa => $this->initiateMpesaSTKPayment($order, $payment, $paymentData),
+            MarketplacePaymentMethod::MpesaPaybill => $this->initiateMpesaPaybillPayment($order, $payment),
             MarketplacePaymentMethod::CashOnDelivery => $this->initiateCashOnDeliveryPayment($order, $payment),
-            default                                  => throw new \RuntimeException(
+            default => throw new \RuntimeException(
                 "Payment method '{$payment->payment_method->label()}' is not yet available. Please choose M-Pesa STK, M-Pesa Paybill, or Cash on Delivery."
             ),
         };
@@ -74,8 +73,7 @@ class MarketplacePaymentService
      * If the payment is already Processing and was initiated <60 seconds ago, returns the
      * current status with a "please wait" message instead of re-initiating.
      *
-     * @param array{phone_number?: string} $paymentData
-     *
+     * @param  array{phone_number?: string}  $paymentData
      * @return array{payment: MarketplaceOrderPayment, message: string, instructions: array<string, mixed>}
      *
      * @throws \RuntimeException
@@ -98,50 +96,50 @@ class MarketplacePaymentService
             && $payment->initiated_at->diffInSeconds(now()) < 60
         ) {
             return [
-                'payment'      => $payment,
-                'message'      => 'STK push already sent. Please check your phone.',
+                'payment' => $payment,
+                'message' => 'STK push already sent. Please check your phone.',
                 'instructions' => ['wait_seconds' => 60 - $payment->initiated_at->diffInSeconds(now())],
             ];
         }
 
         try {
             $stkResult = $this->mpesaService->initiateSTKPush(
-                phoneNumber:      $phoneNumber,
-                amount:           (float) $payment->amount,
+                phoneNumber: $phoneNumber,
+                amount: (float) $payment->amount,
                 accountReference: $order->order_number,
-                transactionDesc:  'Marketplace order payment',
-                callbackUrl:      config('mpesa.stk_callback_url'),
+                transactionDesc: 'Marketplace order payment',
+                callbackUrl: config('mpesa.stk_callback_url'),
             );
         } catch (MpesaException $e) {
             Log::channel('mpesa')->error('Marketplace STK push failed', [
-                'order_id'   => $order->id,
+                'order_id' => $order->id,
                 'payment_id' => $payment->id,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
 
         $payment->update([
-            'payment_status'        => MarketplacePaymentStatus::Processing,
+            'payment_status' => MarketplacePaymentStatus::Processing,
             'transaction_reference' => $stkResult['checkout_request_id'],
-            'payment_metadata'      => array_merge($payment->payment_metadata ?? [], [
+            'payment_metadata' => array_merge($payment->payment_metadata ?? [], [
                 'merchant_request_id' => $stkResult['merchant_request_id'],
-                'phone_number'        => $phoneNumber,
-                'stk_initiated_at'    => now()->toIso8601String(),
+                'phone_number' => $phoneNumber,
+                'stk_initiated_at' => now()->toIso8601String(),
             ]),
             'initiated_at' => now(),
         ]);
 
         CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'stk_initiated', [
-            'customer_id'          => $order->customer_id,
-            'amount'               => (float) $payment->amount,
-            'customer_phone'       => $phoneNumber,
+            'customer_id' => $order->customer_id,
+            'amount' => (float) $payment->amount,
+            'customer_phone' => $phoneNumber,
             'transaction_reference' => $stkResult['checkout_request_id'],
         ]);
 
         Log::channel('mpesa')->info('Marketplace STK push initiated', [
-            'order_id'            => $order->id,
-            'payment_id'          => $payment->id,
+            'order_id' => $order->id,
+            'payment_id' => $payment->id,
             'checkout_request_id' => $stkResult['checkout_request_id'],
         ]);
 
@@ -152,11 +150,11 @@ class MarketplacePaymentService
         ));
 
         return [
-            'payment'      => $payment->fresh(),
-            'message'      => 'STK push sent. Please complete payment on your phone.',
+            'payment' => $payment->fresh(),
+            'message' => 'STK push sent. Please complete payment on your phone.',
             'instructions' => [
                 'checkout_request_id' => $stkResult['checkout_request_id'],
-                'phone_number'        => $phoneNumber,
+                'phone_number' => $phoneNumber,
             ],
         ];
     }
@@ -175,7 +173,7 @@ class MarketplacePaymentService
 
         CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'paybill_instructions_issued', [
             'customer_id' => $order->customer_id,
-            'amount'      => (float) $payment->amount,
+            'amount' => (float) $payment->amount,
         ]);
 
         event(new PaymentAttempted(
@@ -189,9 +187,9 @@ class MarketplacePaymentService
             'message' => 'Pay via M-Pesa Paybill. Use the details below.',
             'instructions' => [
                 'business_number' => $credentials['shortcode'],
-                'account_number'  => $order->order_number,
-                'amount'          => (float) $payment->amount,
-                'expires_at'      => $order->payment_deadline_at?->toIso8601String(),
+                'account_number' => $order->order_number,
+                'amount' => (float) $payment->amount,
+                'expires_at' => $order->payment_deadline_at?->toIso8601String(),
             ],
         ];
     }
@@ -204,7 +202,7 @@ class MarketplacePaymentService
      */
     public function processC2BConfirmation(array $parsedPayload): MarketplaceOrderPayment
     {
-        $orderNumber   = $parsedPayload['bill_ref_number'];
+        $orderNumber = $parsedPayload['bill_ref_number'];
         $transactionId = $parsedPayload['transaction_id'];
 
         // Idempotency: TransID already completed
@@ -216,7 +214,7 @@ class MarketplacePaymentService
         if ($existing) {
             Log::channel('mpesa')->info('C2B marketplace confirmation — duplicate ignored', [
                 'transaction_id' => $transactionId,
-                'payment_id'     => $existing->id,
+                'payment_id' => $existing->id,
             ]);
 
             return $existing;
@@ -235,14 +233,14 @@ class MarketplacePaymentService
             ->firstOrFail();
 
         CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'c2b_confirmation_received', [
-            'customer_id'          => $order->customer_id,
-            'amount'               => $parsedPayload['amount'],
-            'customer_phone'       => $parsedPayload['phone'],
+            'customer_id' => $order->customer_id,
+            'amount' => $parsedPayload['amount'],
+            'customer_phone' => $parsedPayload['phone'],
             'transaction_reference' => $transactionId,
-            'raw_payload'          => $parsedPayload,
+            'raw_payload' => $parsedPayload,
         ]);
 
-        return DB::connection('central')->transaction(function () use ($order, $payment, $transactionId, $parsedPayload) {
+        return DB::connection('central')->transaction(function () use ($order, $payment, $transactionId) {
             $order = MarketplaceOrder::on('central')->lockForUpdate()->find($order->id);
 
             if ($order->order_status->isTerminal()) {
@@ -279,7 +277,7 @@ class MarketplacePaymentService
         MarketplaceOrder $order,
         MarketplaceOrderPayment $payment,
     ): array {
-        $codReference = 'COD-' . $order->order_number . '-' . now()->timestamp;
+        $codReference = 'COD-'.$order->order_number.'-'.now()->timestamp;
 
         // Fire analytics event for payment attempt (COD)
         event(new PaymentAttempted(
@@ -291,8 +289,8 @@ class MarketplacePaymentService
         $this->confirmPayment($payment, $codReference);
 
         Log::info('Cash on delivery confirmed', [
-            'order_id'      => $order->id,
-            'payment_id'    => $payment->id,
+            'order_id' => $order->id,
+            'payment_id' => $payment->id,
             'cod_reference' => $codReference,
         ]);
 
@@ -333,7 +331,7 @@ class MarketplacePaymentService
         if ($existingPayment) {
             Log::info('Duplicate payment webhook ignored', [
                 'transaction_reference' => $transactionReference,
-                'payment_id'           => $existingPayment->id,
+                'payment_id' => $existingPayment->id,
             ]);
 
             return $existingPayment;
@@ -363,9 +361,9 @@ class MarketplacePaymentService
 
             if ($order->order_status->isTerminal()) {
                 Log::info('Payment arrived for cancelled/terminal order — initiating refund', [
-                    'order_id'     => $order->id,
+                    'order_id' => $order->id,
                     'order_status' => $order->order_status->value,
-                    'payment_id'   => $payment->id,
+                    'payment_id' => $payment->id,
                 ]);
 
                 $this->initiateRefund($payment, (float) $payment->amount);
@@ -408,10 +406,10 @@ class MarketplacePaymentService
         })->afterResponse();
 
         Log::info('Payment confirmed', [
-            'order_id'   => $order->id,
+            'order_id' => $order->id,
             'payment_id' => $payment->id,
-            'amount'     => $payment->amount,
-            'method'     => $payment->payment_method->value,
+            'amount' => $payment->amount,
+            'method' => $payment->payment_method->value,
         ]);
 
         // Fire analytics event for payment completion
@@ -432,9 +430,9 @@ class MarketplacePaymentService
         $payment->markAsFailed($reason, $code);
 
         Log::info('Payment failed', [
-            'order_id'   => $payment->order_id,
+            'order_id' => $payment->order_id,
             'payment_id' => $payment->id,
-            'reason'     => $reason,
+            'reason' => $reason,
         ]);
 
         // Fire analytics event for payment failure
@@ -465,12 +463,14 @@ class MarketplacePaymentService
 
         DB::connection('central')->transaction(function () use ($order) {
             $order->payments()
-                ->where('payment_status', MarketplacePaymentStatus::Pending)
-                ->orWhere('payment_status', MarketplacePaymentStatus::Processing)
+                ->whereIn('payment_status', [
+                    MarketplacePaymentStatus::Pending,
+                    MarketplacePaymentStatus::Processing,
+                ])
                 ->update([
                     'payment_status' => MarketplacePaymentStatus::Failed,
-                    'failed_at'      => now(),
-                    'failure_reason'  => 'Payment deadline exceeded',
+                    'failed_at' => now(),
+                    'failure_reason' => 'Payment deadline exceeded',
                 ]);
 
             $order->update([
@@ -495,8 +495,8 @@ class MarketplacePaymentService
         $payment->markAsRefunded($amount);
 
         Log::info('Refund initiated', [
-            'order_id'        => $payment->order_id,
-            'payment_id'      => $payment->id,
+            'order_id' => $payment->order_id,
+            'payment_id' => $payment->id,
             'refunded_amount' => $amount,
         ]);
     }
