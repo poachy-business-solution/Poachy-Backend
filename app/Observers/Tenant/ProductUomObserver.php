@@ -2,8 +2,8 @@
 
 namespace App\Observers\Tenant;
 
+use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductUom;
-use Illuminate\Support\Facades\Log;
 
 class ProductUomObserver
 {
@@ -17,10 +17,16 @@ class ProductUomObserver
      */
     public function updated(ProductUom $productUom): void
     {
-        // If base UOM changed, this might affect pricing calculations
-        if ($productUom->wasChanged('is_base_uom') || $productUom->wasChanged('conversion_to_base')) {
-            // TODO: Trigger recalculation of inventory values
-            // TODO: Sync to marketplace if product is online
+        // conversion_to_base changes alone have no effect on the marketplace payload
+        // (ProductSyncDTO only carries which UOM is the base, not its conversion factor),
+        // and there's no cached inventory valuation anywhere to invalidate — it's always
+        // computed live from ProductBatch rows (see ProductBatchService::getInventoryValuation()).
+        // Only a genuine is_base_uom promotion needs to propagate anywhere.
+        if ($productUom->wasChanged('is_base_uom') && $productUom->is_base_uom) {
+            // A normal Eloquent update (not a query-builder mass update) so this fires
+            // ProductObserver::updated() → handleMarketplaceSync() normally, same as any
+            // other marketplace-relevant field edit.
+            Product::find($productUom->product_id)?->update(['base_uom_id' => $productUom->uom_id]);
         }
     }
 

@@ -49,6 +49,7 @@ class EnqueueBundleMarketplaceSync implements ShouldQueue
                 ]);
 
                 DB::commit();
+
                 return;
             }
 

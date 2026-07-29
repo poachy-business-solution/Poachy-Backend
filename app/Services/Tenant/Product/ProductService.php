@@ -24,7 +24,7 @@ class ProductService
             // Generate UUID
             $data['uuid'] = Str::uuid()->toString();
 
-            // Generate slug 
+            // Generate slug
             $data['slug'] = $this->generateUniqueSlug($data['name']);
 
             // Generate SKU if not provided
@@ -129,7 +129,9 @@ class ProductService
                 'is_available_online' => $data['is_available_online'] ?? $product->is_available_online,
             ]);
 
-            // TODO: Trigger sync to marketplace if is_available_online = true
+            // ProductObserver::updated() → handleMarketplaceSync() already fires on the
+            // $product->update($data) call above and handles this exact is_available_online
+            // transition — do not dispatch a second sync here.
 
             return $product->fresh();
         });
@@ -141,7 +143,7 @@ class ProductService
     public function toggleActive(Product $product): Product
     {
         return DB::transaction(function () use ($product) {
-            $newStatus = !$product->is_active;
+            $newStatus = ! $product->is_active;
             $product->update(['is_active' => $newStatus]);
 
             $this->clearProductCache($product->uuid);
@@ -162,7 +164,7 @@ class ProductService
     public function toggleFeatured(Product $product): Product
     {
         return DB::transaction(function () use ($product) {
-            $newStatus = !$product->is_featured;
+            $newStatus = ! $product->is_featured;
             $product->update(['is_featured' => $newStatus]);
 
             $this->clearProductCache($product->uuid);
@@ -342,7 +344,7 @@ class ProductService
             ]);
 
         // Search
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -352,17 +354,17 @@ class ProductService
         }
 
         // Category filter
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
         // Brand filter
-        if (!empty($filters['brand_id'])) {
+        if (! empty($filters['brand_id'])) {
             $query->where('brand_id', $filters['brand_id']);
         }
 
         // Status filter
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('stock_status', $filters['status']);
         }
 
@@ -429,11 +431,11 @@ class ProductService
                 $query->where('id', '!=', $excludeId);
             }
 
-            if (!$query->exists()) {
+            if (! $query->exists()) {
                 return $slug;
             }
 
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
     }
@@ -446,7 +448,7 @@ class ProductService
         $extension = $file->getClientOriginalExtension();
 
         // Create filename with timestamp
-        $filename = 'primary_' . Str::slug($originalName) . '_' . time() . '.' . $extension;
+        $filename = 'primary_'.Str::slug($originalName).'_'.time().'.'.$extension;
 
         // Store in public disk under products/images
         $path = $file->storeAs('products/images', $filename, 'public');
@@ -466,7 +468,7 @@ class ProductService
                 $extension = $file->getClientOriginalExtension();
 
                 // Create filename with timestamp and index
-                $filename = 'secondary_' . Str::slug($originalName) . '_' . time() . '_' . $index . '.' . $extension;
+                $filename = 'secondary_'.Str::slug($originalName).'_'.time().'_'.$index.'.'.$extension;
 
                 // Store in public disk under products/images
                 $path = $file->storeAs('products/images', $filename, 'public');
@@ -487,7 +489,7 @@ class ProductService
         }
 
         // Delete secondary images
-        if (!empty($product->secondary_images)) {
+        if (! empty($product->secondary_images)) {
             foreach ($product->secondary_images as $imagePath) {
                 if (Storage::disk('public')->exists($imagePath)) {
                     Storage::disk('public')->delete($imagePath);

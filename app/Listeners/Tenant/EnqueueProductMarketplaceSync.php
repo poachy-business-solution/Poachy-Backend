@@ -49,6 +49,7 @@ class EnqueueProductMarketplaceSync implements ShouldQueue
                 ]);
 
                 DB::commit();
+
                 return;
             }
 

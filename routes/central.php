@@ -108,10 +108,10 @@ Route::prefix('v1/central')->group(function () {
 
     // Customer Auth routes
     Route::prefix('marketplace/auth')->group(function () {
-        Route::post('/register',               [CustomerAuthController::class, 'register']);
-        Route::post('/login',                  [CustomerAuthController::class, 'login']);
-        Route::post('/login/verify',  [CustomerAuthController::class, 'verifyLoginOtp']);
-        Route::post('/reset-password',         [CustomerAuthController::class, 'forgotPassword']);
+        Route::post('/register', [CustomerAuthController::class, 'register']);
+        Route::post('/login', [CustomerAuthController::class, 'login']);
+        Route::post('/login/verify', [CustomerAuthController::class, 'verifyLoginOtp']);
+        Route::post('/reset-password', [CustomerAuthController::class, 'forgotPassword']);
         Route::post('/reset-password/confirm', [CustomerAuthController::class, 'resetPassword']);
     });
 });
@@ -135,12 +135,12 @@ Route::prefix('v1/central')
 
         // Customer Auth
         Route::prefix('marketplace/auth')->group(function () {
-            Route::post('/logout',                   [CustomerAuthController::class, 'logout']);
-            Route::post('/update-password',          [CustomerAuthController::class, 'initiateUpdatePassword']);
-            Route::post('/update-password/confirm',  [CustomerAuthController::class, 'confirmUpdatePassword']);
-            Route::post('/verify-email',             [CustomerAuthController::class, 'sendEmailVerification']);
+            Route::post('/logout', [CustomerAuthController::class, 'logout']);
+            Route::post('/update-password', [CustomerAuthController::class, 'initiateUpdatePassword']);
+            Route::post('/update-password/confirm', [CustomerAuthController::class, 'confirmUpdatePassword']);
+            Route::post('/verify-email', [CustomerAuthController::class, 'sendEmailVerification']);
             Route::post('/verify-email/confirm', [CustomerAuthController::class, 'confirmEmailVerification']);
-            Route::post('/verify-phone',             [CustomerAuthController::class, 'sendPhoneVerification']);
+            Route::post('/verify-phone', [CustomerAuthController::class, 'sendPhoneVerification']);
             Route::post('/verify-phone/confirm', [CustomerAuthController::class, 'confirmPhoneVerification']);
         });
 
@@ -159,6 +159,7 @@ Route::prefix('v1/central')
             // subscription period management
             Route::post('/tenants/{tenant_id}/trial-period', [TenantController::class, 'startTrialPeriod']);
             Route::get('/tenants/{tenant_id}/subscriptions', [TenantController::class, 'subscriptions']);
+            Route::get('/tenants/{tenant_id}/unmapped-categories', [TenantController::class, 'unmappedCategories']);
 
             // Tenant Delivery Zones
             Route::get('/tenant-delivery-zones', [TenantDeliveryZoneController::class, 'index']);
@@ -225,15 +226,15 @@ Route::prefix('v1/central')
 
         // Customer Profile
         Route::prefix('customer')->group(function () {
-            Route::get('/profile',   [CustomerProfileController::class, 'profile']);
+            Route::get('/profile', [CustomerProfileController::class, 'profile']);
             Route::patch('/profile', [CustomerProfileController::class, 'updateProfile']);
             Route::post('/profile/picture', [CustomerProfileController::class, 'updateProfilePicture']);
 
             // Customer Delivery addresses
             Route::prefix('delivery-addresses')->group(function () {
-                Route::get('/',        [CustomerProfileController::class, 'addresses']);
-                Route::post('/',       [CustomerProfileController::class, 'storeAddress']);
-                Route::patch('/{id}',  [CustomerProfileController::class, 'updateAddress']);
+                Route::get('/', [CustomerProfileController::class, 'addresses']);
+                Route::post('/', [CustomerProfileController::class, 'storeAddress']);
+                Route::patch('/{id}', [CustomerProfileController::class, 'updateAddress']);
                 Route::delete('/{id}', [CustomerProfileController::class, 'deleteAddress']);
             });
         });

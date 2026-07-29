@@ -10,6 +10,7 @@ use App\Services\Tenant\Sync\VariantSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ProductObserver
 {
@@ -26,7 +27,7 @@ class ProductObserver
     {
         // Ensure UUID is set
         if (empty($product->uuid)) {
-            $product->uuid = \Illuminate\Support\Str::uuid()->toString();
+            $product->uuid = Str::uuid()->toString();
         }
     }
 
@@ -219,7 +220,6 @@ class ProductObserver
         }
     }
 
-
     /**
      * Handle the Product "restored" event.
      */
@@ -288,15 +288,17 @@ class ProductObserver
 
                 // Cascade: sync all eligible variants
                 $this->variantSyncService->bulkSyncVariantsForProduct($product, 'create', 5);
+
                 return;
             }
 
             // Product removed from marketplace
-            if ($product->wasChanged('is_available_online') && !$product->is_available_online) {
+            if ($product->wasChanged('is_available_online') && ! $product->is_available_online) {
                 $this->productSyncService->syncToMarketplace($product, 'deactivate', 3);
 
                 // Cascade: deactivate all variants
                 $this->variantSyncService->bulkSyncVariantsForProduct($product, 'deactivate', 3);
+
                 return;
             }
 
@@ -345,7 +347,7 @@ class ProductObserver
                 }
 
                 // Other marketplace-relevant fields (only if status didn't change)
-                if (!$product->wasChanged(['is_active', 'is_featured'])) {
+                if (! $product->wasChanged(['is_active', 'is_featured'])) {
                     $marketplaceRelevantFields = [
                         'name',
                         'slug',
@@ -357,10 +359,11 @@ class ProductObserver
                         'secondary_images',
                         'category_id',
                         'brand_id',
+                        'base_uom_id',
                     ];
 
                     $hasRelevantChanges = collect($marketplaceRelevantFields)
-                        ->some(fn($field) => $product->wasChanged($field));
+                        ->some(fn ($field) => $product->wasChanged($field));
 
                     if ($hasRelevantChanges) {
                         // Determine priority based on what changed
@@ -432,6 +435,7 @@ class ProductObserver
         if (isset($changes['base_selling_price'])) {
             $oldPrice = number_format($product->getOriginal('base_selling_price'), 2);
             $newPrice = number_format($changes['base_selling_price'], 2);
+
             return "{$user} changed product {$product->name} price from KES {$oldPrice} to KES {$newPrice}";
         }
 
@@ -439,6 +443,7 @@ class ProductObserver
         if (isset($changes['online_price'])) {
             $oldPrice = $product->getOriginal('online_price') ? number_format($product->getOriginal('online_price'), 2) : 'N/A';
             $newPrice = number_format($changes['online_price'], 2);
+
             return "{$user} changed product {$product->name} online price from KES {$oldPrice} to KES {$newPrice}";
         }
 
@@ -446,18 +451,21 @@ class ProductObserver
         if (isset($changes['stock_status'])) {
             $oldStatus = $product->getOriginal('stock_status');
             $newStatus = $changes['stock_status'];
+
             return "{$user} changed product {$product->name} stock status from {$oldStatus} to {$newStatus}";
         }
 
         // Availability change
         if (isset($changes['is_available_online'])) {
             $status = $changes['is_available_online'] ? 'enabled' : 'disabled';
+
             return "{$user} {$status} online availability for product {$product->name}";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} product {$product->name}";
         }
 
@@ -465,11 +473,13 @@ class ProductObserver
         if (isset($changes['product_type'])) {
             $oldType = $product->getOriginal('product_type');
             $newType = $changes['product_type'];
+
             return "{$user} changed product {$product->name} type from {$oldType} to {$newType}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated product {$product->name} ({$changedFields})";
     }
 

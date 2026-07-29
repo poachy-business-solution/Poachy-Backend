@@ -14,9 +14,9 @@ class StoreProductObserver
     protected function getCacheTags(StoreProduct $storeProduct): array
     {
         return [
-            'tenant:' . tenant()->id,
+            'tenant:'.tenant()->id,
             'store_products',
-            'store:' . $storeProduct->store_id,
+            'store:'.$storeProduct->store_id,
         ];
     }
 
@@ -33,10 +33,10 @@ class StoreProductObserver
         // Clear cache
         Cache::tags($this->getCacheTags($storeProduct))->flush();
 
-        // TODO: Dispatch event for marketplace sync if product is available online
-        // if ($storeProduct->product->is_available_online && $storeProduct->is_available) {
-        //     event(new ProductAvailabilityChanged($storeProduct));
-        // }
+        // Not synced to the marketplace on purpose: per-store availability/pricing is a
+        // tenant-side POS concept only. The marketplace has no per-store schema —
+        // `marketplace_products` is one row per tenant product, and `ProductSyncDTO`
+        // never reads `StoreProduct`. Confirmed out of scope, not a gap.
     }
 
     /**
@@ -85,10 +85,7 @@ class StoreProductObserver
         // Clear cache
         Cache::tags($this->getCacheTags($storeProduct))->flush();
 
-        // TODO: Dispatch event for marketplace sync
-        // if ($storeProduct->product->is_available_online) {
-        //     event(new ProductRemovedFromStore($storeProduct));
-        // }
+        // Not synced to the marketplace — see created() above for why.
     }
 
     /**
@@ -112,12 +109,7 @@ class StoreProductObserver
      */
     protected function handleAvailabilityChange(StoreProduct $storeProduct, bool $newAvailability): void
     {
-        $status = $newAvailability ? 'available' : 'unavailable';
-
-        // TODO: Dispatch availability change event for marketplace sync
-        // if ($storeProduct->product->is_available_online) {
-        //     event(new ProductAvailabilityChanged($storeProduct));
-        // }
+        // Not synced to the marketplace — see created() above for why.
     }
 
     /**
@@ -144,9 +136,6 @@ class StoreProductObserver
             ]);
         }
 
-        // TODO: Dispatch price change event for marketplace sync
-        // if ($storeProduct->product->is_available_online) {
-        //     event(new ProductPriceChanged($storeProduct));
-        // }
+        // Not synced to the marketplace — see created() above for why.
     }
 }
