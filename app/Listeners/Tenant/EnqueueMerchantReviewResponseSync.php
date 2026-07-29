@@ -25,8 +25,8 @@ class EnqueueMerchantReviewResponseSync implements ShouldQueue
 
         if ($existing) {
             Log::info('Review response sync already queued', [
-                'tenant_id'          => tenant()->id,
-                'central_review_id'  => $dto->centralReviewId,
+                'tenant_id' => tenant()->id,
+                'central_review_id' => $dto->centralReviewId,
             ]);
 
             return;
@@ -35,19 +35,19 @@ class EnqueueMerchantReviewResponseSync implements ShouldQueue
         DB::beginTransaction();
         try {
             $syncQueue = SyncQueueOutbound::create([
-                'tenant_id'       => tenant()->id,
-                'syncable_type'   => 'ReviewResponse',
-                'syncable_id'     => $dto->centralReviewId,
-                'action'          => $event->action,
-                'payload'         => $dto->toArray(),
-                'priority'        => $event->priority,
-                'scheduled_at'    => now(),
-                'expires_at'      => now()->addHours(24),
-                'status'          => 'pending',
-                'retry_count'     => 0,
-                'max_retries'     => 3,
+                'tenant_id' => tenant()->id,
+                'syncable_type' => 'ReviewResponse',
+                'syncable_id' => $dto->centralReviewId,
+                'action' => $event->action,
+                'payload' => $dto->toArray(),
+                'priority' => $event->priority,
+                'scheduled_at' => now(),
+                'expires_at' => now()->addHours(24),
+                'status' => 'pending',
+                'retry_count' => 0,
+                'max_retries' => 3,
                 'idempotency_key' => $idempotencyKey,
-                'payload_hash'    => hash('sha256', json_encode($dto->toArray())),
+                'payload_hash' => hash('sha256', json_encode($dto->toArray())),
             ]);
 
             DB::commit();
@@ -56,8 +56,8 @@ class EnqueueMerchantReviewResponseSync implements ShouldQueue
                 ->onQueue('sync-high');
 
             Log::info('Review response sync enqueued', [
-                'tenant_id'      => tenant()->id,
-                'sync_queue_id'  => $syncQueue->id,
+                'tenant_id' => tenant()->id,
+                'sync_queue_id' => $syncQueue->id,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

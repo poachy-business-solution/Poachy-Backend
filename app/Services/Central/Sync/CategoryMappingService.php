@@ -3,21 +3,64 @@
 namespace App\Services\Central\Sync;
 
 use App\Models\MarketplaceCategory;
+use App\Models\Tenant;
 use App\Models\TenantCategoryMapping;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class CategoryMappingService
 {
     /**
-     * Get all unmapped categories for a tenant
+     * Get all of a tenant's product categories that have no marketplace mapping yet.
+     * Pulls the tenant's categories over HTTP (central has no direct DB access to
+     * per-tenant databases), following the same central→tenant call pattern used by
+     * ProcessOutboundApprovedReviewSync.
      */
     public function getUnmappedCategories(string $tenantId): Collection
     {
-        // This would require access to tenant DB to get their categories
-        // For now, return empty collection
-        // TODO: Implement cross-database query or API call
-        return collect([]);
+        $tenant = Tenant::on('central')->find($tenantId);
+
+        if (! $tenant) {
+            return collect();
+        }
+
+        $domain = $tenant->domains()->first();
+
+        if (! $domain) {
+            return collect();
+        }
+
+        $scheme = app()->environment('local') ? 'http://' : 'https://';
+
+        try {
+            $response = Http::timeout(30)
+                ->withToken(config('services.tenant_api.token'))
+                ->get($scheme.$domain->domain.'/api/v1/tenant/sync/inbound/categories');
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch tenant categories for unmapped-category check', [
+                'tenant_id' => $tenantId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return collect();
+        }
+
+        if (! $response->successful()) {
+            Log::warning('Tenant categories request did not succeed', [
+                'tenant_id' => $tenantId,
+                'status' => $response->status(),
+            ]);
+
+            return collect();
+        }
+
+        $tenantCategories = collect($response->json('data'));
+
+        $mappedIds = TenantCategoryMapping::where('tenant_id', $tenantId)
+            ->pluck('tenant_category_id');
+
+        return $tenantCategories->reject(fn ($category) => $mappedIds->contains($category['id']))->values();
     }
 
     /**
@@ -50,7 +93,7 @@ class CategoryMappingService
     {
         $mapping = TenantCategoryMapping::find($mappingId);
 
-        if (!$mapping) {
+        if (! $mapping) {
             return false;
         }
 
@@ -75,13 +118,13 @@ class CategoryMappingService
     {
         $mapping = TenantCategoryMapping::find($mappingId);
 
-        if (!$mapping) {
+        if (! $mapping) {
             return false;
         }
 
         $newCategory = MarketplaceCategory::find($newMarketplaceCategoryId);
 
-        if (!$newCategory) {
+        if (! $newCategory) {
             return false;
         }
 
@@ -129,7 +172,7 @@ class CategoryMappingService
             ->get();
 
         foreach ($partialMatches as $match) {
-            if (!$suggestions->contains('category.id', $match->id)) {
+            if (! $suggestions->contains('category.id', $match->id)) {
                 $suggestions->push([
                     'category' => $match,
                     'confidence' => 80.0,
@@ -145,7 +188,7 @@ class CategoryMappingService
             ->get();
 
         foreach ($nameMatches as $match) {
-            if (!$suggestions->contains('category.id', $match->id)) {
+            if (! $suggestions->contains('category.id', $match->id)) {
                 $suggestions->push([
                     'category' => $match,
                     'confidence' => 60.0,

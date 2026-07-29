@@ -8,8 +8,6 @@ use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\RefundMethod;
 use App\Enums\Tenant\RefundReason;
 use App\Enums\Tenant\RefundStatus;
-use App\Events\Tenant\Sales\RefundCompleted;
-use App\Events\Tenant\Sales\RefundInitiated;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\LoyaltyTransaction;
@@ -38,7 +36,6 @@ class RefundService
     /**
      * Process a refund for a sale inline (authorize + complete in one step).
      *
-     * @param  Sale  $sale
      * @param  array{
      *   store_id: int,
      *   reason: string,
@@ -46,7 +43,6 @@ class RefundService
      *   notes: string|null,
      *   items: array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float}>
      * }  $data
-     * @return SaleRefund
      *
      * @throws ValidationException
      */
@@ -203,7 +199,7 @@ class RefundService
 
     private function assertRefundsEnabled(): void
     {
-        if (!TenantConfiguration::isEnabled('pos.refunds_enabled')) {
+        if (! TenantConfiguration::isEnabled('pos.refunds_enabled')) {
             throw ValidationException::withMessages([
                 'refund' => 'Refunds are not enabled for this business. Contact your administrator.',
             ]);
@@ -212,7 +208,7 @@ class RefundService
 
     private function assertSaleIsRefundable(Sale $sale): void
     {
-        if (!$sale->canBeRefunded()) {
+        if (! $sale->canBeRefunded()) {
             throw ValidationException::withMessages([
                 'sale' => 'This sale cannot be refunded. It may already be fully refunded or unpaid.',
             ]);
@@ -222,7 +218,6 @@ class RefundService
     /**
      * Validate each refund item against the sale and collect enriched item data.
      *
-     * @param  Sale  $sale
      * @param  array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float}>  $items
      * @return array<array{sale_item: SaleItem, quantity_refunded: float, quantity_refunded_in_base_uom: float, refund_amount: float}>
      *
@@ -238,7 +233,7 @@ class RefundService
         foreach ($items as $index => $item) {
             $saleItemId = $item['sale_item_id'];
 
-            if (!in_array($saleItemId, $saleItemIds)) {
+            if (! in_array($saleItemId, $saleItemIds)) {
                 throw ValidationException::withMessages([
                     "items.{$index}.sale_item_id" => "Item ID {$saleItemId} does not belong to this sale.",
                 ]);
@@ -277,7 +272,7 @@ class RefundService
      */
     private function restoreInventory(SaleRefund $refund, array $itemsData, RefundReason $reason): void
     {
-        if (!$reason->restoreToInventory()) {
+        if (! $reason->restoreToInventory()) {
             Log::info('Inventory not restored — reason is write-off', [
                 'refund_id' => $refund->id,
                 'reason' => $reason->value,
@@ -320,16 +315,16 @@ class RefundService
      */
     private function reverseLoyaltyPoints(Sale $sale, array $itemsData, SaleRefund $refund): void
     {
-        if (!$this->loyaltyService->isEnabled()) {
+        if (! $this->loyaltyService->isEnabled()) {
             return;
         }
 
-        if (!$sale->customer_id || $sale->loyalty_points_earned <= 0) {
+        if (! $sale->customer_id || $sale->loyalty_points_earned <= 0) {
             return;
         }
 
         $customer = $sale->customer;
-        if (!$customer) {
+        if (! $customer) {
             return;
         }
 
@@ -395,12 +390,12 @@ class RefundService
         SaleRefund $refund,
         float $amount
     ): void {
-        if (!$sale->customer_id) {
+        if (! $sale->customer_id) {
             return;
         }
 
         $customer = $sale->customer;
-        if (!$customer) {
+        if (! $customer) {
             return;
         }
 
@@ -472,7 +467,7 @@ class RefundService
      */
     private function updateShiftSummary(Sale $sale, float $refundAmount): void
     {
-        if (!$sale->shift_assignment_id) {
+        if (! $sale->shift_assignment_id) {
             return;
         }
 
@@ -482,7 +477,9 @@ class RefundService
 
                 $summary->total_refunds = ($summary->total_refunds ?? 0) + 1;
                 $summary->total_refund_amount = ($summary->total_refund_amount ?? 0) + $refundAmount;
-                $summary->total_sales_amount = max(0, ($summary->total_sales_amount ?? 0) - $refundAmount);
+                // total_sales_amount stays gross (matches ShiftSalesSummaryService::recalculateSummary()'s
+                // computation) — ShiftSalesSummary::getNetSalesAttribute() is the single place that nets
+                // sales against refunds. Decrementing it here too would double-subtract every refund.
                 $summary->save();
             });
         } catch (\Exception $e) {

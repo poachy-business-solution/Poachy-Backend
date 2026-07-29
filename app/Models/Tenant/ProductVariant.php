@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([ProductVariantObserver::class])]
 class ProductVariant extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'product_variants';
 
@@ -135,12 +135,12 @@ class ProductVariant extends Model
 
     public function getFormattedVariantPriceAttribute(): string
     {
-        return 'KES ' . number_format($this->variant_price ?? 0, 2);
+        return 'KES '.number_format($this->variant_price ?? 0, 2);
     }
 
     public function getFormattedOnlinePriceAttribute(): string
     {
-        return 'KES ' . number_format($this->online_price ?? 0, 2);
+        return 'KES '.number_format($this->online_price ?? 0, 2);
     }
 
     public function getFormattedAdjustmentAttribute(): string
@@ -148,9 +148,9 @@ class ProductVariant extends Model
         $adjustment = $this->base_selling_price_adjustment;
 
         if ($adjustment > 0) {
-            return '+KES ' . number_format($adjustment, 2);
+            return '+KES '.number_format($adjustment, 2);
         } elseif ($adjustment < 0) {
-            return '-KES ' . number_format(abs($adjustment), 2);
+            return '-KES '.number_format(abs($adjustment), 2);
         }
 
         return 'KES 0.00';
@@ -159,6 +159,7 @@ class ProductVariant extends Model
     public function getDisplayNameAttribute(): string
     {
         $product = $this->product;
+
         return $product ? "{$product->name} - {$this->variant_name}" : $this->variant_name;
     }
 
@@ -178,6 +179,7 @@ class ProductVariant extends Model
         }
 
         $basePrice = $this->product?->base_selling_price ?? 0;
+
         return $basePrice + $this->base_selling_price_adjustment;
     }
 
@@ -200,6 +202,7 @@ class ProductVariant extends Model
 
         // Priority 4: Base price + adjustment
         $basePrice = $this->product?->base_selling_price ?? 0;
+
         return $basePrice + $this->base_selling_price_adjustment;
     }
 
@@ -237,7 +240,7 @@ class ProductVariant extends Model
      */
     public function getUomDisplay(): string
     {
-        if (!$this->uom) {
+        if (! $this->uom) {
             return '';
         }
 
@@ -268,6 +271,7 @@ class ProductVariant extends Model
     public function getAttributeKeys(): array
     {
         $attributes = $this->attributes ?? [];
+
         return array_keys($attributes);
     }
 
@@ -314,6 +318,7 @@ class ProductVariant extends Model
     public function isAvailableInStore(int $storeId, float $quantity = 1): bool
     {
         $inventory = $this->inventoryForStore($storeId);
+
         return $inventory && $inventory->hasStock($quantity);
     }
 
@@ -324,6 +329,7 @@ class ProductVariant extends Model
         }
 
         $offlinePrice = $this->computed_price;
+
         return $this->online_price - $offlinePrice;
     }
 
@@ -332,9 +338,9 @@ class ProductVariant extends Model
         $diff = $this->price_difference;
 
         if ($diff > 0) {
-            return '+KES ' . number_format($diff, 2) . ' online';
+            return '+KES '.number_format($diff, 2).' online';
         } elseif ($diff < 0) {
-            return '-KES ' . number_format(abs($diff), 2) . ' online';
+            return '-KES '.number_format(abs($diff), 2).' online';
         }
 
         return 'Same price';

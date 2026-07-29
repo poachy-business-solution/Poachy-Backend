@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy(SupplierObserver::class)]
 class Supplier extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'suppliers';
 
@@ -29,6 +29,7 @@ class Supplier extends Model
         'credit_limit',
         'outstanding_balance',
         'payment_terms',
+        'tax_id',
         'registration_number',
         'bank_account_details',
         'rating',
@@ -93,7 +94,7 @@ class Supplier extends Model
 
     public function hasFinancialDetails(): bool
     {
-        return !empty($this->bank_account_details);
+        return ! empty($this->bank_account_details);
     }
 
     public function getProductCountAttribute(): int
@@ -118,9 +119,10 @@ class Supplier extends Model
 
     public function getTotalOutstandingAttribute(): float
     {
-        return $this->purchaseOrders()
+        return (float) $this->purchaseOrders()
             ->whereIn('payment_status', ['unpaid', 'partially_paid'])
-            ->sum('amount_due');
+            ->get()
+            ->sum(fn ($po) => $po->amount_due);
     }
 
     // Scopes
@@ -138,12 +140,14 @@ class Supplier extends Model
     public function scopeBySupplierType($query, SupplierType|string $type)
     {
         $typeValue = $type instanceof SupplierType ? $type->value : $type;
+
         return $query->where('supplier_type', $typeValue);
     }
 
     public function scopeByPaymentTerms($query, PaymentTerms|string $terms)
     {
         $termsValue = $terms instanceof PaymentTerms ? $terms->value : $terms;
+
         return $query->where('payment_terms', $termsValue);
     }
 }

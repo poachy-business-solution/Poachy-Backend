@@ -33,24 +33,29 @@ class SaleController extends Controller
      *     operationId="searchCustomer",
      *     tags={"Sales - Customers"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="phone",
      *         in="query",
      *         description="Customer phone number (10-15 characters). Can include country code with + prefix.",
      *         required=true,
      *         example="0712345678",
+     *
      *         @OA\Schema(
      *             type="string",
      *             minLength=10,
      *             maxLength=15
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer found successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -245,12 +250,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found with provided phone number",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "meta"},
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -271,12 +279,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - invalid phone format",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "errors", "meta"},
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -293,9 +304,11 @@ class SaleController extends Controller
      *                 @OA\Property(
      *                     property="phone",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Phone number is required to search for customer")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -306,20 +319,26 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated - invalid or missing bearer token",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to search for customer: Database connection error"),
      *             @OA\Property(
@@ -341,9 +360,9 @@ class SaleController extends Controller
 
             $customer = $this->saleService->resolveCustomerByPhone($phone);
 
-            if (!$customer) {
+            if (! $customer) {
                 return ApiResponse::notFound(
-                    'Customer not found with phone number: ' . $phone
+                    'Customer not found with phone number: '.$phone
                 );
             }
 
@@ -361,7 +380,7 @@ class SaleController extends Controller
             ]);
 
             return ApiResponse::serverError(
-                'Failed to search for customer: ' . $e->getMessage()
+                'Failed to search for customer: '.$e->getMessage()
             );
         }
     }
@@ -374,12 +393,15 @@ class SaleController extends Controller
      *     operationId="calculateSale",
      *     tags={"Sales - Transactions"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Cart items for price calculation. Frontend never sends prices - all prices resolved server-side.",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"store_id", "items"},
+     *
      *             @OA\Property(
      *                 property="store_id",
      *                 type="integer",
@@ -398,9 +420,11 @@ class SaleController extends Controller
      *                 type="array",
      *                 description="Cart items - minimum 1 item required",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"quantity"},
+     *
      *                     @OA\Property(
      *                         property="product_id",
      *                         type="integer",
@@ -472,12 +496,15 @@ class SaleController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Sale calculations completed successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -496,9 +523,11 @@ class SaleController extends Controller
      *                     property="line_items",
      *                     type="array",
      *                     description="Detailed breakdown for each cart item",
+     *
      *                     @OA\Items(
      *                         type="object",
      *                         required={"product_id", "variant_id", "bundle_id", "product_name", "sku", "uom_code", "quantity", "quantity_in_base_uom", "unit_price", "line_total_before_discount", "promotion_discount", "promotion_details", "line_total_after_discount"},
+     *
      *                         @OA\Property(property="product_id", type="integer", nullable=true, example=1),
      *                         @OA\Property(property="variant_id", type="integer", nullable=true, example=null),
      *                         @OA\Property(property="bundle_id", type="integer", nullable=true, example=null),
@@ -628,7 +657,7 @@ class SaleController extends Controller
      *                         description="Whether coupon was applied to this calculation"
      *                     )
      *                 ),
-     *              @OA\Property(                                  
+     *              @OA\Property(
      * property="coupon_data",
      * type="object",
      * nullable=true,
@@ -664,12 +693,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or business logic error (invalid coupon, insufficient loyalty points, etc.)",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -684,9 +716,11 @@ class SaleController extends Controller
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one item is required")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -697,18 +731,24 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to calculate sale totals: Database connection error"),
      *             @OA\Property(
@@ -742,7 +782,7 @@ class SaleController extends Controller
             ]);
 
             return ApiResponse::error(
-                'Failed to calculate sale totals: ' . $e->getMessage(),
+                'Failed to calculate sale totals: '.$e->getMessage(),
                 null,
                 422
             );
@@ -754,14 +794,14 @@ class SaleController extends Controller
      *     path="/api/v1/tenant/sales",
      *     summary="Create new sale transaction",
      *     description="Complete POS sale transaction with inventory deduction, payment processing, and loyalty/credit operations. This endpoint performs 16-step atomic transaction including: inventory validation, server-side price recalculation, sale record creation, payment processing, FIFO inventory deduction, coupon/promotion usage tracking, loyalty earning/redemption, credit transaction processing, and customer aggregate updates. All operations wrapped in database transaction with automatic rollback on any error.
-     *     
+     *
      *     **Supported Payment Scenarios:**
      *     - Simple cash/card/mpesa payments
      *     - Mixed payments (cash + mpesa, cash + card, etc.)
      *     - Credit sales (customer account charging)
      *     - Payments with loyalty redemption
      *     - Walk-in sales (no customer_id)
-     *     
+     *
      *     **Key Features:**
      *     - Server-side price recalculation (send same data as calculate endpoint)
      *     - Automatic FIFO inventory deduction
@@ -772,14 +812,18 @@ class SaleController extends Controller
      *     operationId="createSale",
      *     tags={"Sales - Transactions"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Complete sale data with items and payments. Supports multiple payment methods, loyalty redemption, coupons, and credit sales.",
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="object",
      *                 required={"store_id", "items", "payments"},
+     *
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="integer",
@@ -798,9 +842,11 @@ class SaleController extends Controller
      *                     type="array",
      *                     minItems=1,
      *                     description="Line items being sold",
+     *
      *                     @OA\Items(
      *                         type="object",
      *                         required={"quantity"},
+     *
      *                         @OA\Property(property="product_id", type="integer", nullable=true, example=4),
      *                         @OA\Property(property="variant_id", type="integer", nullable=true, example=2),
      *                         @OA\Property(property="bundle_id", type="integer", nullable=true, example=null),
@@ -827,9 +873,11 @@ class SaleController extends Controller
      *                     type="array",
      *                     minItems=1,
      *                     description="Payment methods - supports single or mixed payments (cash + card, cash + mpesa, etc.)",
+     *
      *                     @OA\Items(
      *                         type="object",
      *                         required={"method", "amount"},
+     *
      *                         @OA\Property(
      *                             property="method",
      *                             type="string",
@@ -871,6 +919,7 @@ class SaleController extends Controller
      *                     description="Additional sale notes"
      *                 )
      *             ),
+     *
      *             @OA\Examples(
      *                 summary="Simple cash sale",
      *                 example="simple_cash_sale",
@@ -960,12 +1009,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Sale created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Sale completed successfully"),
      *             @OA\Property(
@@ -1002,9 +1054,11 @@ class SaleController extends Controller
      *                         property="items",
      *                         type="array",
      *                         description="Sale line items with calculated pricing",
+     *
      *                         @OA\Items(
      *                             type="object",
      *                             required={"id", "product", "variant", "display_name", "uom", "quantity", "quantity_in_base_uom", "unit_price", "line_total_before_tax", "discount_amount", "tax_amount", "subtotal", "effective_unit_price"},
+     *
      *                             @OA\Property(property="id", type="integer", example=7),
      *                             @OA\Property(
      *                                 property="product",
@@ -1044,9 +1098,11 @@ class SaleController extends Controller
      *                         property="payments",
      *                         type="array",
      *                         description="Payment records - empty array for unpaid credit sales, multiple entries for mixed payments",
+     *
      *                         @OA\Items(
      *                             type="object",
      *                             required={"id", "amount", "payment_method", "payment_method_label", "reference_number", "payment_date", "received_by", "notes", "is_electronic"},
+     *
      *                             @OA\Property(property="id", type="integer", example=5),
      *                             @OA\Property(property="amount", type="number", format="float", example=172839.00),
      *                             @OA\Property(property="payment_method", type="string", example="cash"),
@@ -1132,12 +1188,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation or business logic error",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -1155,18 +1214,24 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error - transaction automatically rolled back",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to create sale. Please try again or contact support."),
      *             @OA\Property(
@@ -1252,19 +1317,24 @@ class SaleController extends Controller
      *     operationId="getSale",
      *     tags={"Sales - Transactions"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Sale ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=6)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Sale retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Sale retrieved successfully"),
      *             @OA\Property(
@@ -1302,9 +1372,11 @@ class SaleController extends Controller
      *                         property="items",
      *                         type="array",
      *                         description="Sale line items with full product details",
+     *
      *                         @OA\Items(
      *                             type="object",
      *                             required={"id", "product", "variant", "display_name", "uom", "quantity", "quantity_in_base_uom", "unit_price", "line_total_before_tax", "discount_amount", "tax_amount", "subtotal", "effective_unit_price"},
+     *
      *                             @OA\Property(property="id", type="integer", example=7, description="Sale item record ID"),
      *                             @OA\Property(
      *                                 property="product",
@@ -1350,9 +1422,11 @@ class SaleController extends Controller
      *                         property="payments",
      *                         type="array",
      *                         description="Payment records for this sale. Empty for credit sales where payment is deferred.",
+     *
      *                         @OA\Items(
      *                             type="object",
      *                             required={"id", "amount", "payment_method", "payment_method_label", "reference_number", "payment_date", "received_by", "notes", "is_electronic"},
+     *
      *                             @OA\Property(property="id", type="integer", example=5, description="Payment record ID"),
      *                             @OA\Property(property="amount", type="number", format="float", example=172839.00, description="Payment amount"),
      *                             @OA\Property(property="payment_method", type="string", example="cash", enum={"cash", "mpesa", "card", "bank_transfer", "credit", "mixed", "other"}),
@@ -1423,12 +1497,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Sale not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Sale not found"),
      *             @OA\Property(
@@ -1441,18 +1518,24 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - user does not have permission to view this sale",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1465,11 +1548,14 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve sale details"),
      *             @OA\Property(
@@ -1528,68 +1614,84 @@ class SaleController extends Controller
      *     operationId="listSales",
      *     tags={"Sales - Transactions"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="customer_id",
      *         in="query",
      *         description="Filter by customer ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_status",
      *         in="query",
      *         description="Filter by payment status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"paid", "unpaid", "partially_paid"},
      *             example="paid"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_method",
      *         in="query",
      *         description="Filter by payment method",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"cash", "mpesa", "card", "bank_transfer", "credit", "mixed", "other"},
      *             example="cash"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         description="Start date for date range filter (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         description="End date for date range filter (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by sale number, customer name, or customer phone. Minimum 3 characters.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", minLength=3, example="Jane")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"sale_date", "total_amount", "sale_number"},
@@ -1597,11 +1699,13 @@ class SaleController extends Controller
      *             example="sale_date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"asc", "desc"},
@@ -1609,26 +1713,33 @@ class SaleController extends Controller
      *             example="desc"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of records per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=15, example=15)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1, example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Sales retrieved successfully with pagination",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Sales retrieved successfully"),
      *             @OA\Property(
@@ -1639,9 +1750,11 @@ class SaleController extends Controller
      *                     property="sales",
      *                     type="array",
      *                     description="Array of sales matching filters",
+     *
      *                     @OA\Items(
      *                         type="object",
      *                         required={"id", "sale_number", "sale_date", "store", "customer", "summary", "payment_status", "payment_status_label", "payment_method", "payment_method_label", "loyalty", "served_by", "can_refund", "is_walk_in", "created_at"},
+     *
      *                         @OA\Property(property="id", type="integer", example=6),
      *                         @OA\Property(property="sale_number", type="string", example="INV-STR-2025-74622-2026-01-000003"),
      *                         @OA\Property(property="sale_date", type="string", format="date-time", example="2026-01-08T11:51:46+03:00"),
@@ -1721,12 +1834,15 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - invalid filter parameters",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "errors", "meta"},
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1735,19 +1851,25 @@ class SaleController extends Controller
      *                 @OA\Property(
      *                     property="per_page",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The per page must be between 1 and 100.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="from_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The from date must be a valid date.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="search",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Search query must be at least 3 characters")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1758,18 +1880,24 @@ class SaleController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve sales list"),
      *             @OA\Property(
@@ -1846,15 +1974,65 @@ class SaleController extends Controller
 
     public function generateReceipt(Sale $sale): JsonResponse
     {
-        // TODO: Implement receipt generation
-        // This would typically use a PDF library like DomPDF or generate HTML
+        $sale->loadMissing([
+            'store',
+            'customer',
+            'items.product',
+            'items.productVariant',
+            'items.bundle',
+            'items.uom',
+            'payments',
+            'servedBy',
+            'coupon',
+        ]);
 
-        return ApiResponse::success(
-            'Receipt generation endpoint',
-            [
-                'message' => 'Receipt generation not yet implemented',
-                'sale_number' => $sale->sale_number,
-            ]
-        );
+        $receiptData = [
+            'receipt_type' => 'SALE',
+            'sale_number' => $sale->sale_number,
+            'sale_date' => $sale->sale_date?->toIso8601String(),
+
+            'store' => [
+                'name' => $sale->store->name,
+                'address' => $sale->store->address,
+                'phone' => $sale->store->phone,
+            ],
+
+            'customer' => $sale->customer ? [
+                'name' => $sale->customer->name,
+                'phone' => $sale->customer->phone,
+            ] : null,
+
+            'items' => $sale->items->map(fn ($item) => [
+                'product_name' => $item->display_name,
+                'quantity' => (float) $item->quantity,
+                'uom' => $item->uom?->code,
+                'unit_price' => (float) $item->unit_price,
+                'discount_amount' => (float) $item->discount_amount,
+                'tax_amount' => (float) $item->tax_amount,
+                'subtotal' => (float) $item->subtotal,
+            ]),
+
+            'payments' => $sale->payments->map(fn ($payment) => [
+                'payment_method' => $payment->payment_method?->value,
+                'amount' => (float) $payment->amount,
+            ]),
+
+            'summary' => [
+                'subtotal' => (float) $sale->subtotal,
+                'tax_amount' => (float) $sale->tax_amount,
+                'discount_amount' => (float) $sale->discount_amount,
+                'total_amount' => (float) $sale->total_amount,
+                'amount_paid' => (float) $sale->amount_paid,
+                'amount_due' => (float) $sale->amount_due,
+                'change_due' => $sale->getChangeAmount(),
+                'payment_method' => $sale->payment_method?->value,
+            ],
+
+            'served_by' => $sale->servedBy?->name,
+        ];
+
+        return ApiResponse::success('Receipt data generated successfully', [
+            'receipt' => $receiptData,
+        ]);
     }
 }

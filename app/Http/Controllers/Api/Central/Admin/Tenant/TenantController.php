@@ -14,6 +14,7 @@ use App\Http\Resources\Central\Tenant\BusinessSubscriptionResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Admin\Tenant\TenantService;
 use App\Services\Central\Admin\Tenant\TenantUserService;
+use App\Services\Central\Sync\CategoryMappingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,8 @@ class TenantController extends Controller
 {
     public function __construct(
         private readonly TenantService $tenantService,
-        private readonly TenantUserService $tenantUserService
+        private readonly TenantUserService $tenantUserService,
+        private readonly CategoryMappingService $categoryMappingService
     ) {}
 
     /**
@@ -34,11 +36,14 @@ class TenantController extends Controller
      *     operationId="createTenant",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Tenant creation data",
+     *
      *         @OA\JsonContent(
      *             required={"domain"},
+     *
      *             @OA\Property(
      *                 property="domain",
      *                 type="string",
@@ -48,9 +53,11 @@ class TenantController extends Controller
      *             @OA\Property(
      *                 property="additional_domains",
      *                 type="array",
+     *
      *                 @OA\Items(type="string", example="merchant1.example.com"),
      *                 description="Optional additional domains"
      *             ),
+     *
      *             @OA\Property(
      *                 property="tenant_name",
      *                 type="string",
@@ -65,10 +72,13 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Tenant created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant created successfully"),
      *             @OA\Property(
@@ -77,26 +87,35 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Admin role required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -105,6 +124,7 @@ class TenantController extends Controller
      *                 @OA\Property(
      *                     property="domain",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="This domain is already assigned to another tenant.")
      *                 )
      *             )
@@ -132,24 +152,31 @@ class TenantController extends Controller
      *     operationId="listTenants",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15, maximum=100)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenants retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenants retrieved successfully"),
      *             @OA\Property(
@@ -158,8 +185,10 @@ class TenantController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/TenantResource")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="pagination",
      *                     type="object",
@@ -171,6 +200,7 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -198,17 +228,22 @@ class TenantController extends Controller
      *     operationId="getTenant",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="Tenant UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenant details retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant retrieved successfully"),
      *             @OA\Property(
@@ -217,10 +252,13 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Tenant not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found")
      *         )
@@ -247,24 +285,31 @@ class TenantController extends Controller
      *     operationId="searchTenants",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="q",
      *         in="query",
      *         description="Search query",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="merchant")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Search results retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Search results retrieved successfully")
      *         )
@@ -297,17 +342,22 @@ class TenantController extends Controller
      *     operationId="addDomainToTenant",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="Tenant UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"domain"},
+     *
      *             @OA\Property(
      *                 property="domain",
      *                 type="string",
@@ -315,10 +365,13 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Domain added successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Domain added successfully"),
      *             @OA\Property(
@@ -327,6 +380,7 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Tenant not found"
@@ -360,17 +414,22 @@ class TenantController extends Controller
      *     operationId="updateDomain",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="domain_id",
      *         in="path",
      *         description="Domain ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"domain"},
+     *
      *             @OA\Property(
      *                 property="domain",
      *                 type="string",
@@ -378,10 +437,13 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Domain updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Domain updated successfully"),
      *             @OA\Property(
@@ -390,6 +452,7 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Domain not found"
@@ -419,29 +482,38 @@ class TenantController extends Controller
      *     operationId="deleteDomain",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="domain_id",
      *         in="path",
      *         description="Domain ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Domain deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Domain deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Cannot delete last domain",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot delete the last domain. A tenant must have at least one domain.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Domain not found"
@@ -465,24 +537,32 @@ class TenantController extends Controller
      *     operationId="updateTenantMetadata",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="Tenant UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="tenant_name", type="string", example="Updated Merchant Name"),
      *             @OA\Property(property="notes", type="string", example="Updated notes")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenant metadata updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant metadata updated successfully"),
      *             @OA\Property(
@@ -521,21 +601,27 @@ class TenantController extends Controller
      *     operationId="deleteTenant",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="Tenant UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenant deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Tenant not found"
@@ -556,27 +642,35 @@ class TenantController extends Controller
      *     description="Admin creates the first user for a tenant (stored in tenant's database)",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenantId",
      *         in="path",
      *         required=true,
      *         description="Tenant UUID",
+     *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name", "email", "phone"},
+     *
      *             @OA\Property(property="name", type="string", example="John Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="john@merchant.com"),
      *             @OA\Property(property="phone", type="string", example="+254712345678"),
      *             @OA\Property(property="send_credentials", type="boolean", example=true, description="Send credentials via email")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Tenant user created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant user created successfully"),
      *             @OA\Property(property="data", type="object",
@@ -587,6 +681,7 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=403, description="Forbidden - Admin only"),
      *     @OA\Response(response=404, description="Tenant not found"),
@@ -618,19 +713,24 @@ class TenantController extends Controller
      *     description="Initiates a trial period for a specific tenant. The tenant must not have an existing active trial period. This creates a subscription with trial status.",
      *     tags={"Central - Subscription Plans"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="The UUID of the tenant to start trial for",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="bbab2597-e1ae-466b-a071-83033841d2ed"
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Trial period end date",
+     *
      *         @OA\JsonContent(
      *             required={"trial_ends_at"},
+     *
      *             @OA\Property(
      *                 property="trial_ends_at",
      *                 type="string",
@@ -640,10 +740,13 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Trial period started successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Trial period started successfully"),
      *             @OA\Property(
@@ -686,10 +789,13 @@ class TenantController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad request - Trial period cannot be started",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to start trial period"),
      *             @OA\Property(
@@ -724,6 +830,7 @@ class TenantController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Authentication required"
@@ -731,7 +838,9 @@ class TenantController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Tenant not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Tenant not found"),
      *             @OA\Property(
@@ -744,10 +853,13 @@ class TenantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -756,9 +868,11 @@ class TenantController extends Controller
      *                 @OA\Property(
      *                     property="trial_ends_at",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The trial ends at field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -807,17 +921,22 @@ class TenantController extends Controller
      *     description="Retrieves all subscription records for a specific tenant, including active, trial, expired, and cancelled subscriptions. Returns detailed information about each subscription period, payment details, and status.",
      *     tags={"Central - Subscription Plans"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenant subscriptions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant subscriptions retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1, description="Subscription record ID"),
      *                     @OA\Property(
      *                         property="subscription",
@@ -984,6 +1103,7 @@ class TenantController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Authentication required"
@@ -991,7 +1111,9 @@ class TenantController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Tenant not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Tenant not found"),
      *             @OA\Property(
@@ -1018,6 +1140,27 @@ class TenantController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::error(
                 message: 'Failed to retrieve tenant subscriptions',
+                errors: ['error' => $e->getMessage()],
+                status: 400
+            );
+        }
+    }
+
+    /**
+     * Get a tenant's product categories that have no marketplace mapping yet.
+     */
+    public function unmappedCategories(string $tenantId): JsonResponse
+    {
+        try {
+            $categories = $this->categoryMappingService->getUnmappedCategories($tenantId);
+
+            return ApiResponse::success(
+                message: 'Unmapped categories retrieved successfully',
+                data: $categories
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::error(
+                message: 'Failed to retrieve unmapped categories',
                 errors: ['error' => $e->getMessage()],
                 status: 400
             );

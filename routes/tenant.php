@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
+use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
 use App\Http\Controllers\Api\Tenant\Sales\RefundController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
@@ -43,20 +44,19 @@ use App\Http\Controllers\Api\Tenant\Shift\ShiftController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftSwapController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Store\StoreProductController;
+use App\Http\Controllers\Api\Tenant\Subscription\SubscriptionPaymentController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierController;
 use App\Http\Controllers\Api\Tenant\Supplier\SupplierPaymentController;
+use App\Http\Controllers\Api\Tenant\Sync\ApprovedReviewSyncController;
+use App\Http\Controllers\Api\Tenant\Sync\CategorySyncController;
+use App\Http\Controllers\Api\Tenant\Sync\TenantSyncAckController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
-use App\Http\Controllers\Api\Tenant\Subscription\SubscriptionPaymentController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
 use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
-use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
-use App\Http\Controllers\Api\Tenant\Sync\ApprovedReviewSyncController;
-use App\Http\Controllers\Api\Tenant\Sync\TenantSyncAckController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +83,7 @@ Route::prefix('v1/tenant')->group(function () {
     Route::prefix('sync/inbound')->group(function () {
         Route::post('/approved-review', [ApprovedReviewSyncController::class, 'store']);
         Route::post('/delivery-zone-ack', [TenantSyncAckController::class, 'receiveDeliveryZoneAck']);
+        Route::get('/categories', [CategorySyncController::class, 'index']);
     });
 });
 
@@ -224,6 +225,9 @@ Route::prefix('v1/tenant')
             Route::patch('/{id}/toggle-active', [ProductBundleController::class, 'toggleActive']);
             Route::patch('/{id}/toggle-online', [ProductBundleController::class, 'toggleOnline']);
 
+            // Availability
+            Route::post('/{id}/check-availability', [ProductBundleController::class, 'checkAvailability']);
+
             // Pricing
             Route::patch('/{id}/pricing', [ProductBundleController::class, 'updatePricing']);
 
@@ -361,24 +365,24 @@ Route::prefix('v1/tenant')
 
         // Promotions Management
         Route::prefix('promotions')->group(function () {
-            Route::get('active',   [PromotionController::class, 'activePromotions']);
+            Route::get('active', [PromotionController::class, 'activePromotions']);
             Route::get('featured', [PromotionController::class, 'featuredPromotions']);
-            Route::get('pos',      [PromotionController::class, 'posPromotions']);
-            Route::get('website',  [PromotionController::class, 'websitePromotions']);
+            Route::get('pos', [PromotionController::class, 'posPromotions']);
+            Route::get('website', [PromotionController::class, 'websitePromotions']);
             Route::apiResource('/', PromotionController::class)->parameter('', 'promotion')->names('promotions');
-            Route::patch('{promotion}/activate',   [PromotionController::class, 'activate']);
+            Route::patch('{promotion}/activate', [PromotionController::class, 'activate']);
             Route::patch('{promotion}/deactivate', [PromotionController::class, 'deactivate']);
             Route::post('{promotion}/banner', [PromotionController::class, 'updateBanner']);
             Route::delete('{promotion}/banner', [PromotionController::class, 'removeBanner']);
-            Route::post('{promotion}/products',            [PromotionController::class, 'attachProducts']);
-            Route::post('{promotion}/products/bulk',       [PromotionController::class, 'bulkAttachProducts']);
-            Route::delete('{promotion}/products/bulk',     [PromotionController::class, 'bulkDetachProducts']);
+            Route::post('{promotion}/products', [PromotionController::class, 'attachProducts']);
+            Route::post('{promotion}/products/bulk', [PromotionController::class, 'bulkAttachProducts']);
+            Route::delete('{promotion}/products/bulk', [PromotionController::class, 'bulkDetachProducts']);
             Route::delete('{promotion}/products/{product}', [PromotionController::class, 'detachProduct']);
-            Route::post('{promotion}/categories',            [PromotionController::class, 'attachCategories']);
+            Route::post('{promotion}/categories', [PromotionController::class, 'attachCategories']);
             Route::delete('{promotion}/categories/{category}', [PromotionController::class, 'detachCategory']);
-            Route::post('{promotion}/brands',         [PromotionController::class, 'attachBrands']);
+            Route::post('{promotion}/brands', [PromotionController::class, 'attachBrands']);
             Route::delete('{promotion}/brands/{brand}', [PromotionController::class, 'detachBrand']);
-            Route::patch('{promotion}/stores',          [PromotionController::class, 'updateStores']);
+            Route::patch('{promotion}/stores', [PromotionController::class, 'updateStores']);
             Route::patch('{promotion}/customer-groups', [PromotionController::class, 'updateCustomerGroups']);
         });
 
@@ -499,7 +503,7 @@ Route::prefix('v1/tenant')
             Route::get('/dashboard-summary', [ShiftAnalyticsController::class, 'dashboardSummary']);
         });
 
-        // Shift Swaps 
+        // Shift Swaps
         Route::prefix('shift-swaps')->group(function () {
             Route::get('/', [ShiftSwapController::class, 'index']);
             Route::post('/', [ShiftSwapController::class, 'store']);
@@ -515,7 +519,6 @@ Route::prefix('v1/tenant')
             Route::get('/', [SaleController::class, 'listSales']);
             Route::get('{sale}', [SaleController::class, 'getSale']);
             Route::get('{sale}/receipt', [SaleController::class, 'generateReceipt']);
-            Route::post('{sale}/email-receipt', [SaleController::class, 'emailReceipt']);
 
             // Refunds
             Route::get('{sale}/refundable-items', [RefundController::class, 'getRefundableItems']);
@@ -689,7 +692,7 @@ Route::prefix('v1/tenant')
                     Route::post('/reorder', [DeliveryZoneController::class, 'reorder']);
                     Route::get('/{id}', [DeliveryZoneController::class, 'show']);
                     Route::patch('/{id}', [DeliveryZoneController::class, 'update']);
-                    Route::delete('/{id}', [DeliveryZoneController::class, 'destroy']);                    
+                    Route::delete('/{id}', [DeliveryZoneController::class, 'destroy']);
                 });
 
                 // Delivery Settings (toggle zones on/off)

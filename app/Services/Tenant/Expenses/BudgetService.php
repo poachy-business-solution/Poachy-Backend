@@ -38,18 +38,18 @@ class BudgetService
     public function createBudget(array $data): Budget
     {
         // Resolve store ID if not provided
-        if (!isset($data['store_id'])) {
+        if (! isset($data['store_id'])) {
             $data['store_id'] = $this->resolveStoreId(null, true); // Allow null for company-wide
         }
 
         // Validate category exists and is active
         $category = $this->categoryRepository->findById($data['category_id']);
 
-        if (!$category) {
+        if (! $category) {
             throw new \Exception('Budget category not found.');
         }
 
-        if (!$category->is_active) {
+        if (! $category->is_active) {
             throw new \Exception('Cannot create budget: category is inactive.');
         }
 
@@ -62,7 +62,7 @@ class BudgetService
         $tempBudget = new Budget($data);
         if ($tempBudget->hasOverlap()) {
             throw new \Exception(
-                'A budget already exists for this category and period. ' .
+                'A budget already exists for this category and period. '.
                     'Please adjust the dates or update the existing budget.'
             );
         }
@@ -77,7 +77,7 @@ class BudgetService
     {
         $budget = $this->repository->findById($id);
 
-        if (!$budget) {
+        if (! $budget) {
             throw new \Exception('Budget not found.');
         }
 
@@ -108,7 +108,7 @@ class BudgetService
     {
         $budget = $this->repository->findById($id);
 
-        if (!$budget) {
+        if (! $budget) {
             throw new \Exception('Budget not found.');
         }
 
@@ -122,7 +122,7 @@ class BudgetService
     {
         $budget = $this->repository->findById($id);
 
-        if (!$budget) {
+        if (! $budget) {
             throw new \Exception('Budget not found.');
         }
 
@@ -133,7 +133,7 @@ class BudgetService
 
     /**
      * Recalculate budget for a specific expense (called when expense approved)
-     * 
+     *
      * This is called from ExpenseService when an expense is approved
      */
     public function recalculateBudgetForExpense(Expense $expense): void
@@ -146,12 +146,9 @@ class BudgetService
         );
 
         if ($budget) {
+            // BudgetAlertTriggered already fires via BudgetObserver::updated() on this
+            // same $budget->recalculate()/save() call — do not dispatch a second event here.
             $budget->recalculate();
-
-            // TODO: Fire BudgetThresholdExceeded event if threshold crossed
-            if ($budget->alert_triggered && $budget->wasChanged('alert_triggered')) {
-                // Fire event for notifications
-            }
         }
     }
 
@@ -162,7 +159,7 @@ class BudgetService
     {
         $budget = $this->repository->findById($id);
 
-        if (!$budget) {
+        if (! $budget) {
             throw new \Exception('Budget not found.');
         }
 
@@ -206,9 +203,8 @@ class BudgetService
 
     /**
      * Resolve store ID (auto-detect if only one store)
-     * 
-     * @param int|null $storeId
-     * @param bool $allowNull If true, null is valid for company-wide budgets
+     *
+     * @param  bool  $allowNull  If true, null is valid for company-wide budgets
      */
     protected function resolveStoreId(?int $storeId = null, bool $allowNull = false): ?int
     {
@@ -216,7 +212,7 @@ class BudgetService
         if ($storeId) {
             $store = Store::where('is_active', true)->find($storeId);
 
-            if (!$store) {
+            if (! $store) {
                 throw new InvalidArgumentException('Store not found or inactive.');
             }
 
@@ -242,7 +238,7 @@ class BudgetService
 
         // Require explicit store_id
         throw new InvalidArgumentException(
-            'Multiple stores exist. Please specify store_id or leave null for company-wide budget. Available stores: ' .
+            'Multiple stores exist. Please specify store_id or leave null for company-wide budget. Available stores: '.
                 $activeStores->pluck('name', 'id')->toJson()
         );
     }

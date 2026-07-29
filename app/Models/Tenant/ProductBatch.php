@@ -13,13 +13,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([ProductBatchObserver::class])]
 class ProductBatch extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'store_id',
         'product_id',
         'product_variant_id',
         'purchase_order_id',
+        'source_batch_id',
         'batch_number',
         'purchase_uom_id',
         'quantity_received_in_purchase_uom',
@@ -50,7 +51,6 @@ class ProductBatch extends Model
     /**
      * RELATIONSHIPS
      */
-
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
@@ -71,6 +71,11 @@ class ProductBatch extends Model
         return $this->belongsTo(PurchaseOrder::class);
     }
 
+    public function sourceBatch(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'source_batch_id');
+    }
+
     public function purchaseUom(): BelongsTo
     {
         return $this->belongsTo(UnitOfMeasure::class, 'purchase_uom_id');
@@ -84,7 +89,6 @@ class ProductBatch extends Model
     /**
      * SCOPES
      */
-
     public function scopeByStore($query, int $storeId)
     {
         return $query->where('store_id', $storeId);
@@ -126,10 +130,9 @@ class ProductBatch extends Model
     /**
      * ACCESSORS
      */
-
     public function getIsAvailableAttribute(): bool
     {
-        return $this->quantity_remaining_in_base_uom > 0 && !$this->is_expired;
+        return $this->quantity_remaining_in_base_uom > 0 && ! $this->is_expired;
     }
 
     public function getIsDepletedAttribute(): bool
@@ -158,7 +161,7 @@ class ProductBatch extends Model
 
     public function getDaysUntilExpiryAttribute(): ?int
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return null;
         }
 

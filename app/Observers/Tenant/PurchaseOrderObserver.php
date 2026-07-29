@@ -2,8 +2,11 @@
 
 namespace App\Observers\Tenant;
 
+use App\Enums\Tenant\PaymentStatus;
+use App\Enums\Tenant\PurchaseOrderStatus;
 use App\Models\Tenant\PurchaseOrder;
 use App\Services\Tenant\AuditService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -37,7 +40,7 @@ class PurchaseOrderObserver
                 description: $this->generateCreationDescription($purchaseOrder),
                 tags: ['purchase_order', 'procurement', 'financial', 'aggregated']
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create purchase order audit log', [
                 'tenant_id' => tenant()?->id,
                 'po_id' => $purchaseOrder->id,
@@ -65,7 +68,7 @@ class PurchaseOrderObserver
     {
         try {
             // Check if critical fields changed
-            if (!$this->auditService->hasCriticalChanges($purchaseOrder)) {
+            if (! $this->auditService->hasCriticalChanges($purchaseOrder)) {
                 return;
             }
 
@@ -93,7 +96,7 @@ class PurchaseOrderObserver
                 description: $description,
                 tags: $tags
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create purchase order update audit log', [
                 'tenant_id' => tenant()?->id,
                 'po_id' => $purchaseOrder->id,
@@ -116,7 +119,7 @@ class PurchaseOrderObserver
                 description: $this->generateDeletionDescription($purchaseOrder),
                 tags: ['purchase_order', 'procurement', 'financial', 'critical']
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create purchase order deletion audit log', [
                 'tenant_id' => tenant()?->id,
                 'po_id' => $purchaseOrder->id,
@@ -139,7 +142,7 @@ class PurchaseOrderObserver
                 description: $this->generateRestorationDescription($purchaseOrder),
                 tags: ['purchase_order', 'procurement', 'financial']
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create purchase order restoration audit log', [
                 'tenant_id' => tenant()?->id,
                 'po_id' => $purchaseOrder->id,
@@ -197,8 +200,8 @@ class PurchaseOrderObserver
         }
 
         // Approval (when approved_by is set from null → value)
-        if (isset($changes['approved_by']) && $changes['approved_by'] && !$purchaseOrder->getOriginal('approved_by')) {
-            $approver = $changes['approved_by'] instanceof \Illuminate\Database\Eloquent\Model
+        if (isset($changes['approved_by']) && $changes['approved_by'] && ! $purchaseOrder->getOriginal('approved_by')) {
+            $approver = $changes['approved_by'] instanceof Model
                 ? $changes['approved_by']->name ?? 'someone'
                 : 'someone';
 
@@ -207,6 +210,7 @@ class PurchaseOrderObserver
 
         // Generic fallback for any other critical change
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated purchase order {$purchaseOrder->po_number} ({$changedFields})";
     }
 
@@ -215,9 +219,13 @@ class PurchaseOrderObserver
      */
     private function formatStatus(mixed $status): string
     {
-        if ($status instanceof \App\Enums\Tenant\PurchaseOrderStatus) {
+        if ($status instanceof PurchaseOrderStatus) {
             return $status->label();           // nicest for humans: "Sent to Supplier"
             // or: return $status->value;      // shorter: "sent"
+        }
+
+        if ($status instanceof PaymentStatus) {
+            return $status->label();
         }
 
         if (is_string($status)) {

@@ -14,7 +14,7 @@ class SupplierResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
 
-            // Supplier type 
+            // Supplier type
             'supplier_type' => $this->supplier_type?->value,
             'supplier_type_display' => $this->supplier_type?->displayName(),
             'supplier_type_description' => $this->supplier_type?->description(),
@@ -24,6 +24,7 @@ class SupplierResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'address' => $this->address,
+            'tax_id' => $this->tax_id,
             'registration_number' => $this->registration_number,
 
             // Financial details
@@ -49,12 +50,12 @@ class SupplierResource extends JsonResource
             // Relationships
             'products' => $this->when(
                 $this->relationLoaded('products'),
-                fn() => ProductMinimalResource::collection($this->products)
+                fn () => ProductMinimalResource::collection($this->products)
             ),
 
             'product_count' => $this->when(
                 $this->relationLoaded('products'),
-                fn() => $this->products->count()
+                fn () => $this->products->count()
             ),
 
             // Timestamps

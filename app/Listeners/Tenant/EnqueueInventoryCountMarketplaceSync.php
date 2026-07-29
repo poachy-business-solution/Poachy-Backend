@@ -6,6 +6,7 @@ use App\Events\Tenant\InventoryCountMarketplaceSyncRequested;
 use App\Jobs\Tenant\ProcessOutboundInventoryCountSync;
 use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ class EnqueueInventoryCountMarketplaceSync implements ShouldQueue
                 ->first();
 
             if ($existingSync) {
-                Log::info('InventoryCount sync skipped — already ' . $existingSync->status . ' for this payload', [
+                Log::info('InventoryCount sync skipped — already '.$existingSync->status.' for this payload', [
                     'tenant_id' => $dto->tenantId,
                     'product_id' => $dto->productId,
                     'variant_id' => $dto->variantId,
@@ -96,7 +97,7 @@ class EnqueueInventoryCountMarketplaceSync implements ShouldQueue
 
             ProcessOutboundInventoryCountSync::dispatch($syncQueue->id)
                 ->onQueue('sync-high');
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+        } catch (UniqueConstraintViolationException $e) {
             // A duplicate execution slipped past the idempotency check before either
             // committed (true race condition). The other execution already owns this key.
             DB::rollBack();

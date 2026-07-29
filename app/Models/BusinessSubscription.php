@@ -10,6 +10,7 @@ class BusinessSubscription extends Model
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'business_subscriptions';
 
     protected $fillable = [
@@ -28,6 +29,14 @@ class BusinessSubscription extends Model
         'trial_ends_at',
         'cancelled_at',
         'cancellation_reason',
+        'reminder_7day_sent',
+        'reminder_7day_sent_at',
+        'reminder_1day_sent',
+        'reminder_1day_sent_at',
+        'expired_notified',
+        'expired_notified_at',
+        'activation_notified',
+        'activation_notified_at',
     ];
 
     protected $casts = [
@@ -40,6 +49,14 @@ class BusinessSubscription extends Model
         'trial_ends_at' => 'date',
         'payment_date' => 'datetime',
         'cancelled_at' => 'datetime',
+        'reminder_7day_sent' => 'boolean',
+        'reminder_7day_sent_at' => 'datetime',
+        'reminder_1day_sent' => 'boolean',
+        'reminder_1day_sent_at' => 'datetime',
+        'expired_notified' => 'boolean',
+        'expired_notified_at' => 'datetime',
+        'activation_notified' => 'boolean',
+        'activation_notified_at' => 'datetime',
     ];
 
     // Relationships
@@ -52,6 +69,11 @@ class BusinessSubscription extends Model
     public function plan()
     {
         return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
+    }
+
+    public function businessDetail()
+    {
+        return $this->belongsTo(BusinessDetail::class, 'tenant_id', 'tenant_id');
     }
 
     // Status Methods

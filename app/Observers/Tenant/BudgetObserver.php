@@ -2,6 +2,8 @@
 
 namespace App\Observers\Tenant;
 
+use App\Events\Tenant\BudgetAlertTriggered;
+use App\Events\Tenant\BudgetExceeded;
 use App\Models\Tenant\Budget;
 use App\Services\Tenant\AuditService;
 use Illuminate\Support\Facades\Auth;
@@ -20,20 +22,20 @@ class BudgetObserver
     public function creating(Budget $budget): void
     {
         // Set creator if not already set
-        if (!$budget->created_by && Auth::check()) {
+        if (! $budget->created_by && Auth::check()) {
             $budget->created_by = Auth::id();
         }
 
         // Initialize calculated fields if not set
-        if (!isset($budget->spent_amount)) {
+        if (! isset($budget->spent_amount)) {
             $budget->spent_amount = 0;
         }
 
-        if (!isset($budget->remaining_amount)) {
+        if (! isset($budget->remaining_amount)) {
             $budget->remaining_amount = $budget->budget_amount;
         }
 
-        if (!isset($budget->committed_amount)) {
+        if (! isset($budget->committed_amount)) {
             $budget->committed_amount = 0;
         }
     }
@@ -63,7 +65,6 @@ class BudgetObserver
         }
     }
 
-
     /**
      * Handle the Budget "updated" event.
      */
@@ -75,7 +76,7 @@ class BudgetObserver
 
         // Check if alert was triggered
         if (isset($changes['alert_triggered']) && $changes['alert_triggered'] === true) {
-            // TODO: Fire BudgetAlertTriggered event
+            event(new BudgetAlertTriggered($budget));
             Log::warning('Budget alert triggered', [
                 'tenant_id' => tenant()->id,
                 'budget_id' => $budget->id,
@@ -86,8 +87,8 @@ class BudgetObserver
         }
 
         // Check if budget exceeded
-        if ($budget->is_over_budget && (!isset($changes['spent_amount']) || $budget->getOriginal('spent_amount') <= $budget->budget_amount)) {
-            // TODO: Fire BudgetExceeded event
+        if ($budget->is_over_budget && (! isset($changes['spent_amount']) || $budget->getOriginal('spent_amount') <= $budget->budget_amount)) {
+            event(new BudgetExceeded($budget));
             Log::error('Budget exceeded', [
                 'tenant_id' => tenant()->id,
                 'budget_id' => $budget->id,
@@ -182,6 +183,7 @@ class BudgetObserver
         if (isset($changes['alert_triggered']) && $changes['alert_triggered']) {
             $percentage = number_format($budget->percentage_spent, 2);
             $threshold = number_format($budget->alert_threshold_percentage, 2);
+
             return "{$user} - Budget '{$budget->budget_name}' alert triggered (spent: {$percentage}%, threshold: {$threshold}%)";
         }
 
@@ -190,11 +192,13 @@ class BudgetObserver
             $oldSpent = number_format($budget->getOriginal('spent_amount'), 2);
             $newSpent = number_format($changes['spent_amount'], 2);
             $status = $budget->is_over_budget ? ' - BUDGET EXCEEDED' : '';
+
             return "{$user} - Budget '{$budget->budget_name}' spent amount changed from KES {$oldSpent} to KES {$newSpent}{$status}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated budget '{$budget->budget_name}' - {$changedFields}";
     }
 

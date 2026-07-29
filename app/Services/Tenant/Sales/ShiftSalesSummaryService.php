@@ -4,6 +4,8 @@ namespace App\Services\Tenant\Sales;
 
 use App\Enums\Tenant\PaymentMethod;
 use App\Models\Tenant\Sale;
+use App\Models\Tenant\SalePayment;
+use App\Models\Tenant\SaleRefund;
 use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\ShiftSalesSummary;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +41,7 @@ class ShiftSalesSummaryService
      */
     public function updateFromSale(Sale $sale): ShiftSalesSummary
     {
-        if (!$sale->shift_assignment_id) {
+        if (! $sale->shift_assignment_id) {
             throw new \InvalidArgumentException('Sale is not linked to a shift assignment');
         }
 
@@ -52,7 +54,7 @@ class ShiftSalesSummaryService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$summary) {
+            if (! $summary) {
                 // Create new summary with initial values
                 $summary = ShiftSalesSummary::create([
                     'shift_assignment_id' => $sale->shift_assignment_id,
@@ -134,7 +136,7 @@ class ShiftSalesSummaryService
 
         // Get actual cash received (from sale_payments table)
         // This handles overpayments and split payments correctly
-        $cashReceived = \App\Models\Tenant\SalePayment::whereHas('sale', function ($query) use ($assignment) {
+        $cashReceived = SalePayment::whereHas('sale', function ($query) use ($assignment) {
             $query->where('shift_assignment_id', $assignment->id);
         })
             ->where('payment_method', PaymentMethod::CASH)
@@ -182,7 +184,7 @@ class ShiftSalesSummaryService
     {
         $summary = $assignment->salesSummary;
 
-        if (!$summary) {
+        if (! $summary) {
             return [
                 'total_transactions' => 0,
                 'total_sales_amount' => 0,
@@ -250,7 +252,7 @@ class ShiftSalesSummaryService
 
             // Calculate payment method totals from sale_payments table
             // This correctly handles split payments
-            $paymentTotals = \App\Models\Tenant\SalePayment::whereIn('sale_id', $sales->pluck('id'))
+            $paymentTotals = SalePayment::whereIn('sale_id', $sales->pluck('id'))
                 ->select('payment_method', DB::raw('SUM(amount) as total'))
                 ->groupBy('payment_method')
                 ->get()
@@ -266,9 +268,12 @@ class ShiftSalesSummaryService
                 ->unique()
                 ->count();
 
-            // Refunds not implemented yet
-            $summary->total_refunds = 0;
-            $summary->total_refund_amount = 0;
+            // Refunds are attributed to the shift the original sale was made in, not the
+            // shift the refund itself was processed in — see updateShiftSummary() in
+            // RefundService, which resolves the summary the same way.
+            $refunds = SaleRefund::whereIn('original_sale_id', $sales->pluck('id'))->get();
+            $summary->total_refunds = $refunds->count();
+            $summary->total_refund_amount = $refunds->sum('refund_amount');
 
             $summary->save();
 

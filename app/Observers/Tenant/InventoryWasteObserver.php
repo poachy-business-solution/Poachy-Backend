@@ -21,7 +21,7 @@ class InventoryWasteObserver
     public function creating(InventoryWaste $waste): void
     {
         // Set reporter if not already set
-        if (!$waste->reported_by && Auth::check()) {
+        if (! $waste->reported_by && Auth::check()) {
             $waste->reported_by = Auth::id();
         }
     }
@@ -52,7 +52,9 @@ class InventoryWasteObserver
 
         // Fire event if waste needs approval
         if ($waste->approval_status === WasteApprovalStatus::PENDING) {
-            // TODO: Fire InventoryWasteCreatedPendingApproval event
+            // WasteApprovalRequested already fires from InventoryWasteService::recordWaste()
+            // (app/Services/Tenant/Inventory/InventoryWasteService.php) — do not dispatch it
+            // again here, that service's $waste->update() call is what triggers this observer.
             Log::info('Inventory waste pending approval', [
                 'tenant_id' => tenant()->id,
                 'waste_id' => $waste->id,
@@ -182,8 +184,9 @@ class InventoryWasteObserver
         $newStatus = $waste->approval_status;
 
         if ($newStatus === WasteApprovalStatus::APPROVED) {
-            // TODO: Fire InventoryWasteApproved event
-            // This will trigger inventory deduction
+            // WasteApproved already fires from InventoryWasteService::approveWaste() —
+            // that service's $waste->update() call is what triggers this observer, so
+            // dispatching here too would fire the event twice per approval.
             Log::info('Inventory waste approved', [
                 'tenant_id' => tenant()->id,
                 'waste_id' => $waste->id,
@@ -193,7 +196,8 @@ class InventoryWasteObserver
                 'approved_by' => $waste->approved_by,
             ]);
         } elseif ($newStatus === WasteApprovalStatus::REJECTED) {
-            // TODO: Fire InventoryWasteRejected event
+            // WasteRejected already fires from InventoryWasteService::rejectWaste() —
+            // same reasoning as the approved branch above, do not re-dispatch here.
             Log::info('Inventory waste rejected', [
                 'tenant_id' => tenant()->id,
                 'waste_id' => $waste->id,
@@ -253,6 +257,7 @@ class InventoryWasteObserver
                 $quantity = number_format($waste->quantity_wasted, 2);
                 $uomCode = $waste->product?->baseUom?->code ?? 'units';
                 $loss = number_format($waste->total_loss, 2);
+
                 return "{$user} approved waste record for {$productName} - {$quantity} {$uomCode} (Loss: KES {$loss})";
             } elseif ($newStatus === WasteApprovalStatus::REJECTED->value) {
                 return "{$user} rejected waste record for {$productName}";
@@ -266,6 +271,7 @@ class InventoryWasteObserver
             $oldQty = number_format($waste->getOriginal('quantity_wasted'), 2);
             $newQty = number_format($changes['quantity_wasted'], 2);
             $uomCode = $waste->product?->baseUom?->code ?? 'units';
+
             return "{$user} changed waste quantity for {$productName} from {$oldQty} to {$newQty} {$uomCode}";
         }
 
@@ -273,11 +279,13 @@ class InventoryWasteObserver
         if (isset($changes['total_loss'])) {
             $oldLoss = number_format($waste->getOriginal('total_loss'), 2);
             $newLoss = number_format($changes['total_loss'], 2);
+
             return "{$user} changed waste total loss for {$productName} from KES {$oldLoss} to KES {$newLoss}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated waste record for {$productName} ({$changedFields})";
     }
 

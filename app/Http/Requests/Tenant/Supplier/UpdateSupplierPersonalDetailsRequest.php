@@ -39,6 +39,7 @@ class UpdateSupplierPersonalDetailsRequest extends FormRequest
             ],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'tax_id' => ['nullable', 'string', 'max:50'],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
@@ -48,7 +49,7 @@ class UpdateSupplierPersonalDetailsRequest extends FormRequest
     {
         return [
             'name.unique' => 'A supplier with this name already exists',
-            'supplier_type.enum' => 'Invalid supplier type. Must be one of: ' .
+            'supplier_type.enum' => 'Invalid supplier type. Must be one of: '.
                 implode(', ', SupplierType::values()),
             'email.email' => 'Please provide a valid email address',
             'email.unique' => 'A supplier with this email already exists',

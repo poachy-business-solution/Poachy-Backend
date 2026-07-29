@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Payment;
 
+use App\Enums\Central\OrderStatus;
+use App\Enums\Central\ReservationStatus;
+use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
 use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\Shared\Mpesa\MpesaC2BRouterService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +20,10 @@ class C2BValidationTest extends TestCase
     private MpesaC2BRouterService $router;
 
     private SubscriptionPlan $plan;
+
+    private User $user;
+
+    private MarketplaceCustomer $customer;
 
     protected function setUp(): void
     {
@@ -32,33 +40,69 @@ class C2BValidationTest extends TestCase
         DB::purge('central');
         DB::connection('central')->statement('SET foreign_key_checks = 0');
 
-        $this->router = new MpesaC2BRouterService();
+        $this->router = new MpesaC2BRouterService;
 
         $this->plan = SubscriptionPlan::on('central')->create([
-            'name'               => 'C2B Test Plan',
-            'slug'               => 'c2b-test-plan-' . uniqid(),
-            'price'              => 2500.00,
+            'name' => 'C2B Test Plan',
+            'slug' => 'c2b-test-plan-'.uniqid(),
+            'price' => 2500.00,
             'billing_cycle_days' => 30,
-            'is_active'          => true,
-            'is_featured'        => false,
+            'is_active' => true,
+            'is_featured' => false,
         ]);
 
         DB::connection('central')->table('tenants')->insertOrIgnore([
-            'id'                    => 'c2b-val-tenant',
+            'id' => 'c2b-val-tenant',
             'mpesa_paybill_account' => 'POA99001',
-            'created_at'            => now(),
-            'updated_at'            => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->user = User::on('central')->create([
+            'name' => 'C2B Validation Customer',
+            'email' => 'c2b-val-customer-'.uniqid().'@test.com',
+            'password' => bcrypt('password'),
+            'user_type' => 'customer',
+        ]);
+
+        $this->customer = MarketplaceCustomer::on('central')->create([
+            'user_id' => $this->user->id,
+            'customer_number' => 'MKT-'.uniqid(),
+            'phone' => '0712'.rand(100000, 999999),
+            'phone_verified' => true,
         ]);
     }
 
     protected function tearDown(): void
     {
         DB::connection('central')->statement('SET foreign_key_checks = 0');
+        MarketplaceOrder::on('central')->where('customer_id', $this->customer->id)->forceDelete();
+        MarketplaceCustomer::on('central')->where('id', $this->customer->id)->forceDelete();
+        User::on('central')->where('id', $this->user->id)->forceDelete();
         SubscriptionPlan::on('central')->where('id', $this->plan->id)->forceDelete();
         DB::connection('central')->table('tenants')->where('id', 'c2b-val-tenant')->delete();
         DB::connection('central')->statement('SET foreign_key_checks = 1');
         Mockery::close();
         parent::tearDown();
+    }
+
+    private function createMarketplaceOrder(array $overrides = []): MarketplaceOrder
+    {
+        return MarketplaceOrder::on('central')->create(array_merge([
+            'order_number' => 'MKT-ORD-'.uniqid(),
+            'customer_id' => $this->customer->id,
+            'tenant_id' => 'c2b-val-tenant',
+            'merchant_name' => 'Test Merchant',
+            'subtotal' => 500.0,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 500.0,
+            'fulfillment_type' => 'pickup',
+            'order_status' => OrderStatus::Pending,
+            'reservation_status' => ReservationStatus::Confirmed,
+            'payment_deadline_at' => now()->addMinutes(30),
+        ], $overrides));
     }
 
     // =========================================================================
@@ -69,7 +113,7 @@ class C2BValidationTest extends TestCase
     {
         $response = $this->router->handleValidation([
             'bill_ref_number' => 'POA99001',
-            'amount'          => 2500.00,
+            'amount' => 2500.00,
         ]);
 
         $this->assertSame('0', $response['ResultCode']);
@@ -80,7 +124,7 @@ class C2BValidationTest extends TestCase
     {
         $response = $this->router->handleValidation([
             'bill_ref_number' => 'POA99999',
-            'amount'          => 2500.00,
+            'amount' => 2500.00,
         ]);
 
         $this->assertSame('C2B00011', $response['ResultCode']);
@@ -91,7 +135,7 @@ class C2BValidationTest extends TestCase
     {
         $response = $this->router->handleValidation([
             'bill_ref_number' => 'POA99001',
-            'amount'          => 9999.00, // no plan at this price
+            'amount' => 9999.00, // no plan at this price
         ]);
 
         $this->assertSame('C2B00012', $response['ResultCode']);
@@ -101,7 +145,7 @@ class C2BValidationTest extends TestCase
     {
         $response = $this->router->handleValidation([
             'bill_ref_number' => 'POA99001',
-            'amount'          => 2500.005, // within 0.01 tolerance
+            'amount' => 2500.005, // within 0.01 tolerance
         ]);
 
         $this->assertSame('0', $response['ResultCode']);
@@ -116,7 +160,7 @@ class C2BValidationTest extends TestCase
         // POA prefix → subscription path → should look up tenant, not order
         $response = $this->router->handleValidation([
             'bill_ref_number' => 'POA99001',
-            'amount'          => 2500.00,
+            'amount' => 2500.00,
         ]);
 
         // If it routed to subscription path correctly, it should have found the tenant and accepted
@@ -128,10 +172,52 @@ class C2BValidationTest extends TestCase
         // Non-POA prefix → marketplace path → should look up order, not tenant
         $response = $this->router->handleValidation([
             'bill_ref_number' => 'MKT-ORD-2026-NONEXISTENT',
-            'amount'          => 500.00,
+            'amount' => 500.00,
         ]);
 
         // Order doesn't exist, so it should reject
         $this->assertSame('C2B00011', $response['ResultCode']);
+    }
+
+    // =========================================================================
+    // Marketplace validation branches
+    // =========================================================================
+
+    public function test_accepts_marketplace_order_with_matching_amount(): void
+    {
+        $order = $this->createMarketplaceOrder();
+
+        $response = $this->router->handleValidation([
+            'bill_ref_number' => $order->order_number,
+            'amount' => 500.00,
+        ]);
+
+        $this->assertSame('0', $response['ResultCode']);
+        $this->assertSame('Accepted', $response['ResultDesc']);
+    }
+
+    public function test_rejects_marketplace_order_with_amount_mismatch(): void
+    {
+        $order = $this->createMarketplaceOrder(['total_amount' => 500.0]);
+
+        $response = $this->router->handleValidation([
+            'bill_ref_number' => $order->order_number,
+            'amount' => 350.00, // beyond the 0.01 tolerance
+        ]);
+
+        $this->assertSame('C2B00012', $response['ResultCode']);
+        $this->assertStringContainsStringIgnoringCase('amount', $response['ResultDesc']);
+    }
+
+    public function test_rejects_marketplace_order_that_cannot_accept_payment(): void
+    {
+        $order = $this->createMarketplaceOrder(['reservation_status' => ReservationStatus::Pending]);
+
+        $response = $this->router->handleValidation([
+            'bill_ref_number' => $order->order_number,
+            'amount' => 500.00,
+        ]);
+
+        $this->assertSame('C2B00013', $response['ResultCode']);
     }
 }

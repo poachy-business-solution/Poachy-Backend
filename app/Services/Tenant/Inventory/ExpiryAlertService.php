@@ -10,8 +10,8 @@ use App\Models\Tenant\ExpiryAlert;
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\Store;
 use App\Models\Tenant\TenantConfiguration;
-use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,25 +20,26 @@ class ExpiryAlertService
 {
     /**
      * Check and generate alerts for a specific batch
-     *
-     * @param ProductBatch $batch
-     * @return ExpiryAlert|null
      */
     public function checkAndGenerateAlert(ProductBatch $batch): ?ExpiryAlert
     {
         // Check if expiry alerts are enabled
-        if (!TenantConfiguration::isEnabled('expiry_alerts_enabled')) {
+        if (! TenantConfiguration::isEnabled('expiry_alerts_enabled')) {
             return null;
         }
 
-        // Skip if batch has no expiry date or is already expired
-        if (!$batch->expiry_date || $batch->is_expired) {
+        // Skip if batch has no expiry date. Note: already-expired batches are NOT
+        // skipped here — the days-until-expiry calculation below correctly resolves
+        // to ExpiryAlertLevel::EXPIRED for a negative day count, which is exactly what
+        // ProductBatchObserver::handleBatchExpiration() needs when a batch just expired.
+        if (! $batch->expiry_date) {
             return null;
         }
 
         // Skip if batch is depleted
         if ($batch->quantity_remaining_in_base_uom <= 0) {
             $this->autoResolveAlertsForBatch($batch);
+
             return null;
         }
 
@@ -61,7 +62,7 @@ class ExpiryAlertService
             }
 
             // No alert needed
-            if (!$alertLevel) {
+            if (! $alertLevel) {
                 return null;
             }
 
@@ -124,7 +125,6 @@ class ExpiryAlertService
     /**
      * Auto-resolve alerts when batch is depleted or sold
      *
-     * @param ProductBatch $batch
      * @return int Number of alerts resolved
      */
     public function autoResolveAlertsForBatch(ProductBatch $batch): int
@@ -136,7 +136,7 @@ class ExpiryAlertService
             ->get();
 
         foreach ($alerts as $alert) {
-            if (!$alert->isStillValid()) {
+            if (! $alert->isStillValid()) {
                 $alert->resolve(
                     ResolutionAction::SOLD,
                     'Batch depleted - auto-resolved',
@@ -160,9 +160,6 @@ class ExpiryAlertService
 
     /**
      * Check all batches in a store for expiry alerts
-     *
-     * @param int $storeId
-     * @return Collection
      */
     public function checkStoreBatches(int $storeId): Collection
     {
@@ -222,20 +219,17 @@ class ExpiryAlertService
 
     /**
      * Get active alerts with filters
-     *
-     * @param array $filters
-     * @return LengthAwarePaginator
      */
     public function getAlerts(array $filters = []): LengthAwarePaginator
     {
         $query = ExpiryAlert::withDetails();
 
         // Apply filters
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->byStore($filters['store_id']);
         }
 
-        if (!empty($filters['alert_level'])) {
+        if (! empty($filters['alert_level'])) {
             $query->byLevel($filters['alert_level']);
         }
 
@@ -260,12 +254,6 @@ class ExpiryAlertService
 
     /**
      * Manually resolve an alert
-     *
-     * @param int $alertId
-     * @param ResolutionAction $action
-     * @param string|null $notes
-     * @param int|null $userId
-     * @return ExpiryAlert
      */
     public function resolveAlert(
         int $alertId,
@@ -297,9 +285,6 @@ class ExpiryAlertService
 
     /**
      * Get alert summary for a store
-     *
-     * @param int $storeId
-     * @return array
      */
     public function getStoreSummary(int $storeId): array
     {
@@ -317,10 +302,6 @@ class ExpiryAlertService
 
     /**
      * Get alerts for dashboard
-     *
-     * @param int $storeId
-     * @param int $limit
-     * @return Collection
      */
     public function getDashboardAlerts(int $storeId, int $limit = 10): Collection
     {
@@ -335,12 +316,12 @@ class ExpiryAlertService
     /**
      * Mark expired batches
      *
-     * @param int|null $storeId
      * @return int Count of batches marked
      */
     public function markExpiredBatches(?int $storeId = null): int
     {
         $batchService = app(ProductBatchService::class);
+
         return $batchService->markExpiredBatches($storeId);
     }
 }

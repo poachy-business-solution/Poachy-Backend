@@ -7,8 +7,10 @@ use App\Jobs\Central\Analytics\SendAbandonedCartSMSJob;
 use App\Jobs\Central\ExpireCartsJob;
 use App\Jobs\Central\MonitorPaymentDeadlines;
 use App\Jobs\Central\MonitorReservationTimeouts;
+use App\Jobs\Central\Subscription\CheckSubscriptionExpiryJob;
 use App\Jobs\Tenant\CheckBatchExpiriesJob;
 use App\Jobs\Tenant\CheckStockLevelsJob;
+use App\Models\Tenant;
 use App\Services\Central\Marketplace\Analytics\AbandonedCartService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -24,7 +26,7 @@ Schedule::command('shifts:auto-mark-noshow')
 // Stock Level Checks - Daily at 2 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs
-    $tenants = \App\Models\Tenant::all();
+    $tenants = Tenant::all();
 
     foreach ($tenants as $tenant) {
         $tenant->run(function () {
@@ -36,7 +38,7 @@ Schedule::call(function () {
 // Batch Expiry Checks - Daily at 3 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs
-    $tenants = \App\Models\Tenant::all();
+    $tenants = Tenant::all();
 
     foreach ($tenants as $tenant) {
         $tenant->run(function () {
@@ -111,6 +113,14 @@ Schedule::call(function () {
     }
 })->hourly()
     ->name('send-abandoned-cart-sms')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// Subscriptions: flip lapsed subscriptions to expired and fan out renewal/expiry notifications — daily at midnight
+Schedule::job(new CheckSubscriptionExpiryJob)
+    ->daily()
+    ->at('00:00')
+    ->name('check-subscription-expiry')
     ->withoutOverlapping()
     ->onOneServer();
 

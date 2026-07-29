@@ -4,10 +4,12 @@ namespace App\Listeners\Tenant;
 
 use App\Events\Tenant\StockAlertCreated;
 use App\Jobs\Tenant\SendNotificationJob;
+use App\Models\Tenant\StockAlert;
+use App\Models\Tenant\Store;
 use App\Models\Tenant\TenantConfiguration;
 use App\Models\Tenant\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\Models\Role;
 
 class NotifyStockAlertListener
 {
@@ -30,6 +32,7 @@ class NotifyStockAlertListener
                     'alert_id' => $alert->id,
                     'store_id' => $alert->store_id,
                 ]);
+
                 return;
             }
 
@@ -71,12 +74,12 @@ class NotifyStockAlertListener
     /**
      * Get users to notify (store manager and owner)
      */
-    private function getUsersToNotify(int $storeId): \Illuminate\Database\Eloquent\Collection
+    private function getUsersToNotify(int $storeId): Collection
     {
         $userIds = collect();
 
         // Get store manager
-        $store = \App\Models\Tenant\Store::find($storeId);
+        $store = Store::find($storeId);
 
         if ($store && $store->manager_id) {
             $userIds->push($store->manager_id);
@@ -93,7 +96,7 @@ class NotifyStockAlertListener
     /**
      * Prepare notification message
      */
-    private function prepareMessage(\App\Models\Tenant\StockAlert $alert): array
+    private function prepareMessage(StockAlert $alert): array
     {
         $productName = $alert->display_name;
         $storeName = $alert->store->name;

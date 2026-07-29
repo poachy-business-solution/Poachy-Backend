@@ -2,11 +2,14 @@
 
 namespace App\Services\Tenant\Inventory;
 
+use App\Enums\Tenant\InventoryMovementType;
+use App\Enums\Tenant\PurchaseOrderStatus;
+use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\Supplier;
-use App\Services\Tenant\Inventory\InventoryMovementService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +18,7 @@ class ProductBatchService
 {
     /**
      * Receive goods from purchase order and create batches
-     * 
+     *
      * This handles the complete receiving workflow:
      * 1. Validate PO can be received
      * 2. Create batches for received items
@@ -24,8 +27,7 @@ class ProductBatchService
      * 5. Update PO status
      * 6. Increment supplier total_orders (on first full receipt)
      *
-     * @param int $purchaseOrderId
-     * @param array $receivedItems Format: ['item_id' => ['quantity' => X, 'manufacture_date' => Y, 'expiry_date' => Z]]
+     * @param  array  $receivedItems  Format: ['item_id' => ['quantity' => X, 'manufacture_date' => Y, 'expiry_date' => Z]]
      * @return array ['batches' => Collection, 'purchase_order' => PurchaseOrder]
      */
     public function receiveGoodsFromPurchaseOrder(int $purchaseOrderId, array $receivedItems): array
@@ -37,14 +39,11 @@ class ProductBatchService
                 ->findOrFail($purchaseOrderId);
 
             // Validate PO can be received
-            if (!$po->status->canBeReceived()) {
+            if (! $po->status->canBeReceived()) {
                 throw new \RuntimeException(
                     "Purchase order cannot be received. Current status: {$po->status->label()}"
                 );
             }
-
-            // Track if this is the first receipt for this PO
-            $wasNeverReceived = $po->items->every(fn($item) => $item->quantity_received == 0);
 
             $createdBatches = collect();
 
@@ -58,8 +57,8 @@ class ProductBatchService
 
                 if ($quantityReceiving > $quantityPending) {
                     throw new \RuntimeException(
-                        "Cannot receive more than ordered. Ordered: {$poItem->quantity_ordered}, " .
-                            "Already received: {$poItem->quantity_received}, Pending: {$quantityPending}, " .
+                        "Cannot receive more than ordered. Ordered: {$poItem->quantity_ordered}, ".
+                            "Already received: {$poItem->quantity_received}, Pending: {$quantityPending}, ".
                             "Attempting to receive: {$quantityReceiving}"
                     );
                 }
@@ -102,11 +101,11 @@ class ProductBatchService
                 $poItem->updateStatus();
 
                 Log::info('PO item received', [
-                    'po_item_id'       => $poItem->id,
+                    'po_item_id' => $poItem->id,
                     'quantity_received' => $quantityReceiving,
-                    'total_received'   => $newQuantityReceived,
-                    'item_status'      => $poItem->fresh()->status->value,
-                    'batch_id'         => $batchId,
+                    'total_received' => $newQuantityReceived,
+                    'item_status' => $poItem->fresh()->status->value,
+                    'batch_id' => $batchId,
                 ]);
             }
 
@@ -115,8 +114,9 @@ class ProductBatchService
             $this->updatePurchaseOrderStatus($po);
             $newPoStatus = $po->fresh()->status;
 
-            // Increment supplier total_orders if PO is now fully received for the first time
-            if ($wasNeverReceived && $newPoStatus->value === 'received') {
+            // Increment supplier total_orders the first time this PO reaches RECEIVED,
+            // regardless of whether it took one call or several partial receipts to get there.
+            if ($oldPoStatus->value !== 'received' && $newPoStatus->value === 'received') {
                 $this->incrementSupplierTotalOrders($po);
             }
 
@@ -137,13 +137,8 @@ class ProductBatchService
     /**
      * Create batch from a purchase order item
      *
-     * @param PurchaseOrder $purchaseOrder
-     * @param \App\Models\Tenant\PurchaseOrderItem $poItem
-     * @param float $quantityReceived
-     * @param string|null $manufactureDate
-     * @param string|null $expiryDate
-     * @param string|null $notes
-     * @return ProductBatch
+     * @param  PurchaseOrder  $purchaseOrder
+     * @param  PurchaseOrderItem  $poItem
      */
     private function createBatchFromPurchaseOrderItem(
         $purchaseOrder,
@@ -208,8 +203,7 @@ class ProductBatchService
     /**
      * Update inventory when batch is created
      *
-     * @param ProductBatch $batch
-     * @return void
+     * @param  ProductBatch  $batch
      */
     private function updateInventoryFromBatch($batch): void
     {
@@ -220,7 +214,7 @@ class ProductBatchService
             'store_id' => $batch->store_id,
             'product_id' => $batch->product_id,
             'variant_id' => $batch->product_variant_id,
-            'movement_type' => \App\Enums\Tenant\InventoryMovementType::PURCHASE,
+            'movement_type' => InventoryMovementType::PURCHASE,
             'uom_id' => $batch->purchase_uom_id,
             'quantity' => $batch->quantity_received_in_purchase_uom,
             'unit_cost' => $batch->cost_per_purchase_uom,
@@ -254,23 +248,23 @@ class ProductBatchService
         $movementService = app(InventoryMovementService::class);
 
         $movementService->recordMovement([
-            'store_id'       => $po->store_id,
-            'product_id'     => $poItem->product_id,
-            'variant_id'     => $poItem->product_variant_id,
-            'movement_type'  => \App\Enums\Tenant\InventoryMovementType::PURCHASE,
-            'uom_id'         => $poItem->uom_id,
-            'quantity'       => $quantityReceived,
-            'unit_cost'      => $poItem->unit_cost,
+            'store_id' => $po->store_id,
+            'product_id' => $poItem->product_id,
+            'variant_id' => $poItem->product_variant_id,
+            'movement_type' => InventoryMovementType::PURCHASE,
+            'uom_id' => $poItem->uom_id,
+            'quantity' => $quantityReceived,
+            'unit_cost' => $poItem->unit_cost,
             'reference_type' => PurchaseOrder::class,
-            'reference_id'   => $po->id,
-            'notes'          => "Goods received (no batch tracking) - PO {$po->po_number}",
+            'reference_id' => $po->id,
+            'notes' => "Goods received (no batch tracking) - PO {$po->po_number}",
         ]);
 
         Log::info('Inventory updated directly (no batch)', [
-            'po_id'          => $po->id,
-            'po_number'      => $po->po_number,
-            'product_id'     => $poItem->product_id,
-            'quantity_added'  => $quantityInBaseUom,
+            'po_id' => $po->id,
+            'po_number' => $po->po_number,
+            'product_id' => $poItem->product_id,
+            'quantity_added' => $quantityInBaseUom,
         ]);
     }
 
@@ -283,8 +277,7 @@ class ProductBatchService
      * - All items PENDING → No change (remains SENT or CONFIRMED)
      * - Mixed statuses → PO status: PARTIALLY_RECEIVED
      *
-     * @param PurchaseOrder $po
-     * @return void
+     * @param  PurchaseOrder  $po
      */
     private function updatePurchaseOrderStatus($po): void
     {
@@ -318,10 +311,10 @@ class ProductBatchService
         // Determine new PO status
         if ($receivedItems === $totalItems) {
             // All items fully received
-            $newStatus = \App\Enums\Tenant\PurchaseOrderStatus::RECEIVED;
+            $newStatus = PurchaseOrderStatus::RECEIVED;
         } elseif ($receivedItems > 0 || $partiallyReceivedItems > 0) {
             // At least one item has been received (fully or partially)
-            $newStatus = \App\Enums\Tenant\PurchaseOrderStatus::PARTIALLY_RECEIVED;
+            $newStatus = PurchaseOrderStatus::PARTIALLY_RECEIVED;
         }
         // If all items are still pending, keep current status (SENT or CONFIRMED)
 
@@ -347,9 +340,6 @@ class ProductBatchService
      *
      * This tracks the number of successfully completed orders from this supplier.
      * Only increments when ALL items in the PO are fully received.
-     *
-     * @param PurchaseOrder $po
-     * @return void
      */
     private function incrementSupplierTotalOrders(PurchaseOrder $po): void
     {
@@ -370,20 +360,16 @@ class ProductBatchService
 
     /**
      * Get conversion factor to base UOM for a product
-     *
-     * @param int $uomId
-     * @param int $productId
-     * @return float
      */
     private function getConversionToBaseUom(int $uomId, int $productId): float
     {
-        $product = \App\Models\Tenant\Product::findOrFail($productId);
+        $product = Product::findOrFail($productId);
 
         if ($uomId === $product->base_uom_id) {
             return 1.0;
         }
 
-        $productUom = \App\Models\Tenant\ProductUom::where('product_id', $productId)
+        $productUom = ProductUom::where('product_id', $productId)
             ->where('uom_id', $uomId)
             ->firstOrFail();
 
@@ -393,10 +379,6 @@ class ProductBatchService
     /**
      * Deplete batches using FIFO method for a sale
      *
-     * @param int $storeId
-     * @param int $productId
-     * @param int|null $variantId
-     * @param float $quantityInBaseUom
      * @return array Array of batch depletions ['batch_id' => quantity_depleted]
      */
     public function depleteBatchesFIFO(
@@ -452,8 +434,8 @@ class ProductBatchService
             // Check if we depleted all requested quantity
             if ($remainingQuantity > 0) {
                 throw new \RuntimeException(
-                    "Insufficient batch inventory. Requested: {$quantityInBaseUom}, " .
-                        "Available: " . ($quantityInBaseUom - $remainingQuantity)
+                    "Insufficient batch inventory. Requested: {$quantityInBaseUom}, ".
+                        'Available: '.($quantityInBaseUom - $remainingQuantity)
                 );
             }
 
@@ -475,11 +457,74 @@ class ProductBatchService
     }
 
     /**
-     * Restore batch quantities (for returns/refunds)
+     * Move batch-level lineage for a transferred quantity from one store to another.
      *
-     * @param int $batchId
-     * @param float $quantityInBaseUom
-     * @return ProductBatch
+     * Depletes the source store's batches via FIFO (depleteBatchesFIFO(), the same
+     * method sales use), then creates one new batch per depleted source batch at the
+     * destination store, preserving that source batch's cost/expiry/PO lineage via
+     * source_batch_id. A single transfer item can therefore produce multiple
+     * destination batches if its quantity spans more than one source batch.
+     */
+    public function transferBatchStock(
+        int $fromStoreId,
+        int $toStoreId,
+        int $productId,
+        ?int $variantId,
+        float $quantityInBaseUom,
+        int $transferId,
+        string $transferNumber
+    ): Collection {
+        return DB::transaction(function () use (
+            $fromStoreId, $toStoreId, $productId, $variantId, $quantityInBaseUom, $transferId, $transferNumber
+        ) {
+            $depletionResult = $this->depleteBatchesFIFO($fromStoreId, $productId, $variantId, $quantityInBaseUom);
+
+            $createdBatches = collect();
+
+            foreach ($depletionResult['depletions'] as $sourceBatchId => $depletedQuantity) {
+                $sourceBatch = ProductBatch::findOrFail($sourceBatchId);
+                $conversionFactor = $this->getConversionToBaseUom($sourceBatch->purchase_uom_id, $productId);
+
+                $newBatch = ProductBatch::create([
+                    'store_id' => $toStoreId,
+                    'product_id' => $productId,
+                    'product_variant_id' => $variantId,
+                    'purchase_order_id' => $sourceBatch->purchase_order_id,
+                    'source_batch_id' => $sourceBatch->id,
+                    'batch_number' => $this->generateBatchNumber(),
+                    'purchase_uom_id' => $sourceBatch->purchase_uom_id,
+                    'quantity_received_in_purchase_uom' => $depletedQuantity / $conversionFactor,
+                    'quantity_received_in_base_uom' => $depletedQuantity,
+                    'quantity_remaining_in_base_uom' => $depletedQuantity,
+                    'cost_per_purchase_uom' => $sourceBatch->cost_per_purchase_uom,
+                    'cost_per_base_uom' => $sourceBatch->cost_per_base_uom,
+                    'total_cost' => $depletedQuantity * $sourceBatch->cost_per_base_uom,
+                    'manufacture_date' => $sourceBatch->manufacture_date,
+                    'expiry_date' => $sourceBatch->expiry_date,
+                    'is_expired' => false,
+                    'supplier_id' => $sourceBatch->supplier_id,
+                    'notes' => "Transferred from store #{$fromStoreId}, batch {$sourceBatch->batch_number}, via {$transferNumber}",
+                ]);
+
+                $createdBatches->push($newBatch);
+            }
+
+            Log::info('Batch stock transferred between stores', [
+                'from_store_id' => $fromStoreId,
+                'to_store_id' => $toStoreId,
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'transfer_id' => $transferId,
+                'quantity_transferred' => $quantityInBaseUom,
+                'destination_batches_created' => $createdBatches->count(),
+            ]);
+
+            return $createdBatches;
+        });
+    }
+
+    /**
+     * Restore batch quantities (for returns/refunds)
      */
     public function restoreBatchQuantity(int $batchId, float $quantityInBaseUom): ProductBatch
     {
@@ -491,8 +536,8 @@ class ProductBatchService
 
             if ($newRemaining > $batch->quantity_received_in_base_uom) {
                 throw new \RuntimeException(
-                    "Cannot restore more than originally received. " .
-                        "Received: {$batch->quantity_received_in_base_uom}, " .
+                    'Cannot restore more than originally received. '.
+                        "Received: {$batch->quantity_received_in_base_uom}, ".
                         "Would restore to: {$newRemaining}"
                 );
             }
@@ -511,12 +556,6 @@ class ProductBatchService
 
     /**
      * Get batches for a product/variant
-     *
-     * @param int $storeId
-     * @param int $productId
-     * @param int|null $variantId
-     * @param bool $onlyAvailable
-     * @return Collection
      */
     public function getBatchesForProduct(
         int $storeId,
@@ -542,7 +581,7 @@ class ProductBatchService
     /**
      * Check and mark expired batches
      *
-     * @param int|null $storeId Optional - check specific store
+     * @param  int|null  $storeId  Optional - check specific store
      * @return int Count of batches marked as expired
      */
     public function markExpiredBatches(?int $storeId = null): int
@@ -575,9 +614,7 @@ class ProductBatchService
     /**
      * Get batches expiring soon (within X days)
      *
-     * @param int $storeId
-     * @param int $daysThreshold Default 30 days
-     * @return Collection
+     * @param  int  $daysThreshold  Default 30 days
      */
     public function getExpiringSoonBatches(int $storeId, int $daysThreshold = 30): Collection
     {
@@ -596,10 +633,6 @@ class ProductBatchService
     /**
      * Calculate COGS (Cost of Goods Sold) for a product using FIFO
      *
-     * @param int $storeId
-     * @param int $productId
-     * @param int|null $variantId
-     * @param float $quantityInBaseUom
      * @return float COGS amount
      */
     public function calculateCOGS(
@@ -632,7 +665,7 @@ class ProductBatchService
         }
 
         if ($remainingQuantity > 0) {
-            throw new \RuntimeException("Insufficient batch quantity for COGS calculation");
+            throw new \RuntimeException('Insufficient batch quantity for COGS calculation');
         }
 
         return $totalCost;
@@ -640,10 +673,6 @@ class ProductBatchService
 
     /**
      * Get inventory valuation using FIFO
-     *
-     * @param int $storeId
-     * @param int|null $productId
-     * @return array
      */
     public function getInventoryValuation(int $storeId, ?int $productId = null): array
     {
@@ -672,8 +701,6 @@ class ProductBatchService
 
     /**
      * Generate unique batch number
-     *
-     * @return string
      */
     private function generateBatchNumber(): string
     {

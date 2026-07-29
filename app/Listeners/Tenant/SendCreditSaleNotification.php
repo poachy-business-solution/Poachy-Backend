@@ -6,7 +6,6 @@ use App\Events\Tenant\CreditSaleCreated;
 use App\Jobs\Tenant\SendNotificationJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 
 class SendCreditSaleNotification implements ShouldQueue
 {
@@ -27,9 +26,9 @@ class SendCreditSaleNotification implements ShouldQueue
 
         // Send SMS notification
         if ($customer->phone) {
-            $message = "Dear {$customer->name}, a credit sale of KES " . number_format($transaction->amount, 2) . " has been recorded. " .
-                "Your total debt is now KES " . number_format($transaction->balance_after, 2) . ". " .
-                "Available credit: KES " . number_format($customer->available_credit, 2);
+            $message = "Dear {$customer->name}, a credit sale of KES ".number_format($transaction->amount, 2).' has been recorded. '.
+                'Your total debt is now KES '.number_format($transaction->balance_after, 2).'. '.
+                'Available credit: KES '.number_format($customer->available_credit, 2);
 
             SendNotificationJob::dispatch(
                 channel: 'sms',
@@ -66,15 +65,15 @@ class SendCreditSaleNotification implements ShouldQueue
      */
     protected function generateEmailBody($customer, $transaction): string
     {
-        return "Dear {$customer->name},\n\n" .
-            "This is to confirm a credit sale transaction:\n" .
-            "Amount: KES " . number_format($transaction->amount, 2) . "\n" .
-            "Date: " . $transaction->created_at->format('d M Y H:i') . "\n\n" .
-            "Credit Summary:\n" .
-            "Total Debt: KES " . number_format($transaction->balance_after, 2) . "\n" .
-            "Credit Limit: KES " . number_format($customer->credit_limit, 2) . "\n" .
-            "Available Credit: KES " . number_format($customer->available_credit, 2) . "\n\n" .
-            "Please ensure timely payment.\n\n" .
-            "Thank you for your business!";
+        return "Dear {$customer->name},\n\n".
+            "This is to confirm a credit sale transaction:\n".
+            'Amount: KES '.number_format($transaction->amount, 2)."\n".
+            'Date: '.$transaction->created_at->format('d M Y H:i')."\n\n".
+            "Credit Summary:\n".
+            'Total Debt: KES '.number_format($transaction->balance_after, 2)."\n".
+            'Credit Limit: KES '.number_format($customer->credit_limit, 2)."\n".
+            'Available Credit: KES '.number_format($customer->available_credit, 2)."\n\n".
+            "Please ensure timely payment.\n\n".
+            'Thank you for your business!';
     }
 }
