@@ -4,6 +4,8 @@ namespace App\Services\Tenant\Inventory;
 
 use App\Enums\Tenant\InventoryMovementType;
 use App\Models\Tenant\Inventory;
+use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\StockTransfer;
 use App\Models\Tenant\StockTransferItem;
 use Illuminate\Support\Collection;
@@ -14,14 +16,12 @@ use Illuminate\Support\Facades\Log;
 class StockTransferService
 {
     public function __construct(
-        private InventoryMovementService $movementService
+        private InventoryMovementService $movementService,
+        private ProductBatchService $batchService
     ) {}
 
     /**
      * Create a new stock transfer request
-     *
-     * @param array $data
-     * @return StockTransfer
      */
     public function createTransfer(array $data): StockTransfer
     {
@@ -33,13 +33,13 @@ class StockTransferService
                     ->where('product_variant_id', $itemData['variant_id'] ?? null)
                     ->first();
 
-                if (!$inventory) {
-                    $productName = \App\Models\Tenant\Product::find($itemData['product_id'])->name;
-                    $variantInfo = isset($itemData['variant_id']) ? " (Variant ID: {$itemData['variant_id']})" : "";
+                if (! $inventory) {
+                    $productName = Product::find($itemData['product_id'])->name;
+                    $variantInfo = isset($itemData['variant_id']) ? " (Variant ID: {$itemData['variant_id']})" : '';
 
                     throw new \RuntimeException(
-                        "Product '{$productName}'{$variantInfo} does not exist in source store. " .
-                            "Cannot create transfer for products not in inventory."
+                        "Product '{$productName}'{$variantInfo} does not exist in source store. ".
+                            'Cannot create transfer for products not in inventory.'
                     );
                 }
 
@@ -51,11 +51,11 @@ class StockTransferService
                 );
 
                 if ($inventory->quantity_available < $quantityInBaseUom) {
-                    $productName = \App\Models\Tenant\Product::find($itemData['product_id'])->name;
-                    $variantInfo = isset($itemData['variant_id']) ? " (Variant ID: {$itemData['variant_id']})" : "";
+                    $productName = Product::find($itemData['product_id'])->name;
+                    $variantInfo = isset($itemData['variant_id']) ? " (Variant ID: {$itemData['variant_id']})" : '';
 
                     throw new \RuntimeException(
-                        "Insufficient stock for '{$productName}'{$variantInfo}'. " .
+                        "Insufficient stock for '{$productName}'{$variantInfo}'. ".
                             "Available: {$inventory->quantity_available}, Requested: {$quantityInBaseUom}"
                     );
                 }
@@ -96,10 +96,6 @@ class StockTransferService
 
     /**
      * Add item to transfer
-     *
-     * @param StockTransfer $transfer
-     * @param array $itemData
-     * @return StockTransferItem
      */
     private function addTransferItem(StockTransfer $transfer, array $itemData): StockTransferItem
     {
@@ -123,9 +119,6 @@ class StockTransferService
 
     /**
      * Approve transfer (manager approval)
-     *
-     * @param int $transferId
-     * @return StockTransfer
      */
     public function approveTransfer(int $transferId): StockTransfer
     {
@@ -143,13 +136,13 @@ class StockTransferService
                     ->where('product_variant_id', $item->product_variant_id)
                     ->first();
 
-                if (!$inventory || $inventory->quantity_available < $item->quantity_requested_in_base_uom) {
+                if (! $inventory || $inventory->quantity_available < $item->quantity_requested_in_base_uom) {
                     $productName = $item->product->name;
-                    $variantInfo = $item->productVariant ? " ({$item->productVariant->variant_name})" : "";
+                    $variantInfo = $item->productVariant ? " ({$item->productVariant->variant_name})" : '';
 
                     throw new \RuntimeException(
-                        "Insufficient stock for {$productName}{$variantInfo}. " .
-                            "Available: " . ($inventory->quantity_available ?? 0) . ", " .
+                        "Insufficient stock for {$productName}{$variantInfo}. ".
+                            'Available: '.($inventory->quantity_available ?? 0).', '.
                             "Requested: {$item->quantity_requested_in_base_uom}"
                     );
                 }
@@ -173,9 +166,6 @@ class StockTransferService
 
     /**
      * Send/dispatch transfer (deduct from source store)
-     *
-     * @param int $transferId
-     * @return StockTransfer
      */
     public function sendTransfer(int $transferId): StockTransfer
     {
@@ -200,6 +190,19 @@ class StockTransferService
                     'reference_id' => $transfer->id,
                     'notes' => "Stock transfer to Store #{$transfer->to_store_id} - {$transfer->transfer_number}",
                 ]);
+
+                // Move batch-level lineage (cost/expiry) with the stock, for batch-tracked products
+                if ($item->product->requiresBatchTracking()) {
+                    $this->batchService->transferBatchStock(
+                        fromStoreId: $transfer->from_store_id,
+                        toStoreId: $transfer->to_store_id,
+                        productId: $item->product_id,
+                        variantId: $item->product_variant_id,
+                        quantityInBaseUom: $item->quantity_requested_in_base_uom,
+                        transferId: $transfer->id,
+                        transferNumber: $transfer->transfer_number
+                    );
+                }
 
                 // Update item with sent quantity
                 $item->update([
@@ -227,9 +230,7 @@ class StockTransferService
     /**
      * Receive transfer at destination store
      *
-     * @param int $transferId
-     * @param array $receivedItems Format: ['item_id' => quantity_received]
-     * @return StockTransfer
+     * @param  array  $receivedItems  Format: ['item_id' => quantity_received]
      */
     public function receiveTransfer(int $transferId, array $receivedItems): StockTransfer
     {
@@ -288,7 +289,7 @@ class StockTransferService
                     ]);
 
                     $item->update([
-                        'notes' => ($item->notes ?? '') . " | Discrepancy: Sent {$item->quantity_sent}, Received {$quantityReceived}",
+                        'notes' => ($item->notes ?? '')." | Discrepancy: Sent {$item->quantity_sent}, Received {$quantityReceived}",
                     ]);
                 }
             }
@@ -312,10 +313,6 @@ class StockTransferService
 
     /**
      * Cancel transfer
-     *
-     * @param int $transferId
-     * @param string $reason
-     * @return StockTransfer
      */
     public function cancelTransfer(int $transferId, string $reason): StockTransfer
     {
@@ -323,10 +320,10 @@ class StockTransferService
             $transfer = StockTransfer::lockForUpdate()->findOrFail($transferId);
 
             // Can only cancel if pending or approved (not yet sent)
-            if (!in_array($transfer->status, ['pending', 'approved'])) {
+            if (! in_array($transfer->status, ['pending', 'approved'])) {
                 throw new \RuntimeException(
-                    "Cannot cancel transfer in status: {$transfer->status}. " .
-                        "Only pending or approved transfers can be cancelled."
+                    "Cannot cancel transfer in status: {$transfer->status}. ".
+                        'Only pending or approved transfers can be cancelled.'
                 );
             }
 
@@ -349,10 +346,7 @@ class StockTransferService
     /**
      * Get transfers for a store (as source or destination)
      *
-     * @param int $storeId
-     * @param string $direction 'outbound'|'inbound'|'all'
-     * @param string|null $status
-     * @return Collection
+     * @param  string  $direction  'outbound'|'inbound'|'all'
      */
     public function getStoreTransfers(
         int $storeId,
@@ -384,8 +378,7 @@ class StockTransferService
     /**
      * Get pending approvals for manager
      *
-     * @param int|null $storeId Optional - filter by source store
-     * @return Collection
+     * @param  int|null  $storeId  Optional - filter by source store
      */
     public function getPendingApprovals(?int $storeId = null): Collection
     {
@@ -402,8 +395,6 @@ class StockTransferService
 
     /**
      * Generate unique transfer number
-     *
-     * @return string
      */
     private function generateTransferNumber(): string
     {
@@ -427,13 +418,13 @@ class StockTransferService
      */
     private function convertToBaseUom(float $quantity, int $uomId, int $productId): float
     {
-        $product = \App\Models\Tenant\Product::findOrFail($productId);
+        $product = Product::findOrFail($productId);
 
         if ($uomId === $product->base_uom_id) {
             return $quantity;
         }
 
-        $productUom = \App\Models\Tenant\ProductUom::where('product_id', $productId)
+        $productUom = ProductUom::where('product_id', $productId)
             ->where('uom_id', $uomId)
             ->firstOrFail();
 

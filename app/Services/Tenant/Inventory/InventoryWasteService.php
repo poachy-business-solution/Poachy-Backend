@@ -2,15 +2,13 @@
 
 namespace App\Services\Tenant\Inventory;
 
-use App\Enums\Tenant\ExpiryAlertLevel;
-use App\Enums\Tenant\ResolutionAction;
 use App\Enums\Tenant\WasteApprovalStatus;
 use App\Enums\Tenant\WasteType;
 use App\Events\Tenant\WasteApprovalRequested;
 use App\Events\Tenant\WasteApproved;
 use App\Events\Tenant\WasteRejected;
-use App\Models\Tenant\ExpiryAlert;
 use App\Models\Tenant\InventoryWaste;
+use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -27,9 +25,6 @@ class InventoryWasteService
 
     /**
      * Record inventory waste
-     *
-     * @param array $data
-     * @return InventoryWaste
      */
     public function recordWaste(array $data): InventoryWaste
     {
@@ -79,17 +74,13 @@ class InventoryWasteService
 
     /**
      * Approve waste record
-     *
-     * @param int $wasteId
-     * @param int $approverId
-     * @return InventoryWaste
      */
     public function approveWaste(int $wasteId, int $approverId): InventoryWaste
     {
         return DB::transaction(function () use ($wasteId, $approverId) {
             $waste = InventoryWaste::with(['product', 'batch'])->findOrFail($wasteId);
 
-            if (!$waste->can_be_approved) {
+            if (! $waste->can_be_approved) {
                 throw new \RuntimeException(
                     "Waste record cannot be approved. Current status: {$waste->approval_status->label()}"
                 );
@@ -116,18 +107,13 @@ class InventoryWasteService
 
     /**
      * Reject waste record
-     *
-     * @param int $wasteId
-     * @param int $rejectorId
-     * @param string|null $reason
-     * @return InventoryWaste
      */
     public function rejectWaste(int $wasteId, int $rejectorId, ?string $reason = null): InventoryWaste
     {
         return DB::transaction(function () use ($wasteId, $rejectorId, $reason) {
             $waste = InventoryWaste::findOrFail($wasteId);
 
-            if (!$waste->can_be_rejected) {
+            if (! $waste->can_be_rejected) {
                 throw new \RuntimeException(
                     "Waste record cannot be rejected. Current status: {$waste->approval_status->label()}"
                 );
@@ -151,39 +137,40 @@ class InventoryWasteService
 
     /**
      * Process inventory deduction after waste approval
-     *
-     * @param InventoryWaste $waste
-     * @return void
      */
     private function processWasteInventoryDeduction(InventoryWaste $waste): void
     {
         // If batch is specified, deplete batch first
         if ($waste->batch_id) {
-            try {
-                // Deplete the specific batch
-                $batch = ProductBatch::findOrFail($waste->batch_id);
+            $batch = ProductBatch::find($waste->batch_id);
 
-                if ($batch->quantity_remaining_in_base_uom >= $waste->quantity_wasted) {
-                    $batch->decrement('quantity_remaining_in_base_uom', $waste->quantity_wasted);
-
-                    Log::info('Batch depleted for waste', [
-                        'batch_id' => $waste->batch_id,
-                        'quantity_depleted' => $waste->quantity_wasted,
-                    ]);
-
-                    // Auto-resolve expiry alert if batch is depleted or if waste type is expired
-                    if (
-                        $batch->quantity_remaining_in_base_uom <= 0 ||
-                        $waste->waste_type === WasteType::EXPIRED
-                    ) {
-                        $this->expiryAlertService->autoResolveAlertsForBatch($batch);
-                    }
+            if ($batch) {
+                if ($batch->quantity_remaining_in_base_uom < $waste->quantity_wasted) {
+                    throw new \RuntimeException(
+                        "Cannot approve waste #{$waste->id}: linked batch {$batch->batch_number} only has ".
+                            "{$batch->quantity_remaining_in_base_uom} remaining, but the waste record requests ".
+                            "{$waste->quantity_wasted}."
+                    );
                 }
-            } catch (\Exception $e) {
-                Log::error('Failed to deplete batch for waste', [
+
+                $batch->decrement('quantity_remaining_in_base_uom', $waste->quantity_wasted);
+
+                Log::info('Batch depleted for waste', [
+                    'batch_id' => $waste->batch_id,
+                    'quantity_depleted' => $waste->quantity_wasted,
+                ]);
+
+                // Auto-resolve expiry alert if batch is depleted or if waste type is expired
+                if (
+                    $batch->quantity_remaining_in_base_uom <= 0 ||
+                    $waste->waste_type === WasteType::EXPIRED
+                ) {
+                    $this->expiryAlertService->autoResolveAlertsForBatch($batch);
+                }
+            } else {
+                Log::error('Failed to deplete batch for waste: batch not found', [
                     'waste_id' => $waste->id,
                     'batch_id' => $waste->batch_id,
-                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -213,17 +200,13 @@ class InventoryWasteService
 
     /**
      * Get cost per base UOM for waste calculation
-     *
-     * @param int $productId
-     * @param int $storeId
-     * @param int|null $batchId
-     * @return float
      */
     private function getCostPerBaseUom(int $productId, int $storeId, ?int $batchId = null): float
     {
         // If batch specified, use batch cost
         if ($batchId) {
             $batch = ProductBatch::findOrFail($batchId);
+
             return $batch->cost_per_base_uom;
         }
 
@@ -239,34 +222,32 @@ class InventoryWasteService
         }
 
         // Fallback: Use product selling price as estimate
-        $product = \App\Models\Tenant\Product::findOrFail($productId);
+        $product = Product::findOrFail($productId);
+
         return $product->base_selling_price * 0.7; // Assume 70% of selling price as cost
     }
 
     /**
      * Get waste records with filters
-     *
-     * @param array $filters
-     * @return LengthAwarePaginator
      */
     public function getWasteRecords(array $filters = []): LengthAwarePaginator
     {
         $query = InventoryWaste::withDetails();
 
         // Apply filters
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->byStore($filters['store_id']);
         }
 
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->byProduct($filters['product_id']);
         }
 
-        if (!empty($filters['waste_type'])) {
+        if (! empty($filters['waste_type'])) {
             $query->byType($filters['waste_type']);
         }
 
-        if (!empty($filters['approval_status'])) {
+        if (! empty($filters['approval_status'])) {
             match ($filters['approval_status']) {
                 'pending' => $query->pending(),
                 'approved' => $query->approved(),
@@ -275,7 +256,7 @@ class InventoryWasteService
             };
         }
 
-        if (!empty($filters['from_date']) || !empty($filters['to_date'])) {
+        if (! empty($filters['from_date']) || ! empty($filters['to_date'])) {
             $query->byDateRange($filters['from_date'] ?? null, $filters['to_date'] ?? null);
         }
 
@@ -286,11 +267,6 @@ class InventoryWasteService
 
     /**
      * Get waste summary for a store
-     *
-     * @param int $storeId
-     * @param string|null $fromDate
-     * @param string|null $toDate
-     * @return array
      */
     public function getStoreSummary(int $storeId, ?string $fromDate = null, ?string $toDate = null): array
     {
@@ -315,11 +291,6 @@ class InventoryWasteService
 
     /**
      * Get waste breakdown by type
-     *
-     * @param int $storeId
-     * @param string|null $fromDate
-     * @param string|null $toDate
-     * @return array
      */
     private function getWasteByType(int $storeId, ?string $fromDate = null, ?string $toDate = null): array
     {
@@ -345,17 +316,13 @@ class InventoryWasteService
 
     /**
      * Update waste record (only if pending)
-     *
-     * @param int $wasteId
-     * @param array $data
-     * @return InventoryWaste
      */
     public function updateWaste(int $wasteId, array $data): InventoryWaste
     {
         return DB::transaction(function () use ($wasteId, $data) {
             $waste = InventoryWaste::findOrFail($wasteId);
 
-            if (!$waste->is_pending) {
+            if (! $waste->is_pending) {
                 throw new \RuntimeException('Only pending waste records can be updated');
             }
 
