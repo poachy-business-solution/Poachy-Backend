@@ -9,16 +9,17 @@ use App\Events\Tenant\SaleCompleted;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Customer;
+use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductBundle;
+use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\PromotionUsage;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SalePayment;
-use App\Models\Tenant\Product;
 use App\Models\Tenant\ShiftAssignment;
-use App\Models\Tenant\TenantConfiguration;
-use App\Services\Tenant\Sales\CreditService;
+use App\Models\Tenant\Store;
 use App\Services\Tenant\Customer\CustomerService;
-use App\Services\Tenant\Sales\LoyaltyService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
@@ -40,7 +41,7 @@ class SaleService
 
     /**
      * Resolve customer by phone number
-     * 
+     *
      * This is how POS cashiers identify customers
      */
     public function resolveCustomerByPhone(string $phone): ?Customer
@@ -107,14 +108,10 @@ class SaleService
 
             $actualLoyaltyPointsEarned = 0;
             if ($this->loyaltyService->isEnabled() && $data['customer_id']) {
-                // Use the lesser of what they paid or what they owe
-                // This ensures:
-                // 1. Credit sales get points only on amount paid
-                // 2. Cash overpayment doesn't give extra points
-                $loyaltyEligibleAmount = min($paymentInfo['amount_paid'], $calculations['total_amount']);
-
+                // Same formula/input as processSaleLoyalty() below, so the stored
+                // value here always matches what's actually awarded to the customer.
                 $actualLoyaltyPointsEarned = $this->loyaltyService->calculatePointsEarned(
-                    $loyaltyEligibleAmount,
+                    $paymentInfo['amount_paid'],
                     $data['customer_id']
                 );
             }
@@ -189,7 +186,7 @@ class SaleService
 
             // STEP 16: Update customer aggregates
             if ($data['customer_id']) {
-                $this->updateCustomerAggregates($data['customer_id'], $calculations['total_amount'], $calculations['loyalty_points_earned']);
+                $this->updateCustomerAggregates($data['customer_id'], $calculations['total_amount']);
             }
 
             // STEP 17: Dispatch events
@@ -214,14 +211,14 @@ class SaleService
      */
     protected function validateLoyaltyRedemption(int $customerId, float $points): void
     {
-        if (!$this->loyaltyService->isEnabled()) {
+        if (! $this->loyaltyService->isEnabled()) {
             return;
         }
 
         $customer = Customer::findOrFail($customerId);
         $validation = $this->loyaltyService->validateRedemption($customer, $points);
 
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             throw new \RuntimeException($validation['message']);
         }
     }
@@ -231,14 +228,14 @@ class SaleService
      */
     protected function validateCreditSale(int $customerId, float $amount): void
     {
-        if (!$this->creditService->isEnabled()) {
+        if (! $this->creditService->isEnabled()) {
             throw new \RuntimeException('Credit sales are not enabled');
         }
 
         $customer = Customer::findOrFail($customerId);
         $validation = $this->creditService->validateCreditSale($customer, $amount);
 
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             throw new \RuntimeException($validation['message']);
         }
     }
@@ -263,20 +260,22 @@ class SaleService
     protected function validateInventoryAvailability(int $storeId, array $items): void
     {
         foreach ($items as $item) {
-            $productId = $item['product_id'];
-            $variantId = $item['variant_id'] ?? null;
             $quantity = $item['quantity'];
 
             if (isset($item['bundle_id'])) {
                 $this->validateBundleInventory($storeId, $item['bundle_id'], $quantity);
+
                 continue;
             }
 
-            $product = \App\Models\Tenant\Product::findOrFail($productId);
+            $productId = $item['product_id'];
+            $variantId = $item['variant_id'] ?? null;
+
+            $product = Product::findOrFail($productId);
             $uomId = $product->base_uom_id;
 
             if ($variantId) {
-                $variant = \App\Models\Tenant\ProductVariant::findOrFail($variantId);
+                $variant = ProductVariant::findOrFail($variantId);
                 $uomId = $variant->uom_id;
             }
 
@@ -288,10 +287,10 @@ class SaleService
                 $variantId
             );
 
-            if (!$availability['available']) {
+            if (! $availability['available']) {
                 throw new \RuntimeException(
-                    "Insufficient stock for {$product->name}. " .
-                        "Requested: {$availability['requested_in_base_uom']} {$availability['base_uom']}, " .
+                    "Insufficient stock for {$product->name}. ".
+                        "Requested: {$availability['requested_in_base_uom']} {$availability['base_uom']}, ".
                         "Available: {$availability['available_in_base_uom']} {$availability['base_uom']}"
                 );
             }
@@ -303,7 +302,7 @@ class SaleService
      */
     protected function validateBundleInventory(int $storeId, int $bundleId, float $quantity): void
     {
-        $bundle = \App\Models\Tenant\ProductBundle::with('items')->findOrFail($bundleId);
+        $bundle = ProductBundle::with('items')->findOrFail($bundleId);
 
         foreach ($bundle->items as $bundleItem) {
             $requiredQty = $bundleItem->quantity_in_base_uom * $quantity;
@@ -318,7 +317,7 @@ class SaleService
                 $variantId
             );
 
-            if (!$availability['available']) {
+            if (! $availability['available']) {
                 throw new \RuntimeException(
                     "Insufficient stock for bundle component: {$bundleItem->product->name}"
                 );
@@ -336,9 +335,9 @@ class SaleService
         // Allow credit to cover shortfall
         $hasCreditPayment = $this->hasCreditPayment($payments);
 
-        if (!$hasCreditPayment && $totalPayments < $totalAmount) {
+        if (! $hasCreditPayment && $totalPayments < $totalAmount) {
             throw new \RuntimeException(
-                "Payment amount ({$totalPayments}) is less than total amount ({$totalAmount}). " .
+                "Payment amount ({$totalPayments}) is less than total amount ({$totalAmount}). ".
                     "If paying on credit, include 'credit' payment method."
             );
         }
@@ -349,7 +348,7 @@ class SaleService
      */
     protected function generateSaleNumber(int $storeId): string
     {
-        $store = \App\Models\Tenant\Store::findOrFail($storeId);
+        $store = Store::findOrFail($storeId);
         $prefix = 'INV';
         $year = now()->year;
         $month = now()->format('m');
@@ -468,7 +467,7 @@ class SaleService
 
         // Pre-load batch tracking flags for all non-bundle products in one query
         $nonBundleProductIds = collect($lineItems)
-            ->filter(fn ($item) => !$item['bundle_id'])
+            ->filter(fn ($item) => ! $item['bundle_id'])
             ->pluck('product_id')
             ->unique()
             ->values();
@@ -478,34 +477,34 @@ class SaleService
 
         foreach ($lineItems as $item) {
             if ($item['bundle_id']) {
-                $bundle = \App\Models\Tenant\ProductBundle::with('items')->find($item['bundle_id']);
+                $bundle = ProductBundle::with('items')->find($item['bundle_id']);
 
                 foreach ($bundle->items as $bundleItem) {
                     $itemsForInventory[] = [
-                        'store_id'              => $sale->store_id,
-                        'product_id'            => $bundleItem->product_id,
-                        'variant_id'            => $bundleItem->product_variant_id,
-                        'quantity'              => $bundleItem->quantity_in_base_uom * $item['quantity'],
-                        'uom_id'                => $bundleItem->product->base_uom_id,
-                        'unit_cost'             => $this->getAverageCost(
+                        'store_id' => $sale->store_id,
+                        'product_id' => $bundleItem->product_id,
+                        'variant_id' => $bundleItem->product_variant_id,
+                        'quantity' => $bundleItem->quantity_in_base_uom * $item['quantity'],
+                        'uom_id' => $bundleItem->product->base_uom_id,
+                        'unit_cost' => $this->getAverageCost(
                             $sale->store_id,
                             $bundleItem->product_id,
                             $bundleItem->product_variant_id
                         ),
                         'requires_batch_tracking' => $bundleItem->product->requires_batch_tracking,
-                        'notes'                 => "Bundle component sale - {$sale->sale_number}",
+                        'notes' => "Bundle component sale - {$sale->sale_number}",
                     ];
                 }
             } else {
                 $itemsForInventory[] = [
-                    'store_id'              => $sale->store_id,
-                    'product_id'            => $item['product_id'],
-                    'variant_id'            => $item['variant_id'],
-                    'quantity'              => $item['quantity'],
-                    'uom_id'                => $item['uom_id'],
-                    'unit_cost'             => $item['unit_cost'],
+                    'store_id' => $sale->store_id,
+                    'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'],
+                    'quantity' => $item['quantity'],
+                    'uom_id' => $item['uom_id'],
+                    'unit_cost' => $item['unit_cost'],
                     'requires_batch_tracking' => (bool) ($batchTrackingMap[$item['product_id']] ?? false),
-                    'notes'                 => "Sale - {$sale->sale_number}",
+                    'notes' => "Sale - {$sale->sale_number}",
                 ];
             }
         }
@@ -526,7 +525,7 @@ class SaleService
 
     /**
      * Normalize phone number to E.164 format with country code
-     * 
+     *
      * Converts various Kenyan phone formats to +254XXXXXXXXX
      * Examples:
      * - 0712345602 -> +254712345602
@@ -546,22 +545,22 @@ class SaleService
 
         // If starts with 254, add +
         if (str_starts_with($phone, '254')) {
-            return '+' . $phone;
+            return '+'.$phone;
         }
 
         // If starts with 0, replace with +254
         if (str_starts_with($phone, '0')) {
-            return '+254' . substr($phone, 1);
+            return '+254'.substr($phone, 1);
         }
 
         // If it's just the number without country code or leading 0
         // Assume it's Kenyan and add +254
-        return '+254' . $phone;
+        return '+254'.$phone;
     }
 
     protected function getAverageCost(int $storeId, int $productId, ?int $variantId): float
     {
-        return \App\Models\Tenant\ProductBatch::where('store_id', $storeId)
+        return ProductBatch::where('store_id', $storeId)
             ->where('product_id', $productId)
             ->where('product_variant_id', $variantId)
             ->where('quantity_remaining_in_base_uom', '>', 0)
@@ -598,12 +597,11 @@ class SaleService
         }
     }
 
-    protected function updateCustomerAggregates(int $customerId, float $saleAmount, float $loyaltyPointsEarned): void
+    protected function updateCustomerAggregates(int $customerId, float $saleAmount): void
     {
         $customer = Customer::findOrFail($customerId);
 
         $customer->increment('total_lifetime_purchases', $saleAmount);
         $customer->increment('total_visits');
-        $customer->increment('loyalty_points', $loyaltyPointsEarned);
     }
 }
