@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Mockery;
+use Stancl\Tenancy\Contracts\Tenant;
 use Tests\TestCase;
 
 class RefundTest extends TestCase
@@ -47,9 +48,9 @@ class RefundTest extends TestCase
         $this->createMinimalSchema();
 
         // Bind a fake tenant so tenant()->id works inside TenantConfiguration
-        $fakeTenant = new \stdClass();
+        $fakeTenant = new \stdClass;
         $fakeTenant->id = 'test-tenant';
-        app()->instance(\Stancl\Tenancy\Contracts\Tenant::class, $fakeTenant);
+        app()->instance(Tenant::class, $fakeTenant);
     }
 
     protected function tearDown(): void
@@ -64,7 +65,7 @@ class RefundTest extends TestCase
     // Happy Paths
     // =========================================================================
 
-    public function testFullCashRefundRestoresInventoryAndMarksSaleRefunded(): void
+    public function test_full_cash_refund_restores_inventory_and_marks_sale_refunded(): void
     {
         $this->enableRefunds();
 
@@ -106,7 +107,7 @@ class RefundTest extends TestCase
         $this->assertEquals(PaymentStatus::REFUNDED, $sale->payment_status);
     }
 
-    public function testPartialRefundCorrectlyTracksRemainingRefundableQuantity(): void
+    public function test_partial_refund_correctly_tracks_remaining_refundable_quantity(): void
     {
         $this->enableRefunds();
 
@@ -142,7 +143,7 @@ class RefundTest extends TestCase
         $this->assertNotEquals(PaymentStatus::REFUNDED, $sale->payment_status);
     }
 
-    public function testStoreCreditRefundIncrementsCustomerBalance(): void
+    public function test_store_credit_refund_increments_customer_balance(): void
     {
         $this->enableRefunds();
 
@@ -183,7 +184,7 @@ class RefundTest extends TestCase
         $this->assertSame(1, CustomerCreditTransaction::count());
     }
 
-    public function testDefectiveItemRefundDoesNotRestoreInventory(): void
+    public function test_defective_item_refund_does_not_restore_inventory(): void
     {
         $this->enableRefunds();
 
@@ -217,7 +218,7 @@ class RefundTest extends TestCase
         $this->assertEquals(RefundStatus::COMPLETED, SaleRefund::first()->status);
     }
 
-    public function testLoyaltyPointsReversedProportionallyPerItem(): void
+    public function test_loyalty_points_reversed_proportionally_per_item(): void
     {
         $this->enableRefunds();
         $this->enableLoyalty();
@@ -268,7 +269,7 @@ class RefundTest extends TestCase
     // Failure Paths
     // =========================================================================
 
-    public function testRefundsDisabledThrowsValidationError(): void
+    public function test_refunds_disabled_throws_validation_error(): void
     {
         [$sale, $saleItem] = $this->createPaidSale(total: 100.00, itemQuantity: 1.0, itemSubtotal: 100.00);
 
@@ -293,7 +294,7 @@ class RefundTest extends TestCase
         });
     }
 
-    public function testRefundingAlreadyFullyRefundedSaleThrowsValidationError(): void
+    public function test_refunding_already_fully_refunded_sale_throws_validation_error(): void
     {
         $this->enableRefunds();
 
@@ -337,7 +338,7 @@ class RefundTest extends TestCase
         });
     }
 
-    public function testRefundQuantityExceedsRemainingThrowsValidationError(): void
+    public function test_refund_quantity_exceeds_remaining_throws_validation_error(): void
     {
         $this->enableRefunds();
 
@@ -364,7 +365,7 @@ class RefundTest extends TestCase
         });
     }
 
-    public function testItemNotBelongingToSaleThrowsValidationError(): void
+    public function test_item_not_belonging_to_sale_throws_validation_error(): void
     {
         $this->enableRefunds();
 
@@ -405,7 +406,7 @@ class RefundTest extends TestCase
         });
     }
 
-    public function testCancelProcessingRefundSetsStatusCancelled(): void
+    public function test_cancel_processing_refund_sets_status_cancelled(): void
     {
         $refund = Model::withoutEvents(fn () => SaleRefund::create([
             'original_sale_id' => 1,
@@ -425,7 +426,7 @@ class RefundTest extends TestCase
         $this->assertEquals(RefundStatus::CANCELLED, $cancelled->status);
     }
 
-    public function testCancelCompletedRefundThrowsValidationError(): void
+    public function test_cancel_completed_refund_throws_validation_error(): void
     {
         $refund = Model::withoutEvents(fn () => SaleRefund::create([
             'original_sale_id' => 1,
@@ -486,7 +487,7 @@ class RefundTest extends TestCase
         float $loyaltyPointsEarned = 0.0
     ): Sale {
         return Model::withoutEvents(fn () => Sale::create([
-            'sale_number' => 'SALE-' . uniqid(),
+            'sale_number' => 'SALE-'.uniqid(),
             'store_id' => 1,
             'customer_id' => $customerId,
             'sale_date' => now(),
@@ -506,7 +507,7 @@ class RefundTest extends TestCase
     {
         return Model::withoutEvents(fn () => Customer::create([
             'name' => 'Test Customer',
-            'phone' => '+254700' . rand(100000, 999999),
+            'phone' => '+254700'.rand(100000, 999999),
             'loyalty_points' => $loyaltyPoints,
             'store_credit_balance' => $storeCreditBalance,
             'current_debt' => 0.00,

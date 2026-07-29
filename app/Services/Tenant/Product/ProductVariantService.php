@@ -2,8 +2,14 @@
 
 namespace App\Services\Tenant\Product;
 
+use App\Models\Tenant\Inventory;
+use App\Models\Tenant\MarketplaceSaleItem;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductVariant;
+use App\Models\Tenant\PurchaseOrderItem;
+use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\StockTransferItem;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +31,7 @@ class ProductVariantService
             ->with(['uom']);
 
         // Apply filters
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
@@ -33,11 +39,11 @@ class ProductVariantService
             $query->where('is_active', (bool) $filters['is_active']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('stock_status', $filters['status']);
         }
 
-        if (!empty($filters['attribute_key']) && !empty($filters['attribute_value'])) {
+        if (! empty($filters['attribute_key']) && ! empty($filters['attribute_value'])) {
             $query->byAttribute($filters['attribute_key'], $filters['attribute_value']);
         }
 
@@ -66,17 +72,17 @@ class ProductVariantService
             ->with(['product:id,name,slug,sku', 'uom']);
 
         // Search
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
         // Product filter
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->where('product_id', $filters['product_id']);
         }
 
         // Status filter
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('stock_status', $filters['status']);
         }
 
@@ -86,7 +92,7 @@ class ProductVariantService
         }
 
         // Attribute filters
-        if (!empty($filters['attribute_key']) && !empty($filters['attribute_value'])) {
+        if (! empty($filters['attribute_key']) && ! empty($filters['attribute_value'])) {
             $query->byAttribute($filters['attribute_key'], $filters['attribute_value']);
         }
 
@@ -114,7 +120,7 @@ class ProductVariantService
     {
         return DB::transaction(function () use ($product, $data) {
             // Verify product is variable type
-            if (!$product->isVariable()) {
+            if (! $product->isVariable()) {
                 throw new \InvalidArgumentException('Cannot create variants for a simple product. Change product type to variable first.');
             }
 
@@ -129,7 +135,7 @@ class ProductVariantService
             }
 
             // Calculate quantity in base UOM if not provided
-            if (!isset($data['quantity_in_base_uom']) && isset($data['uom_id']) && isset($data['uom_quantity'])) {
+            if (! isset($data['quantity_in_base_uom']) && isset($data['uom_id']) && isset($data['uom_quantity'])) {
                 $data['quantity_in_base_uom'] = $this->calculateBaseUomQuantity(
                     $product,
                     $data['uom_id'],
@@ -138,12 +144,12 @@ class ProductVariantService
             }
 
             // Calculate variant price if not provided
-            if (!isset($data['variant_price']) && isset($data['base_selling_price_adjustment'])) {
+            if (! isset($data['variant_price']) && isset($data['base_selling_price_adjustment'])) {
                 $data['variant_price'] = $product->base_selling_price + $data['base_selling_price_adjustment'];
             }
 
             // Handle online_price: if not provided but product has online_price, calculate it
-            if (!isset($data['online_price']) && $product->online_price !== null) {
+            if (! isset($data['online_price']) && $product->online_price !== null) {
                 $adjustment = $data['base_selling_price_adjustment'] ?? 0;
                 $data['online_price'] = $product->online_price + $adjustment;
             }
@@ -188,7 +194,7 @@ class ProductVariantService
             }
 
             // Recalculate quantity in base UOM if UOM or quantity changed
-            if ((isset($data['uom_id']) || isset($data['uom_quantity'])) && !isset($data['quantity_in_base_uom'])) {
+            if ((isset($data['uom_id']) || isset($data['uom_quantity'])) && ! isset($data['quantity_in_base_uom'])) {
                 $uomId = $data['uom_id'] ?? $variant->uom_id;
                 $uomQuantity = $data['uom_quantity'] ?? $variant->uom_quantity;
 
@@ -200,7 +206,7 @@ class ProductVariantService
             }
 
             // Recalculate variant price if adjustment changed
-            if (isset($data['base_selling_price_adjustment']) && !isset($data['variant_price'])) {
+            if (isset($data['base_selling_price_adjustment']) && ! isset($data['variant_price'])) {
                 $data['variant_price'] = $variant->product->base_selling_price + $data['base_selling_price_adjustment'];
             }
 
@@ -229,7 +235,7 @@ class ProductVariantService
     public function toggleActive(ProductVariant $variant): ProductVariant
     {
         return DB::transaction(function () use ($variant) {
-            $newStatus = !$variant->is_active;
+            $newStatus = ! $variant->is_active;
             $variant->update(['is_active' => $newStatus]);
 
             // Clear cache
@@ -276,8 +282,20 @@ class ProductVariantService
         return DB::transaction(function () use ($variant) {
             $product = $variant->product;
 
-            // TODO: Check if variant is used in any transactions
-            // If used, should prevent deletion or mark as inactive
+            // Cannot delete if this variant is referenced in existing transactions. ProductVariant
+            // uses SoftDeletes, so the DB-level onDelete('restrict') FKs on these tables never
+            // actually fire for this call (restrict only triggers on a real DELETE) — this guard
+            // is the only thing actually protecting against it.
+            $hasTransactions = SaleItem::where('product_variant_id', $variant->id)->exists()
+                || PurchaseOrderItem::where('product_variant_id', $variant->id)->exists()
+                || StockTransferItem::where('product_variant_id', $variant->id)->exists()
+                || ProductBatch::where('product_variant_id', $variant->id)->exists()
+                || Inventory::where('product_variant_id', $variant->id)->exists()
+                || MarketplaceSaleItem::where('product_variant_id', $variant->id)->exists();
+
+            if ($hasTransactions) {
+                throw new \InvalidArgumentException('Cannot delete this variant: it is referenced in existing transactions.');
+            }
 
             $variantSku = $variant->sku;
             $variant->delete();
@@ -304,7 +322,7 @@ class ProductVariantService
             ->where('uom_id', $uomId)
             ->first();
 
-        if (!$productUom) {
+        if (! $productUom) {
             throw new \InvalidArgumentException('UOM is not configured for this product');
         }
 

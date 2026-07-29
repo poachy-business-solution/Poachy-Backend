@@ -2,8 +2,14 @@
 
 namespace App\Services\Tenant\Product;
 
+use App\Models\Tenant\InventoryMovement;
+use App\Models\Tenant\MarketplaceSaleItem;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductUom;
+use App\Models\Tenant\PurchaseOrderItem;
+use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\StockTransferItem;
 use App\Models\Tenant\UnitOfMeasure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -109,7 +115,7 @@ class ProductUomService
             }
 
             // If removing base UOM flag
-            if (isset($data['is_base_uom']) && !$data['is_base_uom'] && $productUom->is_base_uom) {
+            if (isset($data['is_base_uom']) && ! $data['is_base_uom'] && $productUom->is_base_uom) {
                 // Cannot remove base UOM if it's the only one
                 if (ProductUom::where('product_id', $productUom->product_id)->count() === 1) {
                     throw new \InvalidArgumentException('Cannot remove base UOM flag from the only UOM');
@@ -167,8 +173,19 @@ class ProductUomService
                 throw new \InvalidArgumentException('Cannot delete the only UOM for this product');
             }
 
-            // TODO: Check if UOM is used in any transactions
-            // If used, should prevent deletion or mark as inactive
+            // Cannot delete if this product/UOM pairing already appears in transactions.
+            // product_uoms has no incoming FK from any of these tables, so nothing at the
+            // DB level would otherwise stop this.
+            $hasTransactions = SaleItem::where('product_id', $productUom->product_id)->where('uom_id', $productUom->uom_id)->exists()
+                || PurchaseOrderItem::where('product_id', $productUom->product_id)->where('uom_id', $productUom->uom_id)->exists()
+                || InventoryMovement::where('product_id', $productUom->product_id)->where('uom_id', $productUom->uom_id)->exists()
+                || StockTransferItem::where('product_id', $productUom->product_id)->where('uom_id', $productUom->uom_id)->exists()
+                || ProductBatch::where('product_id', $productUom->product_id)->where('purchase_uom_id', $productUom->uom_id)->exists()
+                || MarketplaceSaleItem::where('product_id', $productUom->product_id)->where('uom_id', $productUom->uom_id)->exists();
+
+            if ($hasTransactions) {
+                throw new \InvalidArgumentException('Cannot delete this UOM: it is referenced in existing transactions.');
+            }
 
             $uomCode = $productUom->uom->code;
             $productUom->delete();

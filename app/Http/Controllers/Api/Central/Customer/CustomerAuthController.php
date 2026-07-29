@@ -15,7 +15,6 @@ use App\Http\Requests\Central\Customer\Auth\VerifyPhoneOtpRequest;
 use App\Http\Resources\Central\Customer\CustomerResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Customer\CustomerAuthService;
-use App\Services\Central\Customer\CustomerOtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -32,11 +31,14 @@ class CustomerAuthController extends Controller
      *     description="Creates a new customer account in the marketplace.",
      *     operationId="registerCustomer",
      *     tags={"Central - Customer - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Customer registration data",
+     *
      *         @OA\JsonContent(
      *             required={"name", "email", "password", "password_confirmation", "phone"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -111,10 +113,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Registration successful. Email verification OTP sent.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -150,10 +155,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -194,11 +202,14 @@ class CustomerAuthController extends Controller
      *     description="Validates customer credentials and sends a one-time password (OTP) to the customer's email for login verification. Customer must verify the OTP using the login/verify endpoint to complete authentication.",
      *     operationId="initiateCustomerLogin",
      *     tags={"Central - Customer - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Customer login credentials",
+     *
      *         @OA\JsonContent(
      *             required={"email", "password"},
+     *
      *             @OA\Property(
      *                 property="email",
      *                 type="string",
@@ -215,10 +226,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credentials validated successfully. Verification code sent to email.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -240,10 +254,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or invalid credentials",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -287,11 +304,14 @@ class CustomerAuthController extends Controller
      *     description="Verifies the OTP code sent to the customer's email and completes the login process. Returns customer details and authentication token upon successful verification. Limited to 3 attempts before the OTP expires.",
      *     operationId="verifyCustomerLogin",
      *     tags={"Central - Customer - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Email and OTP verification data",
+     *
      *         @OA\JsonContent(
      *             required={"email", "otp_code"},
+     *
      *             @OA\Property(
      *                 property="email",
      *                 type="string",
@@ -309,10 +329,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Login successful. Returns customer data and authentication token.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Login successful."),
      *             @OA\Property(
@@ -354,10 +377,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Invalid OTP code or validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -366,9 +392,11 @@ class CustomerAuthController extends Controller
      *                 @OA\Property(
      *                     property="otp_code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Invalid OTP code. 2 attempt(s) remaining.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -393,7 +421,7 @@ class CustomerAuthController extends Controller
 
         return ApiResponse::success('Login successful.', [
             'customer' => new CustomerResource($result['customer']),
-            'token'    => $result['token'],
+            'token' => $result['token'],
         ]);
     }
 
@@ -405,10 +433,13 @@ class CustomerAuthController extends Controller
      *     operationId="logoutCustomer",
      *     tags={"Central - Customer - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Logged out successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Logged out successfully."),
      *             @OA\Property(
@@ -421,10 +452,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -444,11 +478,14 @@ class CustomerAuthController extends Controller
      *     description="Initiates the password reset process by sending an OTP code to the customer's email address if it exists in the system. Returns a generic success message regardless of whether the email exists (security best practice to prevent email enumeration).",
      *     operationId="requestPasswordReset",
      *     tags={"Central - Customer - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Email address for password reset",
+     *
      *         @OA\JsonContent(
      *             required={"email"},
+     *
      *             @OA\Property(
      *                 property="email",
      *                 type="string",
@@ -458,10 +495,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Request processed. OTP sent if email exists.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -478,10 +518,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -521,11 +564,14 @@ class CustomerAuthController extends Controller
      *     description="Completes the password reset process by verifying the OTP code and setting a new password. The customer must provide their email, the OTP received, and the new password with confirmation.",
      *     operationId="confirmPasswordReset",
      *     tags={"Central - Customer - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Password reset confirmation data",
+     *
      *         @OA\JsonContent(
      *             required={"email", "otp_code", "password", "password_confirmation"},
+     *
      *             @OA\Property(
      *                 property="email",
      *                 type="string",
@@ -557,10 +603,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password reset successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -577,10 +626,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or invalid OTP",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -623,11 +675,14 @@ class CustomerAuthController extends Controller
      *     operationId="initiatePasswordUpdate",
      *     tags={"Central - Customer - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Current password for verification",
+     *
      *         @OA\JsonContent(
      *             required={"current_password"},
+     *
      *             @OA\Property(
      *                 property="current_password",
      *                 type="string",
@@ -637,10 +692,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Current password verified. OTP sent to email for confirmation.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -657,17 +715,23 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or incorrect current password",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -709,11 +773,14 @@ class CustomerAuthController extends Controller
      *     operationId="confirmPasswordUpdate",
      *     tags={"Central - Customer - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="OTP code and new password",
+     *
      *         @OA\JsonContent(
      *             required={"otp_code", "password", "password_confirmation"},
+     *
      *             @OA\Property(
      *                 property="otp_code",
      *                 type="string",
@@ -738,10 +805,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Password updated successfully."),
      *             @OA\Property(
@@ -754,17 +824,23 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or invalid OTP",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -807,10 +883,13 @@ class CustomerAuthController extends Controller
      *     operationId="sendEmailVerificationOTP",
      *     tags={"Central - Customer - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Email verification code sent successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -827,10 +906,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -851,11 +933,14 @@ class CustomerAuthController extends Controller
      *     operationId="confirmEmailVerification",
      *     tags={"Central - Customer - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Email verification OTP code",
+     *
      *         @OA\JsonContent(
      *             required={"otp_code"},
+     *
      *             @OA\Property(
      *                 property="otp_code",
      *                 type="string",
@@ -866,10 +951,13 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Email verified successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Email verified successfully."),
      *             @OA\Property(
@@ -882,17 +970,23 @@ class CustomerAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or invalid OTP",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -926,7 +1020,49 @@ class CustomerAuthController extends Controller
         return ApiResponse::success('Email verified successfully.');
     }
 
-    //  TODO
+    /**
+     * @OA\Post(
+     *     path="/api/v1/central/marketplace/auth/verify-phone",
+     *     summary="Send or resend phone verification OTP",
+     *     description="Sends a verification OTP code to the authenticated customer's email address (SMS delivery is not yet integrated, so the code is delivered by email). Can be used to resend the code if needed. Customer must be authenticated.",
+     *     operationId="sendPhoneVerificationOTP",
+     *     tags={"Central - Customer - Auth"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Phone verification code sent successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Phone verification code sent to your email."
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2026-02-16T09:00:58.745008Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="e9211d8c-41df-456b-83e0-bfc413ab7863"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
     public function sendPhoneVerification(): JsonResponse
     {
         $this->authService->sendPhoneVerificationOtp(auth('central')->user());
@@ -934,6 +1070,91 @@ class CustomerAuthController extends Controller
         return ApiResponse::success('Phone verification code sent to your email.');
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/central/marketplace/auth/verify-phone/confirm",
+     *     summary="Confirm phone verification with OTP",
+     *     description="Verifies the customer's phone number by validating the OTP code sent to their email. Upon successful verification, the customer's phone_verified status is updated to true. Customer must be authenticated.",
+     *     operationId="confirmPhoneVerification",
+     *     tags={"Central - Customer - Auth"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Phone verification OTP code",
+     *
+     *         @OA\JsonContent(
+     *             required={"otp_code"},
+     *
+     *             @OA\Property(
+     *                 property="otp_code",
+     *                 type="string",
+     *                 description="7-digit OTP code sent to email",
+     *                 example="5705056",
+     *                 minLength=7,
+     *                 maxLength=7
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Phone number verified successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Phone number verified successfully."),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2026-02-16T09:05:09.931933Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="4620733d-cc1a-49e4-8237-6ac7a83030ea"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error or invalid OTP",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 description="Validation errors keyed by field name",
+     *                 additionalProperties={
+     *                     "type": "array",
+     *                     "items": {"type": "string"}
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid"),
+     *                 @OA\Property(property="tenant_id", type="string", nullable=true),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true)
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function confirmPhoneVerification(VerifyPhoneOtpRequest $request): JsonResponse
     {
         $this->authService->verifyPhone(
