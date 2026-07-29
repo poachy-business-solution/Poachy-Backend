@@ -6,9 +6,11 @@ use App\Enums\Central\SubscriptionPaymentStatus;
 use App\Models\BusinessSubscription;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
-use App\Services\Central\Marketplace\MpesaService as OldMpesaService;
+use App\Services\Central\Notification\SystemNotificationService;
+use App\Services\Central\Subscription\SubscriptionExpiryService;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
 use App\Services\Shared\Mpesa\MpesaService;
+use App\Services\Tenant\TenantAccessService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -33,19 +35,19 @@ class C2BConfirmationTest extends TestCase
         DB::connection('central')->statement('SET foreign_key_checks = 0');
 
         $this->plan = SubscriptionPlan::on('central')->create([
-            'name'               => 'C2B Confirm Plan',
-            'slug'               => 'c2b-confirm-plan-' . uniqid(),
-            'price'              => 2500.00,
+            'name' => 'C2B Confirm Plan',
+            'slug' => 'c2b-confirm-plan-'.uniqid(),
+            'price' => 2500.00,
             'billing_cycle_days' => 30,
-            'is_active'          => true,
-            'is_featured'        => false,
+            'is_active' => true,
+            'is_featured' => false,
         ]);
 
         DB::connection('central')->table('tenants')->insertOrIgnore([
-            'id'                    => 'c2b-confirm-tenant',
+            'id' => 'c2b-confirm-tenant',
             'mpesa_paybill_account' => 'POA99002',
-            'created_at'            => now(),
-            'updated_at'            => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -63,21 +65,26 @@ class C2BConfirmationTest extends TestCase
 
     private function makeService(): SubscriptionPaymentService
     {
-        return new SubscriptionPaymentService(Mockery::mock(MpesaService::class));
+        return new SubscriptionPaymentService(
+            Mockery::mock(MpesaService::class),
+            new TenantAccessService,
+            new SystemNotificationService,
+            new SubscriptionExpiryService,
+        );
     }
 
     private function makeC2BPayload(array $overrides = []): array
     {
         return array_merge([
-            'transaction_id'   => 'C2B_TXN_' . uniqid(),
+            'transaction_id' => 'C2B_TXN_'.uniqid(),
             'transaction_type' => 'Pay Bill',
             'transaction_time' => '20260620120000',
-            'amount'           => 2500.0,
-            'shortcode'        => '174379',
-            'bill_ref_number'  => 'POA99002',
-            'phone'            => '254712345678',
-            'first_name'       => 'John',
-            'last_name'        => 'Doe',
+            'amount' => 2500.0,
+            'shortcode' => '174379',
+            'bill_ref_number' => 'POA99002',
+            'phone' => '254712345678',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'org_account_balance' => '50000.00',
         ], $overrides);
     }
@@ -89,7 +96,7 @@ class C2BConfirmationTest extends TestCase
     public function test_c2b_confirmation_creates_payment_record_and_activates_subscription(): void
     {
         $service = $this->makeService();
-        $txnId   = 'C2B_SUCCESS_' . uniqid();
+        $txnId = 'C2B_SUCCESS_'.uniqid();
 
         $result = $service->processC2BConfirmation($this->makeC2BPayload([
             'transaction_id' => $txnId,
@@ -112,9 +119,9 @@ class C2BConfirmationTest extends TestCase
     public function test_c2b_confirmation_sets_correct_subscription_end_date(): void
     {
         $service = $this->makeService();
-        $before  = now();
+        $before = now();
 
-        $service->processC2BConfirmation($this->makeC2BPayload(['transaction_id' => 'C2B_DATE_' . uniqid()]));
+        $service->processC2BConfirmation($this->makeC2BPayload(['transaction_id' => 'C2B_DATE_'.uniqid()]));
 
         $subscription = BusinessSubscription::on('central')
             ->where('tenant_id', 'c2b-confirm-tenant')
@@ -128,9 +135,9 @@ class C2BConfirmationTest extends TestCase
     public function test_c2b_confirmation_is_idempotent_on_duplicate_transaction_id(): void
     {
         $service = $this->makeService();
-        $txnId   = 'C2B_IDEM_' . uniqid();
+        $txnId = 'C2B_IDEM_'.uniqid();
 
-        $first  = $service->processC2BConfirmation($this->makeC2BPayload(['transaction_id' => $txnId]));
+        $first = $service->processC2BConfirmation($this->makeC2BPayload(['transaction_id' => $txnId]));
         $second = $service->processC2BConfirmation($this->makeC2BPayload(['transaction_id' => $txnId]));
 
         $this->assertSame($first->id, $second->id);
@@ -149,8 +156,8 @@ class C2BConfirmationTest extends TestCase
         $service = $this->makeService();
 
         $result = $service->processC2BConfirmation($this->makeC2BPayload([
-            'transaction_id' => 'C2B_PHONE_' . uniqid(),
-            'phone'          => '254798765432',
+            'transaction_id' => 'C2B_PHONE_'.uniqid(),
+            'phone' => '254798765432',
         ]));
 
         $this->assertSame('254798765432', $result->customer_phone);

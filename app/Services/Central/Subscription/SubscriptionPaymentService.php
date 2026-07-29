@@ -4,15 +4,19 @@ namespace App\Services\Central\Subscription;
 
 use App\Enums\Central\SubscriptionPaymentStatus;
 use App\Exceptions\MpesaException;
+use App\Mail\Central\Subscription\SubscriptionActivatedMail;
 use App\Models\BusinessDetail;
 use App\Models\BusinessSubscription;
 use App\Models\CentralPaymentLog;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Services\Central\Notification\SystemNotificationService;
 use App\Services\Shared\Mpesa\MpesaService;
+use App\Services\Tenant\TenantAccessService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SubscriptionPaymentService
 {
@@ -24,6 +28,9 @@ class SubscriptionPaymentService
 
     public function __construct(
         private readonly MpesaService $mpesa,
+        private readonly TenantAccessService $tenantAccess,
+        private readonly SystemNotificationService $notifications,
+        private readonly SubscriptionExpiryService $expiryService,
     ) {}
 
     // =========================================================================
@@ -63,61 +70,61 @@ class SubscriptionPaymentService
             $waitSeconds = self::STK_COOLDOWN_SECONDS - $recentProcessing->initiated_at->diffInSeconds(now());
 
             return [
-                'payment'      => $recentProcessing,
-                'message'      => 'STK push already sent. Please check your phone.',
+                'payment' => $recentProcessing,
+                'message' => 'STK push already sent. Please check your phone.',
                 'instructions' => ['wait_seconds' => max(0, $waitSeconds)],
             ];
         }
 
         $payment = SubscriptionPayment::create([
-            'tenant_id'            => $tenantId,
+            'tenant_id' => $tenantId,
             'subscription_plan_id' => $plan->id,
-            'customer_phone'       => $phone,
-            'amount'               => $plan->price,
-            'payment_status'       => SubscriptionPaymentStatus::Pending,
-            'payment_type'         => 'stk',
+            'customer_phone' => $phone,
+            'amount' => $plan->price,
+            'payment_status' => SubscriptionPaymentStatus::Pending,
+            'payment_type' => 'stk',
         ]);
 
         try {
             $stkResult = $this->mpesa->initiateSTKPush(
-                phoneNumber:      $phone,
-                amount:           (float) $plan->price,
-                accountReference: config('mpesa.account_prefix') . 'SUB',
-                transactionDesc:  $plan->name,
-                callbackUrl:      config('mpesa.subscription_stk_callback_url'),
+                phoneNumber: $phone,
+                amount: (float) $plan->price,
+                accountReference: config('mpesa.account_prefix').'SUB',
+                transactionDesc: $plan->name,
+                callbackUrl: config('mpesa.subscription_stk_callback_url'),
             );
 
             $payment->update([
-                'payment_status'        => SubscriptionPaymentStatus::Processing,
+                'payment_status' => SubscriptionPaymentStatus::Processing,
                 'transaction_reference' => $stkResult['checkout_request_id'],
-                'initiated_at'          => now(),
-                'payment_metadata'      => [
+                'initiated_at' => now(),
+                'payment_metadata' => [
                     'merchant_request_id' => $stkResult['merchant_request_id'],
-                    'plan_name'           => $plan->name,
+                    'plan_name' => $plan->name,
                 ],
             ]);
 
             CentralPaymentLog::record('subscription_payment', $payment->id, 'stk_initiated', [
-                'tenant_id'    => $tenantId,
-                'amount'       => (float) $plan->price,
+                'tenant_id' => $tenantId,
+                'amount' => (float) $plan->price,
                 'customer_phone' => $phone,
                 'transaction_reference' => $stkResult['checkout_request_id'],
             ]);
 
             return [
-                'payment'      => $payment->fresh(),
-                'message'      => 'STK push sent. Please complete payment on your phone.',
+                'payment' => $payment->fresh(),
+                'message' => 'STK push sent. Please complete payment on your phone.',
                 'instructions' => [
                     'checkout_request_id' => $stkResult['checkout_request_id'],
-                    'phone_number'        => $phone, // the business phone that received the push
+                    'phone_number' => $phone, // the business phone that received the push
                 ],
             ];
         } catch (MpesaException $e) {
             $payment->markAsFailed($e->getMessage(), $e->darajaErrorCode);
 
             CentralPaymentLog::record('subscription_payment', $payment->id, 'payment_failed', [
-                'tenant_id'    => $tenantId,
-                'result_code'  => $e->darajaErrorCode,
+                'tenant_id' => $tenantId,
+                'result_code' => $e->darajaErrorCode,
                 'result_description' => $e->getMessage(),
             ]);
 
@@ -158,14 +165,14 @@ class SubscriptionPaymentService
             );
 
             CentralPaymentLog::record('subscription_payment', $payment->id, 'payment_failed', [
-                'tenant_id'          => $payment->tenant_id,
-                'result_code'        => $parsedPayload['failure_code'],
+                'tenant_id' => $payment->tenant_id,
+                'result_code' => $parsedPayload['failure_code'],
                 'result_description' => $parsedPayload['failure_reason'],
             ]);
 
             Log::channel('mpesa')->info('Subscription STK payment failed', [
                 'payment_id' => $payment->id,
-                'reason'     => $parsedPayload['failure_reason'],
+                'reason' => $parsedPayload['failure_reason'],
             ]);
 
             return $payment->fresh();
@@ -188,10 +195,10 @@ class SubscriptionPaymentService
      */
     public function processC2BConfirmation(array $parsedPayload): SubscriptionPayment
     {
-        $transactionId   = $parsedPayload['transaction_id'];
-        $billRefNumber   = $parsedPayload['bill_ref_number'];
-        $amount          = $parsedPayload['amount'];
-        $customerPhone   = $parsedPayload['phone'];
+        $transactionId = $parsedPayload['transaction_id'];
+        $billRefNumber = $parsedPayload['bill_ref_number'];
+        $amount = $parsedPayload['amount'];
+        $customerPhone = $parsedPayload['phone'];
 
         // Idempotency: TransID already processed
         $existing = SubscriptionPayment::on('central')
@@ -202,7 +209,7 @@ class SubscriptionPaymentService
         if ($existing) {
             Log::channel('mpesa')->info('C2B subscription confirmation — duplicate ignored', [
                 'transaction_id' => $transactionId,
-                'payment_id'     => $existing->id,
+                'payment_id' => $existing->id,
             ]);
 
             return $existing;
@@ -218,22 +225,22 @@ class SubscriptionPaymentService
             ->firstOrFail();
 
         $payment = SubscriptionPayment::create([
-            'tenant_id'             => $tenant->id,
-            'subscription_plan_id'  => $plan->id,
-            'customer_phone'        => $customerPhone,
-            'amount'                => $amount,
-            'payment_status'        => SubscriptionPaymentStatus::Pending,
-            'payment_type'          => 'c2b',
-            'bill_ref_number'       => $billRefNumber,
+            'tenant_id' => $tenant->id,
+            'subscription_plan_id' => $plan->id,
+            'customer_phone' => $customerPhone,
+            'amount' => $amount,
+            'payment_status' => SubscriptionPaymentStatus::Pending,
+            'payment_type' => 'c2b',
+            'bill_ref_number' => $billRefNumber,
             'transaction_reference' => $transactionId,
         ]);
 
         CentralPaymentLog::record('subscription_payment', $payment->id, 'c2b_confirmation_received', [
-            'tenant_id'            => $tenant->id,
-            'amount'               => $amount,
-            'customer_phone'       => $customerPhone,
+            'tenant_id' => $tenant->id,
+            'amount' => $amount,
+            'customer_phone' => $customerPhone,
             'transaction_reference' => $transactionId,
-            'raw_payload'          => $parsedPayload,
+            'raw_payload' => $parsedPayload,
         ]);
 
         return $this->activateSubscription($payment, $parsedPayload['transaction_id']);
@@ -253,10 +260,10 @@ class SubscriptionPaymentService
             ->where('is_active', true)
             ->orderBy('price')
             ->get()
-            ->map(fn($plan) => [
-                'id'            => $plan->id,
-                'name'          => $plan->name,
-                'price'         => (float) $plan->price,
+            ->map(fn ($plan) => [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'price' => (float) $plan->price,
                 'billing_cycle' => $plan->getBillingCycleDisplay(),
             ])
             ->all();
@@ -264,9 +271,9 @@ class SubscriptionPaymentService
         $credentials = $this->mpesa->getActiveCredentials();
 
         return [
-            'shortcode'      => $credentials['shortcode'],
+            'shortcode' => $credentials['shortcode'],
             'account_number' => $tenant->mpesa_paybill_account ?? '—',
-            'plans'          => $plans,
+            'plans' => $plans,
         ];
     }
 
@@ -291,7 +298,7 @@ class SubscriptionPaymentService
      */
     private function activateSubscription(SubscriptionPayment $payment, ?string $providerReference): SubscriptionPayment
     {
-        return DB::connection('central')->transaction(function () use ($payment, $providerReference) {
+        $payment = DB::connection('central')->transaction(function () use ($payment, $providerReference) {
             $plan = $payment->subscriptionPlan;
 
             $endDate = $plan->billing_cycle_days > 0
@@ -299,44 +306,109 @@ class SubscriptionPaymentService
                 : null;
 
             $subscription = BusinessSubscription::create([
-                'tenant_id'            => $payment->tenant_id,
+                'tenant_id' => $payment->tenant_id,
                 'subscription_plan_id' => $plan->id,
-                'start_date'           => now()->toDateString(),
-                'end_date'             => $endDate,
-                'amount_paid'          => $payment->amount,
-                'currency'             => 'KES',
-                'payment_method'       => 'mpesa',
-                'payment_reference'    => $providerReference,
-                'payment_date'         => now(),
-                'status'               => 'active',
-                'auto_renew'           => false,
-                'is_trial'             => false,
+                'start_date' => now()->toDateString(),
+                'end_date' => $endDate,
+                'amount_paid' => $payment->amount,
+                'currency' => 'KES',
+                'payment_method' => 'mpesa',
+                'payment_reference' => $providerReference,
+                'payment_date' => now(),
+                'status' => 'active',
+                'auto_renew' => false,
+                'is_trial' => false,
             ]);
 
             $payment->update([
-                'payment_status'           => SubscriptionPaymentStatus::Completed,
-                'provider_reference'       => $providerReference,
-                'completed_at'             => now(),
+                'payment_status' => SubscriptionPaymentStatus::Completed,
+                'provider_reference' => $providerReference,
+                'completed_at' => now(),
                 'business_subscription_id' => $subscription->id,
             ]);
 
             CentralPaymentLog::record('subscription_payment', $payment->id, 'subscription_activated', [
-                'tenant_id'       => $payment->tenant_id,
+                'tenant_id' => $payment->tenant_id,
                 'subscription_id' => $subscription->id,
-                'plan_id'         => $plan->id,
+                'plan_id' => $plan->id,
                 'provider_reference' => $providerReference,
-                'amount'          => (float) $payment->amount,
+                'amount' => (float) $payment->amount,
             ]);
 
             Log::channel('mpesa')->info('Subscription activated', [
-                'tenant_id'       => $payment->tenant_id,
-                'plan_id'         => $plan->id,
+                'tenant_id' => $payment->tenant_id,
+                'plan_id' => $plan->id,
                 'subscription_id' => $subscription->id,
-                'payment_type'    => $payment->payment_type,
-                'receipt'         => $providerReference,
+                'payment_type' => $payment->payment_type,
+                'receipt' => $providerReference,
             ]);
 
             return $payment->fresh();
         });
+
+        // Fixes a latent bug: without this, a tenant blocked before paying stayed blocked
+        // for up to 24h (checkTenantAccess() caches its result) despite an active subscription.
+        $this->tenantAccess->clearTenantAccessCache($payment->tenant_id);
+
+        $this->sendActivationNotification($payment);
+
+        return $payment;
+    }
+
+    /**
+     * Send the "payment received" confirmation (email + in-app) after a subscription activates.
+     * Guarded by `activation_notified` so a retried dispatch never double-sends.
+     */
+    private function sendActivationNotification(SubscriptionPayment $payment): void
+    {
+        $subscription = $payment->businessSubscription;
+
+        if (! $subscription || $subscription->activation_notified) {
+            return;
+        }
+
+        $businessDetail = BusinessDetail::on('central')
+            ->where('tenant_id', $payment->tenant_id)
+            ->first();
+
+        if (! $businessDetail) {
+            Log::warning('No business detail found for subscription activation notice', [
+                'tenant_id' => $payment->tenant_id,
+            ]);
+
+            return;
+        }
+
+        $plan = $subscription->plan;
+        $paymentMethod = $payment->payment_type === 'stk' ? 'M-Pesa STK Push' : 'M-Pesa Paybill';
+
+        $owner = $this->expiryService->resolveOwnerEmail($payment->tenant_id);
+
+        if ($owner) {
+            Mail::to($owner['email'])->queue(new SubscriptionActivatedMail(
+                businessName: $businessDetail->business_name,
+                planName: $plan->name,
+                amountPaid: (float) $payment->amount,
+                renewalDate: $subscription->end_date?->toFormattedDateString(),
+                paymentMethod: $paymentMethod,
+            ));
+        } else {
+            Log::warning('No owner email found — skipping activation email, in-app notice only', [
+                'tenant_id' => $payment->tenant_id,
+            ]);
+        }
+
+        $this->notifications->notifyTenant(
+            businessDetailId: $businessDetail->id,
+            type: 'subscription_activated',
+            title: 'Payment received — subscription active',
+            message: "Your {$plan->name} plan is now active. Amount paid: KES ".number_format((float) $payment->amount, 2).'.',
+            data: ['subscription_id' => $subscription->id, 'payment_id' => $payment->id],
+        );
+
+        $subscription->update([
+            'activation_notified' => true,
+            'activation_notified_at' => now(),
+        ]);
     }
 }

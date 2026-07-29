@@ -10,7 +10,7 @@ class TenantAccessService
 {
     /**
      * Check if tenant has valid access to the platform.
-     * 
+     *
      * @return array ['allowed' => bool, 'reason' => string|null, 'details' => array]
      */
     public function checkTenantAccess(string $tenantId): array
@@ -19,7 +19,7 @@ class TenantAccessService
         return Cache::remember(
             "tenant_access:{$tenantId}",
             now()->addHours(24),
-            fn() => $this->performAccessCheck($tenantId)
+            fn () => $this->performAccessCheck($tenantId)
         );
     }
 
@@ -33,7 +33,7 @@ class TenantAccessService
             ->where('tenant_id', $tenantId)
             ->first();
 
-        if (!$businessDetail) {
+        if (! $businessDetail) {
             return [
                 'allowed' => false,
                 'reason' => 'business_details_missing',
@@ -74,7 +74,7 @@ class TenantAccessService
         // 4. Check subscription status
         $subscriptionCheck = $this->checkSubscriptionStatus($tenantId);
 
-        if (!$subscriptionCheck['valid']) {
+        if (! $subscriptionCheck['valid']) {
             return [
                 'allowed' => false,
                 'reason' => $subscriptionCheck['reason'],
@@ -102,12 +102,11 @@ class TenantAccessService
     {
         $subscription = BusinessSubscription::on('central')
             ->where('tenant_id', $tenantId)
-            ->whereIn('status', ['active', 'trial'])
             ->orderBy('created_at', 'desc')
             ->first();
 
-        // No active subscription found
-        if (!$subscription) {
+        // No subscription row ever created for this tenant
+        if (! $subscription) {
             return [
                 'valid' => false,
                 'reason' => 'no_active_subscription',
@@ -149,17 +148,44 @@ class TenantAccessService
             ];
         }
 
-        // Check if paid subscription has expired
-        if ($subscription->end_date && now()->gt($subscription->end_date)) {
+        // Check if paid subscription has expired — either the nightly job already flipped
+        // `status`, or the end_date has lapsed but the job hasn't run yet (defensive, immediate block)
+        if ($subscription->status === 'expired' || ($subscription->end_date && now()->gt($subscription->end_date))) {
             return [
                 'valid' => false,
                 'reason' => 'subscription_expired',
                 'message' => 'Your subscription has expired. Please renew to continue using the platform.',
                 'details' => [
                     'action_required' => 'renew_subscription',
-                    'expired_at' => $subscription->end_date->toDateTimeString(),
+                    'expired_at' => $subscription->end_date?->toDateTimeString(),
                     'plan_name' => $subscription->plan->name ?? 'Unknown',
                     'auto_renew' => $subscription->auto_renew,
+                ],
+            ];
+        }
+
+        // Subscription was cancelled before reaching its end_date
+        if ($subscription->status === 'cancelled') {
+            return [
+                'valid' => false,
+                'reason' => 'subscription_cancelled',
+                'message' => 'Your subscription was cancelled. Please subscribe to a plan to continue.',
+                'details' => [
+                    'action_required' => 'subscribe',
+                    'cancelled_at' => $subscription->cancelled_at?->toDateTimeString(),
+                ],
+            ];
+        }
+
+        // Any other non-active status (e.g. 'pending') — no usable subscription
+        if ($subscription->status !== 'active') {
+            return [
+                'valid' => false,
+                'reason' => 'no_active_subscription',
+                'message' => 'No active subscription found. Please subscribe to a plan to continue.',
+                'details' => [
+                    'action_required' => 'subscribe',
+                    'available_plans_endpoint' => '/api/v1/central/subscription-plans',
                 ],
             ];
         }
@@ -214,7 +240,7 @@ class TenantAccessService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return null;
         }
 

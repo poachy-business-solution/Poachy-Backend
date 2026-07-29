@@ -4,13 +4,22 @@ namespace Tests\Feature\Payment;
 
 use App\Enums\Central\SubscriptionPaymentStatus;
 use App\Exceptions\MpesaException;
+use App\Mail\Central\Subscription\SubscriptionActivatedMail;
+use App\Models\BusinessDetail;
 use App\Models\BusinessSubscription;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
+use App\Models\SystemNotification;
+use App\Services\Central\Notification\SystemNotificationService;
+use App\Services\Central\Subscription\SubscriptionExpiryService;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
 use App\Services\Shared\Mpesa\MpesaService;
+use App\Services\Tenant\TenantAccessService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Mockery;
 use Tests\TestCase;
 
@@ -34,51 +43,76 @@ class SubscriptionPaymentTest extends TestCase
         DB::connection('central')->statement('SET foreign_key_checks = 0');
 
         $this->plan = SubscriptionPlan::on('central')->create([
-            'name'               => 'STK Test Plan',
-            'slug'               => 'stk-test-plan-' . uniqid(),
-            'price'              => 1500.00,
+            'name' => 'STK Test Plan',
+            'slug' => 'stk-test-plan-'.uniqid(),
+            'price' => 1500.00,
             'billing_cycle_days' => 30,
-            'is_active'          => true,
-            'is_featured'        => false,
+            'is_active' => true,
+            'is_featured' => false,
         ]);
 
         DB::connection('central')->table('tenants')->insertOrIgnore([
-            'id'                    => 'stk-test-tenant',
+            'id' => 'stk-test-tenant',
             'mpesa_paybill_account' => 'POA88001',
-            'created_at'            => now(),
-            'updated_at'            => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         DB::connection('central')->table('business_details')->updateOrInsert(
             ['tenant_id' => 'stk-test-tenant'],
             [
-                'business_name'        => 'STK Test Biz',
-                'business_phone'       => '0712345678',
-                'business_type_id'     => 1,
+                'business_name' => 'STK Test Biz',
+                'business_phone' => '0712345678',
+                'business_type_id' => 1,
                 'business_category_id' => 1,
-                'status'               => 'active',
-                'created_at'           => now(),
-                'updated_at'           => now(),
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         );
     }
 
     protected function tearDown(): void
     {
+        $businessDetailId = DB::connection('central')->table('business_details')
+            ->where('tenant_id', 'stk-test-tenant')
+            ->value('id');
+
         DB::connection('central')->statement('SET foreign_key_checks = 0');
         SubscriptionPayment::on('central')->where('tenant_id', 'stk-test-tenant')->forceDelete();
         BusinessSubscription::on('central')->where('tenant_id', 'stk-test-tenant')->forceDelete();
+        if ($businessDetailId) {
+            SystemNotification::on('central')->forRecipient('tenant', $businessDetailId)->forceDelete();
+        }
         DB::connection('central')->table('business_details')->where('tenant_id', 'stk-test-tenant')->delete();
         DB::connection('central')->table('tenants')->where('id', 'stk-test-tenant')->delete();
         SubscriptionPlan::on('central')->where('id', $this->plan->id)->forceDelete();
         DB::connection('central')->statement('SET foreign_key_checks = 1');
+        Cache::forget('tenant_access:stk-test-tenant');
         Mockery::close();
         parent::tearDown();
     }
 
-    private function makeService(?MpesaService $mpesa = null): SubscriptionPaymentService
+    private function makeService(?MpesaService $mpesa = null, ?SubscriptionExpiryService $expiryService = null): SubscriptionPaymentService
     {
-        return new SubscriptionPaymentService($mpesa ?? Mockery::mock(MpesaService::class));
+        return new SubscriptionPaymentService(
+            $mpesa ?? Mockery::mock(MpesaService::class),
+            new TenantAccessService,
+            new SystemNotificationService,
+            $expiryService ?? new SubscriptionExpiryService,
+        );
+    }
+
+    /**
+     * A SubscriptionExpiryService double that skips the real tenancy switch (no per-tenant
+     * database exists for the test fixture tenant) and returns a fixed owner.
+     */
+    private function makeExpiryServiceWithOwner(string $email = 'owner@test.com', string $name = 'Test Owner'): SubscriptionExpiryService
+    {
+        $expiryService = Mockery::mock(SubscriptionExpiryService::class)->makePartial();
+        $expiryService->shouldReceive('resolveOwnerEmail')->andReturn(['name' => $name, 'email' => $email]);
+
+        return $expiryService;
     }
 
     // =========================================================================
@@ -107,14 +141,14 @@ class SubscriptionPaymentTest extends TestCase
     public function test_initiate_stk_respects_60_second_cooldown(): void
     {
         SubscriptionPayment::on('central')->create([
-            'tenant_id'             => 'stk-test-tenant',
-            'subscription_plan_id'  => $this->plan->id,
-            'customer_phone'        => '254712345678',
-            'amount'                => 1500.00,
-            'payment_status'        => SubscriptionPaymentStatus::Processing,
-            'payment_type'          => 'stk',
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
             'transaction_reference' => 'ws_CO_EXISTING',
-            'initiated_at'          => now()->subSeconds(30),
+            'initiated_at' => now()->subSeconds(30),
         ]);
 
         $mpesa = Mockery::mock(MpesaService::class);
@@ -154,7 +188,7 @@ class SubscriptionPaymentTest extends TestCase
     {
         $this->plan->update(['is_active' => false]);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         $this->makeService()->initiateSTKPayment('stk-test-tenant', $this->plan->id);
     }
@@ -166,21 +200,21 @@ class SubscriptionPaymentTest extends TestCase
     public function test_process_stk_callback_success_activates_subscription(): void
     {
         $payment = SubscriptionPayment::on('central')->create([
-            'tenant_id'             => 'stk-test-tenant',
-            'subscription_plan_id'  => $this->plan->id,
-            'customer_phone'        => '254712345678',
-            'amount'                => 1500.00,
-            'payment_status'        => SubscriptionPaymentStatus::Processing,
-            'payment_type'          => 'stk',
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
             'transaction_reference' => 'ws_CO_CALLBACK',
         ]);
 
         $result = $this->makeService()->processSTKCallback([
             'transaction_reference' => 'ws_CO_CALLBACK',
-            'status'                => 'success',
-            'provider_reference'    => 'LHG31AA5TX',
-            'failure_reason'        => null,
-            'failure_code'          => null,
+            'status' => 'success',
+            'provider_reference' => 'LHG31AA5TX',
+            'failure_reason' => null,
+            'failure_code' => null,
         ]);
 
         $result->refresh();
@@ -195,21 +229,21 @@ class SubscriptionPaymentTest extends TestCase
     public function test_process_stk_callback_failure_marks_payment_failed(): void
     {
         SubscriptionPayment::on('central')->create([
-            'tenant_id'             => 'stk-test-tenant',
-            'subscription_plan_id'  => $this->plan->id,
-            'customer_phone'        => '254712345678',
-            'amount'                => 1500.00,
-            'payment_status'        => SubscriptionPaymentStatus::Processing,
-            'payment_type'          => 'stk',
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
             'transaction_reference' => 'ws_CO_FAILED',
         ]);
 
         $result = $this->makeService()->processSTKCallback([
             'transaction_reference' => 'ws_CO_FAILED',
-            'status'                => 'failed',
-            'provider_reference'    => null,
-            'failure_reason'        => 'Request cancelled by user',
-            'failure_code'          => '1032',
+            'status' => 'failed',
+            'provider_reference' => null,
+            'failure_reason' => 'Request cancelled by user',
+            'failure_code' => '1032',
         ]);
 
         $result->refresh();
@@ -221,31 +255,31 @@ class SubscriptionPaymentTest extends TestCase
     public function test_process_stk_callback_is_idempotent(): void
     {
         SubscriptionPayment::on('central')->create([
-            'tenant_id'             => 'stk-test-tenant',
-            'subscription_plan_id'  => $this->plan->id,
-            'customer_phone'        => '254712345678',
-            'amount'                => 1500.00,
-            'payment_status'        => SubscriptionPaymentStatus::Completed,
-            'payment_type'          => 'stk',
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Completed,
+            'payment_type' => 'stk',
             'transaction_reference' => 'ws_CO_IDEM',
-            'provider_reference'    => 'RECEIPT_IDEM',
-            'completed_at'          => now(),
+            'provider_reference' => 'RECEIPT_IDEM',
+            'completed_at' => now(),
         ]);
 
         $result1 = $this->makeService()->processSTKCallback([
             'transaction_reference' => 'ws_CO_IDEM',
-            'status'                => 'success',
-            'provider_reference'    => 'RECEIPT_IDEM',
-            'failure_reason'        => null,
-            'failure_code'          => null,
+            'status' => 'success',
+            'provider_reference' => 'RECEIPT_IDEM',
+            'failure_reason' => null,
+            'failure_code' => null,
         ]);
 
         $result2 = $this->makeService()->processSTKCallback([
             'transaction_reference' => 'ws_CO_IDEM',
-            'status'                => 'success',
-            'provider_reference'    => 'RECEIPT_IDEM',
-            'failure_reason'        => null,
-            'failure_code'          => null,
+            'status' => 'success',
+            'provider_reference' => 'RECEIPT_IDEM',
+            'failure_reason' => null,
+            'failure_code' => null,
         ]);
 
         $this->assertSame($result1->id, $result2->id);
@@ -276,21 +310,21 @@ class SubscriptionPaymentTest extends TestCase
     public function test_get_latest_payment_returns_most_recent(): void
     {
         SubscriptionPayment::on('central')->create([
-            'tenant_id'            => 'stk-test-tenant',
+            'tenant_id' => 'stk-test-tenant',
             'subscription_plan_id' => $this->plan->id,
-            'customer_phone'       => '254712345678',
-            'amount'               => 1500.00,
-            'payment_status'       => SubscriptionPaymentStatus::Failed,
-            'payment_type'         => 'stk',
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Failed,
+            'payment_type' => 'stk',
         ]);
 
         $latest = SubscriptionPayment::on('central')->create([
-            'tenant_id'            => 'stk-test-tenant',
+            'tenant_id' => 'stk-test-tenant',
             'subscription_plan_id' => $this->plan->id,
-            'customer_phone'       => '254712345678',
-            'amount'               => 1500.00,
-            'payment_status'       => SubscriptionPaymentStatus::Processing,
-            'payment_type'         => 'stk',
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
         ]);
 
         $result = $this->makeService()->getLatestPayment('stk-test-tenant');
@@ -301,5 +335,91 @@ class SubscriptionPaymentTest extends TestCase
     public function test_get_latest_payment_returns_null_when_no_records(): void
     {
         $this->assertNull($this->makeService()->getLatestPayment('nonexistent-tenant'));
+    }
+
+    // =========================================================================
+    // activateSubscription() side effects
+    // =========================================================================
+
+    public function test_activate_subscription_clears_tenant_access_cache(): void
+    {
+        Cache::put('tenant_access:stk-test-tenant', ['allowed' => false], now()->addHours(24));
+
+        SubscriptionPayment::on('central')->create([
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
+            'transaction_reference' => 'ws_CO_CACHE_CLEAR',
+        ]);
+
+        $this->makeService()->processSTKCallback([
+            'transaction_reference' => 'ws_CO_CACHE_CLEAR',
+            'status' => 'success',
+            'provider_reference' => 'LHG_CACHE_CLEAR',
+            'failure_reason' => null,
+            'failure_code' => null,
+        ]);
+
+        $this->assertFalse(Cache::has('tenant_access:stk-test-tenant'));
+    }
+
+    public function test_activate_subscription_queues_activation_confirmation_mail(): void
+    {
+        Mail::fake();
+
+        SubscriptionPayment::on('central')->create([
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
+            'transaction_reference' => 'ws_CO_MAIL',
+        ]);
+
+        $this->makeService(expiryService: $this->makeExpiryServiceWithOwner('owner@test.com'))->processSTKCallback([
+            'transaction_reference' => 'ws_CO_MAIL',
+            'status' => 'success',
+            'provider_reference' => 'LHG_MAIL',
+            'failure_reason' => null,
+            'failure_code' => null,
+        ]);
+
+        Mail::assertQueued(SubscriptionActivatedMail::class, function (SubscriptionActivatedMail $mail) {
+            return $mail->hasTo('owner@test.com') && $mail->planName === 'STK Test Plan';
+        });
+    }
+
+    public function test_activate_subscription_creates_in_app_activation_notification(): void
+    {
+        SubscriptionPayment::on('central')->create([
+            'tenant_id' => 'stk-test-tenant',
+            'subscription_plan_id' => $this->plan->id,
+            'customer_phone' => '254712345678',
+            'amount' => 1500.00,
+            'payment_status' => SubscriptionPaymentStatus::Processing,
+            'payment_type' => 'stk',
+            'transaction_reference' => 'ws_CO_NOTIFY',
+        ]);
+
+        $this->makeService()->processSTKCallback([
+            'transaction_reference' => 'ws_CO_NOTIFY',
+            'status' => 'success',
+            'provider_reference' => 'LHG_NOTIFY',
+            'failure_reason' => null,
+            'failure_code' => null,
+        ]);
+
+        $businessDetailId = BusinessDetail::on('central')->where('tenant_id', 'stk-test-tenant')->value('id');
+
+        $notification = SystemNotification::on('central')
+            ->forRecipient('tenant', $businessDetailId)
+            ->where('type', 'subscription_activated')
+            ->first();
+
+        $this->assertNotNull($notification);
     }
 }
