@@ -6,7 +6,6 @@ use App\Events\Tenant\LoyaltyPointsEarned;
 use App\Jobs\Tenant\SendNotificationJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 
 class SendLoyaltyEarnedNotification implements ShouldQueue
 {
@@ -27,9 +26,9 @@ class SendLoyaltyEarnedNotification implements ShouldQueue
 
         // Send SMS notification if customer has phone
         if ($customer->phone) {
-            $message = "Dear {$customer->name}, you've earned {$transaction->points} loyalty points! " .
-                "Your new balance is {$transaction->balance_after} points. " .
-                "Thank you for shopping with us!";
+            $message = "Dear {$customer->name}, you've earned {$transaction->points} loyalty points! ".
+                "Your new balance is {$transaction->balance_after} points. ".
+                'Thank you for shopping with us!';
 
             SendNotificationJob::dispatch(
                 channel: 'sms',

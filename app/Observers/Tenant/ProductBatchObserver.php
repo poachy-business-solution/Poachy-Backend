@@ -2,8 +2,10 @@
 
 namespace App\Observers\Tenant;
 
+use App\Events\Tenant\BatchExpired;
 use App\Models\Tenant\ProductBatch;
 use App\Services\Tenant\AuditService;
+use App\Services\Tenant\Inventory\ExpiryAlertService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -11,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 class ProductBatchObserver
 {
     public function __construct(
-        private AuditService $auditService
+        private AuditService $auditService,
+        private ExpiryAlertService $expiryAlertService
     ) {}
 
     /**
@@ -160,8 +163,11 @@ class ProductBatchObserver
             'expiry_date' => $batch->expiry_date?->toDateString(),
         ]);
 
-        // TODO: Fire BatchExpired event for notifications
-        // TODO: Create expiry alert if quantity > 0
+        event(new BatchExpired($batch));
+
+        // checkAndGenerateAlert() already returns null when quantity_remaining_in_base_uom <= 0,
+        // which is exactly the "only when quantity > 0" condition this needs.
+        $this->expiryAlertService->checkAndGenerateAlert($batch);
     }
 
     /**
@@ -205,6 +211,7 @@ class ProductBatchObserver
             if ($changes['is_expired']) {
                 $remaining = number_format($batch->quantity_remaining_in_base_uom, 2);
                 $uomCode = $batch->product?->baseUom?->code ?? 'units';
+
                 return "{$user} marked batch {$batch->batch_number} ({$productName}) as expired - {$remaining} {$uomCode} remaining";
             } else {
                 return "{$user} unmarked batch {$batch->batch_number} ({$productName}) as expired";
@@ -225,6 +232,7 @@ class ProductBatchObserver
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated batch {$batch->batch_number} ({$productName}) - {$changedFields}";
     }
 

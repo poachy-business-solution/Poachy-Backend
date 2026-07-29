@@ -13,7 +13,9 @@ class UpdateShiftSalesSummary implements ShouldQueue
     use InteractsWithQueue;
 
     public string $queue = 'sync-high';
+
     public int $tries = 3;
+
     public int $backoff = 5;
 
     public function __construct(
@@ -28,11 +30,12 @@ class UpdateShiftSalesSummary implements ShouldQueue
         $sale = $event->sale;
 
         // Only update if sale is linked to a shift
-        if (!$sale->shift_assignment_id) {
+        if (! $sale->shift_assignment_id) {
             Log::info('Sale not linked to shift, skipping summary update', [
                 'sale_id' => $sale->id,
                 'sale_number' => $sale->sale_number,
             ]);
+
             return;
         }
 

@@ -4,8 +4,11 @@ namespace App\Listeners\Tenant;
 
 use App\Events\Tenant\WasteApprovalRequested;
 use App\Jobs\Tenant\SendNotificationJob;
+use App\Models\Tenant\InventoryWaste;
+use App\Models\Tenant\Store;
 use App\Models\Tenant\TenantConfiguration;
 use App\Models\Tenant\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class NotifyWasteApprovalListener
@@ -29,6 +32,7 @@ class NotifyWasteApprovalListener
                     'waste_id' => $waste->id,
                     'store_id' => $waste->store_id,
                 ]);
+
                 return;
             }
 
@@ -66,10 +70,10 @@ class NotifyWasteApprovalListener
     /**
      * Get users to notify (store manager and owner who can approve)
      */
-    private function getUsersToNotify(int $storeId): \Illuminate\Support\Collection
+    private function getUsersToNotify(int $storeId): Collection
     {
         // Get store manager
-        $store = \App\Models\Tenant\Store::find($storeId);
+        $store = Store::find($storeId);
         $users = collect();
 
         if ($store && $store->manager_id) {
@@ -89,7 +93,7 @@ class NotifyWasteApprovalListener
     /**
      * Prepare notification message
      */
-    private function prepareMessage(\App\Models\Tenant\InventoryWaste $waste): array
+    private function prepareMessage(InventoryWaste $waste): array
     {
         $productName = $waste->product->name;
         $storeName = $waste->store->name;

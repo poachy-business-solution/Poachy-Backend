@@ -4,8 +4,11 @@ namespace App\Listeners\Tenant;
 
 use App\Events\Tenant\ExpiryAlertCreated;
 use App\Jobs\Tenant\SendNotificationJob;
+use App\Models\Tenant\ExpiryAlert;
+use App\Models\Tenant\Store;
 use App\Models\Tenant\TenantConfiguration;
 use App\Models\Tenant\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class NotifyExpiryAlertListener
@@ -29,6 +32,7 @@ class NotifyExpiryAlertListener
                     'alert_id' => $alert->id,
                     'batch_id' => $alert->batch_id,
                 ]);
+
                 return;
             }
 
@@ -66,10 +70,10 @@ class NotifyExpiryAlertListener
     /**
      * Get users to notify (store manager and owner)
      */
-    private function getUsersToNotify(int $storeId): \Illuminate\Support\Collection
+    private function getUsersToNotify(int $storeId): Collection
     {
         // Get store manager
-        $store = \App\Models\Tenant\Store::find($storeId);
+        $store = Store::find($storeId);
         $users = collect();
 
         if ($store && $store->manager_id) {
@@ -89,7 +93,7 @@ class NotifyExpiryAlertListener
     /**
      * Prepare notification message
      */
-    private function prepareMessage(\App\Models\Tenant\ExpiryAlert $alert): array
+    private function prepareMessage(ExpiryAlert $alert): array
     {
         $batch = $alert->batch;
         $productName = $alert->display_name;
@@ -112,11 +116,11 @@ class NotifyExpiryAlertListener
         $body .= "Remaining Quantity: {$remainingQty} {$baseUom}\n\n";
 
         if ($alert->alert_level->value === 'expired') {
-            $body .= "This batch has EXPIRED and should be removed from inventory immediately.";
+            $body .= 'This batch has EXPIRED and should be removed from inventory immediately.';
         } elseif ($alert->alert_level->value === 'urgent') {
-            $body .= "This batch is expiring soon. Consider discounting or returning to supplier.";
+            $body .= 'This batch is expiring soon. Consider discounting or returning to supplier.';
         } else {
-            $body .= "This batch will expire soon. Plan accordingly to minimize waste.";
+            $body .= 'This batch will expire soon. Plan accordingly to minimize waste.';
         }
 
         return [

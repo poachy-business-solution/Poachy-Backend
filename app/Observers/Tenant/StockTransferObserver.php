@@ -2,6 +2,11 @@
 
 namespace App\Observers\Tenant;
 
+use App\Events\Tenant\StockTransferApproved;
+use App\Events\Tenant\StockTransferCancelled;
+use App\Events\Tenant\StockTransferCompleted;
+use App\Events\Tenant\StockTransferCreatedPendingApproval;
+use App\Events\Tenant\StockTransferInTransit;
 use App\Models\Tenant\StockTransfer;
 use App\Services\Tenant\AuditService;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +25,7 @@ class StockTransferObserver
     public function creating(StockTransfer $transfer): void
     {
         // Set requester if not already set
-        if (!$transfer->requested_by && Auth::check()) {
+        if (! $transfer->requested_by && Auth::check()) {
             $transfer->requested_by = Auth::id();
         }
     }
@@ -53,7 +58,7 @@ class StockTransferObserver
 
         // Fire event for pending transfer
         if ($transfer->status === 'pending') {
-            // TODO: Fire StockTransferCreatedPendingApproval event
+            event(new StockTransferCreatedPendingApproval($transfer));
             Log::info('Stock transfer created pending approval', [
                 'tenant_id' => tenant()->id,
                 'transfer_id' => $transfer->id,
@@ -200,17 +205,16 @@ class StockTransferObserver
 
         switch ($newStatus) {
             case 'approved':
-                // TODO: Fire StockTransferApproved event
+                event(new StockTransferApproved($transfer));
                 break;
             case 'in_transit':
-                // TODO: Fire StockTransferInTransit event
+                event(new StockTransferInTransit($transfer));
                 break;
             case 'completed':
-                // TODO: Fire StockTransferCompleted event
-                // This will trigger inventory updates
+                event(new StockTransferCompleted($transfer));
                 break;
             case 'cancelled':
-                // TODO: Fire StockTransferCancelled event
+                event(new StockTransferCancelled($transfer));
                 break;
         }
     }
@@ -293,17 +297,20 @@ class StockTransferObserver
         if (isset($changes['expected_arrival_date'])) {
             $oldDate = $transfer->getOriginal('expected_arrival_date');
             $newDate = $changes['expected_arrival_date'];
+
             return "{$user} changed expected arrival date for transfer {$transfer->transfer_number} from {$oldDate} to {$newDate}";
         }
 
         // Actual arrival date
         if (isset($changes['actual_arrival_date'])) {
             $date = $changes['actual_arrival_date'];
+
             return "{$user} recorded actual arrival date as {$date} for transfer {$transfer->transfer_number}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated stock transfer {$transfer->transfer_number} ({$changedFields})";
     }
 

@@ -3,6 +3,9 @@
 namespace App\Observers\Tenant;
 
 use App\Enums\Tenant\ExpenseStatus;
+use App\Events\Tenant\ExpenseApproved;
+use App\Events\Tenant\ExpenseCreatedPendingApproval;
+use App\Events\Tenant\ExpenseRejected;
 use App\Models\Tenant\Expense;
 use App\Services\Tenant\AuditService;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +24,7 @@ class ExpenseObserver
     public function creating(Expense $expense): void
     {
         // Set creator if not already set
-        if (!$expense->created_by && Auth::check()) {
+        if (! $expense->created_by && Auth::check()) {
             $expense->created_by = Auth::id();
         }
 
@@ -57,7 +60,7 @@ class ExpenseObserver
 
         // Fire event if expense needs approval
         if ($expense->approval_status === ExpenseStatus::PENDING) {
-            // TODO: Fire ExpenseCreatedPendingApproval event
+            event(new ExpenseCreatedPendingApproval($expense));
         }
     }
 
@@ -178,10 +181,9 @@ class ExpenseObserver
         $newStatus = $expense->approval_status;
 
         if ($newStatus === ExpenseStatus::APPROVED) {
-            // TODO: Fire ExpenseApproved event
-            // This will trigger budget recalculation            
+            event(new ExpenseApproved($expense));
         } elseif ($newStatus === ExpenseStatus::REJECTED) {
-            // TODO: Fire ExpenseRejected event            
+            event(new ExpenseRejected($expense));
         }
     }
 
@@ -211,12 +213,18 @@ class ExpenseObserver
 
         // Approval status change
         if (isset($changes['approval_status'])) {
+            // getOriginal() re-applies the enum cast, but getChanges() (which $changes
+            // comes from) returns the raw stored value — normalize both to plain strings
+            // before comparing/interpolating, or an enum instance ends up in a string
+            // context and throws.
             $oldStatus = $expense->getOriginal('approval_status');
+            $oldStatus = $oldStatus instanceof ExpenseStatus ? $oldStatus->value : $oldStatus;
             $newStatus = $changes['approval_status'];
+            $newStatus = $newStatus instanceof ExpenseStatus ? $newStatus->value : $newStatus;
 
-            if ($newStatus === ExpenseStatus::APPROVED) {
+            if ($newStatus === ExpenseStatus::APPROVED->value) {
                 return "{$user} approved expense {$expense->expense_number}";
-            } elseif ($newStatus === ExpenseStatus::REJECTED) {
+            } elseif ($newStatus === ExpenseStatus::REJECTED->value) {
                 return "{$user} rejected expense {$expense->expense_number}";
             }
 
@@ -227,6 +235,7 @@ class ExpenseObserver
         if (isset($changes['payment_status'])) {
             $oldStatus = $expense->getOriginal('payment_status');
             $newStatus = $changes['payment_status'];
+
             return "{$user} changed expense {$expense->expense_number} payment status from {$oldStatus} to {$newStatus}";
         }
 
@@ -234,11 +243,13 @@ class ExpenseObserver
         if (isset($changes['amount'])) {
             $oldAmount = number_format($expense->getOriginal('amount'), 2);
             $newAmount = number_format($changes['amount'], 2);
+
             return "{$user} changed expense {$expense->expense_number} amount from KES {$oldAmount} to KES {$newAmount}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated expense {$expense->expense_number} ({$changedFields})";
     }
 

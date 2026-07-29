@@ -6,7 +6,6 @@ use App\Events\Tenant\LoyaltyPointsRedeemed;
 use App\Jobs\Tenant\SendNotificationJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 
 class SendLoyaltyRedeemedNotification implements ShouldQueue
 {
@@ -28,9 +27,9 @@ class SendLoyaltyRedeemedNotification implements ShouldQueue
 
         // Send SMS notification if customer has phone
         if ($customer->phone) {
-            $message = "Dear {$customer->name}, you've redeemed {$pointsRedeemed} loyalty points. " .
-                "Your remaining balance is {$transaction->balance_after} points. " .
-                "Thank you for being a loyal customer!";
+            $message = "Dear {$customer->name}, you've redeemed {$pointsRedeemed} loyalty points. ".
+                "Your remaining balance is {$transaction->balance_after} points. ".
+                'Thank you for being a loyal customer!';
 
             SendNotificationJob::dispatch(
                 channel: 'sms',

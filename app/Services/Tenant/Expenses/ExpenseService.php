@@ -3,12 +3,13 @@
 namespace App\Services\Tenant\Expenses;
 
 use App\Enums\Tenant\ExpenseStatus;
+use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\RecurrenceFrequency;
 use App\Models\Tenant\Expense;
 use App\Models\Tenant\Store;
 use App\Repositories\Tenant\ExpenseCategoryRepository;
 use App\Repositories\Tenant\ExpenseRepository;
-use App\Services\Tenant\Expenses\BudgetService;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -50,16 +51,16 @@ class ExpenseService
         // Validate category exists and is active
         $category = $this->categoryRepository->findById($data['category_id']);
 
-        if (!$category) {
+        if (! $category) {
             throw new \Exception('Expense category not found.');
         }
 
-        if (!$category->is_active) {
+        if (! $category->is_active) {
             throw new \Exception('Cannot create expense: category is inactive.');
         }
 
         // Set default approval status based on category requirement
-        if (!isset($data['approval_status'])) {
+        if (! isset($data['approval_status'])) {
             $data['approval_status'] = $category->requires_approval
                 ? ExpenseStatus::PENDING
                 : ExpenseStatus::APPROVED;
@@ -88,11 +89,11 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
-        if (!$expense->is_editable) {
+        if (! $expense->is_editable) {
             throw new \Exception('Cannot edit expense: only pending expenses can be edited.');
         }
 
@@ -117,7 +118,7 @@ class ExpenseService
 
         // Validate expense_date if being updated
         if (isset($updateData['expense_date'])) {
-            $expenseDate = \Carbon\Carbon::parse($updateData['expense_date']);
+            $expenseDate = Carbon::parse($updateData['expense_date']);
             if ($expenseDate->isFuture()) {
                 throw new \Exception('Expense date cannot be in the future.');
             }
@@ -128,14 +129,14 @@ class ExpenseService
 
     /**
      * Set an expense as recurring
-     * 
+     *
      * Converts a regular expense into a recurring parent expense
      */
     public function setRecurrence(int $id, array $data): Expense
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
@@ -149,7 +150,7 @@ class ExpenseService
         }
 
         // Check if category allows recurring
-        if (!$expense->category->is_recurring_eligible) {
+        if (! $expense->category->is_recurring_eligible) {
             throw new \Exception('This expense category does not allow recurring expenses.');
         }
 
@@ -177,18 +178,18 @@ class ExpenseService
 
     /**
      * Update recurrence settings for a recurring expense
-     * 
+     *
      * Updates affect FUTURE instances only, never past ones
      */
     public function updateRecurrence(int $id, array $data): Expense
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
-        if (!$expense->is_recurring || $expense->parent_expense_id) {
+        if (! $expense->is_recurring || $expense->parent_expense_id) {
             throw new \Exception('This is not a recurring expense parent.');
         }
 
@@ -230,11 +231,11 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
-        if (!$expense->is_recurring || $expense->parent_expense_id) {
+        if (! $expense->is_recurring || $expense->parent_expense_id) {
             throw new \Exception('This is not a recurring expense parent.');
         }
 
@@ -250,7 +251,7 @@ class ExpenseService
      */
     public function generateRecurrenceInstance(Expense $parentExpense): Expense
     {
-        if (!$parentExpense->is_recurring || $parentExpense->parent_expense_id) {
+        if (! $parentExpense->is_recurring || $parentExpense->parent_expense_id) {
             throw new \Exception('Not a valid recurring parent expense.');
         }
 
@@ -270,10 +271,10 @@ class ExpenseService
                 'store_id' => $parentExpense->store_id,
                 'category_id' => $parentExpense->category_id,
                 'amount' => $parentExpense->amount,
-                'description' => $parentExpense->description . ' (Auto-generated)',
+                'description' => $parentExpense->description.' (Auto-generated)',
                 'expense_date' => $parentExpense->next_occurrence_date,
                 'payment_method' => $parentExpense->payment_method,
-                'payment_status' => \App\Enums\Tenant\PaymentStatus::PENDING,
+                'payment_status' => PaymentStatus::PENDING,
                 'supplier_id' => $parentExpense->supplier_id,
                 'receipt_number' => null,
                 'is_recurring' => false,
@@ -331,7 +332,7 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
@@ -350,7 +351,7 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
@@ -358,7 +359,7 @@ class ExpenseService
             throw new \Exception('Only pending expenses can be approved.');
         }
 
-        if (!$expense->can_be_approved) {
+        if (! $expense->can_be_approved) {
             throw new \Exception('Cannot approve: expense requires a receipt to be uploaded.');
         }
 
@@ -367,7 +368,9 @@ class ExpenseService
         // Update budget
         $this->budgetService->recalculateBudgetForExpense($expense);
 
-        // TODO: Fire ExpenseApproved event
+        // ExpenseApproved already fires via ExpenseObserver::handleApprovalStatusChange()
+        // when approval_status changes on this same $expense->update() call inside
+        // repository->approve() — do not dispatch it again here.
 
         return $expense;
     }
@@ -379,7 +382,7 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
@@ -393,7 +396,9 @@ class ExpenseService
 
         $expense = $this->repository->reject($expense, $reason);
 
-        // TODO: Fire ExpenseRejected event
+        // ExpenseRejected already fires via ExpenseObserver::handleApprovalStatusChange()
+        // when approval_status changes on this same $expense->update() call inside
+        // repository->reject() — do not dispatch it again here.
 
         return $expense;
     }
@@ -405,7 +410,7 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
@@ -432,7 +437,7 @@ class ExpenseService
         $receiptPath = $file->storeAs($path, $filename, 'public');
 
         return $this->repository->update($expense, [
-            'receipt_path' => $receiptPath
+            'receipt_path' => $receiptPath,
         ]);
     }
 
@@ -443,11 +448,11 @@ class ExpenseService
     {
         $expense = $this->repository->findById($id);
 
-        if (!$expense) {
+        if (! $expense) {
             throw new \Exception('Expense not found.');
         }
 
-        if (!$expense->receipt_path) {
+        if (! $expense->receipt_path) {
             throw new \Exception('No receipt to delete.');
         }
 
@@ -455,7 +460,7 @@ class ExpenseService
         Storage::disk('public')->delete($expense->receipt_path);
 
         return $this->repository->update($expense, [
-            'receipt_path' => null
+            'receipt_path' => null,
         ]);
     }
 
@@ -503,7 +508,7 @@ class ExpenseService
             throw new \Exception('Receipt file size cannot exceed 5MB.');
         }
 
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
+        if (! in_array($file->getMimeType(), $allowedMimes)) {
             throw new \Exception('Receipt must be a PDF, JPG, or PNG file.');
         }
     }
@@ -518,7 +523,7 @@ class ExpenseService
 
     /**
      * Resolve store ID (auto-detect if only one store exists)
-     * 
+     *
      * Logic:
      * - If store_id provided → validate and return
      * - If only one active store exists → auto-select it
@@ -530,7 +535,7 @@ class ExpenseService
         if ($storeId) {
             $store = Store::where('is_active', true)->find($storeId);
 
-            if (!$store) {
+            if (! $store) {
                 throw new InvalidArgumentException('Store not found or inactive.');
             }
 
@@ -550,7 +555,7 @@ class ExpenseService
 
         // Multiple stores exist, store ID is required
         throw new InvalidArgumentException(
-            'Multiple stores exist. Please specify store_id. Available stores: ' .
+            'Multiple stores exist. Please specify store_id. Available stores: '.
                 $activeStores->pluck('name', 'id')->toJson()
         );
     }
@@ -562,15 +567,15 @@ class ExpenseService
         $baseDate,
         $frequency,
         int $interval = 1
-    ): \Carbon\Carbon {
-        $date = \Carbon\Carbon::parse($baseDate);
+    ): Carbon {
+        $date = Carbon::parse($baseDate);
 
         return match ($frequency) {
-            \App\Enums\Tenant\RecurrenceFrequency::DAILY => $date->addDays($interval),
-            \App\Enums\Tenant\RecurrenceFrequency::WEEKLY => $date->addWeeks($interval),
-            \App\Enums\Tenant\RecurrenceFrequency::MONTHLY => $date->addMonths($interval),
-            \App\Enums\Tenant\RecurrenceFrequency::QUARTERLY => $date->addMonths($interval * 3),
-            \App\Enums\Tenant\RecurrenceFrequency::YEARLY => $date->addYears($interval),
+            RecurrenceFrequency::DAILY => $date->addDays($interval),
+            RecurrenceFrequency::WEEKLY => $date->addWeeks($interval),
+            RecurrenceFrequency::MONTHLY => $date->addMonths($interval),
+            RecurrenceFrequency::QUARTERLY => $date->addMonths($interval * 3),
+            RecurrenceFrequency::YEARLY => $date->addYears($interval),
             default => throw new \Exception('Invalid recurrence frequency'),
         };
     }
