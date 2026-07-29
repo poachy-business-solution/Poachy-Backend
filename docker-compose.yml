@@ -30,6 +30,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
+      args:
+        WWWUSER: '${WWWUSER:-1000}'
+        WWWGROUP: '${WWWGROUP:-1000}'
     image: poachy/app
     user: "${WWWUSER:-1000}:${WWWGROUP:-1000}"
     extra_hosts:

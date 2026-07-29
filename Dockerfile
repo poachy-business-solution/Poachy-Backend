@@ -62,6 +62,15 @@ COPY docker/php/php.ini                  /usr/local/etc/php/php.ini
 COPY docker/php/www.conf                 /usr/local/etc/php-fpm.d/www.conf
 COPY docker/php/docker-entrypoint.sh     /usr/local/bin/docker-entrypoint.sh
 
+# ---- sail user ----
+# Matches the WWWUSER/WWWGROUP the container runs as (see docker-compose.yml's
+# `user:` directive) so `vendor/bin/sail`'s `docker compose exec -u sail ...`
+# calls can resolve a real username instead of failing on a bare numeric UID.
+ARG WWWUSER=1000
+ARG WWWGROUP=1000
+RUN addgroup -g ${WWWGROUP} -S sail \
+    && adduser -u ${WWWUSER} -S sail -G sail
+
 WORKDIR /var/www/html
 
 # ---- Application files ----
