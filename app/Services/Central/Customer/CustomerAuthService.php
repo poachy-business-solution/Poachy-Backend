@@ -53,7 +53,7 @@ class CustomerAuthService
             ]);
 
             // 3. Send email verification OTP
-            // $this->otpService->generateAndSend($user, CustomerOtpService::TYPE_VERIFY_EMAIL);
+            $this->otpService->generateAndSend($user, CustomerOtpService::TYPE_VERIFY_EMAIL);
 
             return $customer->load('user');
         });
@@ -222,6 +222,14 @@ class CustomerAuthService
         $this->otpService->verify($user, $otpCode);
 
         $user->update(['password' => Hash::make($newPassword)]);
+
+        // Revoke every other session so a compromised token can't survive an
+        // in-band password change; the device making this request stays signed in.
+        $currentTokenId = $user->currentAccessToken()?->id;
+
+        $user->tokens()
+            ->when($currentTokenId, fn ($query) => $query->where('id', '!=', $currentTokenId))
+            ->delete();
     }
 
     // =========================================================================
