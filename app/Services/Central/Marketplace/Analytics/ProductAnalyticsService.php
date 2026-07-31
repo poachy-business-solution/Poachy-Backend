@@ -12,30 +12,36 @@ class ProductAnalyticsService
      */
     public function getProductPerformance(int $productId, \DateTime $startDate, \DateTime $endDate): array
     {
+        // Raw aggregate aliases must NOT match a real ProductPageView column name —
+        // when they do, Eloquent applies that column's cast (all of these are cast
+        // to 'boolean' on the model) to the aggregate value instead of leaving it as
+        // the plain count, silently collapsing e.g. 37 -> true. Confirmed via a real
+        // bug: `as added_to_cart` turned a SUM of 2 into `true`, which then coerces
+        // to 1 in the rate arithmetic below regardless of the real count.
         $views = ProductPageView::on('central')
             ->where('marketplace_product_id', $productId)
             ->whereBetween('viewed_at', [$startDate, $endDate])
             ->selectRaw('
                 COUNT(*) as total_views,
-                SUM(CASE WHEN added_to_cart = true THEN 1 ELSE 0 END) as added_to_cart,
-                SUM(CASE WHEN added_to_wishlist = true THEN 1 ELSE 0 END) as added_to_wishlist,
+                SUM(CASE WHEN added_to_cart = true THEN 1 ELSE 0 END) as added_to_cart_count,
+                SUM(CASE WHEN added_to_wishlist = true THEN 1 ELSE 0 END) as added_to_wishlist_count,
                 AVG(time_spent_seconds) as avg_time_spent,
-                SUM(CASE WHEN scrolled_to_description = true THEN 1 ELSE 0 END) as scrolled_to_description,
-                SUM(CASE WHEN scrolled_to_reviews = true THEN 1 ELSE 0 END) as scrolled_to_reviews,
-                SUM(CASE WHEN clicked_images = true THEN 1 ELSE 0 END) as clicked_images
+                SUM(CASE WHEN scrolled_to_description = true THEN 1 ELSE 0 END) as scrolled_to_description_count,
+                SUM(CASE WHEN scrolled_to_reviews = true THEN 1 ELSE 0 END) as scrolled_to_reviews_count,
+                SUM(CASE WHEN clicked_images = true THEN 1 ELSE 0 END) as clicked_images_count
             ')
             ->first();
 
         return [
             'total_views'              => $views->total_views ?? 0,
-            'added_to_cart'            => $views->added_to_cart ?? 0,
-            'added_to_wishlist'        => $views->added_to_wishlist ?? 0,
-            'view_to_cart_rate'        => $this->calculateRate($views->added_to_cart ?? 0, $views->total_views ?? 0),
-            'view_to_wishlist_rate'    => $this->calculateRate($views->added_to_wishlist ?? 0, $views->total_views ?? 0),
+            'added_to_cart'            => $views->added_to_cart_count ?? 0,
+            'added_to_wishlist'        => $views->added_to_wishlist_count ?? 0,
+            'view_to_cart_rate'        => $this->calculateRate($views->added_to_cart_count ?? 0, $views->total_views ?? 0),
+            'view_to_wishlist_rate'    => $this->calculateRate($views->added_to_wishlist_count ?? 0, $views->total_views ?? 0),
             'avg_time_spent_seconds'   => round($views->avg_time_spent ?? 0, 2),
-            'scrolled_to_description'  => $views->scrolled_to_description ?? 0,
-            'scrolled_to_reviews'      => $views->scrolled_to_reviews ?? 0,
-            'clicked_images'           => $views->clicked_images ?? 0,
+            'scrolled_to_description'  => $views->scrolled_to_description_count ?? 0,
+            'scrolled_to_reviews'      => $views->scrolled_to_reviews_count ?? 0,
+            'clicked_images'           => $views->clicked_images_count ?? 0,
             'engagement_rate'          => $this->calculateEngagementRate($views),
         ];
     }
@@ -105,9 +111,9 @@ class ProductAnalyticsService
             return 0.0;
         }
 
-        $engagedViews = ($views->scrolled_to_description ?? 0) +
-                        ($views->scrolled_to_reviews ?? 0) +
-                        ($views->clicked_images ?? 0);
+        $engagedViews = ($views->scrolled_to_description_count ?? 0) +
+                        ($views->scrolled_to_reviews_count ?? 0) +
+                        ($views->clicked_images_count ?? 0);
 
         return round(($engagedViews / ($totalViews * 3)) * 100, 2);
     }

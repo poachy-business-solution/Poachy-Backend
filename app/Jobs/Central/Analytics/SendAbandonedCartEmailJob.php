@@ -22,7 +22,7 @@ class SendAbandonedCartEmailJob implements ShouldQueue
     public function handle(): void
     {
         $cart = ShoppingCart::on('central')
-            ->with(['customer', 'items.marketplaceProduct'])
+            ->with(['customer.user', 'items.marketplaceProduct'])
             ->find($this->cartId);
 
         if (! $cart) {
@@ -57,10 +57,12 @@ class SendAbandonedCartEmailJob implements ShouldQueue
         }
 
         try {
-            // Send cart recovery email
-            Mail::to($cart->customer->email)->send(new CartRecoveryMail(
+            // email/name live on the related User, not MarketplaceCustomer — both
+            // columns were dropped from marketplace_customers by
+            // 2025_11_29_141837_add_users_table_relations_to_marketplace_customers_table.
+            Mail::to($cart->customer->user->email)->send(new CartRecoveryMail(
                 cart: $cart,
-                customerName: $cart->customer->name,
+                customerName: $cart->customer->user->name,
                 cartUrl: config('app.frontend_url') . '/cart',
             ));
 
@@ -73,7 +75,7 @@ class SendAbandonedCartEmailJob implements ShouldQueue
             Log::info('Cart recovery email sent successfully', [
                 'cart_id'     => $cart->id,
                 'customer_id' => $cart->customer->id,
-                'email'       => $cart->customer->email,
+                'email'       => $cart->customer->user->email,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send cart recovery email', [
