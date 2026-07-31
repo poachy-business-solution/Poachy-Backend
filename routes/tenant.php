@@ -83,6 +83,8 @@ Route::prefix('v1/tenant')->group(function () {
     Route::prefix('sync/inbound')->group(function () {
         Route::post('/approved-review', [ApprovedReviewSyncController::class, 'store']);
         Route::post('/delivery-zone-ack', [TenantSyncAckController::class, 'receiveDeliveryZoneAck']);
+        Route::post('/inventory-count-ack', [TenantSyncAckController::class, 'receiveInventoryCountAck']);
+        Route::post('/review-response-ack', [TenantSyncAckController::class, 'receiveReviewResponseAck']);
         Route::get('/categories', [CategorySyncController::class, 'index']);
     });
 });

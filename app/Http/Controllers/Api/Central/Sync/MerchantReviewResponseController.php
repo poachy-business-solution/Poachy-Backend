@@ -42,6 +42,11 @@ class MerchantReviewResponseController extends Controller
                 'tenant_syncable_id' => $validated['review_id'],
                 'action'             => 'create',
                 'payload'            => $validated,
+                'metadata'           => [
+                    'received_from_ip'          => $request->ip(),
+                    'received_at_server'        => now()->toISOString(),
+                    'sync_queue_id_from_tenant' => $request->header('X-Sync-Queue-ID'),
+                ],
                 'priority'           => 2,
                 'received_at'        => now(),
                 'scheduled_at'       => now(),

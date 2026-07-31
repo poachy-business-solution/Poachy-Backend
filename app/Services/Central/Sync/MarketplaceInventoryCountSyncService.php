@@ -14,8 +14,9 @@ class MarketplaceInventoryCountSyncService
      *
      * If no MarketplaceProduct exists for this tenant/product, the update is skipped —
      * the next full ProductSync will create the central record with current quantities.
+     * Returns the updated MarketplaceProduct's id, or null when the update was skipped.
      */
-    public function updateInventoryCount(InventoryCountSyncDTO $dto): void
+    public function updateInventoryCount(InventoryCountSyncDTO $dto): ?int
     {
         $query = MarketplaceProduct::where('tenant_id', $dto->tenantId)
             ->where('tenant_product_id', $dto->productId);
@@ -36,7 +37,7 @@ class MarketplaceInventoryCountSyncService
                 'entity_type' => $dto->entityType,
             ]);
 
-            return;
+            return null;
         }
 
         $marketplaceProduct->update([
@@ -53,5 +54,7 @@ class MarketplaceInventoryCountSyncService
             'available_quantity' => $dto->availableQuantity,
             'stock_status' => $dto->stockStatus,
         ]);
+
+        return $marketplaceProduct->id;
     }
 }
