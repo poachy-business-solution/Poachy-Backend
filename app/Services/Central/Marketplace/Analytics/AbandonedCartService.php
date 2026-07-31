@@ -20,7 +20,7 @@ class AbandonedCartService
                 $q->where('accepts_marketing', true)
                   ->where('is_active', true)
             )
-            ->with('customer', 'items.marketplaceProduct');
+            ->with('customer.user', 'items.marketplaceProduct');
 
         if ($since) {
             $query->where('abandoned_at', '>=', $since);
@@ -30,7 +30,10 @@ class AbandonedCartService
             return [
                 'cart_id'      => $cart->id,
                 'customer_id'  => $cart->customer_id,
-                'email'        => $cart->customer->email,
+                // email/name live on the related User, not MarketplaceCustomer —
+                // both columns were dropped from marketplace_customers by
+                // 2025_11_29_141837_add_users_table_relations_to_marketplace_customers_table.
+                'email'        => $cart->customer->user->email,
                 'item_count'   => $cart->getItemCount(),
                 'subtotal'     => $cart->getSubtotal(),
                 'abandoned_at' => $cart->abandoned_at,

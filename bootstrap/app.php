@@ -31,6 +31,12 @@ return Application::configure(basePath: dirname(__DIR__))
             AddRequestId::class
         ]);
 
+        // Global rate-limiting safety net for every API route (central + tenant
+        // both register under the 'api' group above) — see the 'api' limiter
+        // in AppServiceProvider. Route-specific stricter limiters (auth, otp,
+        // analytics) layer on top via their own throttle:<name> middleware.
+        $middleware->throttleApi('api');
+
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

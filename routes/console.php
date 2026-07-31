@@ -133,6 +133,15 @@ Schedule::job(new CleanupOldAnalyticsDataJob)
     ->withoutOverlapping()
     ->onOneServer();
 
+// Audit: Prune audit logs older than the retention window (730 days / 2 years) weekly
+Schedule::command('audit:prune-logs --days=730')
+    ->weekly()
+    ->sundays()
+    ->at('03:30')
+    ->name('prune-audit-logs')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

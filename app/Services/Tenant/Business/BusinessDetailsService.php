@@ -131,7 +131,7 @@ class BusinessDetailsService
         return DB::connection('central')->transaction(function () use ($businessDetailId, $isVerified) {
             $businessDetail = BusinessDetail::on('central')->findOrFail($businessDetailId);
 
-            $businessDetail->verify();
+            $isVerified ? $businessDetail->verify() : $businessDetail->unverify();
 
             $this->sendVerificationEmail($businessDetail, $isVerified);
 

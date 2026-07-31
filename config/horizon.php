@@ -83,7 +83,25 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    'middleware' => ['web', \App\Http\Middleware\AuthenticateHorizon::class],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Horizon Basic Auth Credentials
+    |--------------------------------------------------------------------------
+    |
+    | This app has no session-based web login (API-only, Sanctum tokens for
+    | everything), so Horizon's own gate-based auth (which checks a web
+    | session user) can never be satisfied. AuthenticateHorizon challenges
+    | for HTTP Basic Auth against these credentials instead, in every
+    | environment except local (which Horizon already exempts).
+    |
+    */
+
+    'basic_auth' => [
+        'username' => env('HORIZON_USERNAME'),
+        'password' => env('HORIZON_PASSWORD'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

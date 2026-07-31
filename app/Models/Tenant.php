@@ -24,6 +24,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected $fillable = [
         'data',
         'mpesa_paybill_account',
+        // Virtual attributes (stored inside the `data` JSON column by Stancl's
+        // VirtualColumn trait) — must be fillable as top-level keys, or they're
+        // silently dropped on mass assignment before VirtualColumn ever sees them.
+        'tenant_name',
+        'notes',
     ];
 
     protected $casts = [

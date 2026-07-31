@@ -85,16 +85,19 @@ class ShiftService
     }
 
     /**
-     * Delete (soft delete) a shift
+     * Delete a shift
      */
     public function deleteShift(Shift $shift): bool
     {
         try {
             DB::beginTransaction();
 
-            // Check for future assignments
-            if ($shift->hasFutureAssignments()) {
-                throw new \Exception('Cannot delete shift with future assignments. Please cancel or reassign them first.');
+            // shift_assignments.shift_id is onDelete('restrict'), so any assignment —
+            // past or future — would block the delete at the DB level anyway; check
+            // all of them up front so this fails with a clean message instead of a
+            // raw integrity-constraint error.
+            if ($shift->hasAssignments()) {
+                throw new \Exception('Cannot delete shift with existing assignments. Please cancel or reassign them first.');
             }
 
             $shiftId = $shift->id;

@@ -111,8 +111,8 @@ class ShoppingCartController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
-        $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
-        $cart = $this->cartService->getOrCreateCart($request, $customer->id);
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+        $cart = $this->cartService->getOrCreateCart($request, $customer?->id);
 
         return ApiResponse::success(
             'Cart retrieved successfully',
@@ -234,8 +234,8 @@ class ShoppingCartController extends Controller
      */
     public function addItem(AddToCartRequest $request): JsonResponse
     {
-        $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
-        $cart = $this->cartService->getOrCreateCart($request, $customer->id);
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+        $cart = $this->cartService->getOrCreateCart($request, $customer?->id);
 
         try {
             $item = $this->cartService->addItem($cart, $request->validated());
@@ -380,8 +380,8 @@ class ShoppingCartController extends Controller
      */
     public function updateItem(UpdateCartItemRequest $request, int $id): JsonResponse
     {
-        $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
-        $cart = $this->cartService->getOrCreateCart($request, $customer->id);
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+        $cart = $this->cartService->getOrCreateCart($request, $customer?->id);
 
         try {
             $item = $this->cartService->updateItemQuantity(
@@ -456,8 +456,8 @@ class ShoppingCartController extends Controller
      */
     public function removeItem(Request $request, int $id): JsonResponse
     {
-        $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
-        $cart = $this->cartService->getOrCreateCart($request, $customer->id);
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+        $cart = $this->cartService->getOrCreateCart($request, $customer?->id);
 
         $this->cartService->removeItem($cart, $id);
 
@@ -498,8 +498,8 @@ class ShoppingCartController extends Controller
      */
     public function clear(Request $request): JsonResponse
     {
-        $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
-        $cart = $this->cartService->getOrCreateCart($request, $customer->id);
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+        $cart = $this->cartService->getOrCreateCart($request, $customer?->id);
 
         $this->cartService->clearCart($cart);
 
@@ -557,8 +557,8 @@ class ShoppingCartController extends Controller
      */
     public function refreshPrices(Request $request): JsonResponse
     {
-        $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
-        $cart = $this->cartService->getOrCreateCart($request, $customer->id);
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+        $cart = $this->cartService->getOrCreateCart($request, $customer?->id);
 
         $result = $this->cartService->refreshPrices($cart);
 

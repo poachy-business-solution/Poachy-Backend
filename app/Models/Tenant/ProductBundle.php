@@ -202,6 +202,11 @@ class ProductBundle extends Model
      */
     public function recalculatePricing(): void
     {
+        // Force a fresh load — a cached `items` relation from an earlier access in the
+        // same request (e.g. adding several items in one loop) would otherwise silently
+        // exclude items added since that first access.
+        $this->load('items');
+
         $this->calculated_individual_price = $this->calculateIndividualPrice();
         $this->discount_amount = $this->calculateSavings();
         $this->save();

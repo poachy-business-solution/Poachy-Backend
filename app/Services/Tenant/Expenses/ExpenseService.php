@@ -211,7 +211,12 @@ class ExpenseService
 
         // Recalculate next occurrence if frequency/interval changed
         if (isset($updateData['recurrence_frequency']) || isset($updateData['recurrence_interval'])) {
-            $frequency = $updateData['recurrence_frequency'] ?? $expense->recurrence_frequency;
+            // $updateData['recurrence_frequency'], if present, is the raw string from the
+            // request — calculateNextOccurrence()'s match() needs the enum case, same as
+            // setRecurrence() already converts before calling it.
+            $frequency = isset($updateData['recurrence_frequency'])
+                ? RecurrenceFrequency::from($updateData['recurrence_frequency'])
+                : $expense->recurrence_frequency;
             $interval = $updateData['recurrence_interval'] ?? $expense->recurrence_interval;
 
             $updateData['next_occurrence_date'] = $this->calculateNextOccurrence(

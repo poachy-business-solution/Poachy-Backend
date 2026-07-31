@@ -203,6 +203,17 @@ class Shift extends Model
         return $this->futureAssignments()->exists();
     }
 
+    /**
+     * Whether this shift has any assignments at all (past or future). The
+     * shift_assignments.shift_id FK is onDelete('restrict'), so deleting a shift
+     * with historical assignments fails at the DB level regardless of date —
+     * this guard must match that, not just check future ones.
+     */
+    public function hasAssignments(): bool
+    {
+        return $this->assignments()->exists();
+    }
+
     public function assignmentsCountForDate(Carbon $date): int
     {
         return $this->assignments()

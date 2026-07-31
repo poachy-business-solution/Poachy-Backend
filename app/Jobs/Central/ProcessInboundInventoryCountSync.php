@@ -4,12 +4,14 @@ namespace App\Jobs\Central;
 
 use App\DataTransferObjects\Sync\InventoryCountSyncDTO;
 use App\Models\SyncQueueInbound;
+use App\Models\Tenant;
 use App\Services\Central\Sync\MarketplaceInventoryCountSyncService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ProcessInboundInventoryCountSync implements ShouldQueue
@@ -64,6 +66,10 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
             return;
         }
 
+        $centralProductId = null;
+        $ackStatus = 'failed';
+        $ackReason = null;
+
         try {
             $syncQueue->markAsProcessing();
 
@@ -76,9 +82,10 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
 
             $dto = InventoryCountSyncDTO::fromArray($syncQueue->payload);
 
-            $syncService->updateInventoryCount($dto);
+            $centralProductId = $syncService->updateInventoryCount($dto);
 
-            $syncQueue->markAsCompleted();
+            $syncQueue->markAsCompleted($centralProductId, 'marketplace_products');
+            $ackStatus = 'completed';
 
             Log::info('Inbound inventory count sync completed', [
                 'tenant_id' => $syncQueue->tenant_id,
@@ -87,6 +94,9 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
                 'variant_id' => $dto->variantId,
             ]);
         } catch (\Exception $e) {
+            $ackStatus = 'failed';
+            $ackReason = $e->getMessage();
+
             Log::error('Inbound inventory count sync failed', [
                 'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
@@ -104,11 +114,110 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
                 ]
             );
 
+            if ($syncQueue->canRetry()) {
+                $syncQueue->incrementRetry();
+
+                Log::info('InventoryCount sync will be retried', [
+                    'sync_queue_id' => $syncQueue->id,
+                    'retry_count' => $syncQueue->retry_count,
+                    'next_retry_at' => $syncQueue->next_retry_at,
+                ]);
+
+                $syncQueue->releaseLock();
+
+                ProcessInboundInventoryCountSync::dispatch($syncQueue->id)
+                    ->delay($syncQueue->next_retry_at)
+                    ->onQueue('sync-high');
+            } else {
+                Log::error('Max retries reached, InventoryCount sync failed permanently', [
+                    'sync_queue_id' => $syncQueue->id,
+                    'retry_count' => $syncQueue->retry_count,
+                ]);
+            }
+
             throw $e;
         } finally {
             if ($syncQueue->lock_token) {
                 $syncQueue->releaseLock();
             }
+
+            // Always ACK the tenant on final success or permanent failure — not on a
+            // transient failure that's about to be retried.
+            if ($ackStatus === 'completed' || !$syncQueue->canRetry()) {
+                $this->ackTenant($syncQueue, $ackStatus, $centralProductId, $ackReason);
+            }
+        }
+    }
+
+    /**
+     * ACK the tenant once we have a final result (success or permanent failure).
+     */
+    private function ackTenant(
+        SyncQueueInbound $syncQueue,
+        string $status,
+        ?int $centralProductId,
+        ?string $reason,
+    ): void {
+        $tenantOutboundSyncId = $syncQueue->metadata['sync_queue_id_from_tenant'] ?? null;
+
+        if (!$tenantOutboundSyncId) {
+            Log::warning('No tenant outbound sync queue ID in metadata, skipping ACK', [
+                'sync_queue_id' => $syncQueue->id,
+            ]);
+
+            return;
+        }
+
+        try {
+            $tenant = Tenant::on('central')->find($syncQueue->tenant_id);
+
+            if (!$tenant) {
+                Log::warning('Tenant not found for inventory count ACK', [
+                    'tenant_id' => $syncQueue->tenant_id,
+                    'sync_queue_id' => $syncQueue->id,
+                ]);
+
+                return;
+            }
+
+            $domain = $tenant->domains()->first();
+
+            if (!$domain) {
+                Log::warning('No domain found for tenant inventory count ACK', [
+                    'tenant_id' => $syncQueue->tenant_id,
+                    'sync_queue_id' => $syncQueue->id,
+                ]);
+
+                return;
+            }
+
+            $scheme = app()->environment('local') ? 'http://' : 'https://';
+            $tenantUrl = $scheme . $domain->domain;
+
+            Http::withToken(config('services.tenant_api.token'))
+                ->timeout(30)
+                ->retry(2, 100)
+                ->post($tenantUrl . '/api/v1/tenant/sync/inbound/inventory-count-ack', [
+                    'outbound_sync_queue_id' => (int) $tenantOutboundSyncId,
+                    'status' => $status,
+                    'central_product_id' => $centralProductId,
+                    'reason' => $reason,
+                ]);
+
+            Log::info('InventoryCount ACK sent to tenant', [
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
+                'outbound_sync_queue_id' => $tenantOutboundSyncId,
+                'status' => $status,
+                'central_product_id' => $centralProductId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send InventoryCount ACK to tenant', [
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't rethrow — ACK failure should not fail the sync job
         }
     }
 

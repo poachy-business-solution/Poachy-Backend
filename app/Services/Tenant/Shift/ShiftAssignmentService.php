@@ -3,8 +3,6 @@
 namespace App\Services\Tenant\Shift;
 
 use App\Enums\Tenant\ShiftStatus;
-use App\Events\Tenant\ShiftEnded;
-use App\Events\Tenant\ShiftStarted;
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\User;
@@ -217,8 +215,8 @@ class ShiftAssignmentService
 
             DB::commit();
 
-            // Fire shift started event
-            event(new ShiftStarted($assignment));
+            // ShiftAssignmentObserver::updating() already dispatches ShiftStarted off the
+            // status change in the update() call above — don't fire it a second time here.
 
             Log::info('User clocked in to shift', [
                 'assignment_id' => $assignment->id,
@@ -293,8 +291,8 @@ class ShiftAssignmentService
 
             DB::commit();
 
-            // Fire shift ended event
-            event(new ShiftEnded($assignment));
+            // ShiftAssignmentObserver::updating() already dispatches ShiftEnded off the
+            // status change in the update() call above — don't fire it a second time here.
 
             Log::info('User clocked out of shift', [
                 'assignment_id' => $assignment->id,

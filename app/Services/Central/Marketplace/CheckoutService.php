@@ -17,6 +17,7 @@ use App\Models\MarketplaceOrderDelivery;
 use App\Models\MarketplaceOrderItem;
 use App\Models\MarketplaceOrderPayment;
 use App\Models\ShoppingCart;
+use App\Models\ShoppingCartItem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -103,6 +104,18 @@ class CheckoutService
                 throw new \RuntimeException(
                     'Some product prices have increased since you added them to cart. Please review your cart.'
                 );
+            }
+
+            // Prices that dropped should benefit the customer — lock in the lower price.
+            $decreasedPrices = array_filter(
+                $priceChanges['changed'],
+                fn(array $change) => $change['difference'] < 0
+            );
+
+            foreach ($decreasedPrices as $change) {
+                ShoppingCartItem::on('central')
+                    ->where('id', $change['item_id'])
+                    ->update(['unit_price' => $change['current_price']]);
             }
         }
 

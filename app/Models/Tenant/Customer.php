@@ -55,6 +55,14 @@ class Customer extends Model
         'accepts_marketing' => 'boolean',
     ];
 
+    protected $attributes = [
+        // Matches the customers.customer_type DB column default — without this, a
+        // freshly-created (unsaved-reload) instance has customer_type = null in memory
+        // whenever the caller omits it, and CustomerObserver::generateCreationDescription()
+        // calls ->label() on it unguarded.
+        'customer_type' => CustomerType::WALK_IN->value,
+    ];
+
     protected $hidden = [
         'deleted_at',
     ];

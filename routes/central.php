@@ -46,9 +46,9 @@ Route::prefix('v1/central')->group(function () {
 
     // Admin Authentication
     Route::prefix('auth/admin')->group(function () {
-        Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-        Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
+        Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp');
+        Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->middleware('throttle:otp');
     });
 
     // Subscription plans
@@ -108,11 +108,11 @@ Route::prefix('v1/central')->group(function () {
 
     // Customer Auth routes
     Route::prefix('marketplace/auth')->group(function () {
-        Route::post('/register', [CustomerAuthController::class, 'register']);
-        Route::post('/login', [CustomerAuthController::class, 'login']);
-        Route::post('/login/verify', [CustomerAuthController::class, 'verifyLoginOtp']);
-        Route::post('/reset-password', [CustomerAuthController::class, 'forgotPassword']);
-        Route::post('/reset-password/confirm', [CustomerAuthController::class, 'resetPassword']);
+        Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:auth');
+        Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('throttle:auth');
+        Route::post('/login/verify', [CustomerAuthController::class, 'verifyLoginOtp'])->middleware('throttle:otp');
+        Route::post('/reset-password', [CustomerAuthController::class, 'forgotPassword'])->middleware('throttle:otp');
+        Route::post('/reset-password/confirm', [CustomerAuthController::class, 'resetPassword'])->middleware('throttle:otp');
     });
 });
 
@@ -136,12 +136,12 @@ Route::prefix('v1/central')
         // Customer Auth
         Route::prefix('marketplace/auth')->group(function () {
             Route::post('/logout', [CustomerAuthController::class, 'logout']);
-            Route::post('/update-password', [CustomerAuthController::class, 'initiateUpdatePassword']);
-            Route::post('/update-password/confirm', [CustomerAuthController::class, 'confirmUpdatePassword']);
-            Route::post('/verify-email', [CustomerAuthController::class, 'sendEmailVerification']);
-            Route::post('/verify-email/confirm', [CustomerAuthController::class, 'confirmEmailVerification']);
-            Route::post('/verify-phone', [CustomerAuthController::class, 'sendPhoneVerification']);
-            Route::post('/verify-phone/confirm', [CustomerAuthController::class, 'confirmPhoneVerification']);
+            Route::post('/update-password', [CustomerAuthController::class, 'initiateUpdatePassword'])->middleware('throttle:otp');
+            Route::post('/update-password/confirm', [CustomerAuthController::class, 'confirmUpdatePassword'])->middleware('throttle:otp');
+            Route::post('/verify-email', [CustomerAuthController::class, 'sendEmailVerification'])->middleware('throttle:otp');
+            Route::post('/verify-email/confirm', [CustomerAuthController::class, 'confirmEmailVerification'])->middleware('throttle:otp');
+            Route::post('/verify-phone', [CustomerAuthController::class, 'sendPhoneVerification'])->middleware('throttle:otp');
+            Route::post('/verify-phone/confirm', [CustomerAuthController::class, 'confirmPhoneVerification'])->middleware('throttle:otp');
         });
 
         // Tenant management
