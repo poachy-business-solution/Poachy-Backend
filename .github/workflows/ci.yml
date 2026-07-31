@@ -109,6 +109,18 @@ jobs:
       - name: Run central migrations
         run: php artisan migrate --force
 
+      # A subset of feature tests depend on reference/lookup data (business
+      # types & categories, subscription plans, the central 'customer' role)
+      # that only exists locally because dev DBs get seeded once and never
+      # wiped. Seed just those three here — skip CentralAdminSeeder (creates
+      # a real admin, unneeded) and TenantSeeder (real tenant DB provisioning,
+      # slow and not needed by any test).
+      - name: Seed reference data required by tests
+        run: |
+          php artisan db:seed --class=BusinessTypeSeeder --force
+          php artisan db:seed --class=SubscriptionPlanSeeder --force
+          php artisan db:seed --class=CentralRolesPermissionsSeeder --force
+
       # Validates tenant migration files parse correctly.
       # With no tenants provisioned this is a no-op for data, but it proves
       # the migration files load without errors.
