@@ -881,6 +881,7 @@ class SaleServiceTest extends TestCase
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->string('customer_type')->default('walk_in');
             $table->decimal('loyalty_points', 12, 2)->default(0);
             $table->decimal('current_debt', 12, 2)->default(0);
             $table->decimal('store_credit_balance', 12, 2)->default(0);

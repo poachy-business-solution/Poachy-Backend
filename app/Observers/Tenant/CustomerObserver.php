@@ -40,13 +40,20 @@ class CustomerObserver
             $customer->registered_at = now();
         }
 
-        // Initialize default values if not set
+        // Initialize default values if not set — these match the customers table's own
+        // column defaults, but Eloquent doesn't reflect server-side defaults back onto
+        // the in-memory instance after create(), so any caller using the returned model
+        // without a fresh() reload (e.g. CreditService::validateCreditSale() checking
+        // is_active right after creating a customer) would otherwise see null/missing
+        // values instead of the real defaults.
         $customer->loyalty_points = $customer->loyalty_points ?? 0;
         $customer->total_lifetime_purchases = $customer->total_lifetime_purchases ?? 0;
         $customer->total_visits = $customer->total_visits ?? 0;
         $customer->credit_limit = $customer->credit_limit ?? 0;
         $customer->current_debt = $customer->current_debt ?? 0;
+        $customer->store_credit_balance = $customer->store_credit_balance ?? 0;
         $customer->accepts_marketing = $customer->accepts_marketing ?? false;
+        $customer->is_active = $customer->is_active ?? true;
     }
 
     /**
@@ -65,7 +72,7 @@ class CustomerObserver
                 description: $this->generateCreationDescription($customer),
                 tags: ['customer', 'profile']
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create customer audit log', [
                 'tenant_id' => tenant()?->id,
                 'customer_id' => $customer->id,
@@ -132,7 +139,7 @@ class CustomerObserver
                     tags: $tags
                 );
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create customer update audit log', [
                 'tenant_id' => tenant()?->id,
                 'customer_id' => $customer->id,
@@ -157,7 +164,7 @@ class CustomerObserver
                 description: $this->generateDeletionDescription($customer),
                 tags: ['customer', 'profile', 'critical']
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create customer deletion audit log', [
                 'tenant_id' => tenant()?->id,
                 'customer_id' => $customer->id,
@@ -182,7 +189,7 @@ class CustomerObserver
                 description: $this->generateRestorationDescription($customer),
                 tags: ['customer', 'profile']
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create customer restoration audit log', [
                 'tenant_id' => tenant()?->id,
                 'customer_id' => $customer->id,
