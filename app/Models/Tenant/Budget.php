@@ -251,10 +251,15 @@ class Budget extends Model
         $this->spent_amount = $query->sum('amount');
         $this->remaining_amount = $this->budget_amount - $this->spent_amount;
 
-        // Check if threshold crossed
+        // Check if threshold was crossed in either direction — an approved expense
+        // getting rejected, or the budget amount being raised, can bring spending back
+        // under threshold, and the alert must clear just as reliably as it sets.
         if (!$this->alert_triggered && $this->is_near_threshold) {
             $this->alert_triggered = true;
             $this->alert_triggered_at = now();
+        } elseif ($this->alert_triggered && !$this->is_near_threshold) {
+            $this->alert_triggered = false;
+            $this->alert_triggered_at = null;
         }
 
         $this->save();
@@ -286,17 +291,5 @@ class Budget extends Model
         }
 
         return $query->exists();
-    }
-
-    /**
-     * Reset alert if spending drops below threshold
-     */
-    public function resetAlertIfNeeded(): void
-    {
-        if ($this->alert_triggered && !$this->is_near_threshold) {
-            $this->alert_triggered = false;
-            $this->alert_triggered_at = null;
-            $this->save();
-        }
     }
 }
