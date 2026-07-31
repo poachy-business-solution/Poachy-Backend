@@ -73,10 +73,10 @@ Route::prefix('v1/tenant')->group(function () {
 
     // Tenant Authentication
     Route::prefix('auth')->group(function () {
-        Route::post('/login', [TenantAuthController::class, 'login']);
-        Route::post('/verify-otp', [TenantAuthController::class, 'verifyOtp']); // Step 2: Verify OTP & get token
-        Route::post('/resend-otp', [TenantAuthController::class, 'resendOtp']); // Resend OTP
-        Route::post('/change-password', [TenantAuthController::class, 'changePassword']); // First-time password change
+        Route::post('/login', [TenantAuthController::class, 'login'])->middleware('throttle:auth');
+        Route::post('/verify-otp', [TenantAuthController::class, 'verifyOtp'])->middleware('throttle:otp'); // Step 2: Verify OTP & get token
+        Route::post('/resend-otp', [TenantAuthController::class, 'resendOtp'])->middleware('throttle:otp'); // Resend OTP
+        Route::post('/change-password', [TenantAuthController::class, 'changePassword'])->middleware('throttle:otp'); // First-time password change
     });
 
     // Sync endpoints (from Central)
