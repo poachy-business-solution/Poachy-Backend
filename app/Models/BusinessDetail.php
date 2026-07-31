@@ -110,6 +110,14 @@ class BusinessDetail extends Model
         ]);
     }
 
+    public function unverify(): bool
+    {
+        return $this->update([
+            'is_verified' => false,
+            'verified_at' => null,
+        ]);
+    }
+
     // Scopes
 
     public function scopeActive($query)

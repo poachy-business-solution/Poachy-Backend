@@ -10,7 +10,6 @@ use App\Services\Tenant\TenantAccessService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class TenantService
 {
@@ -19,10 +18,9 @@ class TenantService
      */
     public function createTenant(array $data): Tenant
     {
-        // Generate UUID for tenant
-        $tenantId = (string) Str::uuid();
-
-        // Prepare tenant metadata
+        // Prepare tenant metadata — tenant_name/notes must be top-level attributes
+        // (not nested under 'data') for Stancl's VirtualColumn trait to persist them;
+        // the tenant id itself is intentionally left to GeneratesIds to assign.
         $tenantData = [];
         if (isset($data['tenant_name'])) {
             $tenantData['tenant_name'] = $data['tenant_name'];
@@ -34,10 +32,7 @@ class TenantService
         try {
             // Paybill account assignment is handled by the TenantCreated event listener
             // in TenancyServiceProvider — fires for all creation paths.
-            $tenant = Tenant::create([
-                'id'   => $tenantId,
-                'data' => $tenantData,
-            ]);
+            $tenant = Tenant::create($tenantData);
 
             DB::setDefaultConnection('central');
 
@@ -164,12 +159,11 @@ class TenantService
         return DB::connection('central')->transaction(function () use ($tenantId, $metadata) {
             $tenant = Tenant::findOrFail($tenantId);
 
-            $currentData = $tenant->data ?? [];
-            $updatedData = array_merge($currentData, $metadata);
-
-            $tenant->update([
-                'data' => $updatedData,
-            ]);
+            // $tenant->data is always null after retrieval — Stancl's VirtualColumn
+            // decodes it onto top-level attributes (tenant_name, notes, ...) and nulls
+            // the data column immediately. update() with those keys directly leaves
+            // any attribute not in $metadata untouched, which is the merge we want.
+            $tenant->update($metadata);
 
             return $tenant->fresh(['domains']);
         });
