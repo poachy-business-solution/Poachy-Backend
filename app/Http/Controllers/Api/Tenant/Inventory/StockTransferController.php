@@ -8,6 +8,7 @@ use App\Http\Requests\Tenant\Inventory\Stock\CancelTransferRequest;
 use App\Http\Requests\Tenant\Inventory\Stock\CreateTransferRequest;
 use App\Http\Requests\Tenant\Inventory\Stock\GetTransfersRequest;
 use App\Http\Requests\Tenant\Inventory\Stock\ReceiveTransferRequest;
+use App\Http\Requests\Tenant\Inventory\Stock\SendTransferRequest;
 use App\Http\Resources\Tenant\Inventory\StockTransferResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\StockTransfer;
@@ -29,19 +30,22 @@ class StockTransferController extends Controller
      *     operationId="listStockTransfers",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID (required). Returns transfers where this store is either source or destination based on direction parameter.",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="direction",
      *         in="query",
      *         description="Filter by transfer direction relative to the specified store",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"outbound", "inbound", "all"},
@@ -49,29 +53,35 @@ class StockTransferController extends Controller
      *             example="outbound"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by transfer status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"pending", "approved", "in_transit", "completed", "cancelled"},
      *             example="pending"
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Transfers retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfers retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="transfer_number", type="string", example="TRF-202512-0001", description="Unique transfer identifier"),
      *                     @OA\Property(
@@ -104,8 +114,10 @@ class StockTransferController extends Controller
      *                         property="items",
      *                         type="array",
      *                         description="Products being transferred",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1, description="Transfer item ID"),
      *                             @OA\Property(
      *                                 property="product",
@@ -166,11 +178,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -179,9 +193,11 @@ class StockTransferController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -192,11 +208,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -209,11 +227,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -252,19 +272,22 @@ class StockTransferController extends Controller
      *     operationId="getStockTransfer",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the stock transfer",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Transfer retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfer retrieved successfully"),
      *             @OA\Property(
@@ -302,8 +325,10 @@ class StockTransferController extends Controller
      *                     property="items",
      *                     type="array",
      *                     description="List of products being transferred",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1, description="Transfer item record ID"),
      *                         @OA\Property(
      *                             property="product",
@@ -363,11 +388,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Transfer not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -380,11 +407,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -397,11 +426,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User doesn't have permission to view this transfer",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -414,11 +445,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -461,12 +494,14 @@ class StockTransferController extends Controller
      *     operationId="createStockTransfer",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Stock transfer creation details",
+     *
      *         @OA\JsonContent(
      *             required={"from_store_id", "to_store_id", "transfer_date", "items"},
+     *
      *             @OA\Property(
      *                 property="from_store_id",
      *                 type="integer",
@@ -507,9 +542,11 @@ class StockTransferController extends Controller
      *                 type="array",
      *                 description="Array of products to transfer (at least one item required)",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"product_id", "quantity", "uom_id"},
+     *
      *                     @OA\Property(
      *                         property="product_id",
      *                         type="integer",
@@ -549,11 +586,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Transfer created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfer created successfully"),
      *             @OA\Property(
@@ -582,8 +621,10 @@ class StockTransferController extends Controller
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(
      *                             property="product",
@@ -641,11 +682,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -654,24 +697,32 @@ class StockTransferController extends Controller
      *                 @OA\Property(
      *                     property="from_store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The from store id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="to_store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The to store id must be different from from store id.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The items field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items.0.product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected items.0.product id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -682,11 +733,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -699,11 +752,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -731,7 +786,7 @@ class StockTransferController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to create transfer: ' . $e->getMessage(),
+                'Failed to create transfer: '.$e->getMessage(),
                 null,
                 500
             );
@@ -746,19 +801,22 @@ class StockTransferController extends Controller
      *     operationId="approveStockTransfer",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the stock transfer to approve",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Transfer approved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfer approved successfully"),
      *             @OA\Property(
@@ -815,11 +873,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Insufficient stock at source store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -836,11 +896,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Transfer not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -853,11 +915,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -870,11 +934,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User doesn't have permission to approve transfers",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -887,11 +953,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -917,7 +985,7 @@ class StockTransferController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to approve transfer: ' . $e->getMessage(),
+                'Failed to approve transfer: '.$e->getMessage(),
                 null,
                 400
             );
@@ -932,19 +1000,22 @@ class StockTransferController extends Controller
      *     operationId="sendStockTransfer",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the stock transfer to send",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Transfer sent successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfer sent successfully. Inventory deducted from source store."),
      *             @OA\Property(
@@ -1007,11 +1078,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Transfer must be approved before it can be sent."),
      *             @OA\Property(
@@ -1024,11 +1097,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Transfer not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1041,11 +1116,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1058,11 +1135,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1076,12 +1155,11 @@ class StockTransferController extends Controller
      *         )
      *     )
      * )
-     *
      */
-    public function send(int $id): JsonResponse
+    public function send(int $id, SendTransferRequest $request): JsonResponse
     {
         try {
-            $transfer = $this->transferService->sendTransfer($id);
+            $transfer = $this->transferService->sendTransfer($id, $request->validated('serial_numbers', []));
 
             return ApiResponse::success(
                 'Transfer sent successfully. Inventory deducted from source store.',
@@ -1089,7 +1167,7 @@ class StockTransferController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to send transfer: ' . $e->getMessage(),
+                'Failed to send transfer: '.$e->getMessage(),
                 null,
                 400
             );
@@ -1104,25 +1182,29 @@ class StockTransferController extends Controller
      *     operationId="receiveStockTransfer",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the stock transfer to receive",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Received quantities for each transfer item",
+     *
      *         @OA\JsonContent(
      *             required={"received_items"},
+     *
      *             @OA\Property(
      *                 property="received_items",
      *                 type="object",
      *                 description="Object with transfer item IDs as keys and received quantities as values",
      *                 example={"3": 50},
+     *
      *                 @OA\AdditionalProperties(
      *                     type="number",
      *                     format="float",
@@ -1131,11 +1213,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Transfer received successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfer received successfully. Inventory added to destination store."),
      *             @OA\Property(
@@ -1204,11 +1288,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1217,9 +1303,11 @@ class StockTransferController extends Controller
      *                 @OA\Property(
      *                     property="received_items",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The received items field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1230,11 +1318,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Transfer must be in transit before it can be received."),
      *             @OA\Property(
@@ -1247,11 +1337,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Transfer not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1264,11 +1356,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1281,11 +1375,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1316,7 +1412,7 @@ class StockTransferController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to receive transfer: ' . $e->getMessage(),
+                'Failed to receive transfer: '.$e->getMessage(),
                 null,
                 400
             );
@@ -1331,20 +1427,23 @@ class StockTransferController extends Controller
      *     operationId="cancelStockTransfer",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the stock transfer to cancel",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Cancellation details",
+     *
      *         @OA\JsonContent(
      *             required={"reason"},
+     *
      *             @OA\Property(
      *                 property="reason",
      *                 type="string",
@@ -1354,11 +1453,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Transfer cancelled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfer cancelled successfully"),
      *             @OA\Property(
@@ -1408,11 +1509,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1421,9 +1524,11 @@ class StockTransferController extends Controller
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reason field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1434,11 +1539,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation - Transfer cannot be cancelled in current status",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Transfer cannot be cancelled. It has already been sent or completed."),
      *             @OA\Property(
@@ -1451,11 +1558,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Transfer not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1468,11 +1577,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1485,11 +1596,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1517,7 +1630,7 @@ class StockTransferController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to cancel transfer: ' . $e->getMessage(),
+                'Failed to cancel transfer: '.$e->getMessage(),
                 null,
                 400
             );
@@ -1532,27 +1645,32 @@ class StockTransferController extends Controller
      *     operationId="listPendingApprovals",
      *     tags={"Tenant - Stock Transfers"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by source store ID (optional). Returns pending transfers from this specific store.",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Pending approvals retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Pending approvals retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of pending transfer requests",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="transfer_number", type="string", example="TRF-202512-0001"),
      *                     @OA\Property(
@@ -1576,8 +1694,10 @@ class StockTransferController extends Controller
      *                     @OA\Property(
      *                         property="items",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(
      *                                 property="product",
@@ -1636,11 +1756,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1653,11 +1775,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User doesn't have permission to view pending approvals",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1670,11 +1794,13 @@ class StockTransferController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(

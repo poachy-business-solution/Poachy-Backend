@@ -60,6 +60,15 @@ class CreateSaleRequest extends FormRequest
                 'min:0.0001',
                 'max:999999.9999',
             ],
+            'items.*.serial_numbers' => [
+                'nullable',
+                'array',
+            ],
+            'items.*.serial_numbers.*' => [
+                'string',
+                'max:255',
+                'distinct',
+            ],
             'coupon_code' => [
                 'nullable',
                 'string',
@@ -121,7 +130,7 @@ class CreateSaleRequest extends FormRequest
             'payments.required' => 'At least one payment method is required',
             'payments.min' => 'At least one payment is required',
             'payments.*.method.required' => 'Payment method is required',
-            'payments.*.method.in' => 'Invalid payment method. Must be one of: ' . implode(', ', array_column(PaymentMethod::cases(), 'value')),
+            'payments.*.method.in' => 'Invalid payment method. Must be one of: '.implode(', ', array_column(PaymentMethod::cases(), 'value')),
             'payments.*.amount.required' => 'Payment amount is required',
             'payments.*.amount.min' => 'Payment amount must be greater than 0',
         ];

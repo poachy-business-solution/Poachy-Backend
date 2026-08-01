@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 use Tests\TestCase;
 
@@ -213,6 +214,53 @@ class ProductServiceTest extends TestCase
         $this->assertEquals(20, $updated->reorder_level);
     }
 
+    public function test_update_inventory_config_throws_when_enabling_serial_tracking_while_batch_tracking_active(): void
+    {
+        $product = $this->createProduct(['requires_batch_tracking' => true, 'requires_serial_tracking' => false]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->makeService()->updateInventoryConfig($product, [
+            'requires_serial_tracking' => true,
+        ]);
+    }
+
+    public function test_update_inventory_config_throws_when_enabling_batch_tracking_while_serial_tracking_active(): void
+    {
+        $product = $this->createProduct(['requires_batch_tracking' => false, 'requires_serial_tracking' => true]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->makeService()->updateInventoryConfig($product, [
+            'requires_batch_tracking' => true,
+        ]);
+    }
+
+    public function test_update_inventory_config_throws_when_both_flags_set_true_in_same_call(): void
+    {
+        $product = $this->createProduct(['requires_batch_tracking' => false, 'requires_serial_tracking' => false]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->makeService()->updateInventoryConfig($product, [
+            'requires_batch_tracking' => true,
+            'requires_serial_tracking' => true,
+        ]);
+    }
+
+    public function test_update_inventory_config_allows_switching_from_batch_to_serial_tracking_in_same_call(): void
+    {
+        $product = $this->createProduct(['requires_batch_tracking' => true, 'requires_serial_tracking' => false]);
+
+        $updated = $this->makeService()->updateInventoryConfig($product, [
+            'requires_batch_tracking' => false,
+            'requires_serial_tracking' => true,
+        ]);
+
+        $this->assertFalse($updated->requires_batch_tracking);
+        $this->assertTrue($updated->requires_serial_tracking);
+    }
+
     public function test_update_online_config_updates_availability_and_price(): void
     {
         $product = $this->createProduct(['is_available_online' => false]);
@@ -371,7 +419,7 @@ class ProductServiceTest extends TestCase
     {
         $this->expectException(ModelNotFoundException::class);
 
-        $this->makeService()->getByUuid((string) \Illuminate\Support\Str::uuid());
+        $this->makeService()->getByUuid((string) Str::uuid());
     }
 
     // =========================================================================

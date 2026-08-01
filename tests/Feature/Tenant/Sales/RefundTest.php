@@ -10,6 +10,7 @@ use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\LoyaltyTransaction;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SaleItemBatchDepletion;
@@ -18,6 +19,7 @@ use App\Models\Tenant\SaleRefundItem;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Sales\CreditService;
 use App\Services\Tenant\Sales\LoyaltyService;
 use App\Services\Tenant\Sales\RefundService;
@@ -401,6 +403,154 @@ class RefundTest extends TestCase
     }
 
     // =========================================================================
+    // Serial-tracked restoration (ProductSerial reversal)
+    // =========================================================================
+
+    public function test_serial_tracked_full_refund_restores_serial_to_available_and_clears_link(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 500.00, itemQuantity: 1.0, itemSubtotal: 500.00, productId: 2);
+        $serial = $this->createSoldSerial(productId: 2, serialNumber: 'IMEI-001', saleItemId: $saleItem->id);
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(inventoryMock: $inventoryMock, loyaltyMock: $loyaltyMock);
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::WRONG_ITEM->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 1.0,
+                        'refund_amount' => 500.00,
+                        'serial_numbers' => ['IMEI-001'],
+                    ],
+                ],
+            ]);
+        });
+
+        $serial->refresh();
+        $this->assertSame('available', $serial->status->value);
+        $this->assertNull($serial->sale_item_id);
+    }
+
+    public function test_serial_tracked_partial_refund_restores_only_the_returned_serials(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 1000.00, itemQuantity: 2.0, itemSubtotal: 1000.00, productId: 2);
+        $serialOne = $this->createSoldSerial(productId: 2, serialNumber: 'IMEI-001', saleItemId: $saleItem->id);
+        $serialTwo = $this->createSoldSerial(productId: 2, serialNumber: 'IMEI-002', saleItemId: $saleItem->id);
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(inventoryMock: $inventoryMock, loyaltyMock: $loyaltyMock);
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::CUSTOMER_CHANGED_MIND->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 1.0,
+                        'refund_amount' => 500.00,
+                        'serial_numbers' => ['IMEI-001'],
+                    ],
+                ],
+            ]);
+        });
+
+        $this->assertSame('available', $serialOne->fresh()->status->value);
+        $this->assertSame('sold', $serialTwo->fresh()->status->value);
+    }
+
+    public function test_serial_tracked_refund_throws_when_serial_count_mismatches_quantity(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 500.00, itemQuantity: 1.0, itemSubtotal: 500.00, productId: 2);
+        $this->createSoldSerial(productId: 2, serialNumber: 'IMEI-001', saleItemId: $saleItem->id);
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(inventoryMock: $inventoryMock, loyaltyMock: $loyaltyMock);
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::WRONG_ITEM->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 1.0,
+                        'refund_amount' => 500.00,
+                        'serial_numbers' => [], // missing — required for serial-tracked items
+                    ],
+                ],
+            ]);
+        });
+    }
+
+    public function test_serial_tracked_refund_throws_when_serial_not_sold_on_this_item(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 500.00, itemQuantity: 1.0, itemSubtotal: 500.00, productId: 2);
+        // No serial created for this sale item — "IMEI-999" was never sold here.
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(inventoryMock: $inventoryMock, loyaltyMock: $loyaltyMock);
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::WRONG_ITEM->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 1.0,
+                        'refund_amount' => 500.00,
+                        'serial_numbers' => ['IMEI-999'],
+                    ],
+                ],
+            ]);
+        });
+    }
+
+    // =========================================================================
     // Failure Paths
     // =========================================================================
 
@@ -592,7 +742,8 @@ class RefundTest extends TestCase
         float $itemQuantity,
         float $itemSubtotal,
         ?int $customerId = null,
-        float $loyaltyPointsEarned = 0.0
+        float $loyaltyPointsEarned = 0.0,
+        int $productId = 1
     ): array {
         $sale = $this->createRawSale(
             total: $total,
@@ -602,7 +753,7 @@ class RefundTest extends TestCase
 
         $saleItem = Model::withoutEvents(fn () => SaleItem::create([
             'sale_id' => $sale->id,
-            'product_id' => 1,
+            'product_id' => $productId,
             'uom_id' => 1,
             'quantity' => $itemQuantity,
             'quantity_in_base_uom' => $itemQuantity,
@@ -674,6 +825,18 @@ class RefundTest extends TestCase
         ]);
     }
 
+    private function createSoldSerial(int $productId, string $serialNumber, int $saleItemId): ProductSerial
+    {
+        return Model::withoutEvents(fn () => ProductSerial::create([
+            'store_id' => 1,
+            'product_id' => $productId,
+            'serial_number' => $serialNumber,
+            'status' => 'sold',
+            'cost' => 50.00,
+            'sale_item_id' => $saleItemId,
+        ]));
+    }
+
     private function enableRefunds(): void
     {
         Model::withoutEvents(fn () => TenantConfiguration::updateOrCreate(
@@ -694,6 +857,7 @@ class RefundTest extends TestCase
         ?InventoryMovementService $inventoryMock = null,
         ?LoyaltyService $loyaltyMock = null,
         ?ProductBatchService $batchService = null,
+        ?ProductSerialService $serialService = null,
     ): RefundService {
         $inventoryMock ??= Mockery::spy(InventoryMovementService::class);
 
@@ -705,6 +869,7 @@ class RefundTest extends TestCase
         return new RefundService(
             inventoryMovementService: $inventoryMock,
             batchService: $batchService ?? Mockery::spy(ProductBatchService::class),
+            serialService: $serialService ?? new ProductSerialService,
             loyaltyService: $loyaltyMock,
             creditService: Mockery::spy(CreditService::class),
             shiftSalesSummaryService: Mockery::spy(ShiftSalesSummaryService::class),
@@ -716,6 +881,7 @@ class RefundTest extends TestCase
         foreach ([
             'sale_item_batch_depletions',
             'product_batches',
+            'product_serials',
             'sale_refund_items',
             'sale_refunds',
             'loyalty_transactions',
@@ -753,6 +919,7 @@ class RefundTest extends TestCase
             $table->string('product_type')->default('simple');
             $table->string('stock_status')->default('in_stock');
             $table->boolean('requires_batch_tracking')->default(false);
+            $table->boolean('requires_serial_tracking')->default(false);
             $table->unsignedBigInteger('base_uom_id')->default(1);
             $table->boolean('is_available_online')->default(false);
             $table->timestamps();
@@ -764,6 +931,16 @@ class RefundTest extends TestCase
             'name' => 'Test Product',
             'slug' => 'test-product',
             'sku' => 'SKU-TEST-001',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::connection($conn)->table('products')->insert([
+            'id' => 2,
+            'name' => 'Serial Tracked Product',
+            'slug' => 'serial-tracked-product',
+            'sku' => 'SKU-SERIAL-001',
+            'requires_serial_tracking' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -920,6 +1097,23 @@ class RefundTest extends TestCase
             $table->unsignedBigInteger('batch_id');
             $table->decimal('quantity_in_base_uom', 15, 4);
             $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('product_serials', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id')->nullable();
+            $table->string('serial_number')->unique();
+            $table->string('status')->default('available');
+            $table->decimal('cost', 15, 2)->default(0);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->unsignedBigInteger('sale_item_id')->nullable();
+            $table->unsignedBigInteger('marketplace_sale_item_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::connection($conn)->create('tenant_configurations', function (Blueprint $table) {

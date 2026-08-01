@@ -6,6 +6,7 @@ use App\Enums\Tenant\InventoryMovementType;
 use App\Enums\Tenant\PurchaseOrderStatus;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
@@ -46,6 +47,7 @@ class ProductBatchService
             }
 
             $createdBatches = collect();
+            $createdSerials = collect();
 
             // Process each received item
             foreach ($receivedItems as $itemId => $receiveData) {
@@ -81,15 +83,38 @@ class ProductBatchService
 
                     $quantityInBaseUom = $batch->quantity_received_in_base_uom;
                     $batchId = $batch->id;
+                } elseif ($poItem->product->requiresSerialTracking()) {
+                    // Serial-tracked: one ProductSerial row per unit, no bulk-packaging
+                    // UOM math — the serial count itself IS the base-UOM quantity.
+                    $serialNumbers = $receiveData['serial_numbers'] ?? [];
+
+                    if (count($serialNumbers) !== (int) $quantityReceiving) {
+                        throw new \RuntimeException(
+                            'Serial number count must match quantity received. '.
+                                "Quantity: {$quantityReceiving}, Serial numbers provided: ".count($serialNumbers)
+                        );
+                    }
+
+                    $serials = app(ProductSerialService::class)->receiveSerialsFromPurchaseOrder(
+                        purchaseOrder: $po,
+                        poItem: $poItem,
+                        serialNumbers: $serialNumbers,
+                        notes: $receiveData['notes'] ?? null
+                    );
+
+                    $createdSerials = $createdSerials->merge($serials);
+                    $this->updateInventoryFromSerials($po, $poItem, $serials);
+
+                    $quantityInBaseUom = $serials->count();
                 } else {
-                    // Non-batch-tracked: directly increment inventory, no batch record created
+                    // Non-batch-tracked, non-serial-tracked: directly increment inventory
                     $conversionFactor = $this->getConversionToBaseUom($poItem->uom_id, $poItem->product_id);
                     $quantityInBaseUom = $quantityReceiving * $conversionFactor;
 
                     $this->updateInventoryDirectly($po, $poItem, $quantityReceiving, $quantityInBaseUom);
                 }
 
-                // Update PO item quantities — common to both paths
+                // Update PO item quantities — common to all paths
                 $newQuantityReceived = $poItem->quantity_received + $quantityReceiving;
 
                 $poItem->update([
@@ -124,11 +149,13 @@ class ProductBatchService
                 'po_id' => $po->id,
                 'po_number' => $po->po_number,
                 'batches_created' => $createdBatches->count(),
+                'serials_created' => $createdSerials->count(),
                 'new_status' => $po->fresh()->status->value,
             ]);
 
             return [
                 'batches' => $createdBatches,
+                'serials' => $createdSerials,
                 'purchase_order' => $po->fresh(['items', 'supplier', 'store']),
             ];
         });
@@ -228,6 +255,42 @@ class ProductBatchService
             'store_id' => $batch->store_id,
             'product_id' => $batch->product_id,
             'quantity_added' => $batch->quantity_received_in_base_uom,
+        ]);
+    }
+
+    /**
+     * Record a single PURCHASE movement for a batch of newly-received serials.
+     * One movement covering the whole group, rather than one per serial —
+     * matches updateInventoryFromBatch()'s single-movement-per-receipt shape.
+     *
+     * @param  Collection<int, ProductSerial>  $serials
+     */
+    private function updateInventoryFromSerials(PurchaseOrder $po, PurchaseOrderItem $poItem, Collection $serials): void
+    {
+        if ($serials->isEmpty()) {
+            return;
+        }
+
+        $movementService = app(InventoryMovementService::class);
+
+        $movementService->recordMovement([
+            'store_id' => $po->store_id,
+            'product_id' => $poItem->product_id,
+            'variant_id' => $poItem->product_variant_id,
+            'movement_type' => InventoryMovementType::PURCHASE,
+            'uom_id' => $poItem->product->base_uom_id,
+            'quantity' => $serials->count(),
+            'unit_cost' => $poItem->unit_cost_in_base_uom,
+            'reference_type' => PurchaseOrder::class,
+            'reference_id' => $po->id,
+            'notes' => "Goods received - {$serials->count()} serial(s) - PO {$po->po_number}",
+        ]);
+
+        Log::info('Inventory updated from serials', [
+            'po_id' => $po->id,
+            'store_id' => $po->store_id,
+            'product_id' => $poItem->product_id,
+            'quantity_added' => $serials->count(),
         ]);
     }
 

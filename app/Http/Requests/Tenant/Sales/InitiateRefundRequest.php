@@ -60,6 +60,15 @@ class InitiateRefundRequest extends FormRequest
                 'numeric',
                 'min:0',
             ],
+            'items.*.serial_numbers' => [
+                'nullable',
+                'array',
+            ],
+            'items.*.serial_numbers.*' => [
+                'string',
+                'max:255',
+                'distinct',
+            ],
         ];
     }
 

@@ -4,7 +4,6 @@ namespace Tests\Feature\Tenant\Product;
 
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBundle;
-use App\Models\Tenant\ProductBundleItem;
 use App\Models\Tenant\ProductUom;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Product\ProductBundleService;
@@ -16,7 +15,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 use Tests\TestCase;
 
@@ -171,6 +169,28 @@ class ProductBundleCrudServiceTest extends TestCase
         $this->assertEquals(20, $bundle->discount_amount);
     }
 
+    public function test_create_with_items_throws_when_a_component_requires_serial_tracking(): void
+    {
+        $serialProduct = $this->createProduct(['requires_serial_tracking' => true]);
+
+        try {
+            $this->makeService()->create([
+                'bundle_name' => 'Bad Bundle',
+                'base_uom_id' => 1,
+                'bundle_price' => 60,
+                'items' => [
+                    ['product_id' => $serialProduct->id, 'uom_id' => 1, 'quantity' => 1],
+                ],
+            ]);
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (\RuntimeException) {
+            // expected
+        }
+
+        // The whole create() transaction rolled back — no orphaned bundle row.
+        $this->assertSame(0, ProductBundle::count());
+    }
+
     public function test_create_without_items_leaves_pricing_at_defaults(): void
     {
         $bundle = $this->makeService()->create([
@@ -240,6 +260,26 @@ class ProductBundleCrudServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $this->makeService()->addItem($bundle, ['product_id' => $product->id, 'uom_id' => 999, 'quantity' => 1]);
+    }
+
+    public function test_add_item_throws_when_product_requires_serial_tracking(): void
+    {
+        $bundle = $this->createBundle();
+        $product = $this->createProduct(['requires_serial_tracking' => true]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->makeService()->addItem($bundle, ['product_id' => $product->id, 'uom_id' => 1, 'quantity' => 1]);
+    }
+
+    public function test_add_item_allows_batch_tracked_product(): void
+    {
+        $bundle = $this->createBundle();
+        $product = $this->createProduct(['requires_batch_tracking' => true]);
+
+        $item = $this->makeService()->addItem($bundle, ['product_id' => $product->id, 'uom_id' => 1, 'quantity' => 1]);
+
+        $this->assertSame($product->id, $item->product_id);
     }
 
     public function test_update_item_recalculates_base_uom_quantity_and_bundle_pricing(): void

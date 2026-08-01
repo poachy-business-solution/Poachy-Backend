@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Inventory;
 
+use App\Enums\Tenant\SerialStatus;
 use App\Enums\Tenant\WasteApprovalStatus;
 use App\Enums\Tenant\WasteType;
 use App\Events\Tenant\WasteApprovalRequested;
@@ -10,6 +11,7 @@ use App\Events\Tenant\WasteRejected;
 use App\Models\Tenant\InventoryWaste;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +35,8 @@ class InventoryWasteService
             $costPerBaseUom = $this->getCostPerBaseUom(
                 $data['product_id'],
                 $data['store_id'],
-                $data['batch_id'] ?? null
+                $data['batch_id'] ?? null,
+                $data['serial_id'] ?? null
             );
 
             // Calculate total loss
@@ -44,6 +47,7 @@ class InventoryWasteService
                 'store_id' => $data['store_id'],
                 'product_id' => $data['product_id'],
                 'batch_id' => $data['batch_id'] ?? null,
+                'serial_id' => $data['serial_id'] ?? null,
                 'waste_type' => $data['waste_type'],
                 'quantity_wasted' => $data['quantity_wasted'],
                 'cost_per_base_uom' => $costPerBaseUom,
@@ -59,6 +63,7 @@ class InventoryWasteService
                 'store_id' => $data['store_id'],
                 'product_id' => $data['product_id'],
                 'batch_id' => $data['batch_id'] ?? null,
+                'serial_id' => $data['serial_id'] ?? null,
                 'waste_type' => $data['waste_type'],
                 'quantity_wasted' => $data['quantity_wasted'],
                 'total_loss' => $totalLoss,
@@ -175,6 +180,35 @@ class InventoryWasteService
             }
         }
 
+        // If a serial is specified, flip it to damaged — a wasted unit is never
+        // returned to sellable stock. Unlike batch (a decrementable quantity), a
+        // serial is a single physical unit, so there's no partial-waste concept —
+        // the whole unit moves to a terminal, non-restorable status.
+        if ($waste->serial_id) {
+            $serial = ProductSerial::find($waste->serial_id);
+
+            if ($serial) {
+                if (! $serial->is_available) {
+                    throw new \RuntimeException(
+                        "Cannot approve waste #{$waste->id}: linked serial {$serial->serial_number} is not available ".
+                            "(current status: {$serial->status->value})."
+                    );
+                }
+
+                $serial->update(['status' => SerialStatus::DAMAGED]);
+
+                Log::info('Serial marked damaged for waste', [
+                    'serial_id' => $waste->serial_id,
+                    'waste_id' => $waste->id,
+                ]);
+            } else {
+                Log::error('Failed to mark serial damaged for waste: serial not found', [
+                    'waste_id' => $waste->id,
+                    'serial_id' => $waste->serial_id,
+                ]);
+            }
+        }
+
         // Record inventory movement
         $movementType = $waste->waste_type->relatedMovementType();
 
@@ -201,13 +235,19 @@ class InventoryWasteService
     /**
      * Get cost per base UOM for waste calculation
      */
-    private function getCostPerBaseUom(int $productId, int $storeId, ?int $batchId = null): float
+    private function getCostPerBaseUom(int $productId, int $storeId, ?int $batchId = null, ?int $serialId = null): float
     {
         // If batch specified, use batch cost
         if ($batchId) {
             $batch = ProductBatch::findOrFail($batchId);
 
             return $batch->cost_per_base_uom;
+        }
+
+        // If serial specified, use its real acquisition cost — more accurate than
+        // any average, since it's the exact cost this exact unit was received at.
+        if ($serialId) {
+            return ProductSerial::findOrFail($serialId)->cost;
         }
 
         // Otherwise, use latest batch cost or calculate average

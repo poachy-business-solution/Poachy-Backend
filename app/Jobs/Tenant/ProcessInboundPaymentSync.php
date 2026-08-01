@@ -12,6 +12,7 @@ use App\Models\Tenant\MarketplaceSaleItemBatchDepletion;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBundle;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Inventory\StockReservationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,6 +43,7 @@ class ProcessInboundPaymentSync implements ShouldQueue
     public function handle(
         StockReservationService $reservationService,
         ProductBatchService $batchService,
+        ProductSerialService $serialService,
     ): void {
         $orderId = $this->paymentPayload['order_id'];
         $orderNumber = $this->paymentPayload['order_number'];
@@ -98,6 +100,7 @@ class ProcessInboundPaymentSync implements ShouldQueue
             $activeReservations,
             $reservationService,
             $batchService,
+            $serialService,
             &$sale,
         ) {
             // For COD, sale is created with PENDING payment — cash is collected on delivery.
@@ -147,17 +150,18 @@ class ProcessInboundPaymentSync implements ShouldQueue
                 $reservationService->confirmAllReservationsForReference('MarketplaceOrder', $orderId);
             }
 
-            // Pre-load batch tracking flags for all non-bundle products in one query
+            // Pre-load batch/serial tracking flags for all non-bundle products in one query
             $nonBundleProductIds = collect($items)
                 ->filter(fn ($item) => ! ($item['tenant_bundle_id'] ?? null))
                 ->pluck('tenant_product_id')
                 ->unique()
                 ->values();
 
-            $batchTrackingMap = Product::whereIn('id', $nonBundleProductIds)
-                ->pluck('requires_batch_tracking', 'id');
+            $trackingFlags = Product::whereIn('id', $nonBundleProductIds)
+                ->get(['id', 'requires_batch_tracking', 'requires_serial_tracking'])
+                ->keyBy('id');
 
-            // Deplete batches via FIFO — only for products that require batch tracking
+            // Deplete batches / assign serials — only for products that require tracking
             if ($storeId) {
                 foreach ($items as $index => $item) {
                     $saleItemId = $saleItemsByIndex[$index]->id;
@@ -168,6 +172,13 @@ class ProcessInboundPaymentSync implements ShouldQueue
 
                         if ($bundle) {
                             foreach ($bundle->items as $bundleItem) {
+                                if ($bundleItem->product->requires_serial_tracking) {
+                                    throw new \RuntimeException(
+                                        "Bundle component '{$bundleItem->product->name}' requires serial tracking, ".
+                                            'which is not supported for bundle components.'
+                                    );
+                                }
+
                                 if ($bundleItem->product->requires_batch_tracking) {
                                     $result = $batchService->depleteBatchesFIFO(
                                         storeId: $storeId,
@@ -181,7 +192,9 @@ class ProcessInboundPaymentSync implements ShouldQueue
                             }
                         }
                     } else {
-                        if ($batchTrackingMap[$item['tenant_product_id']] ?? false) {
+                        $flags = $trackingFlags[$item['tenant_product_id']] ?? null;
+
+                        if ($flags?->requires_batch_tracking) {
                             $result = $batchService->depleteBatchesFIFO(
                                 storeId: $storeId,
                                 productId: $item['tenant_product_id'],
@@ -190,6 +203,14 @@ class ProcessInboundPaymentSync implements ShouldQueue
                             );
 
                             $this->recordDepletions($saleItemId, $item['tenant_product_id'], $result['depletions']);
+                        } elseif ($flags?->requires_serial_tracking) {
+                            $serialService->autoAssignSerialsFIFO(
+                                storeId: $storeId,
+                                productId: $item['tenant_product_id'],
+                                variantId: $item['tenant_variant_id'] ?? null,
+                                quantity: (int) $item['quantity'],
+                                marketplaceSaleItemId: $saleItemId,
+                            );
                         }
                     }
                 }

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\Tenant\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Tenant\Inventory\Batch\CreateBatchRequest;
 use App\Http\Requests\Tenant\Inventory\Batch\GetBatchesRequest;
 use App\Http\Requests\Tenant\Inventory\Batch\ReceiveGoodsRequest;
 use App\Http\Resources\Tenant\Inventory\ProductBatchResource;
+use App\Http\Resources\Tenant\Inventory\ProductSerialResource;
 use App\Http\Resources\Tenant\Inventory\PurchaseOrderResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\ProductBatch;
@@ -28,54 +28,67 @@ class ProductBatchController extends Controller
      *     operationId="listProductBatches",
      *     tags={"Tenant - Product Batches"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Filter by specific product",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="variant_id",
      *         in="query",
      *         description="Filter by specific product variant",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="only_available",
      *         in="query",
      *         description="Show only batches with remaining quantity (not depleted)",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="expiring_soon",
      *         in="query",
      *         description="Get batches expiring within specified number of days",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=30, description="Number of days (e.g., 30 for batches expiring in next 30 days)")
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Batches retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Batches retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="batch_number", type="string", example="BATCH-202512-0001", description="Auto-generated unique batch identifier"),
      *                     @OA\Property(
@@ -174,11 +187,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -187,9 +202,11 @@ class ProductBatchController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -200,11 +217,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -217,11 +236,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -287,19 +308,22 @@ class ProductBatchController extends Controller
      *     operationId="getProductBatch",
      *     tags={"Tenant - Product Batches"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the product batch",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Batch retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Batch retrieved successfully"),
      *             @OA\Property(
@@ -395,11 +419,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Batch not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -412,11 +438,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -429,11 +457,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -446,11 +476,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -490,12 +522,14 @@ class ProductBatchController extends Controller
      *     operationId="receiveGoodsFromPO",
      *     tags={"Tenant - Product Batches"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Goods receipt details",
+     *
      *         @OA\JsonContent(
      *             required={"purchase_order_id", "items"},
+     *
      *             @OA\Property(
      *                 property="purchase_order_id",
      *                 type="integer",
@@ -507,9 +541,11 @@ class ProductBatchController extends Controller
      *                 type="array",
      *                 description="Array of items being received (at least one required)",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"po_item_id", "quantity"},
+     *
      *                     @OA\Property(
      *                         property="po_item_id",
      *                         type="integer",
@@ -552,11 +588,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Goods received successfully - batches created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Goods received successfully. Created 2 batch(es)", description="Message indicates how many batches were created"),
      *             @OA\Property(
@@ -566,8 +604,10 @@ class ProductBatchController extends Controller
      *                     property="batches",
      *                     type="array",
      *                     description="Array of created batch records",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=3),
      *                         @OA\Property(property="batch_number", type="string", example="BATCH-202512-0003"),
      *                         @OA\Property(
@@ -714,8 +754,10 @@ class ProductBatchController extends Controller
      *                         property="items",
      *                         type="array",
      *                         description="PO items with updated receipt quantities and statuses",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(
      *                                 property="product",
@@ -796,11 +838,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation - PO cannot be received in current status",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to receive goods: Purchase order cannot be received. Current status: Draft"),
      *             @OA\Property(
@@ -813,11 +857,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -826,19 +872,25 @@ class ProductBatchController extends Controller
      *                 @OA\Property(
      *                     property="purchase_order_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The purchase order id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The items field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items.0.quantity",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The items.0.quantity must be greater than 0.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -849,11 +901,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -866,11 +920,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Purchase order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -883,11 +939,13 @@ class ProductBatchController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -914,6 +972,7 @@ class ProductBatchController extends Controller
                     'quantity' => $item['quantity'],
                     'manufacture_date' => $item['manufacture_date'] ?? null,
                     'expiry_date' => $item['expiry_date'] ?? null,
+                    'serial_numbers' => $item['serial_numbers'] ?? [],
                     'notes' => $item['notes'] ?? null,
                 ];
             }
@@ -924,15 +983,16 @@ class ProductBatchController extends Controller
             );
 
             return ApiResponse::created(
-                "Goods received successfully. Created {$result['batches']->count()} batch(es)",
+                "Goods received successfully. Created {$result['batches']->count()} batch(es), {$result['serials']->count()} serial(s)",
                 [
                     'batches' => ProductBatchResource::collection($result['batches']),
+                    'serials' => ProductSerialResource::collection($result['serials']),
                     'purchase_order' => new PurchaseOrderResource($result['purchase_order']),
                 ]
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to receive goods: ' . $e->getMessage(),
+                'Failed to receive goods: '.$e->getMessage(),
                 null,
                 400
             );
@@ -944,7 +1004,7 @@ class ProductBatchController extends Controller
         $storeId = request()->query('store_id');
         $productId = request()->query('product_id');
 
-        if (!$storeId) {
+        if (! $storeId) {
             return ApiResponse::error('Store ID is required', null, 422);
         }
 
@@ -966,7 +1026,7 @@ class ProductBatchController extends Controller
         $variantId = request()->query('variant_id');
         $quantity = request()->query('quantity');
 
-        if (!$storeId || !$productId || !$quantity) {
+        if (! $storeId || ! $productId || ! $quantity) {
             return ApiResponse::error(
                 'Store ID, Product ID, and Quantity are required',
                 null,
@@ -992,7 +1052,7 @@ class ProductBatchController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to calculate COGS: ' . $e->getMessage(),
+                'Failed to calculate COGS: '.$e->getMessage(),
                 null,
                 400
             );

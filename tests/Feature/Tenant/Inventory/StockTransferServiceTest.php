@@ -13,6 +13,7 @@ use App\Models\Tenant\StockTransferItem;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Inventory\StockTransferService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
@@ -364,7 +365,7 @@ class StockTransferServiceTest extends TestCase
 
     private function service(): StockTransferService
     {
-        return new StockTransferService(new InventoryMovementService(new InventoryService), new ProductBatchService);
+        return new StockTransferService(new InventoryMovementService(new InventoryService), new ProductBatchService, new ProductSerialService);
     }
 
     private function transferData(int $from = 1, int $to = 2, float $quantity = 5.0, int $productId = 1): array

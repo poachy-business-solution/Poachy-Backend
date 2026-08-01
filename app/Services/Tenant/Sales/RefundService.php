@@ -19,6 +19,7 @@ use App\Models\Tenant\SaleRefundItem;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,7 @@ class RefundService
     public function __construct(
         protected InventoryMovementService $inventoryMovementService,
         protected ProductBatchService $batchService,
+        protected ProductSerialService $serialService,
         protected LoyaltyService $loyaltyService,
         protected CreditService $creditService,
         protected ShiftSalesSummaryService $shiftSalesSummaryService
@@ -219,8 +221,8 @@ class RefundService
     /**
      * Validate each refund item against the sale and collect enriched item data.
      *
-     * @param  array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float}>  $items
-     * @return array<array{sale_item: SaleItem, quantity_refunded: float, quantity_refunded_in_base_uom: float, refund_amount: float}>
+     * @param  array<array{sale_item_id: int, quantity_refunded: float, refund_amount: float, serial_numbers?: array<int, string>}>  $items
+     * @return array<array{sale_item: SaleItem, quantity_refunded: float, quantity_refunded_in_base_uom: float, refund_amount: float, serial_numbers: array<int, string>}>
      *
      * @throws ValidationException
      */
@@ -261,6 +263,7 @@ class RefundService
                 'quantity_refunded' => $item['quantity_refunded'],
                 'quantity_refunded_in_base_uom' => $qtyInBaseUom,
                 'refund_amount' => $item['refund_amount'],
+                'serial_numbers' => $item['serial_numbers'] ?? [],
             ];
         }
 
@@ -300,6 +303,7 @@ class RefundService
                 ]);
 
                 $this->restoreBatchDepletions($saleItem, $itemData['quantity_refunded_in_base_uom']);
+                $this->restoreSerials($saleItem, $itemData['quantity_refunded'], $itemData['serial_numbers']);
             } catch (\Exception $e) {
                 Log::error('Failed to restore inventory for refund item', [
                     'refund_id' => $refund->id,
@@ -342,6 +346,32 @@ class RefundService
 
             $this->batchService->restoreBatchQuantity($depletion->batch_id, $quantityToRestore);
         }
+    }
+
+    /**
+     * Restore specific serials to available status on refund. Unlike batch restoration,
+     * this is exact rather than proportional — each serial is a distinct physical unit,
+     * so the caller must explicitly identify which one(s) are being returned rather than
+     * an abstract quantity. No-ops for non-serial-tracked products.
+     *
+     * @param  array<int, string>  $serialNumbers
+     */
+    private function restoreSerials(SaleItem $saleItem, float $quantityRefunded, array $serialNumbers): void
+    {
+        $saleItem->loadMissing('product');
+
+        if (! $saleItem->product?->requires_serial_tracking) {
+            return;
+        }
+
+        if (count($serialNumbers) !== (int) $quantityRefunded) {
+            throw new \RuntimeException(
+                'Serial number count must match quantity refunded for a serial-tracked item. '.
+                    "Quantity: {$quantityRefunded}, Serial numbers provided: ".count($serialNumbers)
+            );
+        }
+
+        $this->serialService->restoreSerialsForRefund($saleItem->id, $serialNumbers);
     }
 
     /**

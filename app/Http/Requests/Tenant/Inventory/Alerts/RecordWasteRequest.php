@@ -3,6 +3,9 @@
 namespace App\Http\Requests\Tenant\Inventory\Alerts;
 
 use App\Enums\Tenant\WasteType;
+use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -19,6 +22,7 @@ class RecordWasteRequest extends FormRequest
             'store_id' => ['required', 'integer', 'exists:stores,id'],
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'batch_id' => ['nullable', 'integer', 'exists:product_batches,id'],
+            'serial_id' => ['nullable', 'integer', 'exists:product_serials,id'],
             'waste_type' => ['required', new Enum(WasteType::class)],
             'quantity_wasted' => ['required', 'numeric', 'min:0.0001', 'max:999999.9999'],
             'waste_date' => ['nullable', 'date', 'before_or_equal:today'],
@@ -49,7 +53,7 @@ class RecordWasteRequest extends FormRequest
         $validator->after(function ($validator) {
             // If batch_id provided, validate it belongs to the product
             if ($this->batch_id && $this->product_id) {
-                $batch = \App\Models\Tenant\ProductBatch::find($this->batch_id);
+                $batch = ProductBatch::find($this->batch_id);
 
                 if ($batch && $batch->product_id !== $this->product_id) {
                     $validator->errors()->add('batch_id', 'Selected batch does not belong to the product.');
@@ -59,9 +63,31 @@ class RecordWasteRequest extends FormRequest
                 if ($batch && $this->quantity_wasted > $batch->quantity_remaining_in_base_uom) {
                     $validator->errors()->add(
                         'quantity_wasted',
-                        'Quantity wasted cannot exceed batch remaining quantity (' .
-                            number_format($batch->quantity_remaining_in_base_uom, 2) . ').'
+                        'Quantity wasted cannot exceed batch remaining quantity ('.
+                            number_format($batch->quantity_remaining_in_base_uom, 2).').'
                     );
+                }
+            }
+
+            if ($this->product_id) {
+                $product = Product::find($this->product_id);
+
+                if ($product && $product->requires_serial_tracking) {
+                    // Unlike batch tracking (optional per waste record), a serial-tracked
+                    // product's waste MUST identify the specific physical unit.
+                    if (! $this->serial_id) {
+                        $validator->errors()->add('serial_id', 'A serial must be selected for a serial-tracked product.');
+                    } elseif ((float) $this->quantity_wasted !== 1.0) {
+                        $validator->errors()->add('quantity_wasted', 'Quantity wasted must be exactly 1 for a serial-tracked product.');
+                    }
+                }
+
+                if ($this->serial_id && $product) {
+                    $serial = ProductSerial::find($this->serial_id);
+
+                    if ($serial && $serial->product_id !== $this->product_id) {
+                        $validator->errors()->add('serial_id', 'Selected serial does not belong to the product.');
+                    }
                 }
             }
         });
