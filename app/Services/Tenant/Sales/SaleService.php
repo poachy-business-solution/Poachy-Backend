@@ -16,6 +16,7 @@ use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\PromotionUsage;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\SaleItemBatchDepletion;
 use App\Models\Tenant\SalePayment;
 use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\Store;
@@ -465,6 +466,12 @@ class SaleService
     {
         $itemsForInventory = [];
 
+        // Persisted a moment ago in createSaleItems(), in the same order as
+        // $lineItems — used below to tag each inventory line with the
+        // SaleItem it belongs to, so batch depletions can be traced back to
+        // it (and reversed correctly on refund).
+        $saleItems = $sale->items()->orderBy('id')->get()->values();
+
         // Pre-load batch tracking flags for all non-bundle products in one query
         $nonBundleProductIds = collect($lineItems)
             ->filter(fn ($item) => ! $item['bundle_id'])
@@ -475,12 +482,15 @@ class SaleService
         $batchTrackingMap = Product::whereIn('id', $nonBundleProductIds)
             ->pluck('requires_batch_tracking', 'id');
 
-        foreach ($lineItems as $item) {
+        foreach ($lineItems as $index => $item) {
+            $saleItemId = $saleItems[$index]->id;
+
             if ($item['bundle_id']) {
                 $bundle = ProductBundle::with('items')->find($item['bundle_id']);
 
                 foreach ($bundle->items as $bundleItem) {
                     $itemsForInventory[] = [
+                        'sale_item_id' => $saleItemId,
                         'store_id' => $sale->store_id,
                         'product_id' => $bundleItem->product_id,
                         'variant_id' => $bundleItem->product_variant_id,
@@ -497,6 +507,7 @@ class SaleService
                 }
             } else {
                 $itemsForInventory[] = [
+                    'sale_item_id' => $saleItemId,
                     'store_id' => $sale->store_id,
                     'product_id' => $item['product_id'],
                     'variant_id' => $item['variant_id'],
@@ -513,12 +524,21 @@ class SaleService
 
         foreach ($itemsForInventory as $item) {
             if ($item['requires_batch_tracking']) {
-                $this->productBatchService->depleteBatchesFIFO(
+                $result = $this->productBatchService->depleteBatchesFIFO(
                     $item['store_id'],
                     $item['product_id'],
                     $item['variant_id'],
                     $item['quantity']
                 );
+
+                foreach ($result['depletions'] as $batchId => $quantityDepleted) {
+                    SaleItemBatchDepletion::create([
+                        'sale_item_id' => $item['sale_item_id'],
+                        'product_id' => $item['product_id'],
+                        'batch_id' => $batchId,
+                        'quantity_in_base_uom' => $quantityDepleted,
+                    ]);
+                }
             }
         }
     }

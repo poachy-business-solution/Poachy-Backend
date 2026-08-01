@@ -7,6 +7,9 @@ use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
+use App\Models\Tenant\Sale;
+use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\SaleItemBatchDepletion;
 use App\Services\Tenant\Customer\CustomerService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
@@ -28,7 +31,7 @@ use Tests\TestCase;
  */
 class ExposedSaleService extends SaleService
 {
-    public function testDeductInventory(\App\Models\Tenant\Sale $sale, array $lineItems): void
+    public function testDeductInventory(Sale $sale, array $lineItems): void
     {
         $this->deductInventory($sale, $lineItems);
     }
@@ -66,7 +69,7 @@ class BatchTrackingEnforcementTest extends TestCase
     // SaleService — FIFO depletion gate
     // =========================================================================
 
-    public function testNonBatchProductSkipsFifoInPosSale(): void
+    public function test_non_batch_product_skips_fifo_in_pos_sale(): void
     {
         $product = $this->createProduct(requiresBatchTracking: false);
 
@@ -76,23 +79,25 @@ class BatchTrackingEnforcementTest extends TestCase
         $batchSpy = Mockery::spy(ProductBatchService::class);
 
         $saleService = $this->makeSaleService($movementMock, $batchSpy);
-        $sale        = $this->makeSale(storeId: 1);
+        $sale = $this->makeSale(storeId: 1);
+        $this->createSaleItem($sale->id, $product->id, quantity: 5.0);
 
         $saleService->testDeductInventory($sale, [
             [
-                'bundle_id'  => null,
+                'bundle_id' => null,
                 'product_id' => $product->id,
                 'variant_id' => null,
-                'quantity'   => 5.0,
-                'uom_id'     => 1,
-                'unit_cost'  => 10.0,
+                'quantity' => 5.0,
+                'uom_id' => 1,
+                'unit_cost' => 10.0,
             ],
         ]);
 
         $batchSpy->shouldNotHaveReceived('depleteBatchesFIFO');
+        $this->assertSame(0, SaleItemBatchDepletion::count());
     }
 
-    public function testBatchTrackedProductRunsFifoInPosSale(): void
+    public function test_batch_tracked_product_runs_fifo_in_pos_sale(): void
     {
         $product = $this->createProduct(requiresBatchTracking: true);
 
@@ -102,32 +107,93 @@ class BatchTrackingEnforcementTest extends TestCase
         $batchMock = Mockery::mock(ProductBatchService::class);
         $batchMock->shouldReceive('depleteBatchesFIFO')
             ->once()
-            ->with(1, $product->id, null, 5.0);
+            ->with(1, $product->id, null, 5.0)
+            ->andReturn(['depletions' => [], 'total_cost' => 0, 'average_cost' => 0]);
 
         $saleService = $this->makeSaleService($movementMock, $batchMock);
-        $sale        = $this->makeSale(storeId: 1);
+        $sale = $this->makeSale(storeId: 1);
+        $this->createSaleItem($sale->id, $product->id, quantity: 5.0);
 
         $saleService->testDeductInventory($sale, [
             [
-                'bundle_id'  => null,
+                'bundle_id' => null,
                 'product_id' => $product->id,
                 'variant_id' => null,
-                'quantity'   => 5.0,
-                'uom_id'     => 1,
-                'unit_cost'  => 10.0,
+                'quantity' => 5.0,
+                'uom_id' => 1,
+                'unit_cost' => 10.0,
             ],
         ]);
+    }
+
+    public function test_batch_tracked_sale_records_depletion_for_refund_reversal(): void
+    {
+        $product = $this->createProduct(requiresBatchTracking: true);
+        $po = $this->createPurchaseOrder();
+        $poItem = $this->createPurchaseOrderItem($po->id, $product->id, uomId: 1);
+
+        // Receive a single batch with 5 units (partial receipt against the
+        // 10-unit poItem — keeps the PO status short of "received", same as
+        // the other PO-receiving tests above, so no supplier lookup fires),
+        // then sell all 5 — mirrors "one batch, fully depleted by one sale".
+        $movementMock = Mockery::mock(InventoryMovementService::class);
+        $movementMock->shouldReceive('recordMovement')->once();
+
+        $batch = null;
+
+        Model::withoutEvents(function () use (&$batch, $po, $poItem, $movementMock): void {
+            app()->bind(InventoryMovementService::class, fn () => $movementMock);
+
+            $result = (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $poItem->id => [
+                    'quantity' => 5.0,
+                    'manufacture_date' => null,
+                    'expiry_date' => null,
+                    'notes' => null,
+                ],
+            ]);
+
+            $batch = $result['batches']->first();
+        });
+
+        $saleMovementMock = Mockery::mock(InventoryMovementService::class);
+        $saleMovementMock->shouldReceive('recordSale')->once()->andReturn(collect());
+
+        $saleService = $this->makeSaleService($saleMovementMock, new ProductBatchService);
+        $sale = $this->makeSale(storeId: 1);
+        $saleItem = $this->createSaleItem($sale->id, $product->id, quantity: 5.0);
+
+        Model::withoutEvents(function () use ($saleService, $sale, $product): void {
+            $saleService->testDeductInventory($sale, [
+                [
+                    'bundle_id' => null,
+                    'product_id' => $product->id,
+                    'variant_id' => null,
+                    'quantity' => 5.0,
+                    'uom_id' => 1,
+                    'unit_cost' => 10.0,
+                ],
+            ]);
+        });
+
+        $this->assertSame(1, SaleItemBatchDepletion::count());
+        $depletion = SaleItemBatchDepletion::first();
+        $this->assertSame($saleItem->id, $depletion->sale_item_id);
+        $this->assertSame($batch->id, $depletion->batch_id);
+        $this->assertEquals(5.0, (float) $depletion->quantity_in_base_uom);
+
+        $this->assertEquals(0.0, (float) $batch->fresh()->quantity_remaining_in_base_uom);
     }
 
     // =========================================================================
     // ProductBatchService — PO receipt routing
     // =========================================================================
 
-    public function testPoReceiptNonBatchProductDoesNotCreateBatch(): void
+    public function test_po_receipt_non_batch_product_does_not_create_batch(): void
     {
         $product = $this->createProduct(requiresBatchTracking: false);
-        $po      = $this->createPurchaseOrder();
-        $poItem  = $this->createPurchaseOrderItem($po->id, $product->id, uomId: 1);
+        $po = $this->createPurchaseOrder();
+        $poItem = $this->createPurchaseOrderItem($po->id, $product->id, uomId: 1);
 
         // InventoryMovementService::recordMovement() should be called once (direct inventory path)
         $movementMock = Mockery::mock(InventoryMovementService::class);
@@ -140,12 +206,12 @@ class BatchTrackingEnforcementTest extends TestCase
         Model::withoutEvents(function () use (&$result, $po, $poItem, $movementMock): void {
             app()->bind(InventoryMovementService::class, fn () => $movementMock);
 
-            $result = (new ProductBatchService())->receiveGoodsFromPurchaseOrder($po->id, [
+            $result = (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
                 $poItem->id => [
-                    'quantity'         => 5.0,
+                    'quantity' => 5.0,
                     'manufacture_date' => null,
-                    'expiry_date'      => null,
-                    'notes'            => null,
+                    'expiry_date' => null,
+                    'notes' => null,
                 ],
             ]);
         });
@@ -154,11 +220,11 @@ class BatchTrackingEnforcementTest extends TestCase
         $this->assertTrue($result['batches']->isEmpty(), 'Returned batches collection should be empty.');
     }
 
-    public function testPoReceiptBatchTrackedProductCreatesBatch(): void
+    public function test_po_receipt_batch_tracked_product_creates_batch(): void
     {
         $product = $this->createProduct(requiresBatchTracking: true);
-        $po      = $this->createPurchaseOrder();
-        $poItem  = $this->createPurchaseOrderItem($po->id, $product->id, uomId: 1);
+        $po = $this->createPurchaseOrder();
+        $poItem = $this->createPurchaseOrderItem($po->id, $product->id, uomId: 1);
 
         // InventoryMovementService::recordMovement() should be called once (via updateInventoryFromBatch)
         $movementMock = Mockery::mock(InventoryMovementService::class);
@@ -169,12 +235,12 @@ class BatchTrackingEnforcementTest extends TestCase
         Model::withoutEvents(function () use (&$result, $po, $poItem, $movementMock): void {
             app()->bind(InventoryMovementService::class, fn () => $movementMock);
 
-            $result = (new ProductBatchService())->receiveGoodsFromPurchaseOrder($po->id, [
+            $result = (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
                 $poItem->id => [
-                    'quantity'         => 5.0,
+                    'quantity' => 5.0,
                     'manufacture_date' => null,
-                    'expiry_date'      => '2026-12-31',
-                    'notes'            => null,
+                    'expiry_date' => '2026-12-31',
+                    'notes' => null,
                 ],
             ]);
         });
@@ -196,14 +262,14 @@ class BatchTrackingEnforcementTest extends TestCase
     {
         // withoutEvents() skips ProductObserver which calls Cache::tags() (not supported by array driver)
         return Product::withoutEvents(fn () => Product::create([
-            'name'                    => 'Test Product',
-            'slug'                    => 'test-product-' . uniqid(),
-            'sku'                     => 'SKU-' . uniqid(),
-            'product_type'            => 'simple',
-            'stock_status'            => 'in_stock',
+            'name' => 'Test Product',
+            'slug' => 'test-product-'.uniqid(),
+            'sku' => 'SKU-'.uniqid(),
+            'product_type' => 'simple',
+            'stock_status' => 'in_stock',
             'requires_batch_tracking' => $requiresBatchTracking,
-            'base_uom_id'             => $baseUomId,
-            'is_available_online'     => false,
+            'base_uom_id' => $baseUomId,
+            'is_available_online' => false,
         ]));
     }
 
@@ -211,29 +277,29 @@ class BatchTrackingEnforcementTest extends TestCase
     {
         // withoutEvents() skips PurchaseOrderObserver which calls AuditService and relations
         return PurchaseOrder::withoutEvents(fn () => PurchaseOrder::create([
-            'po_number'   => 'PO-TEST-' . uniqid(),
+            'po_number' => 'PO-TEST-'.uniqid(),
             'supplier_id' => 1,
-            'store_id'    => 1,
-            'order_date'  => now()->toDateString(),
-            'status'      => PurchaseOrderStatus::SENT->value,
-            'created_by'  => 1,
+            'store_id' => 1,
+            'order_date' => now()->toDateString(),
+            'status' => PurchaseOrderStatus::SENT->value,
+            'created_by' => 1,
         ]));
     }
 
     private function createPurchaseOrderItem(int $poId, int $productId, int $uomId): PurchaseOrderItem
     {
         return PurchaseOrderItem::withoutEvents(fn () => PurchaseOrderItem::create([
-            'purchase_order_id'             => $poId,
-            'product_id'                    => $productId,
-            'product_variant_id'            => null,
-            'uom_id'                        => $uomId,
-            'quantity_ordered'              => 10.0,
-            'quantity_ordered_in_base_uom'  => 10.0,
-            'quantity_received'             => 0.0,
+            'purchase_order_id' => $poId,
+            'product_id' => $productId,
+            'product_variant_id' => null,
+            'uom_id' => $uomId,
+            'quantity_ordered' => 10.0,
+            'quantity_ordered_in_base_uom' => 10.0,
+            'quantity_received' => 0.0,
             'quantity_received_in_base_uom' => 0.0,
-            'unit_cost'                     => 5.00,
-            'unit_cost_in_base_uom'         => 5.00,
-            'status'                        => 'pending',
+            'unit_cost' => 5.00,
+            'unit_cost_in_base_uom' => 5.00,
+            'status' => 'pending',
         ]));
     }
 
@@ -252,12 +318,34 @@ class BatchTrackingEnforcementTest extends TestCase
         );
     }
 
-    private function makeSale(int $storeId): \App\Models\Tenant\Sale
+    private function makeSale(int $storeId): Sale
     {
-        $sale = new \App\Models\Tenant\Sale();
-        $sale->forceFill(['id' => 1, 'store_id' => $storeId, 'sale_number' => 'SALE-TEST-' . uniqid()]);
+        $sale = new Sale;
+        $sale->forceFill(['id' => 1, 'store_id' => $storeId, 'sale_number' => 'SALE-TEST-'.uniqid()]);
 
         return $sale;
+    }
+
+    /**
+     * deductInventory() looks up the sale's persisted SaleItem rows (created
+     * moments earlier by createSaleItems() in the real flow) to tag each
+     * inventory line for batch-depletion tracking — so tests need a real
+     * SaleItem row matching each line item passed to testDeductInventory().
+     */
+    private function createSaleItem(int $saleId, int $productId, float $quantity): SaleItem
+    {
+        return SaleItem::withoutEvents(fn () => SaleItem::create([
+            'sale_id' => $saleId,
+            'product_id' => $productId,
+            'uom_id' => 1,
+            'quantity' => $quantity,
+            'quantity_in_base_uom' => $quantity,
+            'unit_price' => 20.0,
+            'unit_cost' => 10.0,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'subtotal' => $quantity * 20.0,
+        ]));
     }
 
     private function createMinimalSchema(): void
@@ -404,12 +492,42 @@ class BatchTrackingEnforcementTest extends TestCase
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::connection($conn)->create('sale_items', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('sale_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('bundle_id')->nullable();
+            $table->unsignedBigInteger('uom_id')->default(1);
+            $table->decimal('quantity', 12, 4)->default(1);
+            $table->decimal('quantity_in_base_uom', 12, 4)->default(1);
+            $table->decimal('unit_price', 12, 2)->default(0);
+            $table->decimal('unit_cost', 12, 2)->default(0);
+            $table->decimal('discount_amount', 12, 2)->default(0);
+            $table->unsignedBigInteger('tax_rate_id')->nullable();
+            $table->decimal('tax_amount', 12, 2)->default(0);
+            $table->decimal('subtotal', 12, 2)->default(0);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('sale_item_batch_depletions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('sale_item_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('batch_id');
+            $table->decimal('quantity_in_base_uom', 15, 4);
+            $table->timestamps();
+        });
     }
 
     private function dropTestTables(): void
     {
         $conn = 'tenant';
 
+        Schema::connection($conn)->dropIfExists('sale_item_batch_depletions');
+        Schema::connection($conn)->dropIfExists('sale_items');
         Schema::connection($conn)->dropIfExists('product_batches');
         Schema::connection($conn)->dropIfExists('purchase_order_items');
         Schema::connection($conn)->dropIfExists('purchase_orders');

@@ -8,6 +8,7 @@ use App\Enums\Tenant\ReservationStatus;
 use App\Models\Tenant\InventoryReservation;
 use App\Models\Tenant\MarketplaceSale;
 use App\Models\Tenant\MarketplaceSaleItem;
+use App\Models\Tenant\MarketplaceSaleItemBatchDepletion;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBundle;
 use App\Services\Tenant\Inventory\ProductBatchService;
@@ -42,9 +43,9 @@ class ProcessInboundPaymentSync implements ShouldQueue
         StockReservationService $reservationService,
         ProductBatchService $batchService,
     ): void {
-        $orderId        = $this->paymentPayload['order_id'];
-        $orderNumber    = $this->paymentPayload['order_number'];
-        $items          = $this->paymentPayload['items'] ?? [];
+        $orderId = $this->paymentPayload['order_id'];
+        $orderNumber = $this->paymentPayload['order_number'];
+        $items = $this->paymentPayload['items'] ?? [];
         $outboundSyncId = $this->paymentPayload['_outbound_sync_id'] ?? null;
 
         // Idempotency: if a marketplace sale already exists for this order, skip entirely.
@@ -52,7 +53,7 @@ class ProcessInboundPaymentSync implements ShouldQueue
             $existingSale = MarketplaceSale::where('central_order_id', $orderId)->first();
 
             Log::info('Marketplace sale already exists for order — skipping (idempotent)', [
-                'order_id'     => $orderId,
+                'order_id' => $orderId,
                 'order_number' => $orderNumber,
             ]);
 
@@ -63,9 +64,9 @@ class ProcessInboundPaymentSync implements ShouldQueue
 
         $isCashOnDelivery = $this->paymentPayload['payment_method'] === 'cash_on_delivery';
 
-        $taxTotal    = collect($items)->sum('tax_amount');
+        $taxTotal = collect($items)->sum('tax_amount');
         $totalAmount = (float) $this->paymentPayload['amount'];
-        $subtotal    = round($totalAmount - $taxTotal, 2);
+        $subtotal = round($totalAmount - $taxTotal, 2);
 
         // Resolve store from active reservations for this order
         $activeReservations = InventoryReservation::with('inventory')
@@ -88,7 +89,6 @@ class ProcessInboundPaymentSync implements ShouldQueue
 
         DB::transaction(function () use (
             $orderId,
-            $orderNumber,
             $items,
             $storeId,
             $subtotal,
@@ -103,37 +103,42 @@ class ProcessInboundPaymentSync implements ShouldQueue
             // For COD, sale is created with PENDING payment — cash is collected on delivery.
             // For all other methods, payment has already been confirmed.
             $sale = MarketplaceSale::create([
-                'central_order_id'  => $orderId,
-                'sale_number'       => $this->paymentPayload['order_number'],
-                'store_id'          => $storeId,
-                'subtotal'          => $subtotal,
-                'tax_amount'        => round($taxTotal, 2),
-                'discount_amount'   => 0,
-                'total_amount'      => $totalAmount,
-                'payment_status'    => $isCashOnDelivery ? PaymentStatus::PENDING : PaymentStatus::PAID,
-                'amount_paid'       => $isCashOnDelivery ? 0 : $totalAmount,
-                'amount_due'        => $isCashOnDelivery ? $totalAmount : 0,
-                'payment_method'    => $this->mapPaymentMethod($this->paymentPayload['payment_method']),
+                'central_order_id' => $orderId,
+                'sale_number' => $this->paymentPayload['order_number'],
+                'store_id' => $storeId,
+                'subtotal' => $subtotal,
+                'tax_amount' => round($taxTotal, 2),
+                'discount_amount' => 0,
+                'total_amount' => $totalAmount,
+                'payment_status' => $isCashOnDelivery ? PaymentStatus::PENDING : PaymentStatus::PAID,
+                'amount_paid' => $isCashOnDelivery ? 0 : $totalAmount,
+                'amount_due' => $isCashOnDelivery ? $totalAmount : 0,
+                'payment_method' => $this->mapPaymentMethod($this->paymentPayload['payment_method']),
                 'payment_reference' => $this->paymentPayload['transaction_reference'],
-                'fulfillment_type'  => $this->paymentPayload['fulfillment_type'] ?? 'delivery',
+                'fulfillment_type' => $this->paymentPayload['fulfillment_type'] ?? 'delivery',
             ]);
 
-            // Create sale line items
-            foreach ($items as $item) {
+            // Create sale line items — indexed by the same $items order used
+            // below when depleting batches, so each depletion can be tied
+            // back to the MarketplaceSaleItem it belongs to (needed to
+            // reverse the correct batch(es) on cancellation).
+            $saleItemsByIndex = [];
+
+            foreach ($items as $index => $item) {
                 $product = Product::find($item['tenant_product_id']);
 
-                MarketplaceSaleItem::create([
-                    'marketplace_sale_id'  => $sale->id,
-                    'product_id'           => $item['tenant_product_id'],
-                    'product_variant_id'   => $item['tenant_variant_id'] ?? null,
-                    'bundle_id'            => $item['tenant_bundle_id'] ?? null,
-                    'uom_id'               => $product?->base_uom_id,
-                    'quantity'             => $item['quantity'],
+                $saleItemsByIndex[$index] = MarketplaceSaleItem::create([
+                    'marketplace_sale_id' => $sale->id,
+                    'product_id' => $item['tenant_product_id'],
+                    'product_variant_id' => $item['tenant_variant_id'] ?? null,
+                    'bundle_id' => $item['tenant_bundle_id'] ?? null,
+                    'uom_id' => $product?->base_uom_id,
+                    'quantity' => $item['quantity'],
                     'quantity_in_base_uom' => $item['quantity'],
-                    'unit_price'           => $item['unit_price'],
-                    'tax_amount'           => $item['tax_amount'],
-                    'discount_amount'      => 0,
-                    'subtotal'             => $item['subtotal'],
+                    'unit_price' => $item['unit_price'],
+                    'tax_amount' => $item['tax_amount'],
+                    'discount_amount' => 0,
+                    'subtotal' => $item['subtotal'],
                 ]);
             }
 
@@ -144,7 +149,7 @@ class ProcessInboundPaymentSync implements ShouldQueue
 
             // Pre-load batch tracking flags for all non-bundle products in one query
             $nonBundleProductIds = collect($items)
-                ->filter(fn ($item) => !($item['tenant_bundle_id'] ?? null))
+                ->filter(fn ($item) => ! ($item['tenant_bundle_id'] ?? null))
                 ->pluck('tenant_product_id')
                 ->unique()
                 ->values();
@@ -154,7 +159,9 @@ class ProcessInboundPaymentSync implements ShouldQueue
 
             // Deplete batches via FIFO — only for products that require batch tracking
             if ($storeId) {
-                foreach ($items as $item) {
+                foreach ($items as $index => $item) {
+                    $saleItemId = $saleItemsByIndex[$index]->id;
+
                     if ($item['tenant_bundle_id'] ?? null) {
                         // Bundles: expand to components and deplete each batch-tracked component
                         $bundle = ProductBundle::with('items.product')->find($item['tenant_bundle_id']);
@@ -162,23 +169,27 @@ class ProcessInboundPaymentSync implements ShouldQueue
                         if ($bundle) {
                             foreach ($bundle->items as $bundleItem) {
                                 if ($bundleItem->product->requires_batch_tracking) {
-                                    $batchService->depleteBatchesFIFO(
-                                        storeId:           $storeId,
-                                        productId:         $bundleItem->product_id,
-                                        variantId:         $bundleItem->product_variant_id,
+                                    $result = $batchService->depleteBatchesFIFO(
+                                        storeId: $storeId,
+                                        productId: $bundleItem->product_id,
+                                        variantId: $bundleItem->product_variant_id,
                                         quantityInBaseUom: $bundleItem->quantity_in_base_uom * (float) $item['quantity'],
                                     );
+
+                                    $this->recordDepletions($saleItemId, $bundleItem->product_id, $result['depletions']);
                                 }
                             }
                         }
                     } else {
                         if ($batchTrackingMap[$item['tenant_product_id']] ?? false) {
-                            $batchService->depleteBatchesFIFO(
-                                storeId:           $storeId,
-                                productId:         $item['tenant_product_id'],
-                                variantId:         $item['tenant_variant_id'] ?? null,
+                            $result = $batchService->depleteBatchesFIFO(
+                                storeId: $storeId,
+                                productId: $item['tenant_product_id'],
+                                variantId: $item['tenant_variant_id'] ?? null,
                                 quantityInBaseUom: (float) $item['quantity'],
                             );
+
+                            $this->recordDepletions($saleItemId, $item['tenant_product_id'], $result['depletions']);
                         }
                     }
                 }
@@ -188,22 +199,42 @@ class ProcessInboundPaymentSync implements ShouldQueue
         $this->respondToCentral($orderId, 'completed', null, $outboundSyncId, $sale?->id, 'marketplace_sales');
 
         Log::info('Inbound payment sync processed — marketplace sale created', [
-            'order_id'     => $orderId,
+            'order_id' => $orderId,
             'order_number' => $orderNumber,
-            'store_id'     => $storeId,
-            'tenant_id'    => tenant()->id ?? 'unknown',
-            'cod'          => $isCashOnDelivery,
+            'store_id' => $storeId,
+            'tenant_id' => tenant()->id ?? 'unknown',
+            'cod' => $isCashOnDelivery,
         ]);
+    }
+
+    /**
+     * Persist which batch(es) a marketplace sale item's FIFO depletion drew
+     * from, so a later order cancellation/refund can reverse the correct
+     * batch(es) — mirrors SaleService::deductInventory()'s SaleItemBatchDepletion
+     * writes for POS sales.
+     *
+     * @param  array<int, float>  $depletions  batch_id => quantity_in_base_uom
+     */
+    private function recordDepletions(int $saleItemId, int $productId, array $depletions): void
+    {
+        foreach ($depletions as $batchId => $quantityDepleted) {
+            MarketplaceSaleItemBatchDepletion::create([
+                'marketplace_sale_item_id' => $saleItemId,
+                'product_id' => $productId,
+                'batch_id' => $batchId,
+                'quantity_in_base_uom' => $quantityDepleted,
+            ]);
+        }
     }
 
     private function mapPaymentMethod(string $method): PaymentMethod
     {
         return match ($method) {
-            'mpesa'            => PaymentMethod::MPESA,
-            'card'             => PaymentMethod::CARD,
+            'mpesa' => PaymentMethod::MPESA,
+            'card' => PaymentMethod::CARD,
             'cash_on_delivery' => PaymentMethod::CASH,
-            'bank_transfer'    => PaymentMethod::BANK_TRANSFER,
-            default            => PaymentMethod::OTHER,
+            'bank_transfer' => PaymentMethod::BANK_TRANSFER,
+            default => PaymentMethod::OTHER,
         };
     }
 
@@ -219,38 +250,38 @@ class ProcessInboundPaymentSync implements ShouldQueue
             return;
         }
 
-        $centralUrl = config('services.central_api.url') . '/api/v1/central/sync/inbound/outbound-sync-ack';
-        $token      = config('services.central_api.token');
+        $centralUrl = config('services.central_api.url').'/api/v1/central/sync/inbound/outbound-sync-ack';
+        $token = config('services.central_api.token');
 
         try {
             Http::withToken($token)
                 ->timeout(30)
                 ->post($centralUrl, [
                     'outbound_sync_id' => $outboundSyncId,
-                    'tenant_id'        => tenant()->id ?? null,
-                    'status'           => $status,
-                    'reason'           => $reason,
+                    'tenant_id' => tenant()->id ?? null,
+                    'status' => $status,
+                    'reason' => $reason,
                     'tenant_record_id' => $tenantRecordId,
-                    'tenant_table'     => $tenantTable,
-                    'tenant_response'  => ['order_id' => $orderId],
+                    'tenant_table' => $tenantTable,
+                    'tenant_response' => ['order_id' => $orderId],
                 ]);
         } catch (\Exception $e) {
             Log::error('Failed to send outbound sync ack for payment', [
-                'order_id'         => $orderId,
+                'order_id' => $orderId,
                 'outbound_sync_id' => $outboundSyncId,
-                'error'            => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     public function failed(\Throwable $exception): void
     {
-        $orderId        = $this->paymentPayload['order_id'] ?? null;
+        $orderId = $this->paymentPayload['order_id'] ?? null;
         $outboundSyncId = $this->paymentPayload['_outbound_sync_id'] ?? null;
 
         Log::error('ProcessInboundPaymentSync job failed', [
             'order_id' => $orderId,
-            'error'    => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
 
         if ($outboundSyncId) {
