@@ -253,7 +253,8 @@ class SaleServiceTest extends TestCase
         $batchMock = Mockery::mock(ProductBatchService::class);
         $batchMock->shouldReceive('depleteBatchesFIFO')
             ->once()
-            ->with(1, 2, null, 1.0);
+            ->with(1, 2, null, 1.0)
+            ->andReturn(['depletions' => [], 'total_cost' => 0, 'average_cost' => 0]);
 
         $lineItems = [
             $this->lineItem(['product_id' => 1, 'quantity' => 2, 'quantity_in_base_uom' => 2]),

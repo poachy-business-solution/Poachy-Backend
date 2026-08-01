@@ -2,6 +2,7 @@
 
 namespace App\Services\Central\Marketplace;
 
+use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
 use App\Jobs\Central\ProcessOrderCancellation;
@@ -75,7 +76,7 @@ class MarketplaceOrderService
         $order->update(['order_status' => $newStatus]);
 
         Log::info('Order status updated', [
-            'order_id'   => $order->id,
+            'order_id' => $order->id,
             'old_status' => $order->getOriginal('order_status'),
             'new_status' => $newStatus->value,
         ]);
@@ -92,12 +93,32 @@ class MarketplaceOrderService
             throw new \RuntimeException('This order cannot be cancelled.');
         }
 
-        DB::connection('central')->transaction(function () use ($order, $reason, $cancelledBy) {
+        // order_status only ever advances past Pending via confirmPayment(), which
+        // runs after payment has completed — so anything beyond Pending means the
+        // tenant has (or is about to have) real inventory movements and possibly
+        // batch depletions against this order. Flag the payment as refunded here
+        // (bookkeeping only — no live payment-reversal API exists, matching the
+        // POS refund philosophy that cash/M-Pesa reversals are staff-handled);
+        // the tenant-side cancellation sync (ProcessInboundCancellationSync)
+        // detects the already-synced MarketplaceSale and reverses the real
+        // inventory/batch deductions.
+        $wasAlreadyPaid = $order->order_status !== OrderStatus::Pending;
+
+        DB::connection('central')->transaction(function () use ($order, $reason, $cancelledBy, $wasAlreadyPaid) {
             $order->cancel($reason, $cancelledBy);
 
             if ($order->reservation_status === ReservationStatus::Confirmed
                 || $order->reservation_status === ReservationStatus::Pending) {
                 $order->update(['reservation_status' => ReservationStatus::Released]);
+            }
+
+            if ($wasAlreadyPaid) {
+                $payment = $order->payments()
+                    ->where('payment_status', MarketplacePaymentStatus::Completed)
+                    ->latest()
+                    ->first();
+
+                $payment?->markAsRefunded((float) $order->total_amount);
             }
         });
 
@@ -106,7 +127,7 @@ class MarketplaceOrderService
 
         Log::info('Order cancelled', [
             'order_id' => $order->id,
-            'reason'   => $reason,
+            'reason' => $reason,
         ]);
 
         return $order->fresh();
@@ -121,7 +142,7 @@ class MarketplaceOrderService
 
         if ($order->reservation_status !== ReservationStatus::Pending) {
             Log::info('Ignoring reservation confirmation for non-pending order', [
-                'order_id'           => $orderId,
+                'order_id' => $orderId,
                 'reservation_status' => $order->reservation_status->value,
             ]);
 
@@ -129,12 +150,12 @@ class MarketplaceOrderService
         }
 
         $order->update([
-            'reservation_status'     => ReservationStatus::Confirmed,
+            'reservation_status' => ReservationStatus::Confirmed,
             'reservation_confirmed_at' => now(),
         ]);
 
         Log::info('Reservation confirmed by tenant', [
-            'order_id'  => $orderId,
+            'order_id' => $orderId,
             'tenant_id' => $order->tenant_id,
         ]);
 
@@ -155,20 +176,20 @@ class MarketplaceOrderService
 
         DB::connection('central')->transaction(function () use ($order, $failureDetails) {
             $order->update([
-                'reservation_status'        => ReservationStatus::Failed,
-                'reservation_failed_reason'  => $failureDetails['reason'] ?? 'Insufficient stock',
+                'reservation_status' => ReservationStatus::Failed,
+                'reservation_failed_reason' => $failureDetails['reason'] ?? 'Insufficient stock',
             ]);
 
             $order->cancel(
-                'Reservation failed: ' . ($failureDetails['reason'] ?? 'Insufficient stock')
+                'Reservation failed: '.($failureDetails['reason'] ?? 'Insufficient stock')
             );
         });
 
         // INFO level — this is normal business flow, not an error
         Log::info('Reservation failed for order', [
-            'order_id'  => $orderId,
+            'order_id' => $orderId,
             'tenant_id' => $order->tenant_id,
-            'reason'    => $failureDetails['reason'] ?? 'Insufficient stock',
+            'reason' => $failureDetails['reason'] ?? 'Insufficient stock',
         ]);
     }
 
@@ -190,7 +211,7 @@ class MarketplaceOrderService
         });
 
         Log::info('Reservation expired for order', [
-            'order_id'  => $order->id,
+            'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
         ]);
     }

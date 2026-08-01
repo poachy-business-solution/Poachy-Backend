@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Central\Marketplace;
 
+use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
 use App\Jobs\Central\ProcessOrderCancellation;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceOrderPayment;
 use App\Models\User;
 use App\Services\Central\Marketplace\MarketplaceOrderService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -77,13 +79,15 @@ class MarketplaceOrderServiceTest extends TestCase
             'phone_verified' => true,
         ]);
 
-        $this->service = new MarketplaceOrderService();
+        $this->service = new MarketplaceOrderService;
     }
 
     protected function tearDown(): void
     {
         DB::connection('central')->statement('SET foreign_key_checks = 0');
 
+        $orderIds = MarketplaceOrder::on('central')->where('tenant_id', $this->tenantId)->pluck('id');
+        MarketplaceOrderPayment::on('central')->whereIn('order_id', $orderIds)->forceDelete();
         MarketplaceOrder::on('central')->where('tenant_id', $this->tenantId)->forceDelete();
         MarketplaceCustomer::on('central')->whereIn('id', [$this->customer->id, $this->otherCustomer->id])->forceDelete();
         User::on('central')->whereIn('id', [$this->user->id, $this->otherCustomer->user_id])->forceDelete();
@@ -201,14 +205,71 @@ class MarketplaceOrderServiceTest extends TestCase
 
     public function test_cancel_order_releases_confirmed_reservation_too(): void
     {
+        // order_status stays Pending here — a tenant can confirm a reservation
+        // (hold stock) before the customer has actually paid, so this is a
+        // genuinely safe pre-payment combination, unlike order_status=Confirmed
+        // below (which only happens after payment completes).
         $order = $this->createOrder([
-            'order_status' => OrderStatus::Confirmed,
+            'order_status' => OrderStatus::Pending,
             'reservation_status' => ReservationStatus::Confirmed,
         ]);
 
         $cancelled = $this->service->cancelOrder($order, 'No longer needed');
 
         $this->assertSame(ReservationStatus::Released, $cancelled->reservation_status);
+    }
+
+    public function test_cancel_order_marks_payment_refunded_once_order_has_been_paid_for(): void
+    {
+        // order_status only ever reaches Confirmed via confirmPayment(), which
+        // runs after payment completes. cancelOrder() must flag the payment as
+        // refunded here (bookkeeping only) and still dispatch the cancellation
+        // sync — ProcessInboundCancellationSync is what actually reverses the
+        // tenant-side inventory/batch deductions once it detects the synced sale.
+        $order = $this->createOrder([
+            'order_status' => OrderStatus::Confirmed,
+            'reservation_status' => ReservationStatus::Confirmed,
+        ]);
+
+        $payment = MarketplaceOrderPayment::on('central')->create([
+            'order_id' => $order->id,
+            'payment_method' => 'mpesa',
+            'amount' => $order->total_amount,
+            'payment_status' => MarketplacePaymentStatus::Completed,
+            'completed_at' => now(),
+        ]);
+
+        $cancelled = $this->service->cancelOrder($order, 'No longer needed');
+
+        $this->assertSame(OrderStatus::Cancelled, $cancelled->order_status);
+
+        $payment->refresh();
+        $this->assertTrue($payment->is_refunded);
+        $this->assertEquals((float) $order->total_amount, (float) $payment->refunded_amount);
+        $this->assertSame(MarketplacePaymentStatus::Refunded, $payment->payment_status);
+
+        Queue::assertPushed(ProcessOrderCancellation::class, fn ($job) => $job->orderId === $order->id);
+    }
+
+    public function test_cancel_order_leaves_payment_untouched_when_never_paid(): void
+    {
+        $order = $this->createOrder([
+            'order_status' => OrderStatus::Pending,
+            'reservation_status' => ReservationStatus::Pending,
+        ]);
+
+        $payment = MarketplaceOrderPayment::on('central')->create([
+            'order_id' => $order->id,
+            'payment_method' => 'mpesa',
+            'amount' => $order->total_amount,
+            'payment_status' => MarketplacePaymentStatus::Failed,
+        ]);
+
+        $this->service->cancelOrder($order, 'No longer needed');
+
+        $payment->refresh();
+        $this->assertFalse($payment->is_refunded);
+        $this->assertSame(MarketplacePaymentStatus::Failed, $payment->payment_status);
     }
 
     public function test_cancel_order_throws_when_order_cannot_be_cancelled(): void

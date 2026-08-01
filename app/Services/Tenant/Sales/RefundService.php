@@ -13,6 +13,7 @@ use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\LoyaltyTransaction;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\SaleItemBatchDepletion;
 use App\Models\Tenant\SaleRefund;
 use App\Models\Tenant\SaleRefundItem;
 use App\Models\Tenant\TenantConfiguration;
@@ -297,6 +298,8 @@ class RefundService
                     'reference_id' => $refund->id,
                     'notes' => "Refund {$refund->refund_number} — {$refund->reason->label()}",
                 ]);
+
+                $this->restoreBatchDepletions($saleItem, $itemData['quantity_refunded_in_base_uom']);
             } catch (\Exception $e) {
                 Log::error('Failed to restore inventory for refund item', [
                     'refund_id' => $refund->id,
@@ -306,6 +309,38 @@ class RefundService
 
                 throw $e;
             }
+        }
+    }
+
+    /**
+     * Reverse the specific batch(es) a sale item's FIFO depletion drew from
+     * (recorded in SaleItemBatchDepletion at sale time), proportional to how
+     * much of the sale item is being refunded. No-ops for non-batch-tracked
+     * products, since depleteBatchesFIFO() never ran for them and no
+     * depletion rows exist.
+     */
+    private function restoreBatchDepletions(SaleItem $saleItem, float $quantityRefundedInBaseUom): void
+    {
+        if ($quantityRefundedInBaseUom <= 0 || (float) $saleItem->quantity_in_base_uom <= 0) {
+            return;
+        }
+
+        $depletions = SaleItemBatchDepletion::where('sale_item_id', $saleItem->id)->get();
+
+        if ($depletions->isEmpty()) {
+            return;
+        }
+
+        $ratio = $quantityRefundedInBaseUom / (float) $saleItem->quantity_in_base_uom;
+
+        foreach ($depletions as $depletion) {
+            $quantityToRestore = round((float) $depletion->quantity_in_base_uom * $ratio, 4);
+
+            if ($quantityToRestore <= 0) {
+                continue;
+            }
+
+            $this->batchService->restoreBatchQuantity($depletion->batch_id, $quantityToRestore);
         }
     }
 

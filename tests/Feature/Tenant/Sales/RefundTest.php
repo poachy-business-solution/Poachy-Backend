@@ -9,8 +9,10 @@ use App\Enums\Tenant\RefundStatus;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\LoyaltyTransaction;
+use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\SaleItemBatchDepletion;
 use App\Models\Tenant\SaleRefund;
 use App\Models\Tenant\SaleRefundItem;
 use App\Models\Tenant\TenantConfiguration;
@@ -266,6 +268,139 @@ class RefundTest extends TestCase
     }
 
     // =========================================================================
+    // Batch-tracked restoration (SaleItemBatchDepletion reversal)
+    // =========================================================================
+
+    public function test_batch_tracked_full_refund_restores_the_depleted_batch(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 100.00, itemQuantity: 5.0, itemSubtotal: 100.00);
+        $batch = $this->createBatch(productId: 1, quantityRemaining: 5.0, quantityReceived: 10.0);
+        $this->createDepletion($saleItem->id, productId: 1, batchId: $batch->id, quantity: 5.0);
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(
+            inventoryMock: $inventoryMock,
+            loyaltyMock: $loyaltyMock,
+            batchService: new ProductBatchService,
+        );
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::WRONG_ITEM->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 5.0,
+                        'refund_amount' => 100.00,
+                    ],
+                ],
+            ]);
+        });
+
+        // Batch had 5 remaining out of 10 received; full refund of the 5-unit
+        // sale item puts all 5 depleted units back: 5 + 5 = 10.
+        $this->assertEquals(10.0, (float) $batch->fresh()->quantity_remaining_in_base_uom);
+    }
+
+    public function test_batch_tracked_partial_refund_restores_proportionally_across_batches(): void
+    {
+        $this->enableRefunds();
+
+        // Sale item of 8 units originally depleted 5 from batch A and 3 from batch B.
+        [$sale, $saleItem] = $this->createPaidSale(total: 800.00, itemQuantity: 8.0, itemSubtotal: 800.00);
+        $batchA = $this->createBatch(productId: 1, quantityRemaining: 0.0, quantityReceived: 5.0);
+        $batchB = $this->createBatch(productId: 1, quantityRemaining: 2.0, quantityReceived: 5.0);
+        $this->createDepletion($saleItem->id, productId: 1, batchId: $batchA->id, quantity: 5.0);
+        $this->createDepletion($saleItem->id, productId: 1, batchId: $batchB->id, quantity: 3.0);
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(
+            inventoryMock: $inventoryMock,
+            loyaltyMock: $loyaltyMock,
+            batchService: new ProductBatchService,
+        );
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            // Refund 4 of the original 8 units — half.
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::CUSTOMER_CHANGED_MIND->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 4.0,
+                        'refund_amount' => 400.00,
+                    ],
+                ],
+            ]);
+        });
+
+        // Ratio = 4/8 = 0.5. Batch A restored 0.5*5 = 2.5 (0 + 2.5 = 2.5).
+        // Batch B restored 0.5*3 = 1.5 (2 + 1.5 = 3.5).
+        $this->assertEquals(2.5, (float) $batchA->fresh()->quantity_remaining_in_base_uom);
+        $this->assertEquals(3.5, (float) $batchB->fresh()->quantity_remaining_in_base_uom);
+    }
+
+    public function test_non_batch_tracked_refund_does_not_touch_batch_service(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 100.00, itemQuantity: 1.0, itemSubtotal: 100.00);
+        // No SaleItemBatchDepletion rows exist for this sale item — matches
+        // a non-batch-tracked product, where depleteBatchesFIFO() never ran.
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once();
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $batchMock = Mockery::mock(ProductBatchService::class);
+        $batchMock->shouldNotReceive('restoreBatchQuantity');
+
+        $service = $this->makeRefundService(
+            inventoryMock: $inventoryMock,
+            loyaltyMock: $loyaltyMock,
+            batchService: $batchMock,
+        );
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::WRONG_ITEM->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [
+                    [
+                        'sale_item_id' => $saleItem->id,
+                        'quantity_refunded' => 1.0,
+                        'refund_amount' => 100.00,
+                    ],
+                ],
+            ]);
+        });
+
+        $this->assertSame(1, SaleRefund::count());
+    }
+
+    // =========================================================================
     // Failure Paths
     // =========================================================================
 
@@ -514,6 +649,31 @@ class RefundTest extends TestCase
         ]));
     }
 
+    private function createBatch(int $productId, float $quantityRemaining, float $quantityReceived): ProductBatch
+    {
+        return Model::withoutEvents(fn () => ProductBatch::create([
+            'store_id' => 1,
+            'product_id' => $productId,
+            'batch_number' => 'BATCH-TEST-'.uniqid(),
+            'quantity_received_in_purchase_uom' => $quantityReceived,
+            'quantity_received_in_base_uom' => $quantityReceived,
+            'quantity_remaining_in_base_uom' => $quantityRemaining,
+            'cost_per_purchase_uom' => 5.00,
+            'cost_per_base_uom' => 5.00,
+            'total_cost' => $quantityReceived * 5.00,
+        ]));
+    }
+
+    private function createDepletion(int $saleItemId, int $productId, int $batchId, float $quantity): SaleItemBatchDepletion
+    {
+        return SaleItemBatchDepletion::create([
+            'sale_item_id' => $saleItemId,
+            'product_id' => $productId,
+            'batch_id' => $batchId,
+            'quantity_in_base_uom' => $quantity,
+        ]);
+    }
+
     private function enableRefunds(): void
     {
         Model::withoutEvents(fn () => TenantConfiguration::updateOrCreate(
@@ -532,7 +692,8 @@ class RefundTest extends TestCase
 
     private function makeRefundService(
         ?InventoryMovementService $inventoryMock = null,
-        ?LoyaltyService $loyaltyMock = null
+        ?LoyaltyService $loyaltyMock = null,
+        ?ProductBatchService $batchService = null,
     ): RefundService {
         $inventoryMock ??= Mockery::spy(InventoryMovementService::class);
 
@@ -543,7 +704,7 @@ class RefundTest extends TestCase
 
         return new RefundService(
             inventoryMovementService: $inventoryMock,
-            batchService: Mockery::spy(ProductBatchService::class),
+            batchService: $batchService ?? Mockery::spy(ProductBatchService::class),
             loyaltyService: $loyaltyMock,
             creditService: Mockery::spy(CreditService::class),
             shiftSalesSummaryService: Mockery::spy(ShiftSalesSummaryService::class),
@@ -553,6 +714,8 @@ class RefundTest extends TestCase
     private function dropTestTables(): void
     {
         foreach ([
+            'sale_item_batch_depletions',
+            'product_batches',
             'sale_refund_items',
             'sale_refunds',
             'loyalty_transactions',
@@ -725,6 +888,38 @@ class RefundTest extends TestCase
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_batches', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id')->nullable();
+            $table->string('batch_number')->unique();
+            $table->unsignedBigInteger('purchase_uom_id')->default(1);
+            $table->decimal('quantity_received_in_purchase_uom', 12, 4)->default(0);
+            $table->decimal('quantity_received_in_base_uom', 12, 4)->default(0);
+            $table->decimal('quantity_remaining_in_base_uom', 12, 4)->default(0);
+            $table->decimal('cost_per_purchase_uom', 10, 2)->default(0);
+            $table->decimal('cost_per_base_uom', 10, 2)->default(0);
+            $table->decimal('total_cost', 10, 2)->default(0);
+            $table->date('manufacture_date')->nullable();
+            $table->date('expiry_date')->nullable();
+            $table->boolean('is_expired')->default(false);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('sale_item_batch_depletions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('sale_item_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('batch_id');
+            $table->decimal('quantity_in_base_uom', 15, 4);
+            $table->timestamps();
         });
 
         Schema::connection($conn)->create('tenant_configurations', function (Blueprint $table) {
