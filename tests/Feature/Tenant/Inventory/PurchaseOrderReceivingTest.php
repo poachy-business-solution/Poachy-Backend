@@ -6,6 +6,7 @@ use App\Enums\Tenant\PurchaseOrderItemStatus;
 use App\Enums\Tenant\PurchaseOrderStatus;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\Supplier;
@@ -172,6 +173,123 @@ class PurchaseOrderReceivingTest extends TestCase
     }
 
     // =========================================================================
+    // Serial tracking
+    // =========================================================================
+
+    public function test_receiving_serial_tracked_product_creates_one_serial_per_unit(): void
+    {
+        $this->bindMovementMock();
+
+        $po = $this->createPo();
+        $item = $this->createPoItem($po->id, quantityOrdered: 3.0, productId: 2);
+
+        Model::withoutEvents(function () use ($po, $item) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $item->id => [
+                    'quantity' => 3.0,
+                    'serial_numbers' => ['IMEI-001', 'IMEI-002', 'IMEI-003'],
+                ],
+            ]);
+        });
+
+        $this->assertEquals(3.0, (float) $item->fresh()->quantity_received);
+        $this->assertSame(3, ProductSerial::where('purchase_order_id', $po->id)->count());
+        $this->assertSame(
+            ['IMEI-001', 'IMEI-002', 'IMEI-003'],
+            ProductSerial::where('purchase_order_id', $po->id)->orderBy('id')->pluck('serial_number')->toArray()
+        );
+        $this->assertTrue(ProductSerial::where('serial_number', 'IMEI-001')->first()->is_available);
+        $this->assertSame(0, ProductBatch::where('purchase_order_id', $po->id)->count());
+    }
+
+    public function test_receiving_serial_tracked_product_throws_when_serial_count_mismatches_quantity(): void
+    {
+        $this->bindMovementMock();
+
+        $po = $this->createPo();
+        $item = $this->createPoItem($po->id, quantityOrdered: 3.0, productId: 2);
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(function () use ($po, $item) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $item->id => [
+                    'quantity' => 3.0,
+                    'serial_numbers' => ['IMEI-001', 'IMEI-002'], // only 2 for quantity 3
+                ],
+            ]);
+        });
+    }
+
+    public function test_receiving_serial_tracked_product_throws_on_duplicate_serial_within_request(): void
+    {
+        $this->bindMovementMock();
+
+        $po = $this->createPo();
+        $item = $this->createPoItem($po->id, quantityOrdered: 2.0, productId: 2);
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(function () use ($po, $item) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $item->id => [
+                    'quantity' => 2.0,
+                    'serial_numbers' => ['IMEI-001', 'IMEI-001'],
+                ],
+            ]);
+        });
+    }
+
+    public function test_receiving_serial_tracked_product_throws_on_serial_already_in_use(): void
+    {
+        $this->bindMovementMock();
+
+        $po = $this->createPo();
+        $itemOne = $this->createPoItem($po->id, quantityOrdered: 1.0, productId: 2);
+
+        Model::withoutEvents(function () use ($po, $itemOne) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $itemOne->id => ['quantity' => 1.0, 'serial_numbers' => ['IMEI-001']],
+            ]);
+        });
+
+        $itemTwo = $this->createPoItem($po->id, quantityOrdered: 1.0, productId: 2);
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(function () use ($po, $itemTwo) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $itemTwo->id => ['quantity' => 1.0, 'serial_numbers' => ['IMEI-001']],
+            ]);
+        });
+    }
+
+    public function test_receiving_serial_tracked_product_partial_receipt_across_multiple_calls(): void
+    {
+        $this->bindMovementMock();
+
+        $po = $this->createPo();
+        $item = $this->createPoItem($po->id, quantityOrdered: 4.0, productId: 2);
+
+        Model::withoutEvents(function () use ($po, $item) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $item->id => ['quantity' => 2.0, 'serial_numbers' => ['IMEI-001', 'IMEI-002']],
+            ]);
+        });
+
+        $this->assertSame(PurchaseOrderItemStatus::PARTIALLY_RECEIVED, $item->fresh()->status);
+
+        Model::withoutEvents(function () use ($po, $item) {
+            (new ProductBatchService)->receiveGoodsFromPurchaseOrder($po->id, [
+                $item->id => ['quantity' => 2.0, 'serial_numbers' => ['IMEI-003', 'IMEI-004']],
+            ]);
+        });
+
+        $this->assertSame(PurchaseOrderItemStatus::RECEIVED, $item->fresh()->status);
+        $this->assertSame(4, ProductSerial::where('purchase_order_id', $po->id)->count());
+    }
+
+    // =========================================================================
     // Helpers
     // =========================================================================
 
@@ -194,11 +312,11 @@ class PurchaseOrderReceivingTest extends TestCase
         ]));
     }
 
-    private function createPoItem(int $poId, float $quantityOrdered): PurchaseOrderItem
+    private function createPoItem(int $poId, float $quantityOrdered, int $productId = 1): PurchaseOrderItem
     {
         return Model::withoutEvents(fn () => PurchaseOrderItem::create([
             'purchase_order_id' => $poId,
-            'product_id' => 1,
+            'product_id' => $productId,
             'product_variant_id' => null,
             'uom_id' => 1,
             'quantity_ordered' => $quantityOrdered,
@@ -248,12 +366,26 @@ class PurchaseOrderReceivingTest extends TestCase
             'base_uom_id' => 1,
             'is_available_online' => false,
         ]));
+
+        Model::withoutEvents(fn () => Product::create([
+            'name' => 'Serial Tracked Product',
+            'slug' => 'serial-tracked-product',
+            'sku' => 'SKU-SERIAL-001',
+            'product_type' => 'simple',
+            'stock_status' => 'in_stock',
+            'requires_serial_tracking' => true,
+            'base_uom_id' => 1,
+            'is_available_online' => false,
+        ]));
     }
 
     private function dropTestTables(): void
     {
         foreach ([
             'product_batches',
+            'product_serials',
+            'sale_items',
+            'marketplace_sale_items',
             'purchase_order_items',
             'purchase_orders',
             'product_variants',
@@ -401,6 +533,33 @@ class PurchaseOrderReceivingTest extends TestCase
             $table->date('expiry_date')->nullable();
             $table->boolean('is_expired')->default(false);
             $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('sale_items', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('marketplace_sale_items', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('product_serials', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id');
+            $table->string('serial_number')->unique();
+            $table->string('status')->default('available');
+            $table->decimal('cost', 15, 2);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->unsignedBigInteger('sale_item_id')->nullable();
+            $table->unsignedBigInteger('marketplace_sale_item_id')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();

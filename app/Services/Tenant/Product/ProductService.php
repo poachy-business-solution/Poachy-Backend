@@ -100,6 +100,15 @@ class ProductService
     public function updateInventoryConfig(Product $product, array $data): Product
     {
         return DB::transaction(function () use ($product, $data) {
+            $batchTracking = $data['requires_batch_tracking'] ?? $product->requires_batch_tracking;
+            $serialTracking = $data['requires_serial_tracking'] ?? $product->requires_serial_tracking;
+
+            if ($batchTracking && $serialTracking) {
+                throw new \RuntimeException(
+                    'A product cannot require both batch tracking and serial tracking at the same time.'
+                );
+            }
+
             $product->update($data);
 
             $this->clearProductCache($product->uuid);

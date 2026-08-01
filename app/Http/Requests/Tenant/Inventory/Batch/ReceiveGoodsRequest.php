@@ -21,6 +21,8 @@ class ReceiveGoodsRequest extends FormRequest
             'items.*.quantity' => ['required', 'numeric', 'min:0.0001'],
             'items.*.manufacture_date' => ['nullable', 'date', 'date_format:Y-m-d', 'before_or_equal:today'],
             'items.*.expiry_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after:manufacture_date'],
+            'items.*.serial_numbers' => ['nullable', 'array'],
+            'items.*.serial_numbers.*' => ['string', 'max:255', 'distinct'],
             'items.*.notes' => ['nullable', 'string', 'max:500'],
         ];
     }

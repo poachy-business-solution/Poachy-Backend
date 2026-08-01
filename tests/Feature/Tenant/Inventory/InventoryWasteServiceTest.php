@@ -11,6 +11,7 @@ use App\Models\Tenant\Inventory;
 use App\Models\Tenant\InventoryMovement;
 use App\Models\Tenant\InventoryWaste;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use App\Services\Tenant\Inventory\ExpiryAlertService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
@@ -139,6 +140,24 @@ class InventoryWasteServiceTest extends TestCase
         $this->assertEquals(70.0, (float) $waste->cost_per_base_uom);
     }
 
+    public function test_record_waste_with_explicit_serial_uses_its_cost(): void
+    {
+        $serial = $this->createSerial(['cost' => 45.0]);
+
+        $waste = Model::withoutEvents(fn () => $this->service()->recordWaste([
+            'store_id' => 1,
+            'product_id' => 1,
+            'serial_id' => $serial->id,
+            'waste_type' => 'damaged',
+            'quantity_wasted' => 1.0,
+            'reason' => 'dropped',
+        ]));
+
+        $this->assertEquals(45.0, (float) $waste->cost_per_base_uom);
+        $this->assertEquals(45.0, (float) $waste->total_loss);
+        $this->assertSame('available', $serial->fresh()->status->value); // untouched until approval
+    }
+
     public function test_record_waste_dispatches_waste_approval_requested(): void
     {
         Event::fake([WasteApprovalRequested::class]);
@@ -187,6 +206,44 @@ class InventoryWasteServiceTest extends TestCase
         $this->assertSame('pending', $waste->fresh()->approval_status->value);
         $this->assertEquals(2.0, (float) $batch->fresh()->quantity_remaining_in_base_uom);
         $this->assertEquals(20.0, (float) $this->freshInventory()->quantity_on_hand);
+    }
+
+    public function test_approve_waste_with_serial_marks_it_damaged(): void
+    {
+        $this->seedInventory(qtyOnHand: 5.0);
+        $serial = $this->createSerial();
+
+        $waste = Model::withoutEvents(fn () => $this->service()->recordWaste([
+            'store_id' => 1,
+            'product_id' => 1,
+            'serial_id' => $serial->id,
+            'waste_type' => 'damaged',
+            'quantity_wasted' => 1.0,
+        ]));
+
+        $approved = Model::withoutEvents(fn () => $this->service()->approveWaste($waste->id, 1));
+
+        $this->assertSame('approved', $approved->approval_status->value);
+        $this->assertSame('damaged', $serial->fresh()->status->value);
+        $this->assertEquals(4.0, (float) $this->freshInventory()->quantity_on_hand);
+    }
+
+    public function test_approve_waste_throws_when_serial_not_available(): void
+    {
+        $this->seedInventory(qtyOnHand: 5.0);
+        $serial = $this->createSerial(['status' => 'sold']);
+
+        $waste = Model::withoutEvents(fn () => $this->service()->recordWaste([
+            'store_id' => 1,
+            'product_id' => 1,
+            'serial_id' => $serial->id,
+            'waste_type' => 'damaged',
+            'quantity_wasted' => 1.0,
+        ]));
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(fn () => $this->service()->approveWaste($waste->id, 1));
     }
 
     public function test_approve_waste_without_batch_only_deducts_store_inventory(): void
@@ -379,6 +436,18 @@ class InventoryWasteServiceTest extends TestCase
         ]));
     }
 
+    private function createSerial(array $overrides = []): ProductSerial
+    {
+        return Model::withoutEvents(fn () => ProductSerial::create(array_merge([
+            'store_id' => 1,
+            'product_id' => 1,
+            'purchase_order_id' => 1,
+            'serial_number' => 'IMEI-'.uniqid(),
+            'status' => 'available',
+            'cost' => 40.0,
+        ], $overrides)));
+    }
+
     private function createBatch(array $overrides = []): ProductBatch
     {
         // created_at/updated_at aren't mass-assignable on ProductBatch — pull them out
@@ -487,6 +556,7 @@ class InventoryWasteServiceTest extends TestCase
             'inventory_movements',
             'inventory',
             'product_batches',
+            'product_serials',
             'products',
             'units_of_measure',
             'users',
@@ -592,11 +662,29 @@ class InventoryWasteServiceTest extends TestCase
             $table->softDeletes();
         });
 
+        Schema::connection($conn)->create('product_serials', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id');
+            $table->string('serial_number')->unique();
+            $table->string('status')->default('available');
+            $table->decimal('cost', 15, 2)->default(0);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->unsignedBigInteger('sale_item_id')->nullable();
+            $table->unsignedBigInteger('marketplace_sale_item_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::connection($conn)->create('inventory_waste', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('batch_id')->nullable();
+            $table->unsignedBigInteger('serial_id')->nullable();
             $table->string('waste_type');
             $table->decimal('quantity_wasted', 15, 4);
             $table->decimal('cost_per_base_uom', 15, 2);

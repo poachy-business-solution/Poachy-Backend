@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryReservationController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryWasteController;
 use App\Http\Controllers\Api\Tenant\Inventory\ProductBatchController;
+use App\Http\Controllers\Api\Tenant\Inventory\ProductSerialController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
@@ -306,6 +307,13 @@ Route::prefix('v1/tenant')
             Route::get('/cogs/calculate', [ProductBatchController::class, 'calculateCogs']);
             Route::post('/expired/mark', [ProductBatchController::class, 'markExpired']);
             Route::get('/{id}', [ProductBatchController::class, 'show']);
+        });
+
+        // Product Serials Routes
+        Route::prefix('serials')->group(function () {
+            Route::get('/', [ProductSerialController::class, 'index']);
+            Route::get('/lookup/{serialNumber}', [ProductSerialController::class, 'lookup']);
+            Route::get('/{id}', [ProductSerialController::class, 'show']);
         });
 
         // Customer Management Routes

@@ -157,6 +157,22 @@ class ProductBundleService
     public function addItem(ProductBundle $bundle, array $data): ProductBundleItem
     {
         return DB::transaction(function () use ($bundle, $data) {
+            // Serial-tracked products can't be bundle components — no sale-time
+            // request shape exists for identifying which specific serial(s) go with
+            // a bundle purchase (unlike batch-tracked components, which deplete via
+            // invisible-to-client FIFO and need no such identification). Caught here
+            // at configuration time rather than only at first-sale time, so an admin
+            // building the bundle gets an immediate, clear error instead of a
+            // customer hitting it mid-checkout. See SaleService::deductInventory()
+            // and ProcessInboundPaymentSync for the matching sale-time guard.
+            $product = Product::findOrFail($data['product_id']);
+
+            if ($product->requires_serial_tracking) {
+                throw new \RuntimeException(
+                    "Cannot add '{$product->name}' to a bundle — serial-tracked products are not supported as bundle components."
+                );
+            }
+
             // Calculate base UOM quantity if not provided
             if (! isset($data['quantity_in_base_uom'])) {
                 $data['quantity_in_base_uom'] = $this->calculateBaseUomQuantity($data);

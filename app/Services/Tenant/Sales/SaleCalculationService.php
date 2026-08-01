@@ -2,20 +2,20 @@
 
 namespace App\Services\Tenant\Sales;
 
-use App\Models\Tenant\Customer;
+use App\Models\Tenant\Coupon;
+use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TenantConfiguration;
-use App\Services\Tenant\Sales\LoyaltyService;
 use App\Services\Tenant\Offers\CouponService;
 use App\Services\Tenant\Offers\PromotionService;
-use Illuminate\Support\Facades\Log;
 
 /**
  * PURE PRICING ENGINE
- * 
+ *
  * Rules:
  * - Stateless
  * - NO DB writes
@@ -172,18 +172,21 @@ class SaleCalculationService
         // Handle product/variant
         $productId = $item['product_id'];
         $variantId = $item['variant_id'] ?? null;
+        $serialNumbers = $item['serial_numbers'] ?? [];
 
         if ($variantId) {
-            return $this->resolveVariantItem($storeId, $productId, $variantId, $quantity);
+            return $this->resolveVariantItem($storeId, $productId, $variantId, $quantity, $serialNumbers);
         }
 
-        return $this->resolveProductItem($storeId, $productId, $quantity);
+        return $this->resolveProductItem($storeId, $productId, $quantity, $serialNumbers);
     }
 
     /**
      * Resolve product item pricing
+     *
+     * @param  array<int, string>  $serialNumbers  Only meaningful when the product requires serial tracking
      */
-    protected function resolveProductItem(int $storeId, int $productId, float $quantity): array
+    protected function resolveProductItem(int $storeId, int $productId, float $quantity, array $serialNumbers = []): array
     {
         $product = Product::with(['baseUom', 'taxRate'])->findOrFail($productId);
 
@@ -221,13 +224,16 @@ class SaleCalculationService
             'line_total_after_discount' => $quantity * $unitPrice,
             'promotion_id' => null,
             'promotion_details' => null,
+            'serial_numbers' => $serialNumbers,
         ];
     }
 
     /**
      * Resolve variant item pricing
+     *
+     * @param  array<int, string>  $serialNumbers  Only meaningful when the product requires serial tracking
      */
-    protected function resolveVariantItem(int $storeId, int $productId, int $variantId, float $quantity): array
+    protected function resolveVariantItem(int $storeId, int $productId, int $variantId, float $quantity, array $serialNumbers = []): array
     {
         $variant = ProductVariant::with(['product.baseUom', 'product.taxRate', 'uom'])->findOrFail($variantId);
         $product = $variant->product;
@@ -260,6 +266,7 @@ class SaleCalculationService
             'line_total_after_discount' => $quantity * $unitPrice,
             'promotion_id' => null,
             'promotion_details' => null,
+            'serial_numbers' => $serialNumbers,
         ];
     }
 
@@ -277,6 +284,7 @@ class SaleCalculationService
         // Calculate cost from bundle components
         $unitCost = $bundle->items->sum(function ($item) use ($storeId) {
             $componentCost = $this->getProductCost($storeId, $item->product_id, $item->product_variant_id);
+
             return $componentCost * $item->quantity_in_base_uom;
         });
 
@@ -307,7 +315,7 @@ class SaleCalculationService
      */
     protected function getProductCost(int $storeId, int $productId, ?int $variantId): float
     {
-        $averageCost = \App\Models\Tenant\ProductBatch::where('store_id', $storeId)
+        $averageCost = ProductBatch::where('store_id', $storeId)
             ->where('product_id', $productId)
             ->where('product_variant_id', $variantId)
             ->where('quantity_remaining_in_base_uom', '>', 0)
@@ -373,6 +381,7 @@ class SaleCalculationService
 
         if ($applicableTo->value === 'specific_categories') {
             $product = Product::find($item['product_id']);
+
             return $promotion->categories()
                 ->where('category_id', $product->category_id)
                 ->exists();
@@ -380,6 +389,7 @@ class SaleCalculationService
 
         if ($applicableTo->value === 'specific_brands') {
             $product = Product::find($item['product_id']);
+
             return $promotion->brands()
                 ->where('brand_id', $product->brand_id)
                 ->exists();
@@ -418,13 +428,13 @@ class SaleCalculationService
      */
     protected function applyCoupon(string $couponCode, array $lineItems, float $subtotal, ?int $customerId): array
     {
-        $coupon = \App\Models\Tenant\Coupon::where('code', $couponCode)
+        $coupon = Coupon::where('code', $couponCode)
             ->where('is_active', true)
             ->where('valid_from', '<=', now())
             ->where('valid_until', '>=', now())
             ->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ['discount' => 0, 'coupon' => null];
         }
 
@@ -433,7 +443,7 @@ class SaleCalculationService
         }
 
         if ($customerId && $coupon->usage_limit_per_customer) {
-            $customerUsage = \App\Models\Tenant\CouponUsage::where('coupon_id', $coupon->id)
+            $customerUsage = CouponUsage::where('coupon_id', $coupon->id)
                 ->where('customer_id', $customerId)
                 ->count();
 

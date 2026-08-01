@@ -12,8 +12,10 @@ use App\Models\Tenant\MarketplaceSaleItem;
 use App\Models\Tenant\MarketplaceSaleItemBatchDepletion;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Inventory\StockReservationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -78,6 +80,7 @@ class ProcessInboundCancellationSyncTest extends TestCase
             app(StockReservationService::class),
             app(InventoryMovementService::class),
             app(ProductBatchService::class),
+            app(ProductSerialService::class),
         ));
 
         $reservation->refresh();
@@ -138,6 +141,7 @@ class ProcessInboundCancellationSyncTest extends TestCase
             app(StockReservationService::class),
             app(InventoryMovementService::class),
             app(ProductBatchService::class),
+            app(ProductSerialService::class),
         ));
 
         $inventory->refresh();
@@ -149,18 +153,82 @@ class ProcessInboundCancellationSyncTest extends TestCase
         $this->assertSame(PaymentStatus::REFUNDED, $sale->payment_status);
     }
 
+    public function test_reverses_sale_restores_serials_to_available_and_clears_link(): void
+    {
+        $product = $this->createProduct(requiresBatchTracking: false, requiresSerialTracking: true);
+        $inventory = $this->createInventory($product->id, onHand: 0, reserved: 0);
+
+        $sale = Model::withoutEvents(fn () => MarketplaceSale::create([
+            'central_order_id' => 888,
+            'sale_number' => 'MKT-SALE-SERIAL-TEST',
+            'store_id' => 1,
+            'sale_date' => now(),
+            'subtotal' => 500.0,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'total_amount' => 500.0,
+            'payment_status' => PaymentStatus::PAID,
+            'amount_paid' => 500.0,
+            'amount_due' => 0,
+        ]));
+
+        $saleItem = Model::withoutEvents(fn () => MarketplaceSaleItem::create([
+            'marketplace_sale_id' => $sale->id,
+            'product_id' => $product->id,
+            'uom_id' => 1,
+            'quantity' => 1,
+            'quantity_in_base_uom' => 1,
+            'unit_price' => 500.0,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'subtotal' => 500.0,
+        ]));
+
+        $serial = $this->createSerial($product->id, 'IMEI-001', $saleItem->id);
+
+        $job = new ProcessInboundCancellationSync(['order_id' => 888]);
+
+        Model::withoutEvents(fn () => $job->handle(
+            app(StockReservationService::class),
+            app(InventoryMovementService::class),
+            app(ProductBatchService::class),
+            app(ProductSerialService::class),
+        ));
+
+        $serial->refresh();
+        $this->assertSame('available', $serial->status->value);
+        $this->assertNull($serial->marketplace_sale_item_id);
+
+        $sale->refresh();
+        $this->assertSame(PaymentStatus::REFUNDED, $sale->payment_status);
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
 
-    private function createProduct(bool $requiresBatchTracking): Product
+    private function createProduct(bool $requiresBatchTracking, bool $requiresSerialTracking = false): Product
     {
         return Product::withoutEvents(fn () => Product::create([
             'name' => 'Test Product',
             'slug' => 'test-product-'.uniqid(),
             'sku' => 'SKU-'.uniqid(),
             'requires_batch_tracking' => $requiresBatchTracking,
+            'requires_serial_tracking' => $requiresSerialTracking,
             'base_uom_id' => 1,
+        ]));
+    }
+
+    private function createSerial(int $productId, string $serialNumber, int $marketplaceSaleItemId): ProductSerial
+    {
+        return Model::withoutEvents(fn () => ProductSerial::create([
+            'store_id' => 1,
+            'product_id' => $productId,
+            'purchase_order_id' => 1,
+            'serial_number' => $serialNumber,
+            'status' => 'sold',
+            'cost' => 50.00,
+            'marketplace_sale_item_id' => $marketplaceSaleItemId,
         ]));
     }
 
@@ -202,6 +270,7 @@ class ProcessInboundCancellationSyncTest extends TestCase
             'marketplace_sales',
             'inventory_reservations',
             'product_batches',
+            'product_serials',
             'inventory_movements',
             'inventory',
             'product_variants',
@@ -344,6 +413,23 @@ class ProcessInboundCancellationSyncTest extends TestCase
             $table->date('expiry_date')->nullable();
             $table->boolean('is_expired')->default(false);
             $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_serials', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id');
+            $table->string('serial_number')->unique();
+            $table->string('status')->default('available');
+            $table->decimal('cost', 15, 2)->default(0);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->unsignedBigInteger('sale_item_id')->nullable();
+            $table->unsignedBigInteger('marketplace_sale_item_id')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();

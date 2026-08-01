@@ -8,6 +8,7 @@ use App\Models\Tenant\MarketplaceSaleItemBatchDepletion;
 use App\Models\Tenant\ProductBundle;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Inventory\StockReservationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -39,6 +40,7 @@ class ProcessInboundCancellationSync implements ShouldQueue
         StockReservationService $reservationService,
         InventoryMovementService $movementService,
         ProductBatchService $batchService,
+        ProductSerialService $serialService,
     ): void {
         $orderId = $this->orderPayload['order_id'];
         $outboundSyncId = $this->orderPayload['_outbound_sync_id'] ?? null;
@@ -53,7 +55,7 @@ class ProcessInboundCancellationSync implements ShouldQueue
         $sale = MarketplaceSale::where('central_order_id', $orderId)->first();
 
         if ($sale) {
-            $this->reverseSale($sale, $movementService, $batchService);
+            $this->reverseSale($sale, $movementService, $batchService, $serialService);
         } else {
             $reservationService->releaseAllReservationsForReference(
                 'MarketplaceOrder',
@@ -81,8 +83,9 @@ class ProcessInboundCancellationSync implements ShouldQueue
         MarketplaceSale $sale,
         InventoryMovementService $movementService,
         ProductBatchService $batchService,
+        ProductSerialService $serialService,
     ): void {
-        DB::transaction(function () use ($sale, $movementService, $batchService) {
+        DB::transaction(function () use ($sale, $movementService, $batchService, $serialService) {
             foreach ($sale->items as $item) {
                 if ($item->bundle_id) {
                     $bundle = ProductBundle::with('items.product')->find($item->bundle_id);
@@ -122,6 +125,12 @@ class ProcessInboundCancellationSync implements ShouldQueue
                 foreach ($depletions as $depletion) {
                     $batchService->restoreBatchQuantity($depletion->batch_id, (float) $depletion->quantity_in_base_uom);
                 }
+
+                // No-ops for non-serial-tracked items (nothing to find), and it's safe
+                // to always call — a whole-order cancellation reverses the entire line
+                // item, unlike a partial POS refund which needs the customer to name
+                // specific serials.
+                $serialService->restoreSerialsForMarketplaceCancellation($item->id);
             }
 
             $sale->update(['payment_status' => PaymentStatus::REFUNDED]);

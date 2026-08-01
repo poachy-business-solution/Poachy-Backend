@@ -17,6 +17,7 @@ use App\Services\Tenant\Customer\CustomerService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Sales\CreditService;
 use App\Services\Tenant\Sales\LoyaltyService;
 use App\Services\Tenant\Sales\SaleCalculationService;
@@ -277,6 +278,48 @@ class SaleServiceTest extends TestCase
         Model::withoutEvents(fn () => $service->createSale($data));
 
         $this->assertSame(2, SaleItem::count());
+    }
+
+    public function test_serial_tracked_product_assigns_serials_but_does_not_deplete_batches(): void
+    {
+        $this->seedInventory(productId: 4, qtyAvailable: 10); // requires_serial_tracking = true
+
+        $batchMock = Mockery::mock(ProductBatchService::class);
+        $batchMock->shouldNotReceive('depleteBatchesFIFO');
+
+        $serialMock = Mockery::mock(ProductSerialService::class);
+        $serialMock->shouldReceive('assignSerialsForSale')
+            ->once()
+            ->with(1, 4, null, ['IMEI-001'], 1.0, Mockery::type('int'))
+            ->andReturn(collect());
+
+        $lineItems = [
+            $this->lineItem([
+                'product_id' => 4,
+                'quantity' => 1,
+                'quantity_in_base_uom' => 1,
+                'unit_cost' => 40.0,
+                'line_total_after_discount' => 500.0,
+                'serial_numbers' => ['IMEI-001'],
+            ]),
+        ];
+
+        $service = $this->makeService(
+            $this->mockCalculation($this->calculations($lineItems)),
+            productBatchService: $batchMock,
+            productSerialService: $serialMock,
+        );
+
+        $data = $this->baseSaleData([
+            'items' => [
+                ['product_id' => 4, 'quantity' => 1, 'serial_numbers' => ['IMEI-001']],
+            ],
+            'payments' => [['method' => 'cash', 'amount' => 500.0]],
+        ]);
+
+        Model::withoutEvents(fn () => $service->createSale($data));
+
+        $this->assertSame(1, SaleItem::count());
     }
 
     // =========================================================================
@@ -597,6 +640,7 @@ class SaleServiceTest extends TestCase
         SaleCalculationService $calculationService,
         ?InventoryMovementService $inventoryMovementService = null,
         ?ProductBatchService $productBatchService = null,
+        ?ProductSerialService $productSerialService = null,
         ?LoyaltyService $loyaltyService = null,
         ?CreditService $creditService = null,
     ): SaleService {
@@ -605,6 +649,7 @@ class SaleServiceTest extends TestCase
             inventoryService: new InventoryService,
             inventoryMovementService: $inventoryMovementService ?? Mockery::spy(InventoryMovementService::class),
             productBatchService: $productBatchService ?? Mockery::spy(ProductBatchService::class),
+            productSerialService: $productSerialService ?? Mockery::spy(ProductSerialService::class),
             customerService: new CustomerService,
             loyaltyService: $loyaltyService ?? new LoyaltyService,
             creditService: $creditService ?? new CreditService,
@@ -737,6 +782,9 @@ class SaleServiceTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        // NOTE: multi-row insert() derives its column list from the FIRST row's
+        // keys — every row here must share identical keys (in the same set),
+        // or a later row's values silently land in the wrong columns.
         DB::connection($conn)->table('products')->insert([
             [
                 'id' => 1,
@@ -744,6 +792,7 @@ class SaleServiceTest extends TestCase
                 'slug' => 'simple-product',
                 'sku' => 'SKU-SIMPLE-001',
                 'requires_batch_tracking' => false,
+                'requires_serial_tracking' => false,
                 'base_uom_id' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -754,6 +803,18 @@ class SaleServiceTest extends TestCase
                 'slug' => 'batch-tracked-product',
                 'sku' => 'SKU-BATCH-001',
                 'requires_batch_tracking' => true,
+                'requires_serial_tracking' => false,
+                'base_uom_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 4,
+                'name' => 'Serial Tracked Product',
+                'slug' => 'serial-tracked-product',
+                'sku' => 'SKU-SERIAL-001',
+                'requires_batch_tracking' => false,
+                'requires_serial_tracking' => true,
                 'base_uom_id' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -816,6 +877,7 @@ class SaleServiceTest extends TestCase
             $table->string('product_type')->default('simple');
             $table->string('stock_status')->default('in_stock');
             $table->boolean('requires_batch_tracking')->default(false);
+            $table->boolean('requires_serial_tracking')->default(false);
             $table->unsignedBigInteger('base_uom_id')->default(1);
             $table->boolean('is_available_online')->default(false);
             $table->timestamps();

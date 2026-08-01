@@ -2,20 +2,20 @@
 
 namespace App\Models\Tenant;
 
-use App\Enums\Tenant\WasteType;
 use App\Enums\Tenant\WasteApprovalStatus;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
+use App\Enums\Tenant\WasteType;
 use App\Observers\Tenant\InventoryWasteObserver;
 use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[ObservedBy([InventoryWasteObserver::class])]
 class InventoryWaste extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'inventory_waste';
 
@@ -23,6 +23,7 @@ class InventoryWaste extends Model
         'store_id',
         'product_id',
         'batch_id',
+        'serial_id',
         'waste_type',
         'quantity_wasted',
         'cost_per_base_uom',
@@ -62,6 +63,11 @@ class InventoryWaste extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(ProductBatch::class, 'batch_id');
+    }
+
+    public function serial(): BelongsTo
+    {
+        return $this->belongsTo(ProductSerial::class, 'serial_id');
     }
 
     public function reportedBy(): BelongsTo
@@ -106,6 +112,7 @@ class InventoryWaste extends Model
     public function scopeByType(Builder $query, WasteType|string $type): Builder
     {
         $typeValue = $type instanceof WasteType ? $type->value : $type;
+
         return $query->where('waste_type', $typeValue);
     }
 
@@ -128,6 +135,7 @@ class InventoryWaste extends Model
             'product:id,name,slug,sku,base_uom_id,primary_image',
             'product.baseUom:id,code,name',
             'batch:id,batch_number,expiry_date',
+            'serial:id,serial_number',
             'store:id,name,code',
             'reportedBy:id,name,email',
             'approvedBy:id,name,email',
@@ -184,7 +192,7 @@ class InventoryWaste extends Model
 
     public function approve(int $userId): bool
     {
-        if (!$this->can_be_approved) {
+        if (! $this->can_be_approved) {
             throw new \RuntimeException('Waste record cannot be approved in current status');
         }
 
@@ -197,7 +205,7 @@ class InventoryWaste extends Model
 
     public function reject(int $userId, ?string $reason = null): bool
     {
-        if (!$this->can_be_rejected) {
+        if (! $this->can_be_rejected) {
             throw new \RuntimeException('Waste record cannot be rejected in current status');
         }
 

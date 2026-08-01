@@ -24,6 +24,7 @@ use App\Services\Tenant\Customer\CustomerService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +36,7 @@ class SaleService
         protected InventoryService $inventoryService,
         protected InventoryMovementService $inventoryMovementService,
         protected ProductBatchService $productBatchService,
+        protected ProductSerialService $productSerialService,
         protected CustomerService $customerService,
         protected LoyaltyService $loyaltyService,
         protected CreditService $creditService
@@ -472,15 +474,16 @@ class SaleService
         // it (and reversed correctly on refund).
         $saleItems = $sale->items()->orderBy('id')->get()->values();
 
-        // Pre-load batch tracking flags for all non-bundle products in one query
+        // Pre-load batch/serial tracking flags for all non-bundle products in one query
         $nonBundleProductIds = collect($lineItems)
             ->filter(fn ($item) => ! $item['bundle_id'])
             ->pluck('product_id')
             ->unique()
             ->values();
 
-        $batchTrackingMap = Product::whereIn('id', $nonBundleProductIds)
-            ->pluck('requires_batch_tracking', 'id');
+        $trackingFlags = Product::whereIn('id', $nonBundleProductIds)
+            ->get(['id', 'requires_batch_tracking', 'requires_serial_tracking'])
+            ->keyBy('id');
 
         foreach ($lineItems as $index => $item) {
             $saleItemId = $saleItems[$index]->id;
@@ -489,6 +492,13 @@ class SaleService
                 $bundle = ProductBundle::with('items')->find($item['bundle_id']);
 
                 foreach ($bundle->items as $bundleItem) {
+                    if ($bundleItem->product->requires_serial_tracking) {
+                        throw new \RuntimeException(
+                            "Bundle component '{$bundleItem->product->name}' requires serial tracking, ".
+                                'which is not supported for bundle components.'
+                        );
+                    }
+
                     $itemsForInventory[] = [
                         'sale_item_id' => $saleItemId,
                         'store_id' => $sale->store_id,
@@ -502,6 +512,8 @@ class SaleService
                             $bundleItem->product_variant_id
                         ),
                         'requires_batch_tracking' => $bundleItem->product->requires_batch_tracking,
+                        'requires_serial_tracking' => false,
+                        'serial_numbers' => [],
                         'notes' => "Bundle component sale - {$sale->sale_number}",
                     ];
                 }
@@ -514,7 +526,9 @@ class SaleService
                     'quantity' => $item['quantity'],
                     'uom_id' => $item['uom_id'],
                     'unit_cost' => $item['unit_cost'],
-                    'requires_batch_tracking' => (bool) ($batchTrackingMap[$item['product_id']] ?? false),
+                    'requires_batch_tracking' => (bool) ($trackingFlags[$item['product_id']]->requires_batch_tracking ?? false),
+                    'requires_serial_tracking' => (bool) ($trackingFlags[$item['product_id']]->requires_serial_tracking ?? false),
+                    'serial_numbers' => $item['serial_numbers'] ?? [],
                     'notes' => "Sale - {$sale->sale_number}",
                 ];
             }
@@ -539,6 +553,15 @@ class SaleService
                         'quantity_in_base_uom' => $quantityDepleted,
                     ]);
                 }
+            } elseif ($item['requires_serial_tracking']) {
+                $this->productSerialService->assignSerialsForSale(
+                    storeId: $item['store_id'],
+                    productId: $item['product_id'],
+                    variantId: $item['variant_id'],
+                    serialNumbers: $item['serial_numbers'],
+                    quantity: $item['quantity'],
+                    saleItemId: $item['sale_item_id']
+                );
             }
         }
     }

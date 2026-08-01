@@ -17,7 +17,8 @@ class StockTransferService
 {
     public function __construct(
         private InventoryMovementService $movementService,
-        private ProductBatchService $batchService
+        private ProductBatchService $batchService,
+        private ProductSerialService $serialService
     ) {}
 
     /**
@@ -166,10 +167,12 @@ class StockTransferService
 
     /**
      * Send/dispatch transfer (deduct from source store)
+     *
+     * @param  array<int, array<int, string>>  $serialNumbersByItemId  transfer_item_id => serial numbers, required for serial-tracked items
      */
-    public function sendTransfer(int $transferId): StockTransfer
+    public function sendTransfer(int $transferId, array $serialNumbersByItemId = []): StockTransfer
     {
-        return DB::transaction(function () use ($transferId) {
+        return DB::transaction(function () use ($transferId, $serialNumbersByItemId) {
             $transfer = StockTransfer::with('items.product', 'items.productVariant')->lockForUpdate()->findOrFail($transferId);
 
             if ($transfer->status !== 'approved') {
@@ -199,6 +202,25 @@ class StockTransferService
                         productId: $item->product_id,
                         variantId: $item->product_variant_id,
                         quantityInBaseUom: $item->quantity_requested_in_base_uom,
+                        transferId: $transfer->id,
+                        transferNumber: $transfer->transfer_number
+                    );
+                } elseif ($item->product->requiresSerialTracking()) {
+                    $serialNumbers = $serialNumbersByItemId[$item->id] ?? [];
+
+                    if (count($serialNumbers) !== (int) $item->quantity_requested) {
+                        throw new \RuntimeException(
+                            'Serial number count must match quantity requested for a serial-tracked item. '.
+                                "Item: {$item->id}, Quantity: {$item->quantity_requested}, Serial numbers provided: ".count($serialNumbers)
+                        );
+                    }
+
+                    $this->serialService->transferSerialStock(
+                        fromStoreId: $transfer->from_store_id,
+                        toStoreId: $transfer->to_store_id,
+                        productId: $item->product_id,
+                        variantId: $item->product_variant_id,
+                        serialNumbers: $serialNumbers,
                         transferId: $transfer->id,
                         transferNumber: $transfer->transfer_number
                     );

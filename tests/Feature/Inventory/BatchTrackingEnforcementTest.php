@@ -14,6 +14,7 @@ use App\Services\Tenant\Customer\CustomerService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Sales\CreditService;
 use App\Services\Tenant\Sales\LoyaltyService;
 use App\Services\Tenant\Sales\SaleCalculationService;
@@ -312,6 +313,7 @@ class BatchTrackingEnforcementTest extends TestCase
             Mockery::mock(InventoryService::class),
             $movementService,
             $batchService,
+            Mockery::mock(ProductSerialService::class),
             Mockery::mock(CustomerService::class),
             Mockery::mock(LoyaltyService::class),
             Mockery::mock(CreditService::class),

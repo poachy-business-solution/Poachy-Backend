@@ -4,10 +4,12 @@ namespace Tests\Feature\Tenant\Inventory;
 
 use App\Models\Tenant\Inventory;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\StockTransfer;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Inventory\StockTransferService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
@@ -175,13 +177,110 @@ class StockTransferBatchIntegrationTest extends TestCase
         $this->assertSame('approved', $transfer->fresh()->status);
     }
 
+    public function test_serial_tracked_transfer_moves_serial_to_destination_store(): void
+    {
+        DB::connection('tenant')->table('products')->insert([
+            'id' => 3,
+            'name' => 'Serial Tracked Product',
+            'slug' => 'serial-tracked-product',
+            'sku' => 'SKU-SERIAL-001',
+            'requires_batch_tracking' => false,
+            'requires_serial_tracking' => true,
+            'base_uom_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->seedInventory(storeId: 1, productId: 3, qtyOnHand: 1);
+        $serial = $this->createSerial(['store_id' => 1, 'product_id' => 3, 'serial_number' => 'IMEI-001']);
+
+        $transfer = Model::withoutEvents(function () {
+            $t = $this->service()->createTransfer($this->transferData(quantity: 1.0, productId: 3));
+
+            return $this->service()->approveTransfer($t->id);
+        });
+
+        $item = $transfer->items->first();
+
+        Model::withoutEvents(fn () => $this->service()->sendTransfer($transfer->id, [
+            $item->id => ['IMEI-001'],
+        ]));
+
+        $serial->refresh();
+        $this->assertSame(2, $serial->store_id);
+        $this->assertSame('available', $serial->status->value);
+    }
+
+    public function test_serial_tracked_transfer_throws_when_serial_count_mismatches_quantity(): void
+    {
+        DB::connection('tenant')->table('products')->insert([
+            'id' => 3,
+            'name' => 'Serial Tracked Product',
+            'slug' => 'serial-tracked-product',
+            'sku' => 'SKU-SERIAL-001',
+            'requires_batch_tracking' => false,
+            'requires_serial_tracking' => true,
+            'base_uom_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->seedInventory(storeId: 1, productId: 3, qtyOnHand: 2);
+        $this->createSerial(['store_id' => 1, 'product_id' => 3, 'serial_number' => 'IMEI-001']);
+        $this->createSerial(['store_id' => 1, 'product_id' => 3, 'serial_number' => 'IMEI-002']);
+
+        $transfer = Model::withoutEvents(function () {
+            $t = $this->service()->createTransfer($this->transferData(quantity: 2.0, productId: 3));
+
+            return $this->service()->approveTransfer($t->id);
+        });
+
+        $item = $transfer->items->first();
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(fn () => $this->service()->sendTransfer($transfer->id, [
+            $item->id => ['IMEI-001'], // only 1 for quantity 2
+        ]));
+    }
+
+    public function test_serial_tracked_transfer_throws_when_serial_not_at_source_store(): void
+    {
+        DB::connection('tenant')->table('products')->insert([
+            'id' => 3,
+            'name' => 'Serial Tracked Product',
+            'slug' => 'serial-tracked-product',
+            'sku' => 'SKU-SERIAL-001',
+            'requires_batch_tracking' => false,
+            'requires_serial_tracking' => true,
+            'base_uom_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->seedInventory(storeId: 1, productId: 3, qtyOnHand: 1);
+        // Serial exists but belongs to store 2, not the transfer's source store (1).
+        $this->createSerial(['store_id' => 2, 'product_id' => 3, 'serial_number' => 'IMEI-001']);
+
+        $transfer = Model::withoutEvents(function () {
+            $t = $this->service()->createTransfer($this->transferData(quantity: 1.0, productId: 3));
+
+            return $this->service()->approveTransfer($t->id);
+        });
+
+        $item = $transfer->items->first();
+
+        $this->expectException(\RuntimeException::class);
+
+        Model::withoutEvents(fn () => $this->service()->sendTransfer($transfer->id, [
+            $item->id => ['IMEI-001'],
+        ]));
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
 
     private function service(): StockTransferService
     {
-        return new StockTransferService(new InventoryMovementService(new InventoryService), new ProductBatchService);
+        return new StockTransferService(new InventoryMovementService(new InventoryService), new ProductBatchService, new ProductSerialService);
     }
 
     private function transferData(int $from = 1, int $to = 2, float $quantity = 5.0, int $productId = 1): array
@@ -203,6 +302,18 @@ class StockTransferBatchIntegrationTest extends TestCase
 
             return $this->service()->sendTransfer($transfer->id);
         });
+    }
+
+    private function createSerial(array $overrides = []): ProductSerial
+    {
+        return Model::withoutEvents(fn () => ProductSerial::create(array_merge([
+            'store_id' => 1,
+            'product_id' => 1,
+            'purchase_order_id' => 1,
+            'serial_number' => 'IMEI-'.uniqid(),
+            'status' => 'available',
+            'cost' => 40.0,
+        ], $overrides)));
     }
 
     private function createBatch(array $overrides = []): ProductBatch
@@ -279,6 +390,7 @@ class StockTransferBatchIntegrationTest extends TestCase
     {
         foreach ([
             'product_batches',
+            'product_serials',
             'stock_transfer_items',
             'stock_transfers',
             'inventory_movements',
@@ -324,6 +436,7 @@ class StockTransferBatchIntegrationTest extends TestCase
             $table->string('slug');
             $table->string('sku')->unique();
             $table->boolean('requires_batch_tracking')->default(false);
+            $table->boolean('requires_serial_tracking')->default(false);
             $table->unsignedBigInteger('base_uom_id')->default(1);
             $table->timestamps();
             $table->softDeletes();
@@ -438,6 +551,23 @@ class StockTransferBatchIntegrationTest extends TestCase
             $table->date('expiry_date')->nullable();
             $table->boolean('is_expired')->default(false);
             $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_serials', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_id');
+            $table->string('serial_number')->unique();
+            $table->string('status')->default('available');
+            $table->decimal('cost', 15, 2)->default(0);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->unsignedBigInteger('sale_item_id')->nullable();
+            $table->unsignedBigInteger('marketplace_sale_item_id')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
