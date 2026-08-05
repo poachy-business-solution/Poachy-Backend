@@ -16,7 +16,9 @@ class ProcessOutboundApprovedReviewSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public int $timeout = 120;
+
     public int $tries = 3;
+
     public $backoff = [60, 300, 900];
 
     public function __construct(public int $syncQueueId) {}
@@ -52,18 +54,18 @@ class ProcessOutboundApprovedReviewSync implements ShouldQueue
 
             $scheme = app()->environment('local') ? 'http://' : 'https://';
 
-            $tenantUrl = $scheme . $domain->domain;
+            $tenantUrl = $scheme.$domain->domain;
 
             $response = Http::timeout(60)
                 ->retry(2, 100)
                 ->withHeaders([
-                    'X-Central-Sync'     => 'true',
-                    'X-Sync-Queue-ID'    => $syncQueue->id,
-                    'X-Idempotency-Key'  => $syncQueue->idempotency_key,
+                    'X-Central-Sync' => 'true',
+                    'X-Sync-Queue-ID' => $syncQueue->id,
+                    'X-Idempotency-Key' => $syncQueue->idempotency_key,
                 ])
                 ->withToken(config('services.tenant_api.token'))
                 ->post(
-                    $tenantUrl . '/api/v1/tenant/sync/inbound/approved-review',
+                    $tenantUrl.'/api/v1/tenant/sync/inbound/approved-review',
                     $syncQueue->payload
                 );
 
@@ -75,7 +77,7 @@ class ProcessOutboundApprovedReviewSync implements ShouldQueue
 
             Log::info('Outbound approved review sync completed', [
                 'sync_queue_id' => $syncQueue->id,
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
             ]);
         } catch (\Exception $e) {
             $syncQueue->markAsFailed($e->getMessage());
@@ -90,6 +92,19 @@ class ProcessOutboundApprovedReviewSync implements ShouldQueue
             throw $e;
         } finally {
             $syncQueue->releaseLock();
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessOutboundApprovedReviewSync job failed permanently', [
+            'sync_queue_id' => $this->syncQueueId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        $syncQueue = SyncQueueOutbound::on('central')->find($this->syncQueueId);
+        if ($syncQueue) {
+            $syncQueue->markAsFailed('Job failed permanently: '.$exception->getMessage());
         }
     }
 }

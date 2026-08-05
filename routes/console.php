@@ -47,6 +47,13 @@ Schedule::call(function () {
     }
 })->daily()->at('03:00')->name('check-batch-expiries');
 
+// Inventory: expire stale stock reservations (default 30min hold) every 15 minutes
+Schedule::command('inventory:expire-reservations')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('expire-stale-reservations');
+
 // Marketplace: Abandon inactive carts every 15 minutes
 Schedule::job(new AbandonCartJob)->everyFifteenMinutes()
     ->withoutOverlapping()
@@ -139,6 +146,22 @@ Schedule::command('audit:prune-logs --days=730')
     ->sundays()
     ->at('03:30')
     ->name('prune-audit-logs')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// OTP: clean up expired/used one-time codes daily (central admin/customer OTPs)
+Schedule::command('otp:cleanup')
+    ->daily()
+    ->at('01:00')
+    ->name('cleanup-central-otps')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// OTP: clean up expired/used one-time codes daily, across all tenants
+Schedule::command('otp:cleanup-tenant')
+    ->daily()
+    ->at('01:15')
+    ->name('cleanup-tenant-otps')
     ->withoutOverlapping()
     ->onOneServer();
 

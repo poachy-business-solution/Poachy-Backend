@@ -9,6 +9,7 @@ use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\User;
 use App\Services\Tenant\Shift\ShiftAssignmentService;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -47,12 +48,12 @@ class ShiftAssignmentServiceTest extends TestCase
             ['id' => 3, 'name' => 'Manager One', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        \Carbon\Carbon::setTestNow('2026-07-30 14:00:00');
+        Carbon::setTestNow('2026-07-30 14:00:00');
     }
 
     protected function tearDown(): void
     {
-        \Carbon\Carbon::setTestNow();
+        Carbon::setTestNow();
         $this->dropTestTables();
         DB::connection('tenant')->statement('SET foreign_key_checks = 1');
         parent::tearDown();
@@ -60,7 +61,7 @@ class ShiftAssignmentServiceTest extends TestCase
 
     private function makeService(): ShiftAssignmentService
     {
-        return new ShiftAssignmentService();
+        return new ShiftAssignmentService;
     }
 
     private function createShift(array $overrides = []): Shift
@@ -149,24 +150,74 @@ class ShiftAssignmentServiceTest extends TestCase
     public function test_bulk_assign_shift_creates_assignments_for_applicable_days_only(): void
     {
         $shift = $this->createShift(['applicable_days' => ['monday']]);
-        $monday = \Carbon\Carbon::parse('next monday');
+        $monday = Carbon::parse('next monday');
         $sunday = $monday->copy()->addDays(6);
 
         $assignments = $this->makeService()->bulkAssignShift($shift, [1], $monday, $sunday, 'weekly');
 
         $this->assertCount(1, $assignments);
-        $this->assertTrue(\Carbon\Carbon::parse($assignments->first()->shift_date)->isMonday());
+        $this->assertTrue(Carbon::parse($assignments->first()->shift_date)->isMonday());
     }
 
     public function test_bulk_assign_shift_skips_existing_assignment_for_same_user_date_shift(): void
     {
         $shift = $this->createShift(['applicable_days' => null]);
-        $date = \Carbon\Carbon::parse('next monday');
+        $date = Carbon::parse('next monday');
         ShiftAssignment::create([
             'shift_id' => $shift->id, 'store_id' => 1, 'user_id' => 1, 'shift_date' => $date->toDateString(),
         ]);
 
         $assignments = $this->makeService()->bulkAssignShift($shift, [1], $date, $date, 'daily');
+
+        $this->assertCount(0, $assignments);
+    }
+
+    /**
+     * Before this fix, a genuine overlap discovered mid-batch would only be
+     * caught by ShiftAssignmentObserver::creating() throwing — which, inside
+     * bulkAssignShift()'s single DB transaction, would roll back the *entire*
+     * batch (including every already-created assignment for other users),
+     * not just skip the one conflicting pair.
+     */
+    public function test_bulk_assign_shift_skips_real_overlap_without_aborting_the_whole_batch(): void
+    {
+        $existingShift = $this->createShift(['scheduled_start_time' => '08:00', 'scheduled_end_time' => '16:00']);
+        $bulkShift = $this->createShift(['applicable_days' => null, 'scheduled_start_time' => '10:00', 'scheduled_end_time' => '18:00']);
+        $date = Carbon::parse('next monday');
+        ShiftAssignment::create([
+            'shift_id' => $existingShift->id, 'store_id' => 1, 'user_id' => 1, 'shift_date' => $date->toDateString(),
+        ]);
+
+        $assignments = $this->makeService()->bulkAssignShift($bulkShift, [1, 2], $date, $date, 'daily');
+
+        $this->assertCount(1, $assignments);
+        $this->assertSame(2, $assignments->first()->user_id);
+    }
+
+    public function test_bulk_assign_shift_allows_back_to_back_non_overlapping_shifts(): void
+    {
+        $existingShift = $this->createShift(['scheduled_start_time' => '08:00', 'scheduled_end_time' => '16:00']);
+        $bulkShift = $this->createShift(['applicable_days' => null, 'scheduled_start_time' => '16:00', 'scheduled_end_time' => '22:00']);
+        $date = Carbon::parse('next monday');
+        ShiftAssignment::create([
+            'shift_id' => $existingShift->id, 'store_id' => 1, 'user_id' => 1, 'shift_date' => $date->toDateString(),
+        ]);
+
+        $assignments = $this->makeService()->bulkAssignShift($bulkShift, [1], $date, $date, 'daily');
+
+        $this->assertCount(1, $assignments);
+    }
+
+    public function test_bulk_assign_shift_skips_multi_store_conflict(): void
+    {
+        $existingShift = $this->createShift(['store_id' => 1]);
+        $bulkShift = $this->createShift(['store_id' => 2, 'applicable_days' => null, 'scheduled_start_time' => '18:00', 'scheduled_end_time' => '22:00']);
+        $date = Carbon::parse('next monday');
+        ShiftAssignment::create([
+            'shift_id' => $existingShift->id, 'store_id' => 1, 'user_id' => 1, 'shift_date' => $date->toDateString(),
+        ]);
+
+        $assignments = $this->makeService()->bulkAssignShift($bulkShift, [1], $date, $date, 'daily');
 
         $this->assertCount(0, $assignments);
     }
@@ -271,14 +322,14 @@ class ShiftAssignmentServiceTest extends TestCase
     {
         $assignment = $this->createAssignment();
 
-        $this->assertTrue($this->makeService()->checkOverlappingShifts(1, \Carbon\Carbon::parse($assignment->shift_date)));
+        $this->assertTrue($this->makeService()->checkOverlappingShifts(1, Carbon::parse($assignment->shift_date)));
     }
 
     public function test_check_overlapping_shifts_excludes_given_assignment_id(): void
     {
         $assignment = $this->createAssignment();
 
-        $this->assertFalse($this->makeService()->checkOverlappingShifts(1, \Carbon\Carbon::parse($assignment->shift_date), $assignment->id));
+        $this->assertFalse($this->makeService()->checkOverlappingShifts(1, Carbon::parse($assignment->shift_date), $assignment->id));
     }
 
     public function test_get_upcoming_assignments_returns_scheduled_within_window(): void

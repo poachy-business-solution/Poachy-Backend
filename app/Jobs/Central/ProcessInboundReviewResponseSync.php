@@ -18,7 +18,9 @@ class ProcessInboundReviewResponseSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public int $timeout = 120;
+
     public int $tries = 3;
+
     public $backoff = [60, 300, 900];
 
     public function __construct(public int $syncQueueId) {}
@@ -62,7 +64,7 @@ class ProcessInboundReviewResponseSync implements ShouldQueue
 
             Log::info('Inbound review response sync completed', [
                 'sync_queue_id' => $syncQueue->id,
-                'review_id'     => $review->id,
+                'review_id' => $review->id,
             ]);
         } catch (\Exception $e) {
             $ackReason = $e->getMessage();
@@ -108,7 +110,7 @@ class ProcessInboundReviewResponseSync implements ShouldQueue
 
             if (! $tenant) {
                 Log::warning('Tenant not found for review response ACK', [
-                    'tenant_id'     => $syncQueue->tenant_id,
+                    'tenant_id' => $syncQueue->tenant_id,
                     'sync_queue_id' => $syncQueue->id,
                 ]);
 
@@ -119,7 +121,7 @@ class ProcessInboundReviewResponseSync implements ShouldQueue
 
             if (! $domain) {
                 Log::warning('No domain found for tenant review response ACK', [
-                    'tenant_id'     => $syncQueue->tenant_id,
+                    'tenant_id' => $syncQueue->tenant_id,
                     'sync_queue_id' => $syncQueue->id,
                 ]);
 
@@ -127,30 +129,43 @@ class ProcessInboundReviewResponseSync implements ShouldQueue
             }
 
             $scheme = app()->environment('local') ? 'http://' : 'https://';
-            $tenantUrl = $scheme . $domain->domain;
+            $tenantUrl = $scheme.$domain->domain;
 
             Http::withToken(config('services.tenant_api.token'))
                 ->timeout(30)
                 ->retry(2, 100)
-                ->post($tenantUrl . '/api/v1/tenant/sync/inbound/review-response-ack', [
+                ->post($tenantUrl.'/api/v1/tenant/sync/inbound/review-response-ack', [
                     'outbound_sync_queue_id' => (int) $tenantOutboundSyncId,
-                    'status'                 => $status,
-                    'reason'                 => $reason,
+                    'status' => $status,
+                    'reason' => $reason,
                 ]);
 
             Log::info('Review response ACK sent to tenant', [
-                'tenant_id'              => $syncQueue->tenant_id,
-                'sync_queue_id'          => $syncQueue->id,
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
                 'outbound_sync_queue_id' => $tenantOutboundSyncId,
-                'status'                 => $status,
+                'status' => $status,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send review response ACK to tenant', [
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
-                'error'         => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             // Don't rethrow — ACK failure should not fail the sync job
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessInboundReviewResponseSync job failed permanently', [
+            'sync_queue_id' => $this->syncQueueId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        $syncQueue = SyncQueueInbound::find($this->syncQueueId);
+        if ($syncQueue) {
+            $syncQueue->markAsFailed('Job failed permanently: '.$exception->getMessage());
         }
     }
 }

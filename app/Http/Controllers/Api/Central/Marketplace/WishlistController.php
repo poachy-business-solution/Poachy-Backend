@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use App\Helpers\CustomerHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Marketplace\AddToWishlistRequest;
@@ -11,6 +12,7 @@ use App\Http\Resources\Central\Marketplace\WishlistResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Marketplace\ShoppingCartService;
 use App\Services\Central\Marketplace\WishlistService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,24 +31,31 @@ class WishlistController extends Controller
      *     operationId="getWishlist",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="in_stock_only",
      *         in="query",
      *         description="Filter to show only in-stock items",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Wishlist retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Wishlist retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="customer_id", type="integer", example=1),
      *                     @OA\Property(property="marketplace_product_id", type="integer", example=3),
@@ -91,10 +100,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -111,6 +123,8 @@ class WishlistController extends Controller
 
         $wishlistItems = $this->wishlistService->getCustomerWishlist($customer->id, $filters);
 
+        BusinessHelper::warmCache($wishlistItems->pluck('marketplaceProduct.tenant_id')->all());
+
         return ApiResponse::success(
             'Wishlist retrieved successfully',
             WishlistResource::collection($wishlistItems)
@@ -125,10 +139,13 @@ class WishlistController extends Controller
      *     operationId="getWishlistSummary",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Wishlist summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Wishlist summary retrieved successfully"),
      *             @OA\Property(
@@ -151,10 +168,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -177,11 +197,14 @@ class WishlistController extends Controller
      *     operationId="addToWishlist",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Product and wishlist details",
+     *
      *         @OA\JsonContent(
      *             required={"marketplace_product_id"},
+     *
      *             @OA\Property(
      *                 property="marketplace_product_id",
      *                 type="integer",
@@ -205,10 +228,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Product added to wishlist successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product added to wishlist"),
      *             @OA\Property(
@@ -257,17 +283,23 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -321,16 +353,21 @@ class WishlistController extends Controller
      *     operationId="updateWishlistItem",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Wishlist item ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         description="Fields to update (all optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="notes",
      *                 type="string",
@@ -348,10 +385,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Wishlist item updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Wishlist item updated successfully"),
      *             @OA\Property(
@@ -400,17 +440,23 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Wishlist item not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Wishlist item not found."),
      *             @OA\Property(
@@ -423,10 +469,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -465,7 +514,7 @@ class WishlistController extends Controller
                 'Wishlist item updated successfully',
                 new WishlistResource($wishlistItem)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Wishlist item not found', 404);
         }
     }
@@ -478,17 +527,22 @@ class WishlistController extends Controller
      *     operationId="removeFromWishlist",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Wishlist item ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item removed from wishlist successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item removed from wishlist"),
      *             @OA\Property(
@@ -501,17 +555,23 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Wishlist item not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Wishlist item not found."),
      *             @OA\Property(
@@ -534,7 +594,7 @@ class WishlistController extends Controller
             $this->wishlistService->removeFromWishlist($customer->id, $id);
 
             return ApiResponse::success('Item removed from wishlist');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Wishlist item not found', 404);
         }
     }
@@ -547,10 +607,13 @@ class WishlistController extends Controller
      *     operationId="clearWishlist",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Wishlist cleared successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Wishlist cleared"),
      *             @OA\Property(
@@ -568,10 +631,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -594,24 +660,31 @@ class WishlistController extends Controller
      *     operationId="moveWishlistItemToCart",
      *     tags={"Central - Customer - Marketplace - Wishlist"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Wishlist item ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=3)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Cart session identifier (UUID) - required for cart session management",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item moved to cart successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item moved to cart successfully"),
      *             @OA\Property(
@@ -640,17 +713,23 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Wishlist item not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Wishlist item not found."),
      *             @OA\Property(
@@ -663,10 +742,13 @@ class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Product unavailable or out of stock",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product is currently out of stock."),
      *             @OA\Property(
@@ -697,7 +779,7 @@ class WishlistController extends Controller
                 'Item moved to cart successfully',
                 new ShoppingCartItemResource($cartItem)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Wishlist item not found', 404);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 422);

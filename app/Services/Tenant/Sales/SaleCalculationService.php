@@ -7,6 +7,7 @@ use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductBundle;
+use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TenantConfiguration;
@@ -203,7 +204,7 @@ class SaleCalculationService
         $taxRate = $product->taxRate;
 
         // Get unit cost for profit calculation
-        $unitCost = $this->getProductCost($storeId, $productId, null);
+        $unitCost = $this->getProductCost($product, $storeId, null);
 
         return [
             'product_id' => $productId,
@@ -245,7 +246,7 @@ class SaleCalculationService
         $conversionFactor = $variant->quantity_in_base_uom / $variant->uom_quantity;
         $quantityInBaseUom = $quantity * $conversionFactor;
 
-        $unitCost = $this->getProductCost($storeId, $productId, $variantId);
+        $unitCost = $this->getProductCost($product, $storeId, $variantId);
 
         return [
             'product_id' => $productId,
@@ -283,7 +284,7 @@ class SaleCalculationService
 
         // Calculate cost from bundle components
         $unitCost = $bundle->items->sum(function ($item) use ($storeId) {
-            $componentCost = $this->getProductCost($storeId, $item->product_id, $item->product_variant_id);
+            $componentCost = $this->getProductCost($item->product, $storeId, $item->product_variant_id);
 
             return $componentCost * $item->quantity_in_base_uom;
         });
@@ -311,12 +312,24 @@ class SaleCalculationService
     }
 
     /**
-     * Get product cost (FIFO average or fallback)
+     * Get product cost. Serial-tracked products use the real per-unit acquisition
+     * cost recorded on their available ProductSerial rows (exact, not estimated);
+     * everything else uses the FIFO batch average as before.
      */
-    protected function getProductCost(int $storeId, int $productId, ?int $variantId): float
+    protected function getProductCost(Product $product, int $storeId, ?int $variantId): float
     {
+        if ($product->requires_serial_tracking) {
+            $averageCost = ProductSerial::where('store_id', $storeId)
+                ->where('product_id', $product->id)
+                ->where('product_variant_id', $variantId)
+                ->available()
+                ->avg('cost');
+
+            return $averageCost ?? 0;
+        }
+
         $averageCost = ProductBatch::where('store_id', $storeId)
-            ->where('product_id', $productId)
+            ->where('product_id', $product->id)
             ->where('product_variant_id', $variantId)
             ->where('quantity_remaining_in_base_uom', '>', 0)
             ->where('is_expired', false)

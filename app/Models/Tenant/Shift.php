@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy(ShiftObserver::class)]
 class Shift extends Model
@@ -128,7 +127,7 @@ class Shift extends Model
 
     public function scopeSearch($query, ?string $search)
     {
-        if (!$search) {
+        if (! $search) {
             return $query;
         }
 
@@ -141,12 +140,12 @@ class Shift extends Model
 
     public function getApplicableDaysEnumAttribute(): array
     {
-        if (!$this->applicable_days) {
+        if (! $this->applicable_days) {
             return DayOfWeek::cases();
         }
 
         return array_map(
-            fn($day) => DayOfWeek::from($day),
+            fn ($day) => DayOfWeek::from($day),
             $this->applicable_days
         );
     }
@@ -187,9 +186,27 @@ class Shift extends Model
         $this->duration_minutes = $start->diffInMinutes($end);
     }
 
+    public function overlapsWith(Shift $other): bool
+    {
+        $start = Carbon::parse($this->scheduled_start_time);
+        $end = Carbon::parse($this->scheduled_end_time);
+        $otherStart = Carbon::parse($other->scheduled_start_time);
+        $otherEnd = Carbon::parse($other->scheduled_end_time);
+
+        // Handle overnight shifts
+        if ($end->lessThan($start)) {
+            $end->addDay();
+        }
+        if ($otherEnd->lessThan($otherStart)) {
+            $otherEnd->addDay();
+        }
+
+        return $start->lessThan($otherEnd) && $end->greaterThan($otherStart);
+    }
+
     public function isApplicableOn(Carbon $date): bool
     {
-        if (!$this->applicable_days || empty($this->applicable_days)) {
+        if (! $this->applicable_days || empty($this->applicable_days)) {
             return true;
         }
 

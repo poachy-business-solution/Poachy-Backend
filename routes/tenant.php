@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
+use App\Http\Controllers\Api\Tenant\Sales\MarketplaceSaleController;
 use App\Http\Controllers\Api\Tenant\Sales\RefundController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Controllers\Api\Tenant\Sales\ShiftSalesSummaryController;
@@ -86,6 +87,10 @@ Route::prefix('v1/tenant')->group(function () {
         Route::post('/delivery-zone-ack', [TenantSyncAckController::class, 'receiveDeliveryZoneAck']);
         Route::post('/inventory-count-ack', [TenantSyncAckController::class, 'receiveInventoryCountAck']);
         Route::post('/review-response-ack', [TenantSyncAckController::class, 'receiveReviewResponseAck']);
+        Route::post('/marketplace-fulfillment-ack', [TenantSyncAckController::class, 'receiveMarketplaceFulfillmentAck']);
+        Route::post('/product-ack', [TenantSyncAckController::class, 'receiveProductAck']);
+        Route::post('/variant-ack', [TenantSyncAckController::class, 'receiveVariantAck']);
+        Route::post('/bundle-ack', [TenantSyncAckController::class, 'receiveBundleAck']);
         Route::get('/categories', [CategorySyncController::class, 'index']);
     });
 });
@@ -95,50 +100,70 @@ Route::prefix('v1/tenant')
     ->middleware(['auth:tenant', 'tenant.access'])
     ->group(function () {
 
-        // Store Management
+        // Store Management — read is available to any authenticated tenant user
+        // (no dedicated view-locations permission, and operational staff need
+        // the store list); mutations require manage-locations (owner only).
         Route::prefix('stores')->group(function () {
             Route::get('/', [StoreController::class, 'index']);
-            Route::post('/', [StoreController::class, 'store']);
             Route::get('/{id}', [StoreController::class, 'show']);
-            Route::patch('/{id}/details', [StoreController::class, 'updateDetails']);
-            Route::patch('/{id}/set-main', [StoreController::class, 'setAsMain']);
-            Route::patch('/{id}/activate', [StoreController::class, 'activate']);
-            Route::patch('/{id}/deactivate', [StoreController::class, 'deactivate']);
-            Route::post('/{id}/assign-manager', [StoreController::class, 'assignManager']);
-            Route::delete('/{id}/remove-manager', [StoreController::class, 'removeManager']);
+
+            Route::middleware(['permission:manage-locations,tenant'])->group(function () {
+                Route::post('/', [StoreController::class, 'store']);
+                Route::patch('/{id}/details', [StoreController::class, 'updateDetails']);
+                Route::patch('/{id}/set-main', [StoreController::class, 'setAsMain']);
+                Route::patch('/{id}/activate', [StoreController::class, 'activate']);
+                Route::patch('/{id}/deactivate', [StoreController::class, 'deactivate']);
+                Route::post('/{id}/assign-manager', [StoreController::class, 'assignManager']);
+                Route::delete('/{id}/remove-manager', [StoreController::class, 'removeManager']);
+            });
         });
 
-        // Product Categories Management
+        // Product Categories Management — reads open to any tenant user;
+        // mutations require manage-products, matching ProductController's own
+        // FormRequest-level convention (store/update FormRequests here return
+        // true unconditionally today, so this route middleware is what
+        // actually enforces it).
         Route::prefix('categories')->group(function () {
             Route::get('/', [ProductCategoryController::class, 'index']);
-            Route::post('/', [ProductCategoryController::class, 'store']);
             Route::get('/{category}', [ProductCategoryController::class, 'show']);
-            Route::patch('/{category}', [ProductCategoryController::class, 'update']);
-            Route::patch('/{category}/activate', [ProductCategoryController::class, 'activate']);
-            Route::patch('/{category}/deactivate', [ProductCategoryController::class, 'deactivate']);
-            Route::delete('/{category}', [ProductCategoryController::class, 'destroy']);
+
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::post('/', [ProductCategoryController::class, 'store']);
+                Route::patch('/{category}', [ProductCategoryController::class, 'update']);
+                Route::patch('/{category}/activate', [ProductCategoryController::class, 'activate']);
+                Route::patch('/{category}/deactivate', [ProductCategoryController::class, 'deactivate']);
+                Route::delete('/{category}', [ProductCategoryController::class, 'destroy']);
+            });
         });
 
-        // Product Brands Management
+        // Product Brands Management — same split as Categories above.
         Route::prefix('brands')->group(function () {
             Route::get('/', [ProductBrandController::class, 'index']);
             Route::get('/{brand}', [ProductBrandController::class, 'show']);
-            Route::post('/', [ProductBrandController::class, 'store']);
-            Route::patch('/{brand}/activate', [ProductBrandController::class, 'activate']);
-            Route::patch('/{brand}/deactivate', [ProductBrandController::class, 'deactivate']);
-            Route::patch('/{brand}/feature', [ProductBrandController::class, 'feature']);
-            Route::patch('/{brand}/unfeature', [ProductBrandController::class, 'unfeature']);
-            Route::post('/{brand}/logo', [ProductBrandController::class, 'updateLogo']);
-            Route::delete('/{brand}', [ProductBrandController::class, 'destroy']);
+
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::post('/', [ProductBrandController::class, 'store']);
+                Route::patch('/{brand}/activate', [ProductBrandController::class, 'activate']);
+                Route::patch('/{brand}/deactivate', [ProductBrandController::class, 'deactivate']);
+                Route::patch('/{brand}/feature', [ProductBrandController::class, 'feature']);
+                Route::patch('/{brand}/unfeature', [ProductBrandController::class, 'unfeature']);
+                Route::post('/{brand}/logo', [ProductBrandController::class, 'updateLogo']);
+                Route::delete('/{brand}', [ProductBrandController::class, 'destroy']);
+            });
         });
 
-        // Tax Rates Management
+        // Tax Rates Management — read is available to any authenticated tenant
+        // user (rates are needed for POS sale calculation display); mutations
+        // require manage-store-settings (owner only), same bucket as Locations.
         Route::prefix('tax-rates')->group(function () {
             Route::get('/', [TaxRateController::class, 'index']);
-            Route::post('/', [TaxRateController::class, 'store']);
-            Route::patch('/{taxRate}/toggle-active', [TaxRateController::class, 'toggleActive']);
-            Route::patch('/{taxRate}/toggle-default', [TaxRateController::class, 'toggleDefault']);
-            Route::patch('/{taxRate}/effective-until', [TaxRateController::class, 'updateEffectiveUntil']);
+
+            Route::middleware(['permission:manage-store-settings,tenant'])->group(function () {
+                Route::post('/', [TaxRateController::class, 'store']);
+                Route::patch('/{taxRate}/toggle-active', [TaxRateController::class, 'toggleActive']);
+                Route::patch('/{taxRate}/toggle-default', [TaxRateController::class, 'toggleDefault']);
+                Route::patch('/{taxRate}/effective-until', [TaxRateController::class, 'updateEffectiveUntil']);
+            });
         });
 
         // Suppliers Routes
@@ -152,23 +177,32 @@ Route::prefix('v1/tenant')
             Route::patch('/{supplier}/toggle-active', [SupplierController::class, 'toggleActive']);
         });
 
-        // Units of Measure Routes
+        // Units of Measure Routes — read/conversion-options open to any tenant
+        // user (needed for product/inventory forms); mutations require
+        // manage-store-settings (owner only), same bucket as Locations/Tax.
         Route::prefix('units-of-measure')->group(function () {
             Route::get('/', [UnitOfMeasureController::class, 'index']);
             Route::get('/{id}', [UnitOfMeasureController::class, 'show']);
-            Route::post('/', [UnitOfMeasureController::class, 'store']);
-            Route::patch('/{id}', [UnitOfMeasureController::class, 'update']);
             Route::get('/{id}/conversion-options', [UnitOfMeasureController::class, 'conversionOptions']);
-            Route::post('/{id}/set-base-unit', [UnitOfMeasureController::class, 'setBaseUnit']);
-            Route::delete('/{id}/remove-base-unit', [UnitOfMeasureController::class, 'removeBaseUnit']);
+
+            Route::middleware(['permission:manage-store-settings,tenant'])->group(function () {
+                Route::post('/', [UnitOfMeasureController::class, 'store']);
+                Route::patch('/{id}', [UnitOfMeasureController::class, 'update']);
+                Route::post('/{id}/set-base-unit', [UnitOfMeasureController::class, 'setBaseUnit']);
+                Route::delete('/{id}/remove-base-unit', [UnitOfMeasureController::class, 'removeBaseUnit']);
+            });
         });
 
-        // UOM Conversion Routes
+        // UOM Conversion Routes — convert is a read-only calculation, open to
+        // any tenant user; store/update/destroy require manage-store-settings.
         Route::prefix('uom-conversions')->group(function () {
-            Route::post('/', [UomConversionController::class, 'store']);
-            Route::patch('/{id}', [UomConversionController::class, 'update']);
-            Route::delete('/{id}', [UomConversionController::class, 'destroy']);
             Route::post('/convert', [UomConversionController::class, 'convert']);
+
+            Route::middleware(['permission:manage-store-settings,tenant'])->group(function () {
+                Route::post('/', [UomConversionController::class, 'store']);
+                Route::patch('/{id}', [UomConversionController::class, 'update']);
+                Route::delete('/{id}', [UomConversionController::class, 'destroy']);
+            });
         });
 
         // Products Routes
@@ -179,17 +213,23 @@ Route::prefix('v1/tenant')
             Route::patch('/{uuid}', [ProductController::class, 'update']);
             Route::patch('/{uuid}/inventory', [ProductController::class, 'updateInventoryConfig']);
             Route::patch('/{uuid}/online', [ProductController::class, 'updateOnlineConfig']);
-            Route::patch('/{uuid}/toggle-active', [ProductController::class, 'toggleActive']);
-            Route::patch('/{uuid}/toggle-featured', [ProductController::class, 'toggleFeatured']);
+            // toggleActive/toggleFeatured/updatePrimaryImage have no FormRequest
+            // of their own (unlike store/update/addImages/removeImage), so the
+            // manage-products check has to be wired in here at the route level.
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::patch('/{uuid}/toggle-active', [ProductController::class, 'toggleActive']);
+                Route::patch('/{uuid}/toggle-featured', [ProductController::class, 'toggleFeatured']);
+                Route::post('/{uuid}/primary-image', [ProductController::class, 'updatePrimaryImage']);
+            });
             Route::post('/{uuid}/images', [ProductController::class, 'addImages']);
-            Route::post('/{uuid}/primary-image', [ProductController::class, 'updatePrimaryImage']);
             Route::delete('/{uuid}/images', [ProductController::class, 'removeImage']);
 
             Route::prefix('{uuid}/uoms')->group(function () {
                 Route::get('/', [ProductUomController::class, 'index']);
                 Route::post('/', [ProductUomController::class, 'store']);
                 Route::patch('/{productUom}', [ProductUomController::class, 'update']);
-                Route::delete('/{productUomId}', [ProductUomController::class, 'destroy']);
+                Route::delete('/{productUomId}', [ProductUomController::class, 'destroy'])
+                    ->middleware(['permission:manage-products,tenant']);
                 Route::get('/base', [ProductUomController::class, 'base']);
                 Route::get('/purchase', [ProductUomController::class, 'purchase']);
                 Route::get('/sales', [ProductUomController::class, 'sales']);
@@ -206,9 +246,12 @@ Route::prefix('v1/tenant')
             Route::get('/', [ProductVariantController::class, 'indexAll']);
             Route::get('/{id}', [ProductVariantController::class, 'show']);
             Route::patch('/{id}', [ProductVariantController::class, 'update']);
-            Route::delete('/{id}', [ProductVariantController::class, 'destroy']);
-            Route::patch('/{id}/toggle-active', [ProductVariantController::class, 'toggleActive']);
             Route::patch('/{id}/inventory', [ProductVariantController::class, 'updateInventory']);
+
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::delete('/{id}', [ProductVariantController::class, 'destroy']);
+                Route::patch('/{id}/toggle-active', [ProductVariantController::class, 'toggleActive']);
+            });
         });
 
         // Product Bundles
@@ -217,16 +260,10 @@ Route::prefix('v1/tenant')
             Route::post('/', [ProductBundleController::class, 'store']);
             Route::get('/{id}', [ProductBundleController::class, 'show']);
             Route::patch('/{id}', [ProductBundleController::class, 'update']);
-            Route::delete('/{id}', [ProductBundleController::class, 'destroy']);
 
             // Items
             Route::post('/{id}/items', [ProductBundleController::class, 'addItem']);
             Route::patch('/{id}/items/{itemId}', [ProductBundleController::class, 'updateItem']);
-            Route::delete('/{id}/items/{itemId}', [ProductBundleController::class, 'removeItem']);
-
-            // Status toggles
-            Route::patch('/{id}/toggle-active', [ProductBundleController::class, 'toggleActive']);
-            Route::patch('/{id}/toggle-online', [ProductBundleController::class, 'toggleOnline']);
 
             // Availability
             Route::post('/{id}/check-availability', [ProductBundleController::class, 'checkAvailability']);
@@ -236,11 +273,21 @@ Route::prefix('v1/tenant')
 
             // Images
             Route::post('/{id}/images', [ProductBundleController::class, 'addImages']);
-            Route::delete('/{id}/images', [ProductBundleController::class, 'removeImage']);
 
             // Utilities
             Route::get('/{id}/savings', [ProductBundleController::class, 'calculateSavings']);
             Route::get('/{id}/breakdown', [ProductBundleController::class, 'getBreakdown']);
+
+            // destroy/removeItem/toggleActive/toggleOnline/removeImage have no
+            // FormRequest of their own (unlike store/update/addItem/etc.), so
+            // the manage-products check has to be wired in here.
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::delete('/{id}', [ProductBundleController::class, 'destroy']);
+                Route::delete('/{id}/items/{itemId}', [ProductBundleController::class, 'removeItem']);
+                Route::patch('/{id}/toggle-active', [ProductBundleController::class, 'toggleActive']);
+                Route::patch('/{id}/toggle-online', [ProductBundleController::class, 'toggleOnline']);
+                Route::delete('/{id}/images', [ProductBundleController::class, 'removeImage']);
+            });
         });
 
         // Store Products Routes
@@ -295,8 +342,13 @@ Route::prefix('v1/tenant')
             Route::get('/{id}', [PurchaseOrderController::class, 'show']);
             Route::post('/', [PurchaseOrderController::class, 'store']);
             Route::patch('/{id}', [PurchaseOrderController::class, 'update']);
-            Route::post('/{id}/send', [PurchaseOrderController::class, 'send']);
-            Route::post('/{id}/cancel', [PurchaseOrderController::class, 'cancel']);
+
+            // send/cancel have no FormRequest of their own (unlike store/update,
+            // which check manage-inventory) — wire the same check in here.
+            Route::middleware(['permission:manage-inventory,tenant'])->group(function () {
+                Route::post('/{id}/send', [PurchaseOrderController::class, 'send']);
+                Route::post('/{id}/cancel', [PurchaseOrderController::class, 'cancel']);
+            });
         });
 
         // Product Batches Routes
@@ -324,11 +376,16 @@ Route::prefix('v1/tenant')
             Route::post('/', [CustomerController::class, 'store']);
             Route::get('/{customer}', [CustomerController::class, 'show']);
             Route::patch('/{customer}', [CustomerController::class, 'update']);
-            Route::delete('/{customer}', [CustomerController::class, 'destroy']);
-            Route::post('/{customer}/restore', [CustomerController::class, 'restore']);
             Route::patch('/{customer}/upgrade-type', [CustomerController::class, 'upgradeType']);
-            Route::patch('/{customer}/toggle-status', [CustomerController::class, 'toggleStatus']);
-            Route::patch('{customer}/toggle-marketing', [CustomerController::class, 'toggleMarketingConsent']);
+
+            // destroy/restore/toggleStatus/toggleMarketingConsent have no
+            // FormRequest of their own — wire manage-customers in here.
+            Route::middleware(['permission:manage-customers,tenant'])->group(function () {
+                Route::delete('/{customer}', [CustomerController::class, 'destroy']);
+                Route::post('/{customer}/restore', [CustomerController::class, 'restore']);
+                Route::patch('/{customer}/toggle-status', [CustomerController::class, 'toggleStatus']);
+                Route::patch('{customer}/toggle-marketing', [CustomerController::class, 'toggleMarketingConsent']);
+            });
         });
 
         // Customer Group Routes
@@ -449,19 +506,24 @@ Route::prefix('v1/tenant')
             Route::post('/{expense}/generate-recurrence', [ExpenseController::class, 'generateRecurrence']);
         });
 
-        // Budgets
-        Route::prefix('budgets')->group(function () {
+        // Budgets — reads require view-financial-reports (withheld from
+        // cashiers); mutations additionally require manage-expenses, matching
+        // the permission Expenses itself is gated behind.
+        Route::prefix('budgets')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [BudgetController::class, 'index']);
-            Route::post('/', [BudgetController::class, 'store']);
             Route::get('/current', [BudgetController::class, 'current']);
             Route::get('/alerts', [BudgetController::class, 'alerts']);
             Route::get('/over-budget', [BudgetController::class, 'overBudget']);
             Route::get('/performance', [BudgetController::class, 'performance']);
             Route::get('/{budget}', [BudgetController::class, 'show']);
-            Route::patch('/{budget}', [BudgetController::class, 'update']);
-            Route::delete('/{budget}', [BudgetController::class, 'destroy']);
-            Route::post('/{budget}/recalculate', [BudgetController::class, 'recalculate']);
             Route::get('/{budget}/expenses', [BudgetController::class, 'expenses']);
+
+            Route::middleware(['permission:manage-expenses,tenant'])->group(function () {
+                Route::post('/', [BudgetController::class, 'store']);
+                Route::patch('/{budget}', [BudgetController::class, 'update']);
+                Route::delete('/{budget}', [BudgetController::class, 'destroy']);
+                Route::post('/{budget}/recalculate', [BudgetController::class, 'recalculate']);
+            });
         });
 
         // Shift Management Routes
@@ -496,7 +558,7 @@ Route::prefix('v1/tenant')
         Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments']);
 
         // Shift Sales Summary Routes
-        Route::prefix('shifts/{shiftAssignment}')->group(function () {
+        Route::prefix('shifts/{shiftAssignment}')->middleware(['permission:view-sales-reports,tenant'])->group(function () {
             Route::get('sales-summary', [ShiftSalesSummaryController::class, 'show']);
             Route::post('recalculate-summary', [ShiftSalesSummaryController::class, 'recalculate']);
             Route::get('cash-reconciliation', [ShiftSalesSummaryController::class, 'cashReconciliation']);
@@ -543,6 +605,14 @@ Route::prefix('v1/tenant')
             Route::get('/{refund}', [RefundController::class, 'show']);
             Route::get('/{refund}/receipt', [RefundController::class, 'generateReceipt']);
             Route::patch('/{refund}/cancel', [RefundController::class, 'cancel']);
+        });
+
+        // Marketplace Sales — fulfillment tracking for orders synced from central
+        Route::prefix('marketplace-sales')->group(function () {
+            Route::get('/', [MarketplaceSaleController::class, 'index']);
+            Route::get('/{id}', [MarketplaceSaleController::class, 'show']);
+            Route::patch('/{id}/fulfillment-status', [MarketplaceSaleController::class, 'updateFulfillmentStatus']);
+            Route::patch('/{id}/location', [MarketplaceSaleController::class, 'updateLocation']);
         });
 
         // Loyalty Transactions
@@ -595,9 +665,13 @@ Route::prefix('v1/tenant')
             Route::post('/', [InventoryWasteController::class, 'store']);
             Route::get('/{id}', [InventoryWasteController::class, 'show']);
             Route::patch('/{id}', [InventoryWasteController::class, 'update']);
-            Route::delete('/{id}', [InventoryWasteController::class, 'destroy']);
             Route::post('/{id}/approve', [InventoryWasteController::class, 'approve']);
             Route::post('/{id}/reject', [InventoryWasteController::class, 'reject']);
+
+            // destroy has no FormRequest of its own (unlike store/update/approve/
+            // reject, which check manage-waste-records) — wire the same check in here.
+            Route::delete('/{id}', [InventoryWasteController::class, 'destroy'])
+                ->middleware(['permission:manage-waste-records,tenant']);
         });
 
         // Store-specific routes
@@ -617,7 +691,7 @@ Route::prefix('v1/tenant')
         });
 
         // Daily sales aggregates
-        Route::prefix('reports/daily-sales')->group(function () {
+        Route::prefix('reports/daily-sales')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [DailySalesReportController::class, 'index']);
             Route::get('/range', [DailySalesReportController::class, 'range']);
             Route::get('/summary', [DailySalesReportController::class, 'summary']);

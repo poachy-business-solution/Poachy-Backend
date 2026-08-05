@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Api\Central\Sync;
 
-use App\Enums\Central\OrderFulfillmentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Sync\InboundBundleSyncRequest;
 use App\Http\Requests\Central\Sync\InboundDeliveryZoneSyncRequest;
 use App\Http\Requests\Central\Sync\InboundInventoryCountSyncRequest;
+use App\Http\Requests\Central\Sync\InboundMarketplaceFulfillmentSyncRequest;
 use App\Http\Requests\Central\Sync\InboundOrderConfirmationRequest;
-use App\Http\Requests\Central\Sync\InboundOrderStatusUpdateRequest;
 use App\Http\Requests\Central\Sync\InboundOutboundSyncAckRequest;
 use App\Http\Requests\Central\Sync\InboundProductSyncRequest;
 use App\Http\Requests\Central\Sync\InboundVariantSyncRequest;
@@ -16,6 +15,7 @@ use App\Http\Responses\ApiResponse;
 use App\Jobs\Central\ProcessInboundBundleSync;
 use App\Jobs\Central\ProcessInboundDeliveryZoneSync;
 use App\Jobs\Central\ProcessInboundInventoryCountSync;
+use App\Jobs\Central\ProcessInboundMarketplaceFulfillmentSync;
 use App\Jobs\Central\ProcessInboundProductSync;
 use App\Jobs\Central\ProcessInboundVariantSync;
 use App\Jobs\Central\ProcessTenantOrderConfirmation;
@@ -645,43 +645,108 @@ class SyncController extends Controller
     }
 
     /**
-     * Receive order fulfillment status update from tenant.
+     * Receive a marketplace order fulfillment-status sync from a tenant — queued
+     * and ACK'd the same way as every other Tenant->Central sync entity (see
+     * receiveDeliveryZoneSync() above, the reference implementation). Replaces
+     * the old receiveOrderStatusUpdate() ad-hoc endpoint, which only wrote
+     * item-level fulfillment_status and never rolled up to order_status.
      */
-    public function receiveOrderStatusUpdate(InboundOrderStatusUpdateRequest $request): JsonResponse
+    public function receiveMarketplaceFulfillmentSync(InboundMarketplaceFulfillmentSyncRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        $orderId = $validated['order_id'];
+        try {
+            DB::connection('central')->beginTransaction();
 
-        $order = MarketplaceOrder::on('central')
-            ->with('items')
-            ->find($orderId);
+            $tenantId = $request->input('tenant_id');
+            $action = $request->input('action');
+            $priority = $request->input('priority');
+            $payload = $request->input('payload');
+            $metadata = $request->input('metadata', []);
+            $idempotencyKey = $request->input('idempotency_key');
 
-        if (! $order) {
-            return ApiResponse::notFound('Order not found');
+            $existingSync = SyncQueueInbound::where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existingSync) {
+                Log::info('Duplicate marketplace fulfillment sync request received, returning existing sync', [
+                    'tenant_id' => $tenantId,
+                    'idempotency_key' => $idempotencyKey,
+                    'existing_sync_id' => $existingSync->id,
+                    'status' => $existingSync->status,
+                ]);
+
+                DB::connection('central')->commit();
+
+                return ApiResponse::success(
+                    message: 'Marketplace fulfillment sync request already received',
+                    data: [
+                        'sync_id' => $existingSync->id,
+                        'status' => $existingSync->status,
+                        'is_duplicate' => true,
+                    ],
+                    status: 200
+                );
+            }
+
+            $syncQueue = SyncQueueInbound::create([
+                'tenant_id' => $tenantId,
+                'syncable_type' => 'MarketplaceFulfillment',
+                'tenant_syncable_id' => $payload['sale_id'],
+                'action' => $action,
+                'payload' => $payload,
+                'changes' => null,
+                'metadata' => array_merge($metadata, [
+                    'received_from_ip' => $request->ip(),
+                    'received_at_server' => now()->toISOString(),
+                    'sync_queue_id_from_tenant' => $request->header('X-Sync-Queue-ID'),
+                ]),
+                'priority' => $priority,
+                'received_at' => now(),
+                'scheduled_at' => now(),
+                'expires_at' => now()->addHours(24),
+                'status' => 'pending',
+                'retry_count' => 0,
+                'max_retries' => 3,
+                'backoff_strategy' => 'exponential',
+                'idempotency_key' => $idempotencyKey,
+                'payload_hash' => hash('sha256', json_encode($payload)),
+            ]);
+
+            DB::connection('central')->commit();
+
+            Log::info('Marketplace fulfillment sync request received and queued', [
+                'tenant_id' => $tenantId,
+                'sync_queue_id' => $syncQueue->id,
+                'sale_id' => $payload['sale_id'],
+                'central_order_id' => $payload['central_order_id'],
+                'fulfillment_status' => $payload['fulfillment_status'],
+            ]);
+
+            ProcessInboundMarketplaceFulfillmentSync::dispatch($syncQueue->id)
+                ->onQueue('sync-high');
+
+            return ApiResponse::success(
+                message: 'Marketplace fulfillment sync request received and queued for processing',
+                data: [
+                    'sync_id' => $syncQueue->id,
+                    'status' => $syncQueue->status,
+                    'estimated_processing_time' => '1-2 minutes',
+                ],
+                status: 202
+            );
+        } catch (\Exception $e) {
+            DB::connection('central')->rollBack();
+
+            Log::error('Failed to receive marketplace fulfillment sync request', [
+                'tenant_id' => $request->input('tenant_id'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return ApiResponse::serverError(
+                message: 'Failed to process marketplace fulfillment sync request',
+                errors: config('app.debug') ? ['error' => $e->getMessage()] : null
+            );
         }
-
-        if ($order->tenant_id !== $validated['tenant_id']) {
-            return ApiResponse::error('Tenant ID mismatch', null, 403);
-        }
-
-        $fulfillmentStatus = OrderFulfillmentStatus::from($validated['fulfillment_status']);
-
-        $order->items()->update(['fulfillment_status' => $fulfillmentStatus]);
-
-        if ($validated['notes'] ?? null) {
-            $order->update(['merchant_notes' => $validated['notes']]);
-        }
-
-        Log::info('Order fulfillment status updated by tenant', [
-            'order_id'           => $orderId,
-            'tenant_id'          => $validated['tenant_id'],
-            'fulfillment_status' => $fulfillmentStatus->value,
-        ]);
-
-        return ApiResponse::success(
-            message: 'Order status updated',
-            data: ['order_id' => $orderId, 'fulfillment_status' => $fulfillmentStatus->value],
-        );
     }
 
     /**

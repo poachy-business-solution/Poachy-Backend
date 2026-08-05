@@ -31,5 +31,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="CENTRAL_DOMAINS" value="localhost,127.0.0.1"/>
+        <env name="CENTRAL_DB_DATABASE" value="poachy_central_test"/>
     </php>
 </phpunit>

@@ -13,13 +13,13 @@ class ProductReviewRepository
         $query = ProductReview::query()
             ->approved()
             ->byProduct($productId)
-            ->with(['customer.user:id,name']);
+            ->with(['customer.user:id,name', 'order:id,tenant_id']);
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = match ($sortBy) {
-            'rating'       => 'desc',
+            'rating' => 'desc',
             'helpful_count' => 'desc',
-            default        => 'desc',
+            default => 'desc',
         };
 
         if (in_array($sortBy, ['rating', 'helpful_count', 'created_at'], true)) {

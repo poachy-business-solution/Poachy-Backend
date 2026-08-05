@@ -1,5 +1,57 @@
 <?php
 
+use App\Models\Tenant\Budget;
+use App\Models\Tenant\Coupon;
+use App\Models\Tenant\CouponUsage;
+use App\Models\Tenant\Customer;
+use App\Models\Tenant\CustomerCreditTransaction;
+use App\Models\Tenant\CustomerGroup;
+use App\Models\Tenant\CustomerGroupMember;
+use App\Models\Tenant\Expense;
+use App\Models\Tenant\ExpenseCategory;
+use App\Models\Tenant\ExpiryAlert;
+use App\Models\Tenant\Inventory;
+use App\Models\Tenant\InventoryMovement;
+use App\Models\Tenant\InventoryReservation;
+use App\Models\Tenant\InventoryWaste;
+use App\Models\Tenant\LoyaltyTransaction;
+use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductBrand;
+use App\Models\Tenant\ProductBundleItem;
+use App\Models\Tenant\ProductCategory;
+use App\Models\Tenant\ProductPriceHistory;
+use App\Models\Tenant\ProductSerial;
+use App\Models\Tenant\ProductUom;
+use App\Models\Tenant\ProductVariant;
+use App\Models\Tenant\Promotion;
+use App\Models\Tenant\PromotionUsage;
+use App\Models\Tenant\PurchaseOrder;
+use App\Models\Tenant\PurchaseOrderItem;
+use App\Models\Tenant\Sale;
+use App\Models\Tenant\SaleItem;
+use App\Models\Tenant\SalePayment;
+use App\Models\Tenant\SaleRefund;
+use App\Models\Tenant\SaleRefundItem;
+use App\Models\Tenant\SalesDailyAggregate;
+use App\Models\Tenant\Shift;
+use App\Models\Tenant\ShiftAssignment;
+use App\Models\Tenant\ShiftSalesSummary;
+use App\Models\Tenant\ShiftSwapRequest;
+use App\Models\Tenant\StockAlert;
+use App\Models\Tenant\StockTransfer;
+use App\Models\Tenant\StockTransferItem;
+use App\Models\Tenant\Store;
+use App\Models\Tenant\StoreProduct;
+use App\Models\Tenant\Supplier;
+use App\Models\Tenant\SupplierPayment;
+use App\Models\Tenant\TaxRate;
+use App\Models\Tenant\TenantConfiguration;
+use App\Models\Tenant\TenantOtp;
+use App\Models\Tenant\UnitOfMeasure;
+use App\Models\Tenant\UomConversion;
+use App\Models\Tenant\User;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -58,62 +110,62 @@ return [
         // ========================================
         // CRITICAL FINANCIAL MODELS (ALWAYS AUDIT)
         // ========================================
-        \App\Models\Tenant\Sale::class => [
+        Sale::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['total_amount', 'payment_status', 'order_status'],
             'aggregate_children' => ['items', 'payments'], // Include in parent audit
             'default_tags' => ['sale', 'transaction', 'financial'],
         ],
 
-        \App\Models\Tenant\SaleItem::class => [
+        SaleItem::class => [
             'audit_mode' => 'none', // Included in Sale audit
         ],
 
-        \App\Models\Tenant\SalePayment::class => [
+        SalePayment::class => [
             'audit_mode' => 'none', // Included in Sale audit
         ],
 
-        \App\Models\Tenant\SaleRefund::class => [
+        SaleRefund::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['refund_amount', 'refund_method'],
             'aggregate_children' => ['items'],
             'default_tags' => ['refund', 'transaction', 'financial'],
         ],
 
-        \App\Models\Tenant\SaleRefundItem::class => [
+        SaleRefundItem::class => [
             'audit_mode' => 'none', // Included in SaleRefund audit
         ],
 
-        \App\Models\Tenant\PurchaseOrder::class => [
+        PurchaseOrder::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['status', 'total_amount', 'payment_status'],
             'aggregate_children' => ['items'],
             'default_tags' => ['purchase_order', 'procurement', 'financial'],
         ],
 
-        \App\Models\Tenant\PurchaseOrderItem::class => [
+        PurchaseOrderItem::class => [
             'audit_mode' => 'none', // Included in PurchaseOrder audit
         ],
 
-        \App\Models\Tenant\Expense::class => [
+        Expense::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['amount', 'approval_status', 'payment_status'],
             'default_tags' => ['expense', 'financial'],
         ],
 
-        \App\Models\Tenant\SupplierPayment::class => [
+        SupplierPayment::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['amount', 'payment_method'],
             'default_tags' => ['supplier_payment', 'financial'],
         ],
 
-        \App\Models\Tenant\CustomerCreditTransaction::class => [
+        CustomerCreditTransaction::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['amount', 'transaction_type', 'balance_after'],
             'default_tags' => ['credit', 'customer', 'financial'],
         ],
 
-        \App\Models\Tenant\LoyaltyTransaction::class => [
+        LoyaltyTransaction::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['points', 'transaction_type', 'balance_after'],
             'default_tags' => ['loyalty', 'customer'],
@@ -122,7 +174,7 @@ return [
         // ========================================
         // INVENTORY & PRODUCT MODELS (SELECTIVE)
         // ========================================
-        \App\Models\Tenant\Product::class => [
+        Product::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => [
                 'base_selling_price',
@@ -135,7 +187,7 @@ return [
             'default_tags' => ['product', 'inventory'],
         ],
 
-        \App\Models\Tenant\ProductVariant::class => [
+        ProductVariant::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => [
                 'variant_price',
@@ -146,41 +198,47 @@ return [
             'default_tags' => ['product_variant', 'inventory'],
         ],
 
-        \App\Models\Tenant\Inventory::class => [
+        Inventory::class => [
             'audit_mode' => 'none', // Use InventoryMovement instead
         ],
 
-        \App\Models\Tenant\InventoryMovement::class => [
+        InventoryMovement::class => [
             'audit_mode' => 'none', // Self-auditing table
         ],
 
-        \App\Models\Tenant\ProductBatch::class => [
+        ProductBatch::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['is_expired', 'quantity_remaining_in_base_uom'],
             'default_tags' => ['batch', 'inventory'],
         ],
 
-        \App\Models\Tenant\InventoryWaste::class => [
+        ProductSerial::class => [
+            'audit_mode' => 'critical_only',
+            'critical_fields' => ['status'],
+            'default_tags' => ['serial', 'inventory'],
+        ],
+
+        InventoryWaste::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['quantity_wasted', 'total_loss', 'approval_status'],
             'default_tags' => ['waste', 'inventory', 'loss'],
         ],
 
-        \App\Models\Tenant\StockTransfer::class => [
+        StockTransfer::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['status'],
             'aggregate_children' => ['items'],
             'default_tags' => ['stock_transfer', 'inventory'],
         ],
 
-        \App\Models\Tenant\StockTransferItem::class => [
+        StockTransferItem::class => [
             'audit_mode' => 'none', // Included in StockTransfer audit
         ],
 
         // ========================================
         // CUSTOMER & SUPPLIER MODELS (MODERATE)
         // ========================================
-        \App\Models\Tenant\Customer::class => [
+        Customer::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => [
                 'name',
@@ -195,7 +253,7 @@ return [
             'pii_fields' => ['email', 'phone', 'address'], // For GDPR compliance
         ],
 
-        \App\Models\Tenant\Supplier::class => [
+        Supplier::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => [
                 'name',
@@ -209,7 +267,7 @@ return [
             'default_tags' => ['supplier', 'profile'],
         ],
 
-        \App\Models\Tenant\CustomerGroup::class => [
+        CustomerGroup::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['name', 'discount_percentage', 'is_active'],
             'default_tags' => ['customer_group', 'configuration'],
@@ -218,43 +276,43 @@ return [
         // ========================================
         // CONFIGURATION MODELS (LIGHT)
         // ========================================
-        \App\Models\Tenant\Store::class => [
+        Store::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['name', 'is_active', 'is_main_store'],
             'default_tags' => ['store', 'configuration'],
         ],
 
-        \App\Models\Tenant\TaxRate::class => [
+        TaxRate::class => [
             'audit_mode' => 'full',
             'critical_fields' => ['rate', 'effective_from', 'is_active'],
             'default_tags' => ['tax', 'configuration', 'critical'],
         ],
 
-        \App\Models\Tenant\ExpenseCategory::class => [
+        ExpenseCategory::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['name', 'is_active'],
             'default_tags' => ['expense_category', 'configuration'],
         ],
 
-        \App\Models\Tenant\ProductCategory::class => [
+        ProductCategory::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['name', 'parent_id', 'is_active'],
             'default_tags' => ['product_category', 'configuration'],
         ],
 
-        \App\Models\Tenant\ProductBrand::class => [
+        ProductBrand::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['name', 'is_active'],
             'default_tags' => ['product_brand', 'configuration'],
         ],
 
-        \App\Models\Tenant\UnitOfMeasure::class => [
+        UnitOfMeasure::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['name', 'code', 'is_active'],
             'default_tags' => ['uom', 'configuration'],
         ],
 
-        \App\Models\Tenant\TenantConfiguration::class => [
+        TenantConfiguration::class => [
             'audit_mode' => 'full',
             'default_tags' => ['tenant_config', 'configuration', 'critical'],
         ],
@@ -262,7 +320,7 @@ return [
         // ========================================
         // PROMOTIONAL MODELS (CONDITIONAL)
         // ========================================
-        \App\Models\Tenant\Coupon::class => [
+        Coupon::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => [
                 'code',
@@ -274,11 +332,11 @@ return [
             'default_tags' => ['coupon', 'promotion'],
         ],
 
-        \App\Models\Tenant\CouponUsage::class => [
+        CouponUsage::class => [
             'audit_mode' => 'none', // Self-auditing table (usage tracking)
         ],
 
-        \App\Models\Tenant\Promotion::class => [
+        Promotion::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => [
                 'name',
@@ -290,85 +348,85 @@ return [
             'default_tags' => ['promotion', 'marketing'],
         ],
 
-        \App\Models\Tenant\PromotionUsage::class => [
+        PromotionUsage::class => [
             'audit_mode' => 'none', // Self-auditing table (usage tracking)
         ],
 
         // ========================================
         // OPERATIONAL MODELS (MINIMAL/NO AUDIT)
         // ========================================
-        \App\Models\Tenant\Budget::class => [
+        Budget::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['status'], // Only audit approval/rejection
             'default_tags' => ['budget', 'financial'],
         ],
 
-        \App\Models\Tenant\Shift::class => [
+        Shift::class => [
             'audit_mode' => 'none',
         ],
 
-        \App\Models\Tenant\ShiftAssignment::class => [
+        ShiftAssignment::class => [
             'audit_mode' => 'none',
         ],
 
-        \App\Models\Tenant\ShiftSalesSummary::class => [
+        ShiftSalesSummary::class => [
             'audit_mode' => 'none',
         ],
 
-        \App\Models\Tenant\ShiftSwapRequest::class => [
+        ShiftSwapRequest::class => [
             'audit_mode' => 'critical_only',
             'critical_fields' => ['status'], // Only audit approval
             'default_tags' => ['shift', 'hr'],
         ],
 
-        \App\Models\Tenant\StockAlert::class => [
+        StockAlert::class => [
             'audit_mode' => 'none', // System-generated, ephemeral
         ],
 
-        \App\Models\Tenant\ExpiryAlert::class => [
+        ExpiryAlert::class => [
             'audit_mode' => 'none', // System-generated, ephemeral
         ],
 
-        \App\Models\Tenant\SalesDailyAggregate::class => [
+        SalesDailyAggregate::class => [
             'audit_mode' => 'none', // Derived data
         ],
 
-        \App\Models\Tenant\ProductPriceHistory::class => [
+        ProductPriceHistory::class => [
             'audit_mode' => 'none', // Self-auditing table
         ],
 
-        \App\Models\Tenant\InventoryReservation::class => [
+        InventoryReservation::class => [
             'audit_mode' => 'none', // Temporary, auto-expire
         ],
 
         // ========================================
         // SYSTEM/JUNCTION MODELS (NO AUDIT)
         // ========================================
-        \App\Models\Tenant\User::class => [
+        User::class => [
             'audit_mode' => 'none', // Use separate authentication audit
         ],
 
-        \App\Models\Tenant\TenantOtp::class => [
+        TenantOtp::class => [
             'audit_mode' => 'none', // Security-sensitive, short-lived
         ],
 
-        \App\Models\Tenant\ProductUom::class => [
+        ProductUom::class => [
             'audit_mode' => 'none', // Configuration data
         ],
 
-        \App\Models\Tenant\UomConversion::class => [
+        UomConversion::class => [
             'audit_mode' => 'none', // Configuration data
         ],
 
-        \App\Models\Tenant\ProductBundleItem::class => [
+        ProductBundleItem::class => [
             'audit_mode' => 'none', // Junction table
         ],
 
-        \App\Models\Tenant\StoreProduct::class => [
+        StoreProduct::class => [
             'audit_mode' => 'none', // Junction table
         ],
 
-        \App\Models\Tenant\CustomerGroupMember::class => [
+        CustomerGroupMember::class => [
             'audit_mode' => 'none', // Junction table
         ],
     ],

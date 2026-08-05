@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Central\Marketplace\AnalyticsTrackingController;
 use App\Http\Controllers\Api\Central\Marketplace\CheckoutController;
 use App\Http\Controllers\Api\Central\Marketplace\DeliveryFeeController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryLocationController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplacePaymentController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
@@ -174,8 +175,9 @@ Route::prefix('v1/central')
             });
         });
 
-        // Business Details Review
-        Route::prefix('business-details')->group(function () {
+        // Business Details Review (admin only — this guard is shared with
+        // marketplace customers, so this must stay explicit, not assumed)
+        Route::prefix('business-details')->middleware(['role:admin'])->group(function () {
             Route::get('/', [BusinessReviewController::class, 'index']);
             Route::get('/pending', [BusinessReviewController::class, 'pending']);
             Route::post('/{id}/approve', [BusinessReviewController::class, 'approve']);
@@ -287,11 +289,11 @@ Route::prefix('v1/central')->group(function () {
         Route::post('inbound/bundle', [SyncController::class, 'receiveBundleSync']);
         Route::post('inbound/inventory-count', [SyncController::class, 'receiveInventoryCountSync']);
         Route::post('inbound/delivery-zone', [SyncController::class, 'receiveDeliveryZoneSync']);
+        Route::post('inbound/marketplace-fulfillment', [SyncController::class, 'receiveMarketplaceFulfillmentSync']);
         Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);
 
         // Inbound order sync (from tenants)
         Route::post('inbound/order-confirmation', [SyncController::class, 'receiveOrderConfirmation']);
-        Route::post('inbound/order-status-update', [SyncController::class, 'receiveOrderStatusUpdate']);
 
         // Generic outbound sync acknowledgment (payment and cancellation flows)
         Route::post('inbound/outbound-sync-ack', [SyncController::class, 'acknowledgeOutboundSync']);
@@ -299,4 +301,8 @@ Route::prefix('v1/central')->group(function () {
         // Merchant review responses (tenant → central)
         Route::post('inbound/product-review-response', [MerchantReviewResponseController::class, 'store']);
     });
+
+    // Marketplace delivery location pings (from tenants) — deliberately NOT under
+    // sync/, not routed through SyncQueueOutbound/Inbound. See TODO.md §11b.
+    Route::post('marketplace-orders/{orderId}/delivery/location', [MarketplaceDeliveryLocationController::class, 'update']);
 });

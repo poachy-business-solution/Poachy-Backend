@@ -4,14 +4,17 @@ namespace App\Exceptions;
 
 use App\Http\Responses\ApiResponse;
 use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
+use RuntimeException;
 use Stancl\Tenancy\Contracts\TenantCouldNotBeIdentifiedException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,7 +33,7 @@ class ExceptionHandler extends Exception
         //
     }
 
-    public function render($request, Throwable $e): JsonResponse|\Symfony\Component\HttpFoundation\Response
+    public function render($request, Throwable $e): JsonResponse|Response
     {
         if ($request->is('api/*') || $request->expectsJson()) {
             return $this->handleApiException($request, $e);
@@ -56,6 +59,7 @@ class ExceptionHandler extends Exception
             $e instanceof TenantCouldNotBeIdentifiedException => $this->handleTenantNotIdentified($e),
             $e instanceof QueryException => $this->handleQueryException($e),
             $e instanceof HttpException => $this->handleHttpException($e),
+            $e instanceof RuntimeException, $e instanceof InvalidArgumentException => $this->handleBusinessRuleException($e),
             default => $this->handleGenericException($e),
         };
     }
@@ -138,6 +142,18 @@ class ExceptionHandler extends Exception
         );
     }
 
+    /**
+     * Handle RuntimeException/InvalidArgumentException — the app-wide
+     * convention services use to signal business-rule violations (e.g. "only
+     * pending expenses can be approved"). Their messages are written for API
+     * consumers, unlike other exception types, so they're always surfaced —
+     * not gated behind config('app.debug') like handleGenericException().
+     */
+    protected function handleBusinessRuleException(Throwable $e): JsonResponse
+    {
+        return ApiResponse::error($e->getMessage(), null, 422);
+    }
+
     protected function handleGenericException(Throwable $e): JsonResponse
     {
         return ApiResponse::serverError(
@@ -178,6 +194,25 @@ class ExceptionHandler extends Exception
 
         if ($e instanceof ValidationException) {
             logger()->info('Validation failed', $context + ['errors' => $e->errors()]);
+
+            return;
+        }
+
+        // RuntimeException/InvalidArgumentException are expected business-rule
+        // rejections (see handleBusinessRuleException) — but QueryException,
+        // ModelNotFoundException, and the whole HttpException family are also
+        // RuntimeException subtypes and should keep logging as real errors.
+        $isBusinessRuleException = ($e instanceof RuntimeException || $e instanceof InvalidArgumentException)
+            && ! $e instanceof QueryException
+            && ! $e instanceof ModelNotFoundException
+            && ! $e instanceof HttpException;
+
+        if ($isBusinessRuleException) {
+            logger()->info('Business rule violation', $context + [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
+
             return;
         }
 

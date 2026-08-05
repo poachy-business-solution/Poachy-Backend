@@ -10,6 +10,7 @@ use App\Models\Tenant\ProductReview;
 use App\Models\Tenant\SyncQueueOutbound;
 use App\Services\Tenant\ReviewResponseService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -313,7 +314,7 @@ class ReviewResponseSyncTest extends TestCase
         try {
             (new ProcessOutboundReviewResponseSync($sync->id))->handle();
             $this->fail('Expected exception was not thrown');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             // Http::retry(2, 100) defaults to $throw=true — same as the other
             // two outbound sync jobs, so the manual successful() check below it
             // never actually runs once retries are exhausted.
@@ -333,6 +334,17 @@ class ReviewResponseSyncTest extends TestCase
         (new ProcessOutboundReviewResponseSync($sync->id))->handle();
 
         Http::assertNothingSent();
+    }
+
+    public function test_failed_marks_sync_queue_failed_with_job_failed_message(): void
+    {
+        $sync = $this->createOutboundSync();
+
+        (new ProcessOutboundReviewResponseSync($sync->id))->failed(new \RuntimeException('queue worker gave up'));
+
+        $fresh = $sync->fresh();
+        $this->assertSame('failed', $fresh->status);
+        $this->assertStringContainsString('queue worker gave up', $fresh->error_message);
     }
 
     // =========================================================================

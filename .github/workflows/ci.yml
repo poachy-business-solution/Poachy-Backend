@@ -121,6 +121,15 @@ jobs:
           php artisan db:seed --class=SubscriptionPlanSeeder --force
           php artisan db:seed --class=CentralRolesPermissionsSeeder --force
 
+      # phpunit.xml pins central-connection tests to CENTRAL_DB_DATABASE=
+      # poachy_central_test (see feedback-testing-db memory) so they never
+      # touch the real central DB. That database doesn't exist yet in CI —
+      # create/migrate/seed it here via the same command used locally.
+      - name: Set up isolated central test database
+        run: php artisan test:setup-central-db
+        env:
+          CENTRAL_DB_DATABASE: poachy_central_test
+
       # Validates tenant migration files parse correctly.
       # With no tenants provisioned this is a no-op for data, but it proves
       # the migration files load without errors.

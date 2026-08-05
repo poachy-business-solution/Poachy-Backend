@@ -18,6 +18,7 @@ class GetSerialsRequest extends FormRequest
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'only_available' => ['nullable', 'boolean'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

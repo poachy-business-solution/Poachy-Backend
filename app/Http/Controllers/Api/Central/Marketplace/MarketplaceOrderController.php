@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use App\Helpers\CustomerHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Marketplace\CancelOrderRequest;
 use App\Http\Resources\Central\Marketplace\MarketplaceOrderResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Marketplace\MarketplaceOrderService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,41 +27,52 @@ class MarketplaceOrderController extends Controller
      *     operationId="listOrders",
      *     tags={"Central - Customer - Marketplace - Orders"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="order_status",
      *         in="query",
      *         description="Filter orders by status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"pending", "confirmed", "processing", "completed", "cancelled"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort orders by",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_direction",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Orders retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Orders retrieved successfully"),
      *             @OA\Property(
@@ -68,8 +81,10 @@ class MarketplaceOrderController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="order_number", type="string", example="MKT-ORD-2026-000002"),
      *                         @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
@@ -96,8 +111,10 @@ class MarketplaceOrderController extends Controller
      *                         @OA\Property(
      *                             property="items",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=2),
      *                                 @OA\Property(property="marketplace_product_id", type="integer", example=2),
      *                                 @OA\Property(property="product_name", type="string", example="TCL 55 4K UHD Smart LED TV"),
@@ -156,8 +173,10 @@ class MarketplaceOrderController extends Controller
      *                             nullable=true,
      *                             description="Delivery object — null for pickup orders",
      *                             oneOf={
+     *
      *                                 @OA\Schema(
      *                                     type="object",
+     *
      *                                     @OA\Property(property="id", type="integer", example=1),
      *                                     @OA\Property(property="delivery_method", type="string", example="standard"),
      *                                     @OA\Property(property="delivery_status", type="string", example="pending"),
@@ -186,9 +205,11 @@ class MarketplaceOrderController extends Controller
      *                                     @OA\Property(property="delivery_issues", type="string", nullable=true, example=null),
      *                                     @OA\Property(property="delivery_attempts", type="integer", example=0)
      *                                 ),
+     *
      *                                 @OA\Schema(type="object", nullable=true, example=null)
      *                             }
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="delivery_address",
      *                             type="object",
@@ -225,10 +246,13 @@ class MarketplaceOrderController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -243,17 +267,19 @@ class MarketplaceOrderController extends Controller
             $request->only(['order_status', 'sort_by', 'sort_direction', 'per_page']),
         );
 
+        BusinessHelper::warmCache($orders->pluck('tenant_id')->all());
+
         return ApiResponse::success(
             'Orders retrieved successfully',
             [
-                'data'       => MarketplaceOrderResource::collection($orders),
+                'data' => MarketplaceOrderResource::collection($orders),
                 'pagination' => [
                     'current_page' => $orders->currentPage(),
-                    'last_page'    => $orders->lastPage(),
-                    'per_page'     => $orders->perPage(),
-                    'total'        => $orders->total(),
-                    'from'         => $orders->firstItem(),
-                    'to'           => $orders->lastItem(),
+                    'last_page' => $orders->lastPage(),
+                    'per_page' => $orders->perPage(),
+                    'total' => $orders->total(),
+                    'from' => $orders->firstItem(),
+                    'to' => $orders->lastItem(),
                 ],
             ],
         );
@@ -267,17 +293,22 @@ class MarketplaceOrderController extends Controller
      *     operationId="getOrder",
      *     tags={"Central - Customer - Marketplace - Orders"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="order_number",
      *         in="path",
      *         description="Unique order number",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="MKT-ORD-2026-000001")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Order retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Order retrieved successfully"),
      *             @OA\Property(
@@ -309,8 +340,10 @@ class MarketplaceOrderController extends Controller
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="marketplace_product_id", type="integer", example=2),
      *                         @OA\Property(property="product_name", type="string", example="TCL 55 4K UHD Smart LED TV"),
@@ -369,8 +402,10 @@ class MarketplaceOrderController extends Controller
      *                     nullable=true,
      *                     description="Delivery object — null for pickup orders",
      *                     oneOf={
+     *
      *                         @OA\Schema(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="delivery_method", type="string", example="standard"),
      *                             @OA\Property(property="delivery_status", type="string", example="pending"),
@@ -399,9 +434,11 @@ class MarketplaceOrderController extends Controller
      *                             @OA\Property(property="delivery_issues", type="string", nullable=true, example=null),
      *                             @OA\Property(property="delivery_attempts", type="integer", example=0)
      *                         ),
+     *
      *                         @OA\Schema(type="object", nullable=true, example=null)
      *                     }
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="delivery_address",
      *                     type="object",
@@ -426,17 +463,23 @@ class MarketplaceOrderController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Order not found."),
      *             @OA\Property(
@@ -462,7 +505,7 @@ class MarketplaceOrderController extends Controller
                 'Order retrieved successfully',
                 new MarketplaceOrderResource($order),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Order not found');
         }
     }
@@ -475,17 +518,22 @@ class MarketplaceOrderController extends Controller
      *     operationId="cancelOrder",
      *     tags={"Central - Customer - Marketplace - Orders"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Order ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Optional cancellation reason",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="cancellation_reason",
      *                 type="string",
@@ -495,10 +543,13 @@ class MarketplaceOrderController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Order cancelled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Order cancelled successfully"),
      *             @OA\Property(
@@ -540,17 +591,23 @@ class MarketplaceOrderController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Order not found."),
      *             @OA\Property(
@@ -563,10 +620,13 @@ class MarketplaceOrderController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Order cannot be cancelled",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -607,7 +667,7 @@ class MarketplaceOrderController extends Controller
                 'Order cancelled successfully',
                 new MarketplaceOrderResource($order),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Order not found');
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);

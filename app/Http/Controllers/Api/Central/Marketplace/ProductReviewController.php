@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use App\Helpers\CustomerHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Review\StoreProductReviewRequest;
@@ -9,8 +10,10 @@ use App\Http\Resources\Central\Marketplace\ProductReviewResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\ProductReview;
 use App\Services\Central\Marketplace\ProductReviewService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ProductReviewController extends Controller
 {
@@ -25,31 +28,40 @@ class ProductReviewController extends Controller
      *     description="Retrieves a paginated list of all approved reviews for a specific product. No authentication required. Returns review details including rating, text, images, customer information, and merchant responses.",
      *     operationId="listProductReviews",
      *     tags={"Central - Reviews - Products"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product reviews retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product reviews retrieved successfully."),
      *             @OA\Property(
@@ -58,8 +70,10 @@ class ProductReviewController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="rating", type="number", format="float", example=4),
      *                         @OA\Property(property="title", type="string", example="Excellent TV Quality"),
@@ -71,8 +85,10 @@ class ProductReviewController extends Controller
      *                         @OA\Property(
      *                             property="review_images",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                         ),
+     *
      *                         @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                         @OA\Property(property="status", type="string", example="approved"),
      *                         @OA\Property(property="helpful_count", type="integer", example=0),
@@ -121,12 +137,14 @@ class ProductReviewController extends Controller
                 $request->only(['sort_by', 'per_page'])
             );
 
+            BusinessHelper::warmCache($reviews->pluck('order.tenant_id')->all());
+
             return ApiResponse::paginated(
                 ProductReviewResource::collection($reviews),
                 'Product reviews retrieved successfully.'
             );
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to retrieve reviews: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to retrieve reviews: '.$e->getMessage());
         }
     }
 
@@ -138,19 +156,25 @@ class ProductReviewController extends Controller
      *     operationId="createProductReview",
      *     tags={"Central - Reviews - Products"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"rating", "review_text"},
+     *
      *                 @OA\Property(
      *                     property="order_id",
      *                     type="integer",
@@ -187,6 +211,7 @@ class ProductReviewController extends Controller
      *                     property="review_images[]",
      *                     type="array",
      *                     description="Review images (max 5 images, each max 5MB)",
+     *
      *                     @OA\Items(
      *                         type="string",
      *                         format="binary",
@@ -198,10 +223,13 @@ class ProductReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Review submitted successfully and pending moderation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Your review has been submitted and is pending moderation."),
      *             @OA\Property(
@@ -218,8 +246,10 @@ class ProductReviewController extends Controller
      *                 @OA\Property(
      *                     property="review_images",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                 ),
+     *
      *                 @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                 @OA\Property(property="status", type="string", example="pending"),
      *                 @OA\Property(property="helpful_count", type="integer", nullable=true, example=null),
@@ -240,20 +270,27 @@ class ProductReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or business rule violation",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
      *                     description="Order not completed",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Reviews can only be submitted for completed orders."),
      *                     @OA\Property(
@@ -265,8 +302,10 @@ class ProductReviewController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="Product not in order",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="This product was not part of the specified order."),
      *                     @OA\Property(
@@ -278,8 +317,10 @@ class ProductReviewController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="Review window expired",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="The 30-day review window for this order has expired."),
      *                     @OA\Property(
@@ -291,8 +332,10 @@ class ProductReviewController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="Duplicate review",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="You have already submitted a review for this product on this order."),
      *                     @OA\Property(
@@ -304,8 +347,10 @@ class ProductReviewController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="Standard validation errors",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="The given data was invalid."),
      *                     @OA\Property(
@@ -329,10 +374,13 @@ class ProductReviewController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=429,
      *         description="Rate limit exceeded - too many reviews submitted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -380,7 +428,7 @@ class ProductReviewController extends Controller
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to submit review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to submit review: '.$e->getMessage());
         }
     }
 
@@ -391,17 +439,22 @@ class ProductReviewController extends Controller
      *     description="Retrieves the full details of a specific approved product review by ID. No authentication required. Returns review information including rating, text, images, customer details, and merchant response if available.",
      *     operationId="getReviewDetails",
      *     tags={"Central - Reviews - Products"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review retrieved successfully."),
      *             @OA\Property(
@@ -418,8 +471,10 @@ class ProductReviewController extends Controller
      *                 @OA\Property(
      *                     property="review_images",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                 ),
+     *
      *                 @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                 @OA\Property(property="status", type="string", example="approved"),
      *                 @OA\Property(property="helpful_count", type="integer", example=0),
@@ -446,10 +501,13 @@ class ProductReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Review not found."),
      *             @OA\Property(
@@ -475,10 +533,10 @@ class ProductReviewController extends Controller
                 'Review retrieved successfully.',
                 new ProductReviewResource($review)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to retrieve review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to retrieve review: '.$e->getMessage());
         }
     }
 
@@ -490,17 +548,22 @@ class ProductReviewController extends Controller
      *     operationId="deleteProductReview",
      *     tags={"Central - Reviews - Products"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review deleted successfully"),
      *             @OA\Property(
@@ -513,17 +576,23 @@ class ProductReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - review does not belong to the authenticated customer",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You do not have permission to delete this review."),
      *             @OA\Property(
@@ -536,10 +605,13 @@ class ProductReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Review not found."),
      *             @OA\Property(
@@ -554,7 +626,7 @@ class ProductReviewController extends Controller
      *     )
      * )
      */
-    public function destroy(int $id): JsonResponse|\Illuminate\Http\Response
+    public function destroy(int $id): JsonResponse|Response
     {
         try {
             $customer = CustomerHelper::getAuthenticatedCustomerOrFail();
@@ -566,10 +638,10 @@ class ProductReviewController extends Controller
             $review->delete();
 
             return ApiResponse::success('Review deleted successfully');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found or does not belong to your account.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to delete review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to delete review: '.$e->getMessage());
         }
     }
 }

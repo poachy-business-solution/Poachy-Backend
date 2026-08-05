@@ -40,6 +40,10 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'process-refunds',
             'apply-discounts',
 
+            // Marketplace Sales
+            'view-marketplace-sales',
+            'manage-marketplace-sales',
+
             // Customer Management
             'manage-customers',
             'view-customers',
@@ -131,6 +135,8 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-sales',
             'process-refunds',
             'apply-discounts',
+            'view-marketplace-sales',
+            'manage-marketplace-sales',
             'manage-customers',
             'loyalty-transactions',
             'credit-management',
@@ -170,6 +176,8 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-inventory',
             'create-sales',
             'view-sales',
+            'view-marketplace-sales',
+            'manage-marketplace-sales',
             'view-customers',
             'manage-customers',
             'apply-discounts',
