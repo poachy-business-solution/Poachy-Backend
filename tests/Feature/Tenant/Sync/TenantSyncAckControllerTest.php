@@ -3,9 +3,13 @@
 namespace Tests\Feature\Tenant\Sync;
 
 use App\Http\Controllers\Api\Tenant\Sync\TenantSyncAckController;
+use App\Http\Requests\Tenant\Sync\BundleSyncAckRequest;
 use App\Http\Requests\Tenant\Sync\DeliveryZoneSyncAckRequest;
 use App\Http\Requests\Tenant\Sync\InventoryCountSyncAckRequest;
+use App\Http\Requests\Tenant\Sync\MarketplaceFulfillmentSyncAckRequest;
+use App\Http\Requests\Tenant\Sync\ProductSyncAckRequest;
 use App\Http\Requests\Tenant\Sync\ReviewResponseSyncAckRequest;
+use App\Http\Requests\Tenant\Sync\VariantSyncAckRequest;
 use App\Models\Tenant\ProductReview;
 use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Database\Schema\Blueprint;
@@ -154,6 +158,91 @@ class TenantSyncAckControllerTest extends TestCase
     }
 
     // =========================================================================
+    // receiveProductAck() / receiveVariantAck() / receiveBundleAck()
+    // =========================================================================
+
+    public function test_product_ack_completed_updates_central_record_id(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'Product']);
+
+        $this->makeController()->receiveProductAck($this->makeRequest(ProductSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'completed', 'central_product_id' => 55,
+        ]));
+
+        $fresh = $sync->fresh();
+        $this->assertSame('55', $fresh->central_record_id);
+        $this->assertSame('marketplace_products', $fresh->central_table);
+    }
+
+    public function test_product_ack_failed_marks_sync_failed(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'Product']);
+
+        $this->makeController()->receiveProductAck($this->makeRequest(ProductSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'failed', 'reason' => 'Central error',
+        ]));
+
+        $this->assertSame('failed', $sync->fresh()->status);
+    }
+
+    public function test_product_ack_returns_404_for_unknown_sync(): void
+    {
+        $response = $this->makeController()->receiveProductAck($this->makeRequest(ProductSyncAckRequest::class, [
+            'outbound_sync_queue_id' => 999999, 'status' => 'completed', 'central_product_id' => 1,
+        ]));
+
+        $this->assertSame(404, $response->getStatusCode());
+    }
+
+    public function test_variant_ack_completed_updates_central_record_id(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'Variant']);
+
+        $this->makeController()->receiveVariantAck($this->makeRequest(VariantSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'completed', 'central_product_id' => 56,
+        ]));
+
+        $fresh = $sync->fresh();
+        $this->assertSame('56', $fresh->central_record_id);
+        $this->assertSame('marketplace_products', $fresh->central_table);
+    }
+
+    public function test_variant_ack_failed_marks_sync_failed(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'Variant']);
+
+        $this->makeController()->receiveVariantAck($this->makeRequest(VariantSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'failed', 'reason' => 'Central error',
+        ]));
+
+        $this->assertSame('failed', $sync->fresh()->status);
+    }
+
+    public function test_bundle_ack_completed_updates_central_record_id(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'Bundle']);
+
+        $this->makeController()->receiveBundleAck($this->makeRequest(BundleSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'completed', 'central_product_id' => 57,
+        ]));
+
+        $fresh = $sync->fresh();
+        $this->assertSame('57', $fresh->central_record_id);
+        $this->assertSame('marketplace_products', $fresh->central_table);
+    }
+
+    public function test_bundle_ack_failed_marks_sync_failed(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'Bundle']);
+
+        $this->makeController()->receiveBundleAck($this->makeRequest(BundleSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'failed', 'reason' => 'Central error',
+        ]));
+
+        $this->assertSame('failed', $sync->fresh()->status);
+    }
+
+    // =========================================================================
     // receiveReviewResponseAck()
     // =========================================================================
 
@@ -218,6 +307,47 @@ class TenantSyncAckControllerTest extends TestCase
         ]));
 
         $this->assertSame(200, $response->getStatusCode());
+    }
+
+    // =========================================================================
+    // receiveMarketplaceFulfillmentAck()
+    // =========================================================================
+
+    public function test_marketplace_fulfillment_ack_completed_updates_central_record_id(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'MarketplaceFulfillment']);
+
+        $response = $this->makeController()->receiveMarketplaceFulfillmentAck($this->makeRequest(MarketplaceFulfillmentSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'completed', 'central_order_id' => 555,
+        ]));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $fresh = $sync->fresh();
+        $this->assertSame('555', $fresh->central_record_id);
+        $this->assertSame('marketplace_orders', $fresh->central_table);
+        $this->assertSame('completed', $fresh->sync_response['ack_status']);
+    }
+
+    public function test_marketplace_fulfillment_ack_failed_marks_sync_failed(): void
+    {
+        $sync = $this->createOutboundSync(['syncable_type' => 'MarketplaceFulfillment']);
+
+        $this->makeController()->receiveMarketplaceFulfillmentAck($this->makeRequest(MarketplaceFulfillmentSyncAckRequest::class, [
+            'outbound_sync_queue_id' => $sync->id, 'status' => 'failed', 'reason' => 'Order not found centrally',
+        ]));
+
+        $fresh = $sync->fresh();
+        $this->assertSame('failed', $fresh->status);
+        $this->assertSame('Order not found centrally', $fresh->error_message);
+    }
+
+    public function test_marketplace_fulfillment_ack_returns_404_for_unknown_sync(): void
+    {
+        $response = $this->makeController()->receiveMarketplaceFulfillmentAck($this->makeRequest(MarketplaceFulfillmentSyncAckRequest::class, [
+            'outbound_sync_queue_id' => 999999, 'status' => 'completed', 'central_order_id' => 1,
+        ]));
+
+        $this->assertSame(404, $response->getStatusCode());
     }
 
     // =========================================================================

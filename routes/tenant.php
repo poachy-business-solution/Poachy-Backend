@@ -87,6 +87,10 @@ Route::prefix('v1/tenant')->group(function () {
         Route::post('/delivery-zone-ack', [TenantSyncAckController::class, 'receiveDeliveryZoneAck']);
         Route::post('/inventory-count-ack', [TenantSyncAckController::class, 'receiveInventoryCountAck']);
         Route::post('/review-response-ack', [TenantSyncAckController::class, 'receiveReviewResponseAck']);
+        Route::post('/marketplace-fulfillment-ack', [TenantSyncAckController::class, 'receiveMarketplaceFulfillmentAck']);
+        Route::post('/product-ack', [TenantSyncAckController::class, 'receiveProductAck']);
+        Route::post('/variant-ack', [TenantSyncAckController::class, 'receiveVariantAck']);
+        Route::post('/bundle-ack', [TenantSyncAckController::class, 'receiveBundleAck']);
         Route::get('/categories', [CategorySyncController::class, 'index']);
     });
 });

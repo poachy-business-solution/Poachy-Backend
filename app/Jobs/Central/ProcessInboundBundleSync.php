@@ -4,21 +4,27 @@ namespace App\Jobs\Central;
 
 use App\DataTransferObjects\Sync\BundleSyncDTO;
 use App\Models\SyncQueueInbound;
+use App\Models\Tenant;
 use App\Services\Central\Sync\MarketplaceBundleSyncService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ProcessInboundBundleSync implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 180;
+
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public $backoff = [60, 300, 900]; // 1min, 5min, 15min
 
     /**
@@ -35,10 +41,11 @@ class ProcessInboundBundleSync implements ShouldQueue
     {
         $syncQueue = SyncQueueInbound::find($this->syncQueueId);
 
-        if (!$syncQueue) {
+        if (! $syncQueue) {
             Log::error('SyncQueueInbound record not found', [
                 'sync_queue_id' => $this->syncQueueId,
             ]);
+
             return;
         }
 
@@ -47,6 +54,7 @@ class ProcessInboundBundleSync implements ShouldQueue
             Log::info('Bundle sync already completed, skipping', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
+
             return;
         }
 
@@ -57,17 +65,23 @@ class ProcessInboundBundleSync implements ShouldQueue
                 'sync_queue_id' => $syncQueue->id,
                 'expires_at' => $syncQueue->expires_at,
             ]);
+
             return;
         }
 
         // Acquire lock
         $workerId = getmypid();
-        if (!$syncQueue->acquireLock($workerId)) {
+        if (! $syncQueue->acquireLock($workerId)) {
             Log::info('Could not acquire lock, another worker processing', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
+
             return;
         }
+
+        $centralProductId = null;
+        $ackStatus = 'failed';
+        $ackReason = null;
 
         try {
             // Mark as processing
@@ -99,6 +113,9 @@ class ProcessInboundBundleSync implements ShouldQueue
                 centralTable: 'marketplace_products'
             );
 
+            $centralProductId = $result['marketplace_product_id'];
+            $ackStatus = 'completed';
+
             Log::info('Inbound bundle sync completed', [
                 'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
@@ -106,6 +123,9 @@ class ProcessInboundBundleSync implements ShouldQueue
                 'action' => $syncQueue->action,
             ]);
         } catch (\Exception $e) {
+            $ackStatus = 'failed';
+            $ackReason = $e->getMessage();
+
             Log::error('Inbound bundle sync failed', [
                 'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
@@ -154,6 +174,83 @@ class ProcessInboundBundleSync implements ShouldQueue
             if ($syncQueue->lock_token) {
                 $syncQueue->releaseLock();
             }
+
+            // Always ACK the tenant on final success or permanent failure
+            if ($ackStatus === 'completed' || ! $syncQueue->canRetry()) {
+                $this->ackTenant($syncQueue, $ackStatus, $centralProductId, $ackReason);
+            }
+        }
+    }
+
+    /**
+     * ACK the tenant once we have a final result (success or permanent failure).
+     */
+    private function ackTenant(
+        SyncQueueInbound $syncQueue,
+        string $status,
+        ?int $centralProductId,
+        ?string $reason,
+    ): void {
+        $tenantOutboundSyncId = $syncQueue->metadata['sync_queue_id_from_tenant'] ?? null;
+
+        if (! $tenantOutboundSyncId) {
+            Log::warning('No tenant outbound sync queue ID in metadata, skipping ACK', [
+                'sync_queue_id' => $syncQueue->id,
+            ]);
+
+            return;
+        }
+
+        try {
+            $tenant = Tenant::on('central')->find($syncQueue->tenant_id);
+
+            if (! $tenant) {
+                Log::warning('Tenant not found for bundle ACK', [
+                    'tenant_id' => $syncQueue->tenant_id,
+                    'sync_queue_id' => $syncQueue->id,
+                ]);
+
+                return;
+            }
+
+            $domain = $tenant->domains()->first();
+
+            if (! $domain) {
+                Log::warning('No domain found for tenant bundle ACK', [
+                    'tenant_id' => $syncQueue->tenant_id,
+                    'sync_queue_id' => $syncQueue->id,
+                ]);
+
+                return;
+            }
+
+            $scheme = app()->environment('local') ? 'http://' : 'https://';
+            $tenantUrl = $scheme.$domain->domain;
+
+            Http::withToken(config('services.tenant_api.token'))
+                ->timeout(30)
+                ->retry(2, 100)
+                ->post($tenantUrl.'/api/v1/tenant/sync/inbound/bundle-ack', [
+                    'outbound_sync_queue_id' => (int) $tenantOutboundSyncId,
+                    'status' => $status,
+                    'central_product_id' => $centralProductId,
+                    'reason' => $reason,
+                ]);
+
+            Log::info('Bundle ACK sent to tenant', [
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
+                'outbound_sync_queue_id' => $tenantOutboundSyncId,
+                'status' => $status,
+                'central_product_id' => $centralProductId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send bundle ACK to tenant', [
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't rethrow — ACK failure should not fail the sync job
         }
     }
 
@@ -162,7 +259,7 @@ class ProcessInboundBundleSync implements ShouldQueue
      */
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Validation\ValidationException) {
+        if ($e instanceof ValidationException) {
             return 'VALIDATION_ERROR';
         }
 
@@ -190,7 +287,7 @@ class ProcessInboundBundleSync implements ShouldQueue
         $syncQueue = SyncQueueInbound::find($this->syncQueueId);
         if ($syncQueue) {
             $syncQueue->markAsFailed(
-                errorMessage: 'Job failed permanently: ' . $exception->getMessage(),
+                errorMessage: 'Job failed permanently: '.$exception->getMessage(),
                 errorCode: 'JOB_FAILED',
                 errorDetails: [
                     'exception' => get_class($exception),

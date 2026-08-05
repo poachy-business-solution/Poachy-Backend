@@ -271,4 +271,15 @@ class ReviewResponseSyncTest extends TestCase
 
         Http::assertNothingSent();
     }
+
+    public function test_failed_marks_sync_queue_failed_with_job_failed_message(): void
+    {
+        $sync = $this->createInboundSync();
+
+        (new ProcessInboundReviewResponseSync($sync->id))->failed(new \RuntimeException('queue worker gave up'));
+
+        $fresh = $sync->fresh();
+        $this->assertSame('failed', $fresh->status);
+        $this->assertStringContainsString('queue worker gave up', $fresh->error_message);
+    }
 }

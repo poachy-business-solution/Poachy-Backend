@@ -15,7 +15,9 @@ class ProcessOutboundReviewResponseSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public int $timeout = 120;
+
     public int $tries = 3;
+
     public $backoff = [60, 300, 900];
 
     public function __construct(public int $syncQueueId) {}
@@ -39,13 +41,13 @@ class ProcessOutboundReviewResponseSync implements ShouldQueue
             $response = Http::timeout(60)
                 ->retry(2, 100)
                 ->withHeaders([
-                    'X-Tenant-ID'        => $syncQueue->tenant_id,
-                    'X-Sync-Queue-ID'    => $syncQueue->id,
-                    'X-Idempotency-Key'  => $syncQueue->idempotency_key,
+                    'X-Tenant-ID' => $syncQueue->tenant_id,
+                    'X-Sync-Queue-ID' => $syncQueue->id,
+                    'X-Idempotency-Key' => $syncQueue->idempotency_key,
                 ])
                 ->withToken(config('services.central_api.token'))
                 ->post(
-                    config('services.central_api.url') . '/api/v1/central/sync/inbound/product-review-response',
+                    config('services.central_api.url').'/api/v1/central/sync/inbound/product-review-response',
                     $syncQueue->payload
                 );
 
@@ -71,6 +73,19 @@ class ProcessOutboundReviewResponseSync implements ShouldQueue
             throw $e;
         } finally {
             $syncQueue->releaseLock();
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessOutboundReviewResponseSync job failed permanently', [
+            'sync_queue_id' => $this->syncQueueId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        $syncQueue = SyncQueueOutbound::find($this->syncQueueId);
+        if ($syncQueue) {
+            $syncQueue->markAsFailed('Job failed permanently: '.$exception->getMessage());
         }
     }
 }
