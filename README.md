@@ -10,6 +10,7 @@ A multi-tenant SaaS platform built on Laravel 12. Merchants get a full point-of-
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Local Development](#local-development)
+- [Demo Tenant Seeder](#demo-tenant-seeder)
 - [Environment Variables](#environment-variables)
 - [CI/CD Pipeline](#cicd-pipeline)
 
@@ -203,6 +204,40 @@ With `L5_SWAGGER_GENERATE_ALWAYS=true` in your `.env`, Swagger UI is available a
 ```text
 http://poachy.test/api/documentation
 ```
+
+---
+
+## Demo Tenant Seeder
+
+For frontend development, `tenant:seed-demo` provisions a single, fully-populated demo tenant in one command — no manual API calls or empty screens.
+
+```bash
+docker compose exec laravel.test php artisan tenant:seed-demo
+```
+
+Safe to re-run any time: it deletes the existing `demo.poachy.test` tenant (and its database) first, then rebuilds from scratch, so the demo dataset is always fresh and predictable. It creates:
+
+- Central business profile + an Enterprise-tier subscription
+- 2 stores, 4 staff accounts with roles (owner, manager, 2 cashiers)
+- A full product catalog — simple, variable, batch-tracked, and serial-tracked products, bundles, suppliers, tax rates
+- Opening stock via real purchase orders (batches, serials, supplier payments)
+- Customers, customer groups, coupons, promotions
+- 9 days of shift history plus today's active shifts (clock-in/out, a swap, a no-show)
+- ~50 POS sales (cash/mpesa/card/credit), refunds, and marketplace orders
+- Stock transfers, waste records, inventory reservations, expiry alerts
+- Expense categories, budgets, and expenses
+- Product reviews and delivery zones
+
+Add `demo.poachy.test` to `/etc/hosts` (see [step 1](#1-add-domains-to-etchosts) above) to reach it. Fixed login credentials are printed at the end of every run:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Owner | `owner@demo.poachy.test` | `Demo@12345` |
+| Manager | `manager@demo.poachy.test` | `Demo@12345` |
+| Cashier | `cashier1@demo.poachy.test` | `Demo@12345` |
+| Cashier | `cashier2@demo.poachy.test` | `Demo@12345` |
+
+This is separate from `TenantDatabaseSeeder`, which runs automatically on every tenant's creation and only seeds structural/reference data (roles, product categories, UoMs, tenant configuration) — `tenant:seed-demo` builds the full operational dataset on top of that baseline.
 
 ---
 
