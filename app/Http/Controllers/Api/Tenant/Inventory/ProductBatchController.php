@@ -4,20 +4,24 @@ namespace App\Http\Controllers\Api\Tenant\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Inventory\Batch\GetBatchesRequest;
+use App\Http\Requests\Tenant\Inventory\Batch\MarkExpiredBatchesRequest;
 use App\Http\Requests\Tenant\Inventory\Batch\ReceiveGoodsRequest;
 use App\Http\Resources\Tenant\Inventory\ProductBatchResource;
 use App\Http\Resources\Tenant\Inventory\ProductSerialResource;
 use App\Http\Resources\Tenant\Inventory\PurchaseOrderResource;
 use App\Http\Responses\ApiResponse;
+use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductSerialService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProductBatchController extends Controller
 {
     public function __construct(
-        private ProductBatchService $batchService
+        private ProductBatchService $batchService,
+        private ProductSerialService $serialService
     ) {}
 
     /**
@@ -1008,14 +1012,26 @@ class ProductBatchController extends Controller
             return ApiResponse::error('Store ID is required', null, 422);
         }
 
-        $valuation = $this->batchService->getInventoryValuation(
-            (int) $storeId,
-            $productId ? (int) $productId : null
-        );
+        $productIdInt = $productId ? (int) $productId : null;
+
+        // Combines both tracking modes so the total actually reflects the store's
+        // full inventory value — previously this silently omitted serial-tracked
+        // stock entirely, since only ProductBatch was ever queried.
+        $batchValuation = $this->batchService->getInventoryValuation((int) $storeId, $productIdInt);
+        $serialValuation = $this->serialService->getInventoryValuation((int) $storeId, $productIdInt);
+
+        $totalQuantity = $batchValuation['total_quantity'] + $serialValuation['total_quantity'];
+        $totalValue = $batchValuation['total_value'] + $serialValuation['total_value'];
 
         return ApiResponse::success(
             'Inventory valuation calculated (FIFO method)',
-            $valuation
+            [
+                'total_quantity' => $totalQuantity,
+                'total_value' => $totalValue,
+                'average_cost' => $totalQuantity > 0 ? $totalValue / $totalQuantity : 0,
+                'batches' => $batchValuation,
+                'serials' => $serialValuation,
+            ]
         );
     }
 
@@ -1035,12 +1051,23 @@ class ProductBatchController extends Controller
         }
 
         try {
-            $cogs = $this->batchService->calculateCOGS(
-                storeId: (int) $storeId,
-                productId: (int) $productId,
-                variantId: $variantId ? (int) $variantId : null,
-                quantityInBaseUom: (float) $quantity
-            );
+            $product = Product::findOrFail((int) $productId);
+
+            // A product is exactly one of batch-tracked, serial-tracked, or neither
+            // (mutually exclusive by design) — route to the matching COGS method.
+            $cogs = $product->requires_serial_tracking
+                ? $this->serialService->calculateCOGS(
+                    storeId: (int) $storeId,
+                    productId: (int) $productId,
+                    variantId: $variantId ? (int) $variantId : null,
+                    quantity: (int) $quantity
+                )
+                : $this->batchService->calculateCOGS(
+                    storeId: (int) $storeId,
+                    productId: (int) $productId,
+                    variantId: $variantId ? (int) $variantId : null,
+                    quantityInBaseUom: (float) $quantity
+                );
 
             return ApiResponse::success(
                 'COGS calculated using FIFO method',

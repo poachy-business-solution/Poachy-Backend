@@ -380,4 +380,56 @@ class ProductSerialService
             ->where('serial_number', $serialNumber)
             ->first();
     }
+
+    /**
+     * Calculate COGS (Cost of Goods Sold) for a quantity of a serial-tracked product —
+     * the serial counterpart to ProductBatchService::calculateCOGS(). Dry-run, doesn't
+     * mutate any serial. Genuinely simpler than the batch version: no partial-unit
+     * quantity math, just the summed real cost of the N oldest available serials
+     * (FIFO order), since each serial is exactly one indivisible physical unit.
+     */
+    public function calculateCOGS(int $storeId, int $productId, ?int $variantId, int $quantity): float
+    {
+        $serials = ProductSerial::where('store_id', $storeId)
+            ->where('product_id', $productId)
+            ->where('product_variant_id', $variantId)
+            ->available()
+            ->fifoOrder()
+            ->limit($quantity)
+            ->get();
+
+        if ($serials->count() < $quantity) {
+            throw new \RuntimeException(
+                "Insufficient available serials for COGS calculation. Requested: {$quantity}, Available: {$serials->count()}"
+            );
+        }
+
+        return (float) $serials->sum('cost');
+    }
+
+    /**
+     * Get inventory valuation for serial-tracked stock — the serial counterpart to
+     * ProductBatchService::getInventoryValuation(). Each available serial's real
+     * acquisition cost is exact, so this is a straight sum rather than an estimate.
+     */
+    public function getInventoryValuation(int $storeId, ?int $productId = null): array
+    {
+        $query = ProductSerial::where('store_id', $storeId)->available();
+
+        if ($productId) {
+            $query->where('product_id', $productId);
+        }
+
+        $serials = $query->get();
+
+        $totalQuantity = $serials->count();
+        $totalValue = (float) $serials->sum('cost');
+
+        return [
+            'total_quantity' => $totalQuantity,
+            'total_value' => $totalValue,
+            'average_cost' => $totalQuantity > 0 ? $totalValue / $totalQuantity : 0,
+            'serial_count' => $totalQuantity,
+        ];
+    }
 }

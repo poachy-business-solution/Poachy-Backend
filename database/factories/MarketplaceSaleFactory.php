@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Tenant\MarketplaceFulfillmentStatus;
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\PaymentStatus;
 use App\Models\Tenant\MarketplaceSale;
@@ -35,7 +36,43 @@ class MarketplaceSaleFactory extends Factory
             'payment_method'   => PaymentMethod::MPESA,
             'payment_reference' => 'MKT-REF-' . fake()->unique()->numerify('########'),
             'fulfillment_type' => 'delivery',
+            'fulfillment_status' => MarketplaceFulfillmentStatus::PENDING,
         ];
+    }
+
+    public function confirmed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'fulfillment_status' => MarketplaceFulfillmentStatus::CONFIRMED,
+        ]);
+    }
+
+    public function preparing(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'fulfillment_status' => MarketplaceFulfillmentStatus::PREPARING,
+        ]);
+    }
+
+    public function ready(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'fulfillment_status' => MarketplaceFulfillmentStatus::READY,
+        ]);
+    }
+
+    public function delivered(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'fulfillment_status' => MarketplaceFulfillmentStatus::DELIVERED,
+        ]);
+    }
+
+    public function fulfillmentCancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'fulfillment_status' => MarketplaceFulfillmentStatus::CANCELLED,
+        ]);
     }
 
     public function cashOnDelivery(): static

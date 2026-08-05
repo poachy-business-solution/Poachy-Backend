@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
+use App\Http\Controllers\Api\Tenant\Sales\MarketplaceSaleController;
 use App\Http\Controllers\Api\Tenant\Sales\RefundController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Controllers\Api\Tenant\Sales\ShiftSalesSummaryController;
@@ -543,6 +544,14 @@ Route::prefix('v1/tenant')
             Route::get('/{refund}', [RefundController::class, 'show']);
             Route::get('/{refund}/receipt', [RefundController::class, 'generateReceipt']);
             Route::patch('/{refund}/cancel', [RefundController::class, 'cancel']);
+        });
+
+        // Marketplace Sales — fulfillment tracking for orders synced from central
+        Route::prefix('marketplace-sales')->group(function () {
+            Route::get('/', [MarketplaceSaleController::class, 'index']);
+            Route::get('/{id}', [MarketplaceSaleController::class, 'show']);
+            Route::patch('/{id}/fulfillment-status', [MarketplaceSaleController::class, 'updateFulfillmentStatus']);
+            Route::patch('/{id}/location', [MarketplaceSaleController::class, 'updateLocation']);
         });
 
         // Loyalty Transactions

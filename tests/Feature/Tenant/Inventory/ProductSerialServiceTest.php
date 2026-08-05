@@ -216,6 +216,75 @@ class ProductSerialServiceTest extends TestCase
     }
 
     // =========================================================================
+    // calculateCOGS()
+    // =========================================================================
+
+    public function test_calculate_cogs_sums_the_oldest_available_serials_fifo(): void
+    {
+        $this->createSerial(['serial_number' => 'IMEI-OLD', 'purchase_order_id' => 1, 'cost' => 40.0, 'created_at' => now()->subMinute()]);
+        $this->createSerial(['serial_number' => 'IMEI-NEW', 'purchase_order_id' => 2, 'cost' => 60.0, 'created_at' => now()]);
+
+        $cogs = $this->service()->calculateCOGS(storeId: 1, productId: 1, variantId: null, quantity: 1);
+
+        $this->assertEquals(40.0, $cogs); // only the oldest serial's real cost
+    }
+
+    public function test_calculate_cogs_throws_when_insufficient_available_serials(): void
+    {
+        $this->createSerial(['serial_number' => 'IMEI-001', 'cost' => 40.0]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->service()->calculateCOGS(storeId: 1, productId: 1, variantId: null, quantity: 2);
+    }
+
+    public function test_calculate_cogs_does_not_mutate_serial_status(): void
+    {
+        $serial = $this->createSerial(['serial_number' => 'IMEI-001', 'cost' => 40.0]);
+
+        $this->service()->calculateCOGS(storeId: 1, productId: 1, variantId: null, quantity: 1);
+
+        $this->assertSame('available', $serial->fresh()->status->value);
+    }
+
+    // =========================================================================
+    // getInventoryValuation()
+    // =========================================================================
+
+    public function test_get_inventory_valuation_sums_available_serial_costs(): void
+    {
+        $this->createSerial(['serial_number' => 'IMEI-001', 'cost' => 40.0]);
+        $this->createSerial(['serial_number' => 'IMEI-002', 'cost' => 60.0]);
+        $this->createSerial(['serial_number' => 'IMEI-003', 'cost' => 999.0, 'status' => 'sold']);
+
+        $valuation = $this->service()->getInventoryValuation(storeId: 1);
+
+        $this->assertSame(2, $valuation['total_quantity']);
+        $this->assertEquals(100.0, $valuation['total_value']);
+        $this->assertEquals(50.0, $valuation['average_cost']);
+    }
+
+    public function test_get_inventory_valuation_filters_by_product(): void
+    {
+        $this->createSerial(['serial_number' => 'IMEI-001', 'product_id' => 1, 'cost' => 40.0]);
+        $this->createSerial(['serial_number' => 'IMEI-002', 'product_id' => 2, 'cost' => 999.0]);
+
+        $valuation = $this->service()->getInventoryValuation(storeId: 1, productId: 1);
+
+        $this->assertSame(1, $valuation['total_quantity']);
+        $this->assertEquals(40.0, $valuation['total_value']);
+    }
+
+    public function test_get_inventory_valuation_is_zero_with_no_serials(): void
+    {
+        $valuation = $this->service()->getInventoryValuation(storeId: 1);
+
+        $this->assertSame(0, $valuation['total_quantity']);
+        $this->assertEquals(0.0, $valuation['total_value']);
+        $this->assertEquals(0, $valuation['average_cost']);
+    }
+
+    // =========================================================================
     // getSerialsForProduct()
     // =========================================================================
 
