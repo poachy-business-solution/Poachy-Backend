@@ -22,7 +22,7 @@ Persistent memory lives at `~/.claude/projects/-home-godiah-MyProjects-poachy/me
 
 - **No EventServiceProvider** — Laravel 11+ auto-discovers listeners. `#[ObservedBy]` attribute on models for observers.
 - **Dual models** — `App\Models\Tenant\SyncQueueOutbound` ≠ `App\Models\SyncQueueOutbound`. Same for `TenantDeliveryZone`. Check namespace carefully.
-- **Tests use MySQL** — SQLite PDO not installed. Any DB-touching test must use MySQL.
+- **Tests use MySQL** — SQLite PDO not installed. Any DB-touching test must use MySQL. Tenant-connection tests → `poachy_test`. Central-connection tests → `poachy_central_test` (isolated via `phpunit.xml`'s `CENTRAL_DB_DATABASE`; run `php artisan test:setup-central-db` once to create/migrate/seed it, `--fresh` to rebuild) — never let a central test fall back to the real `poachy` database.
 - **Every Tenant→Central sync needs an ACK callback** — central must notify tenant of `central_record_id` after inbound job completes.
 - **`collect()` returns `Support\Collection`** — not `Eloquent\Collection`. Use `Support\Collection` as type hint when collection is built with `collect()`.
 - **Inventory quantities in base UOM** — always convert via `getConversionToBaseUom()` before writing.
