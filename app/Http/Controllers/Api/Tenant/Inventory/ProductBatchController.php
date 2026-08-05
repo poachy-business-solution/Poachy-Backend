@@ -1086,12 +1086,10 @@ class ProductBatchController extends Controller
         }
     }
 
-    public function markExpired(): JsonResponse
+    public function markExpired(MarkExpiredBatchesRequest $request): JsonResponse
     {
-        $storeId = request()->query('store_id');
-
         $expiredCount = $this->batchService->markExpiredBatches(
-            $storeId ? (int) $storeId : null
+            $request->validated('store_id')
         );
 
         return ApiResponse::success(

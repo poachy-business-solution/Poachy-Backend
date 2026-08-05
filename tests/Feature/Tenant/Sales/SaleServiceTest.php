@@ -572,6 +572,13 @@ class SaleServiceTest extends TestCase
             'payments' => [['method' => 'cash', 'amount' => 100]],
         ]);
         $request->setContainer($this->app);
+        $request->setUserResolver(fn () => new class
+        {
+            public function can($ability): bool
+            {
+                return true;
+            }
+        });
         $request->validateResolved();
 
         $response = $controller->createSale($request);

@@ -1533,7 +1533,7 @@ class ExpenseController extends Controller
      *     )
      * )
      */
-    public function approve(int $id): JsonResponse
+    public function approve(ApproveExpenseRequest $request, int $id): JsonResponse
     {
         try {
             $expense = $this->service->approveExpense(

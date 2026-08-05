@@ -175,8 +175,9 @@ Route::prefix('v1/central')
             });
         });
 
-        // Business Details Review
-        Route::prefix('business-details')->group(function () {
+        // Business Details Review (admin only — this guard is shared with
+        // marketplace customers, so this must stay explicit, not assumed)
+        Route::prefix('business-details')->middleware(['role:admin'])->group(function () {
             Route::get('/', [BusinessReviewController::class, 'index']);
             Route::get('/pending', [BusinessReviewController::class, 'pending']);
             Route::post('/{id}/approve', [BusinessReviewController::class, 'approve']);

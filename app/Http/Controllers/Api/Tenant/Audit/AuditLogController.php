@@ -644,7 +644,7 @@ class AuditLogController extends Controller
      *     )
      * )
      */
-    public function availableFilters(): JsonResponse
+    public function availableFilters(AuditLogRequest $request): JsonResponse
     {
         return ApiResponse::success(
             message: 'Available filters retrieved successfully',
