@@ -170,6 +170,48 @@ class SaleServiceTest extends TestCase
         }
     }
 
+    public function test_creates_sale_for_bundle_with_null_product_id_on_the_sale_item(): void
+    {
+        // Regression test: sale_items.product_id was a NOT NULL FK even though every
+        // consumer (SaleItem::getDisplayNameAttribute(), SalesDailyAggregateService::
+        // determineSellableData()) was already written to expect null product_id / set
+        // bundle_id for a bundle line — fixed via the make_product_id_nullable_on_sale_items_table
+        // migration. This locks in that a bundle sale actually persists now.
+        $this->seedBundle(bundleId: 1, componentProductId: 3, quantityInBaseUomPerBundle: 2.0);
+        $this->seedInventory(productId: 3, qtyAvailable: 10.0);
+
+        $bundleLineItem = $this->lineItem([
+            'product_id' => null,
+            'variant_id' => null,
+            'bundle_id' => 1,
+            'quantity' => 1,
+            'quantity_in_base_uom' => 1,
+            'unit_price' => 100.0,
+            'line_total_after_discount' => 100.0,
+        ]);
+
+        $service = $this->makeService(
+            $this->mockCalculation($this->calculations([$bundleLineItem]))
+        );
+
+        $data = $this->baseSaleData([
+            'items' => [['bundle_id' => 1, 'quantity' => 1]],
+            'payments' => [['method' => 'cash', 'amount' => 100.0]],
+        ]);
+
+        $sale = null;
+        Model::withoutEvents(function () use ($service, $data, &$sale) {
+            $sale = $service->createSale($data);
+        });
+
+        $this->assertSame(1, Sale::count());
+        $this->assertSame(1, SaleItem::count());
+
+        $saleItem = SaleItem::first();
+        $this->assertNull($saleItem->product_id);
+        $this->assertSame(1, $saleItem->bundle_id);
+    }
+
     public function test_invalid_loyalty_redemption_throws(): void
     {
         $this->enableLoyalty();
@@ -839,6 +881,7 @@ class SaleServiceTest extends TestCase
             'sale_payments',
             'sale_items',
             'sales',
+            'product_batches',
             'product_bundle_items',
             'product_bundles',
             'shift_assignments',
@@ -917,6 +960,18 @@ class SaleServiceTest extends TestCase
             $table->decimal('quantity', 15, 4);
             $table->decimal('quantity_in_base_uom', 15, 4);
             $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('product_batches', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('quantity_remaining_in_base_uom', 15, 4)->default(0);
+            $table->decimal('cost_per_base_uom', 15, 2)->default(0);
+            $table->boolean('is_expired')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::connection($conn)->create('inventory', function (Blueprint $table) {
