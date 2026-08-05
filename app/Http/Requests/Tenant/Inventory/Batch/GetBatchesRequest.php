@@ -19,6 +19,7 @@ class GetBatchesRequest extends FormRequest
             'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'only_available' => ['nullable', 'boolean'],
             'expiring_soon' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

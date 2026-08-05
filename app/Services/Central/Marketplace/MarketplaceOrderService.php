@@ -33,7 +33,13 @@ class MarketplaceOrderService
         }
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
+        if (! in_array($sortBy, ['created_at', 'total_amount', 'order_status', 'order_number'], true)) {
+            $sortBy = 'created_at';
+        }
+
         $sortDir = $filters['sort_direction'] ?? 'desc';
+        $sortDir = in_array(strtolower((string) $sortDir), ['asc', 'desc'], true) ? $sortDir : 'desc';
+
         $perPage = (int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE);
 
         return $query->orderBy($sortBy, $sortDir)->paginate($perPage);

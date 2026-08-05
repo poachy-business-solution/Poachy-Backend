@@ -6,6 +6,7 @@ use App\Enums\Tenant\CustomerType;
 use App\Models\Tenant\Customer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,11 +21,11 @@ class CustomerService
         $query = Customer::query()->with(['preferredStore', 'currentGroup.group']);
 
         // Apply filters
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['customer_type'])) {
+        if (! empty($filters['customer_type'])) {
             $customerType = CustomerType::from($filters['customer_type']);
             $query->byType($customerType);
         }
@@ -33,13 +34,13 @@ class CustomerService
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (!empty($filters['group_id'])) {
+        if (! empty($filters['group_id'])) {
             $query->whereHas('groups', function ($q) use ($filters) {
                 $q->where('customer_groups.id', $filters['group_id']);
             });
         }
 
-        if (!empty($filters['has_debt'])) {
+        if (! empty($filters['has_debt'])) {
             $query->withDebt();
         }
 
@@ -69,7 +70,30 @@ class CustomerService
     public function createCustomer(array $data): Customer
     {
         return DB::transaction(function () use ($data) {
-            $customer = Customer::create($data);
+            try {
+                $customer = Customer::create($data);
+            } catch (QueryException $e) {
+                // customers.phone/.email are plain unique columns with no
+                // deleted_at scoping, but StoreCustomerRequest's own uniqueness
+                // checks exclude soft-deleted rows — so a phone/email belonging
+                // to a soft-deleted customer passes validation and fails here
+                // instead, as a raw DB integrity error.
+                if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                    if (str_contains($e->getMessage(), 'phone')) {
+                        throw new \InvalidArgumentException(
+                            'This phone number belongs to a previously deleted customer. Restore that customer instead of creating a new one.'
+                        );
+                    }
+
+                    if (str_contains($e->getMessage(), 'email')) {
+                        throw new \InvalidArgumentException(
+                            'This email belongs to a previously deleted customer. Restore that customer instead of creating a new one.'
+                        );
+                    }
+                }
+
+                throw $e;
+            }
 
             // Clear cache
             $this->clearCustomerCache();
@@ -138,7 +162,7 @@ class CustomerService
         return DB::transaction(function () use ($id) {
             $customer = Customer::withTrashed()->find($id);
 
-            if (!$customer || !$customer->trashed()) {
+            if (! $customer || ! $customer->trashed()) {
                 return null;
             }
 
@@ -174,7 +198,7 @@ class CustomerService
      */
     public function upgradeCustomerType(Customer $customer, CustomerType $targetType): Customer
     {
-        if (!$customer->canUpgradeTo($targetType)) {
+        if (! $customer->canUpgradeTo($targetType)) {
             throw new \InvalidArgumentException(
                 "Cannot upgrade {$customer->customer_type->value} to {$targetType->value}"
             );
@@ -208,7 +232,7 @@ class CustomerService
     public function toggleCustomerStatus(Customer $customer): Customer
     {
         return DB::transaction(function () use ($customer) {
-            $newStatus = !$customer->is_active;
+            $newStatus = ! $customer->is_active;
 
             $customer->update([
                 'is_active' => $newStatus,
@@ -229,10 +253,6 @@ class CustomerService
 
     /**
      * Get customers who accept marketing
-     *
-     * @param bool $paginate
-     * @param int $perPage
-     * @return Collection|LengthAwarePaginator
      */
     public function getMarketingEligibleCustomers(
         bool $paginate = true,
@@ -251,9 +271,6 @@ class CustomerService
 
     /**
      * Get customer by phone number
-     *
-     * @param string $phone
-     * @return Customer|null
      */
     public function getCustomerByPhone(string $phone): ?Customer
     {
@@ -263,7 +280,6 @@ class CustomerService
     /**
      * Toggle customer's marketing consent
      *
-     * @param int $customerId
      * @return array ['accepts_marketing' => bool, 'message' => string]
      */
     public function toggleMarketingConsent(int $customerId): array

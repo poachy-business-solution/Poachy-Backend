@@ -286,21 +286,27 @@ class ProductBatchController extends Controller
                 variantId: $validated['variant_id'] ?? null,
                 onlyAvailable: $validated['only_available'] ?? false
             );
-        } else {
-            // Get all batches for store
-            $query = ProductBatch::where('store_id', $validated['store_id'])
-                ->with(['product', 'productVariant', 'supplier', 'purchaseOrder']);
 
-            if ($validated['only_available'] ?? false) {
-                $query->available();
-            }
-
-            $batches = $query->fifoOrder()->get();
+            return ApiResponse::success(
+                'Batches retrieved successfully',
+                ProductBatchResource::collection($batches)
+            );
         }
 
-        return ApiResponse::success(
-            'Batches retrieved successfully',
-            ProductBatchResource::collection($batches)
+        // Get all batches for store — paginated, since without a product_id
+        // filter this can be a store's entire batch history.
+        $query = ProductBatch::where('store_id', $validated['store_id'])
+            ->with(['product', 'productVariant', 'supplier', 'purchaseOrder']);
+
+        if ($validated['only_available'] ?? false) {
+            $query->available();
+        }
+
+        $batches = $query->fifoOrder()->paginate($validated['per_page'] ?? 20);
+
+        return ApiResponse::paginated(
+            ProductBatchResource::collection($batches),
+            'Batches retrieved successfully'
         );
     }
 

@@ -57,20 +57,27 @@ class ProductSerialController extends Controller
                 variantId: $validated['variant_id'] ?? null,
                 onlyAvailable: $validated['only_available'] ?? false
             );
-        } else {
-            $query = ProductSerial::where('store_id', $validated['store_id'])
-                ->with(['product', 'productVariant', 'supplier', 'purchaseOrder']);
 
-            if ($validated['only_available'] ?? false) {
-                $query->available();
-            }
-
-            $serials = $query->fifoOrder()->get();
+            return ApiResponse::success(
+                'Serials retrieved successfully',
+                ProductSerialResource::collection($serials)
+            );
         }
 
-        return ApiResponse::success(
-            'Serials retrieved successfully',
-            ProductSerialResource::collection($serials)
+        // No product_id filter — paginated, since this can be a store's
+        // entire serial history.
+        $query = ProductSerial::where('store_id', $validated['store_id'])
+            ->with(['product', 'productVariant', 'supplier', 'purchaseOrder']);
+
+        if ($validated['only_available'] ?? false) {
+            $query->available();
+        }
+
+        $serials = $query->fifoOrder()->paginate($validated['per_page'] ?? 20);
+
+        return ApiResponse::paginated(
+            ProductSerialResource::collection($serials),
+            'Serials retrieved successfully'
         );
     }
 

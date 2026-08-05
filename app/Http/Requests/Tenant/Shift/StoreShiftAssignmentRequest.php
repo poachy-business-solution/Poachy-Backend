@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Tenant\Shift;
 
-use App\Enums\Tenant\DayOfWeek;
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
 use Carbon\Carbon;
@@ -89,19 +88,19 @@ class StoreShiftAssignmentRequest extends FormRequest
      */
     protected function validateShiftApplicability($validator): void
     {
-        if (!$this->shift_id || !$this->shift_date) {
+        if (! $this->shift_id || ! $this->shift_date) {
             return;
         }
 
         $shift = Shift::find($this->shift_id);
 
-        if (!$shift) {
+        if (! $shift) {
             return;
         }
 
         $date = Carbon::parse($this->shift_date);
 
-        if (!$shift->isApplicableOn($date)) {
+        if (! $shift->isApplicableOn($date)) {
             $validator->errors()->add(
                 'shift_date',
                 "This shift is not applicable on {$date->format('l')} (day of week)."
@@ -114,13 +113,13 @@ class StoreShiftAssignmentRequest extends FormRequest
      */
     protected function validateNoOverlappingShifts($validator): void
     {
-        if (!$this->user_id || !$this->shift_date || !config('shift.prevent_overlapping_shifts', true)) {
+        if (! $this->user_id || ! $this->shift_date || ! config('shift.prevent_overlapping_shifts', true)) {
             return;
         }
 
         $shift = Shift::find($this->shift_id);
 
-        if (!$shift) {
+        if (! $shift) {
             return;
         }
 
@@ -143,11 +142,12 @@ class StoreShiftAssignmentRequest extends FormRequest
         foreach ($existingAssignments as $existing) {
             $hasOverlap = $this->checkShiftOverlap($shift, $existing->shift);
 
-            if (!$allowBackToBack || $hasOverlap) {
+            if (! $allowBackToBack || $hasOverlap) {
                 $validator->errors()->add(
                     'user_id',
                     "User already has a shift assigned on this date: {$existing->shift->shift_name} ({$existing->shift->shift_time_range})"
                 );
+
                 return;
             }
 
@@ -160,6 +160,7 @@ class StoreShiftAssignmentRequest extends FormRequest
                         'shift_date',
                         "Minimum rest period of {$minRestHours} hours between shifts not met. Only {$timeBetween} hours between shifts."
                     );
+
                     return;
                 }
             }
@@ -171,11 +172,11 @@ class StoreShiftAssignmentRequest extends FormRequest
      */
     protected function validateNoMultiStoreAssignments($validator): void
     {
-        if (!$this->user_id || !$this->shift_date || !$this->store_id) {
+        if (! $this->user_id || ! $this->shift_date || ! $this->store_id) {
             return;
         }
 
-        if (!config('shift.prevent_multi_store_same_day', true)) {
+        if (! config('shift.prevent_multi_store_same_day', true)) {
             return;
         }
 
@@ -200,21 +201,7 @@ class StoreShiftAssignmentRequest extends FormRequest
      */
     protected function checkShiftOverlap(Shift $shift1, Shift $shift2): bool
     {
-        $start1 = Carbon::parse($shift1->scheduled_start_time);
-        $end1 = Carbon::parse($shift1->scheduled_end_time);
-        $start2 = Carbon::parse($shift2->scheduled_start_time);
-        $end2 = Carbon::parse($shift2->scheduled_end_time);
-
-        // Handle overnight shifts
-        if ($end1->lessThan($start1)) {
-            $end1->addDay();
-        }
-        if ($end2->lessThan($start2)) {
-            $end2->addDay();
-        }
-
-        // Check for time overlap
-        return $start1->lessThan($end2) && $end1->greaterThan($start2);
+        return $shift1->overlapsWith($shift2);
     }
 
     /**

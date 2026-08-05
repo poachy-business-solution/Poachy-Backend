@@ -131,6 +131,41 @@ class MarketplaceOrderServiceTest extends TestCase
         $this->assertSame(1, $result->total());
     }
 
+    /**
+     * sort_by/sort_direction previously went straight into orderBy() with no
+     * validation — an unknown column name would throw a raw QueryException
+     * instead of just being ignored, unlike order_status above.
+     */
+    public function test_list_customer_orders_falls_back_to_created_at_for_unknown_sort_by(): void
+    {
+        $this->createOrder();
+
+        $result = $this->service->listCustomerOrders($this->customer->id, ['sort_by' => 'DROP TABLE orders']);
+
+        $this->assertSame(1, $result->total());
+    }
+
+    public function test_list_customer_orders_falls_back_to_desc_for_unknown_sort_direction(): void
+    {
+        $this->createOrder();
+
+        $result = $this->service->listCustomerOrders($this->customer->id, ['sort_direction' => 'sideways']);
+
+        $this->assertSame(1, $result->total());
+    }
+
+    public function test_list_customer_orders_accepts_a_whitelisted_sort_by(): void
+    {
+        $this->createOrder(['total_amount' => 100]);
+        $this->createOrder(['total_amount' => 500]);
+
+        $result = $this->service->listCustomerOrders($this->customer->id, [
+            'sort_by' => 'total_amount', 'sort_direction' => 'asc',
+        ]);
+
+        $this->assertEquals(100, $result->first()->total_amount);
+    }
+
     // =========================================================================
     // getOrderDetails() / getOrderByNumber()
     // =========================================================================

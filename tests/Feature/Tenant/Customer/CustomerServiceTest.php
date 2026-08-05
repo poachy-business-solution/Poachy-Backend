@@ -42,7 +42,7 @@ class CustomerServiceTest extends TestCase
 
     private function makeService(): CustomerService
     {
-        return new CustomerService();
+        return new CustomerService;
     }
 
     private function createCustomer(array $overrides = []): Customer
@@ -124,6 +124,36 @@ class CustomerServiceTest extends TestCase
         $customer = $this->makeService()->createCustomer(['name' => 'New Customer', 'phone' => '0712345678']);
 
         $this->assertNotEmpty($customer->customer_number);
+    }
+
+    /**
+     * customers.phone/.email are plain unique columns with no deleted_at
+     * scoping, but StoreCustomerRequest's own uniqueness checks exclude
+     * soft-deleted rows — so this scenario reaches the service as a raw DB
+     * duplicate-entry error unless it's translated here.
+     */
+    public function test_create_customer_throws_clean_error_for_soft_deleted_customers_phone(): void
+    {
+        $deleted = $this->createCustomer(['phone' => '0712345678']);
+        $deleted->delete();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('previously deleted customer');
+
+        $this->makeService()->createCustomer(['name' => 'New Customer', 'phone' => '0712345678']);
+    }
+
+    public function test_create_customer_throws_clean_error_for_soft_deleted_customers_email(): void
+    {
+        $deleted = $this->createCustomer(['email' => 'reused@example.com']);
+        $deleted->delete();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('previously deleted customer');
+
+        $this->makeService()->createCustomer([
+            'name' => 'New Customer', 'phone' => '0712'.rand(100000, 999999), 'email' => 'reused@example.com',
+        ]);
     }
 
     public function test_update_customer_updates_fields(): void

@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Shift;
 
+use App\Enums\Tenant\DayOfWeek;
 use App\Enums\Tenant\ShiftStatus;
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
@@ -70,6 +71,7 @@ class ShiftAssignmentService
 
             $assignments = collect();
             $dates = $this->generateRecurrenceDates($shift, $startDate, $endDate, $recurrencePattern, $recurrenceDays);
+            $skippedConflicts = 0;
 
             foreach ($userIds as $userId) {
                 foreach ($dates as $date) {
@@ -80,6 +82,12 @@ class ShiftAssignmentService
                         ->exists();
 
                     if ($exists) {
+                        continue;
+                    }
+
+                    if ($this->hasSchedulingConflict($shift, $userId, $date)) {
+                        $skippedConflicts++;
+
                         continue;
                     }
 
@@ -103,12 +111,14 @@ class ShiftAssignmentService
                 'shift_id' => $shift->id,
                 'user_count' => count($userIds),
                 'assignments_created' => $assignments->count(),
+                'skipped_conflicts' => $skippedConflicts,
                 'date_range' => [$startDate->toDateString(), $endDate->toDateString()],
                 'tenant_id' => tenant()->id,
             ]);
 
             // convert to an Eloquent collection once
             $eloquentCollection = ShiftAssignment::whereIn('id', $assignments->pluck('id'))->get();
+
             return $eloquentCollection->load(['shift', 'store', 'user']);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -121,6 +131,71 @@ class ShiftAssignmentService
 
             throw $e;
         }
+    }
+
+    /**
+     * Check whether assigning $userId to $shift on $date would create a real
+     * time-overlap with an existing assignment, or a same-day multi-store
+     * conflict — the same checks StoreShiftAssignmentRequest applies to a
+     * single assignment, applied here per user/date pair in a bulk batch.
+     */
+    protected function hasSchedulingConflict(Shift $shift, int $userId, Carbon $date): bool
+    {
+        $existingAssignments = ShiftAssignment::forUser($userId)
+            ->forDate($date)
+            ->whereNotIn('status', [ShiftStatus::CANCELLED, ShiftStatus::NO_SHOW])
+            ->with('shift')
+            ->get();
+
+        if ($existingAssignments->isEmpty()) {
+            return false;
+        }
+
+        if (config('shift.prevent_multi_store_same_day', true)) {
+            if ($existingAssignments->contains(fn (ShiftAssignment $existing) => $existing->store_id !== $shift->store_id)) {
+                return true;
+            }
+        }
+
+        if (config('shift.prevent_overlapping_shifts', true)) {
+            $allowBackToBack = config('shift.allow_back_to_back_shifts', true);
+            $minRestHours = config('shift.minimum_rest_hours_between_shifts', 0);
+
+            foreach ($existingAssignments as $existing) {
+                if (! $allowBackToBack || $shift->overlapsWith($existing->shift)) {
+                    return true;
+                }
+
+                if ($minRestHours > 0 && $this->hoursBetweenShifts($shift, $existing->shift) < $minRestHours) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Minimum rest hours between two shifts, handling overnight shifts.
+     */
+    protected function hoursBetweenShifts(Shift $shift1, Shift $shift2): float
+    {
+        $start1 = Carbon::parse($shift1->scheduled_start_time);
+        $end1 = Carbon::parse($shift1->scheduled_end_time);
+        $start2 = Carbon::parse($shift2->scheduled_start_time);
+        $end2 = Carbon::parse($shift2->scheduled_end_time);
+
+        if ($end1->lessThan($start1)) {
+            $end1->addDay();
+        }
+        if ($end2->lessThan($start2)) {
+            $end2->addDay();
+        }
+
+        return min(
+            abs($start1->diffInHours($end2)),
+            abs($start2->diffInHours($end1))
+        );
     }
 
     /**
@@ -168,8 +243,8 @@ class ShiftAssignmentService
             $assignment->update([
                 'status' => ShiftStatus::CANCELLED,
                 'notes' => $assignment->notes
-                    ? $assignment->notes . "\n\nCancellation Reason: " . $reason
-                    : "Cancellation Reason: " . $reason,
+                    ? $assignment->notes."\n\nCancellation Reason: ".$reason
+                    : 'Cancellation Reason: '.$reason,
             ]);
 
             $this->clearAssignmentCache();
@@ -208,7 +283,7 @@ class ShiftAssignmentService
                 'status' => ShiftStatus::IN_PROGRESS,
                 'actual_start' => now(),
                 'opening_cash' => $openingCash,
-                'notes' => $notes ? ($assignment->notes ? $assignment->notes . "\n\n" . $notes : $notes) : $assignment->notes,
+                'notes' => $notes ? ($assignment->notes ? $assignment->notes."\n\n".$notes : $notes) : $assignment->notes,
             ]);
 
             $this->clearAssignmentCache();
@@ -260,7 +335,7 @@ class ShiftAssignmentService
 
             if ($notes) {
                 $updateData['notes'] = $assignment->notes
-                    ? $assignment->notes . "\n\n" . $notes
+                    ? $assignment->notes."\n\n".$notes
                     : $notes;
             }
 
@@ -332,8 +407,8 @@ class ShiftAssignmentService
 
             if ($notes) {
                 $updateData['notes'] = $assignment->notes
-                    ? $assignment->notes . "\n\nApproval Notes: " . $notes
-                    : "Approval Notes: " . $notes;
+                    ? $assignment->notes."\n\nApproval Notes: ".$notes
+                    : 'Approval Notes: '.$notes;
             }
 
             $assignment->update($updateData);
@@ -486,7 +561,7 @@ class ShiftAssignmentService
      */
     public function autoMarkNoShow(int $gracePeriodMinutes = 30): int
     {
-        if (!config('shift.auto_mark_no_show', true)) {
+        if (! config('shift.auto_mark_no_show', true)) {
             return 0;
         }
 
@@ -500,7 +575,7 @@ class ShiftAssignmentService
                 $assignment->update([
                     'status' => ShiftStatus::NO_SHOW,
                     'notes' => $assignment->notes
-                        ? $assignment->notes . "\n\nAuto-marked as no-show after {$gracePeriodMinutes} minute grace period."
+                        ? $assignment->notes."\n\nAuto-marked as no-show after {$gracePeriodMinutes} minute grace period."
                         : "Auto-marked as no-show after {$gracePeriodMinutes} minute grace period.",
                 ]);
 
@@ -588,7 +663,7 @@ class ShiftAssignmentService
 
                 case 'custom':
                     if ($recurrenceDays && $shift->isApplicableOn($current)) {
-                        $dayOfWeek = \App\Enums\Tenant\DayOfWeek::fromCarbonDayOfWeek($current->dayOfWeek);
+                        $dayOfWeek = DayOfWeek::fromCarbonDayOfWeek($current->dayOfWeek);
                         $shouldInclude = in_array($dayOfWeek->value, $recurrenceDays);
                     }
                     break;
