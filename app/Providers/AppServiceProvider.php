@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,6 +24,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Every model factory lives flat in database/factories/ (MarketplaceSaleFactory,
+        // not Tenant/MarketplaceSaleFactory), but Laravel's default guesser mirrors the
+        // model's full namespace under App\Models — for App\Models\Tenant\MarketplaceSale
+        // that resolves to Database\Factories\Tenant\MarketplaceSaleFactory, which doesn't
+        // exist, so Model::factory() throws. Resolve by class basename only instead, so
+        // every tenant model factory resolves to where the files actually are.
+        Factory::guessFactoryNamesUsing(
+            fn (string $modelName) => 'Database\\Factories\\'.class_basename($modelName).'Factory'
+        );
+
         // Global safety net applied to every API route (see bootstrap/app.php's
         // throttleApi('api') call) — generous enough not to bother normal usage,
         // just stops basic flooding. Keyed by authenticated user when available
