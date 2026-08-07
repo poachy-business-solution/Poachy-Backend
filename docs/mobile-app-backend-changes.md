@@ -102,4 +102,20 @@ During seeding: `local.ERROR: Outbound delivery zone sync failed … cURL error 
 
 ---
 
+## Update (2026‑08‑07) — additional findings from batch/expiry + product‑create testing
+
+### 17. P1 — Sale calculation NPEs on any product with no tax rate (blocks selling app‑created products)
+- **Where:** `app/Services/Tenant/Sales/SaleCalculationService.php:204` `$taxRate = $product->taxRate;` then `:221` `'tax_rate_id' => $taxRate->id` and `:222` `'tax_rate_percentage' => $taxRate->rate` (same pattern at `:244/:263/:264` for variants, `:283` for bundles).
+- **Why:** `$product->taxRate` is null whenever `products.tax_rate_id` is null — the case for **every product created via `POST /tenant/products`**, since create doesn't accept `tax_rate_id` (only settable later via `PATCH /products/{uuid}/inventory`). Result: `Attempt to read property "id" on null` → **HTTP 500** on both `POST /sales/calculate` and `POST /sales`. A freshly created product cannot be sold until a tax rate is attached.
+- **Repro:** create a product via the API (no tax rate) → `POST /sales/calculate` with it → 500.
+- **Fix:** null‑guard the tax rate — `$taxRate?->id`, `$taxRate?->rate ?? 0` — and treat a missing tax rate as **0% / tax‑exempt** (valid for zero‑rated goods, medicines, etc.). Same for the variant and bundle branches.
+- **App note:** the app works around this by stamping the tenant **default** tax rate on every product it creates, but that forces tax onto items that may be exempt — the backend should tolerate a null tax rate.
+
+### 18. DX — a PO can only order products already allocated to the store; consider a one‑shot "receive stock" endpoint
+- **Where:** `POST /tenant/purchase-orders` returns `Product '…' is not allocated to this store. Only store products can be ordered.` unless the product has a `store_products` row for that store.
+- **Why:** To receive batch/expiry stock for a new product, the app must chain **4 calls**: allocate to store (`POST /stores/{store}/products`) → create PO → send PO → receive goods (`POST /batches/receive`).
+- **Suggestion:** a single `POST /tenant/products/{id}/receive-stock` taking `{store_id, quantity, unit_cost?, expiry_date?, supplier_id?}` that internally allocates (if needed), creates+sends a PO, and receives the batch. Would greatly simplify mobile receiving. (Not blocking — the app orchestrates the 4 calls today.)
+
+---
+
 *Generated from the Poachy Mobile integration effort. Questions → the mobile team. File/line references are approximate and may shift as the backend evolves.*
