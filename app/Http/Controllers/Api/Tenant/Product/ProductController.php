@@ -176,7 +176,7 @@ class ProductController extends Controller
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="is_featured", type="boolean", example=false),
      *                         @OA\Property(property="is_available_online", type="boolean", example=false),
-     *                         @OA\Property(property="primary_image", type="string", format="url", example="http://localhost/storage/products/images/primary_a54_1766233929.jpg"),
+     *                         @OA\Property(property="primary_image", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766233929.jpg"),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-12-20T12:32:09.000000Z")
      *                     )
      *                 ),
@@ -376,12 +376,12 @@ class ProductController extends Controller
      *                 @OA\Property(property="product_type", type="string", example="simple"),
      *                 @OA\Property(property="base_selling_price", type="string", example="135999.00"),
      *                 @OA\Property(property="formatted_base_price", type="string", example="KES 135,999.00"),
-     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://localhost/storage/products/images/primary_a54_1766233929.jpg"),
+     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766233929.jpg"),
      *                 @OA\Property(
      *                     property="secondary_images",
      *                     type="array",
      *
-     *                     @OA\Items(type="string", format="url", example="http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg")
+     *                     @OA\Items(type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg")
      *                 ),
      *
      *                 @OA\Property(property="image_count", type="integer", example=2),
@@ -599,12 +599,12 @@ class ProductController extends Controller
      *                 @OA\Property(property="is_weighed", type="boolean", example=false),
      *                 @OA\Property(property="requires_batch_tracking", type="boolean", example=false),
      *                 @OA\Property(property="requires_serial_tracking", type="boolean", example=true),
-     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://localhost/storage/products/images/primary_a54_1766346778.jpg"),
+     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"),
      *                 @OA\Property(
      *                     property="secondary_images",
      *                     type="array",
      *
-     *                     @OA\Items(type="string", format="url", example="http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg")
+     *                     @OA\Items(type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg")
      *                 ),
      *
      *                 @OA\Property(property="image_count", type="integer", example=3),
@@ -820,12 +820,12 @@ class ProductController extends Controller
      *                 @OA\Property(property="is_weighed", type="boolean", example=false),
      *                 @OA\Property(property="requires_batch_tracking", type="boolean", example=false),
      *                 @OA\Property(property="requires_serial_tracking", type="boolean", example=true),
-     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://localhost/storage/products/images/primary_a54_1766346778.jpg"),
+     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"),
      *                 @OA\Property(
      *                     property="secondary_images",
      *                     type="array",
      *
-     *                     @OA\Items(type="string", format="url", example="http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg")
+     *                     @OA\Items(type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg")
      *                 ),
      *
      *                 @OA\Property(property="image_count", type="integer", example=3),
@@ -1063,12 +1063,12 @@ class ProductController extends Controller
      *                 @OA\Property(property="is_weighed", type="boolean", example=false),
      *                 @OA\Property(property="requires_batch_tracking", type="boolean", example=false),
      *                 @OA\Property(property="requires_serial_tracking", type="boolean", example=true),
-     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://localhost/storage/products/images/primary_a54_1766346778.jpg"),
+     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"),
      *                 @OA\Property(
      *                     property="secondary_images",
      *                     type="array",
      *
-     *                     @OA\Items(type="string", format="url", example="http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg")
+     *                     @OA\Items(type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg")
      *                 ),
      *
      *                 @OA\Property(property="image_count", type="integer", example=3),
@@ -1319,12 +1319,12 @@ class ProductController extends Controller
      *                 @OA\Property(property="is_weighed", type="boolean", example=false),
      *                 @OA\Property(property="requires_batch_tracking", type="boolean", example=false),
      *                 @OA\Property(property="requires_serial_tracking", type="boolean", example=true),
-     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://localhost/storage/products/images/primary_a54_1766346778.jpg"),
+     *                 @OA\Property(property="primary_image", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"),
      *                 @OA\Property(
      *                     property="secondary_images",
      *                     type="array",
      *
-     *                     @OA\Items(type="string", format="url", example="http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg")
+     *                     @OA\Items(type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg")
      *                 ),
      *
      *                 @OA\Property(property="image_count", type="integer", example=3),

@@ -2,15 +2,17 @@
 
 namespace App\Http\Resources\Tenant\Product;
 
+use App\Http\Resources\Tenant\Concerns\ResolvesTenantPublicAssetUrls;
 use App\Http\Resources\Tenant\Supplier\SupplierResource;
 use App\Http\Resources\Tenant\Tax\TaxRateResource;
 use App\Http\Resources\Tenant\Uom\UnitOfMeasureResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
+    use ResolvesTenantPublicAssetUrls;
+
     /**
      * Transform the resource into an array.
      *
@@ -40,7 +42,7 @@ class ProductResource extends JsonResource
 
             // Pricing
             'base_selling_price' => $this->base_selling_price,
-            'formatted_base_price' => 'KES ' . number_format($this->base_selling_price, 2),
+            'formatted_base_price' => 'KES '.number_format($this->base_selling_price, 2),
 
             // Tax & UOM
             'tax_rate' => new TaxRateResource($this->whenLoaded('taxRate')),
@@ -66,7 +68,7 @@ class ProductResource extends JsonResource
             'is_available_online' => $this->is_available_online,
             'online_price' => $this->online_price,
             'formatted_online_price' => $this->online_price
-                ? 'KES ' . number_format($this->online_price, 2)
+                ? 'KES '.number_format($this->online_price, 2)
                 : null,
             'online_description' => $this->online_description,
 
@@ -81,11 +83,11 @@ class ProductResource extends JsonResource
 
     protected function getPrimaryImageUrl(): ?string
     {
-        if (!$this->primary_image) {
+        if (! $this->primary_image) {
             return null;
         }
 
-        return Storage::disk('public')->url($this->primary_image);
+        return $this->tenantPublicAssetUrl($this->primary_image);
     }
 
     protected function getSecondaryImageUrls(): array
@@ -94,9 +96,6 @@ class ProductResource extends JsonResource
             return [];
         }
 
-        return array_map(
-            fn($imagePath) => Storage::disk('public')->url($imagePath),
-            $this->secondary_images
-        );
+        return $this->tenantPublicAssetUrls($this->secondary_images);
     }
 }

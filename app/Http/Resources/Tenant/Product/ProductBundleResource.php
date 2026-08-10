@@ -2,14 +2,16 @@
 
 namespace App\Http\Resources\Tenant\Product;
 
+use App\Http\Resources\Tenant\Concerns\ResolvesTenantPublicAssetUrls;
 use App\Http\Resources\Tenant\Tax\TaxRateResource;
 use App\Http\Resources\Tenant\Uom\UnitOfMeasureResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductBundleResource extends JsonResource
 {
+    use ResolvesTenantPublicAssetUrls;
+
     public function toArray(Request $request): array
     {
         return [
@@ -60,8 +62,8 @@ class ProductBundleResource extends JsonResource
         return array_map(function ($path) {
             return [
                 'path' => $path,
-                'url' => Storage::disk('public')->url($path),
-                'filename' => basename($path)
+                'url' => $this->tenantPublicAssetUrl($path),
+                'filename' => basename($path),
             ];
         }, $images);
     }

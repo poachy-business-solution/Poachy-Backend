@@ -10,7 +10,6 @@ use App\Http\Resources\Tenant\Product\ProductBrandResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Product\ProductBrandService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ProductBrandController extends Controller
 {
@@ -25,62 +24,77 @@ class ProductBrandController extends Controller
      *     description="Retrieves a list of brands with optional filtering and pagination capabilities.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_featured",
      *         in="query",
      *         description="Filter by featured status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search brands by name",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Samsung"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="paginate",
      *         in="query",
      *         description="Enable pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100),
      *         example=15
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brands retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brands retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Apple"),
      *                     @OA\Property(property="slug", type="string", example="apple"),
      *                     @OA\Property(property="description", type="string", example="American technology company"),
-     *                     @OA\Property(property="logo_url", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/tech-haven-logo_1765886057.jpg"),
+     *                     @OA\Property(property="logo_url", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/brands/logos/tech-haven-logo_1765886057.jpg"),
      *                     @OA\Property(property="is_active", type="boolean", example=true),
      *                     @OA\Property(property="is_featured", type="boolean", example=false),
      *                     @OA\Property(property="display_order", type="integer", example=1),
@@ -105,7 +119,7 @@ class ProductBrandController extends Controller
      *                         "name": "Apple",
      *                         "slug": "apple",
      *                         "description": "American technology company",
-     *                         "logo_url": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/tech-haven-logo_1765886057.jpg",
+     *                         "logo_url": "http://techhaven.localhost/tenancy/assets/products/brands/logos/tech-haven-logo_1765886057.jpg",
      *                         "is_active": true,
      *                         "is_featured": false,
      *                         "display_order": 1,
@@ -117,7 +131,7 @@ class ProductBrandController extends Controller
      *                         "name": "Samsung",
      *                         "slug": "samsung",
      *                         "description": "China technology company",
-     *                         "logo_url": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/odometer_1765886108.jpg",
+     *                         "logo_url": "http://techhaven.localhost/tenancy/assets/products/brands/logos/odometer_1765886108.jpg",
      *                         "is_active": true,
      *                         "is_featured": true,
      *                         "display_order": 2,
@@ -134,6 +148,7 @@ class ProductBrandController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -161,7 +176,7 @@ class ProductBrandController extends Controller
                             'total' => $brands->total(),
                             'from' => $brands->firstItem(),
                             'to' => $brands->lastItem(),
-                        ]
+                        ],
                     ]
                 );
             }
@@ -172,7 +187,7 @@ class ProductBrandController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve brands: ' . $e->getMessage()
+                'Failed to retrieve brands: '.$e->getMessage()
             );
         }
     }
@@ -184,18 +199,23 @@ class ProductBrandController extends Controller
      *     description="Retrieves detailed information about a specific brand including associated products and product count.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand retrieved successfully"),
      *             @OA\Property(
@@ -205,15 +225,17 @@ class ProductBrandController extends Controller
      *                 @OA\Property(property="name", type="string", example="Apple"),
      *                 @OA\Property(property="slug", type="string", example="apple"),
      *                 @OA\Property(property="description", type="string", example="American technology company"),
-     *                 @OA\Property(property="logo_url", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/tech-haven-logo_1765886057.jpg"),
+     *                 @OA\Property(property="logo_url", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/brands/logos/tech-haven-logo_1765886057.jpg"),
      *                 @OA\Property(property="is_active", type="boolean", example=true),
      *                 @OA\Property(property="is_featured", type="boolean", example=false),
      *                 @OA\Property(property="display_order", type="integer", example=1),
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="object")
      *                 ),
+     *
      *                 @OA\Property(property="product_count", type="integer", example=0),
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-12-16T11:54:17.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2025-12-16T11:54:17.000000Z")
@@ -228,6 +250,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -235,7 +258,9 @@ class ProductBrandController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Brand not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Brand not found"),
      *             @OA\Property(
@@ -255,7 +280,7 @@ class ProductBrandController extends Controller
         try {
             $brand = $this->brandService->getBrandById($id, true);
 
-            if (!$brand) {
+            if (! $brand) {
                 return ApiResponse::notFound('Brand not found');
             }
 
@@ -265,7 +290,7 @@ class ProductBrandController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve brand: ' . $e->getMessage()
+                'Failed to retrieve brand: '.$e->getMessage()
             );
         }
     }
@@ -277,12 +302,16 @@ class ProductBrandController extends Controller
      *     description="Creates a new product brand with optional logo upload. Slug is auto-generated from the name if not provided.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"name"},
+     *
      *                 @OA\Property(property="name", type="string", maxLength=255, description="Brand name", example="Samsung"),
      *                 @OA\Property(property="slug", type="string", maxLength=255, description="Optional brand slug. Auto-generated if not provided", example="samsung"),
      *                 @OA\Property(property="description", type="string", description="Optional brand description", example="China technology company"),
@@ -293,10 +322,13 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Brand created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand created successfully"),
      *             @OA\Property(
@@ -306,7 +338,7 @@ class ProductBrandController extends Controller
      *                 @OA\Property(property="name", type="string", example="Samsung"),
      *                 @OA\Property(property="slug", type="string", example="samsung"),
      *                 @OA\Property(property="description", type="string", example="China technology company"),
-     *                 @OA\Property(property="logo_url", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/odometer_1765886108.jpg"),
+     *                 @OA\Property(property="logo_url", type="string", format="url", example="http://techhaven.localhost/tenancy/assets/products/brands/logos/odometer_1765886108.jpg"),
      *                 @OA\Property(property="is_active", type="boolean", example=true),
      *                 @OA\Property(property="is_featured", type="boolean", example=true),
      *                 @OA\Property(property="display_order", type="integer", example=2),
@@ -323,6 +355,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -346,11 +379,10 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to create brand: ' . $e->getMessage()
+                'Failed to create brand: '.$e->getMessage()
             );
         }
     }
-
 
     /**
      * @OA\Patch(
@@ -359,18 +391,23 @@ class ProductBrandController extends Controller
      *     description="Activates a brand, making it visible and available for use.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand activated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand activated successfully"),
      *             @OA\Property(
@@ -383,6 +420,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -403,7 +441,7 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to activate brand: ' . $e->getMessage()
+                'Failed to activate brand: '.$e->getMessage()
             );
         }
     }
@@ -415,18 +453,23 @@ class ProductBrandController extends Controller
      *     description="Deactivates a brand, making it hidden and unavailable for use.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand deactivated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand deactivated successfully"),
      *             @OA\Property(
@@ -439,6 +482,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -459,7 +503,7 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to deactivate brand: ' . $e->getMessage()
+                'Failed to deactivate brand: '.$e->getMessage()
             );
         }
     }
@@ -471,18 +515,23 @@ class ProductBrandController extends Controller
      *     description="Marks a brand as featured, giving it prominence in listings.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand featured successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand featured successfully"),
      *             @OA\Property(
@@ -495,6 +544,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -515,7 +565,7 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to feature brand: ' . $e->getMessage()
+                'Failed to feature brand: '.$e->getMessage()
             );
         }
     }
@@ -527,18 +577,23 @@ class ProductBrandController extends Controller
      *     description="Removes the featured status from a brand.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand unfeatured successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand unfeatured successfully"),
      *             @OA\Property(
@@ -551,6 +606,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -571,7 +627,7 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to unfeature brand: ' . $e->getMessage()
+                'Failed to unfeature brand: '.$e->getMessage()
             );
         }
     }
@@ -583,20 +639,26 @@ class ProductBrandController extends Controller
      *     description="Updates or replaces the brand's logo image. The old logo will be deleted if it exists.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"logo"},
+     *
      *                 @OA\Property(
      *                     property="logo",
      *                     type="string",
@@ -606,10 +668,13 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand logo updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand logo updated successfully"),
      *             @OA\Property(
@@ -622,6 +687,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -646,7 +712,7 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to update brand logo: ' . $e->getMessage()
+                'Failed to update brand logo: '.$e->getMessage()
             );
         }
     }
@@ -658,18 +724,23 @@ class ProductBrandController extends Controller
      *     description="Permanently deletes a brand. The brand must not have any associated products. Associated logo will also be deleted.",
      *     tags={"Tenant Product Brands"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Brand ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand deleted successfully"),
      *             @OA\Property(
@@ -682,6 +753,7 @@ class ProductBrandController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -706,7 +778,7 @@ class ProductBrandController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to delete brand: ' . $e->getMessage()
+                'Failed to delete brand: '.$e->getMessage()
             );
         }
     }

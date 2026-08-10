@@ -2,12 +2,14 @@
 
 namespace App\Http\Resources\Tenant\Product;
 
+use App\Http\Resources\Tenant\Concerns\ResolvesTenantPublicAssetUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductListResource extends JsonResource
 {
+    use ResolvesTenantPublicAssetUrls;
+
     /**
      * Transform the resource into an array.
      *
@@ -39,9 +41,9 @@ class ProductListResource extends JsonResource
             // Pricing
             'base_selling_price' => $this->base_selling_price,
             'online_price' => $this->online_price,
-            'formatted_base_price' => 'KES ' . number_format($this->base_selling_price, 2),
+            'formatted_base_price' => 'KES '.number_format($this->base_selling_price, 2),
             'formatted_online_price' => $this->online_price
-                ? 'KES ' . number_format($this->online_price, 2)
+                ? 'KES '.number_format($this->online_price, 2)
                 : null,
 
             // Status
@@ -63,10 +65,10 @@ class ProductListResource extends JsonResource
 
     protected function getPrimaryImageUrl(): ?string
     {
-        if (!$this->primary_image) {
+        if (! $this->primary_image) {
             return null;
         }
 
-        return Storage::disk('public')->url($this->primary_image);
+        return $this->tenantPublicAssetUrl($this->primary_image);
     }
 }
