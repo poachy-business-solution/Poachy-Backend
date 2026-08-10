@@ -81,7 +81,7 @@ class ProductBundleController extends Controller
      *                                 type="object",
      *
      *                                 @OA\Property(property="path", type="string", example="bundles/images/bundle_1_a54-extra_1766482359_0.jpg"),
-     *                                 @OA\Property(property="url", type="string", example="http://localhost/storage/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"),
+     *                                 @OA\Property(property="url", type="string", example="http://techhaven.localhost/tenancy/assets/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"),
      *                                 @OA\Property(property="filename", type="string", example="bundle_1_a54-extra_1766482359_0.jpg")
      *                             )
      *                         ),
@@ -375,7 +375,7 @@ class ProductBundleController extends Controller
      *                         type="object",
      *
      *                         @OA\Property(property="path", type="string", example="bundles/images/bundle_1_a54-extra_1766482359_0.jpg"),
-     *                         @OA\Property(property="url", type="string", example="http://localhost/storage/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"),
+     *                         @OA\Property(property="url", type="string", example="http://techhaven.localhost/tenancy/assets/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"),
      *                         @OA\Property(property="filename", type="string", example="bundle_1_a54-extra_1766482359_0.jpg")
      *                     )
      *                 ),

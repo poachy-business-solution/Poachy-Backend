@@ -2,12 +2,14 @@
 
 namespace App\Http\Resources\Tenant\Product;
 
+use App\Http\Resources\Tenant\Concerns\ResolvesTenantPublicAssetUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductMinimalResource extends JsonResource
 {
+    use ResolvesTenantPublicAssetUrls;
+
     /**
      * Transform the resource into an array.
      */
@@ -29,10 +31,10 @@ class ProductMinimalResource extends JsonResource
 
     protected function getPrimaryImageUrl(): ?string
     {
-        if (!$this->primary_image) {
+        if (! $this->primary_image) {
             return null;
         }
 
-        return Storage::disk('public')->url($this->primary_image);
+        return $this->tenantPublicAssetUrl($this->primary_image);
     }
 }

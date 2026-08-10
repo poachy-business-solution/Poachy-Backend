@@ -2,12 +2,14 @@
 
 namespace App\Http\Resources\Tenant\Product;
 
+use App\Http\Resources\Tenant\Concerns\ResolvesTenantPublicAssetUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductBrandResource extends JsonResource
 {
+    use ResolvesTenantPublicAssetUrls;
+
     /**
      * Transform the resource into an array.
      */
@@ -18,7 +20,7 @@ class ProductBrandResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'logo_url' => $this->logo_url ? asset('storage/' . $this->logo_url) : null,
+            'logo_url' => $this->tenantPublicAssetUrl($this->logo_url),
             'is_active' => $this->is_active,
             'is_featured' => $this->is_featured,
             'display_order' => $this->display_order,
@@ -26,13 +28,13 @@ class ProductBrandResource extends JsonResource
             // Relationships (loaded conditionally)
             'products' => $this->when(
                 $this->relationLoaded('products'),
-                fn() => ProductMinimalResource::collection($this->products)
+                fn () => ProductMinimalResource::collection($this->products)
             ),
 
             // Computed attributes
             'product_count' => $this->when(
                 $this->relationLoaded('products'),
-                fn() => $this->products->count()
+                fn () => $this->products->count()
             ),
 
             // Timestamps
