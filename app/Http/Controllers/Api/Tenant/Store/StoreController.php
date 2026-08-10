@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Store\AssignManagerRequest;
 use App\Http\Requests\Tenant\Store\StoreRequest;
 use App\Http\Requests\Tenant\Store\UpdateStoreDetailsRequest;
-use App\Http\Resources\Tenant\Store\StoreCollection;
 use App\Http\Resources\Tenant\Store\StoreResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Store\StoreService;
@@ -27,82 +26,103 @@ class StoreController extends Controller
      *     description="Retrieves a paginated list of stores with optional filtering and sorting capabilities.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by name, code, city, or region",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Nairobi"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_main_store",
      *         in="query",
      *         description="Filter by main store flag",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=false
      *     ),
+     *
      *     @OA\Parameter(
      *         name="city",
      *         in="query",
      *         description="Filter by city",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Nairobi"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="region",
      *         in="query",
      *         description="Filter by region",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Central"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="manager_id",
      *         in="query",
      *         description="Filter by manager ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer"),
      *         example=5
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="name"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order (asc/desc)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}),
      *         example="asc"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100),
      *         example=20
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Stores retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stores retrieved successfully"),
      *             @OA\Property(
@@ -111,7 +131,9 @@ class StoreController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="code", type="string", example="STR-2025-74622"),
      *                         @OA\Property(property="name", type="string", example="Branch Store - Mombasa"),
@@ -141,31 +163,11 @@ class StoreController extends Controller
      *                     property="pagination",
      *                     type="object",
      *                     @OA\Property(property="total", type="integer", example=1),
-     *                     @OA\Property(property="count", type="integer", example=1),
      *                     @OA\Property(property="per_page", type="integer", example=15),
      *                     @OA\Property(property="current_page", type="integer", example=1),
      *                     @OA\Property(property="last_page", type="integer", example=1),
      *                     @OA\Property(property="from", type="integer", example=1),
      *                     @OA\Property(property="to", type="integer", example=1)
-     *                 ),
-     *                 @OA\Property(
-     *                     property="links",
-     *                     type="object",
-     *                     @OA\Property(property="first", type="array", @OA\Items(type="string")),
-     *                     @OA\Property(property="last", type="array", @OA\Items(type="string")),
-     *                     @OA\Property(property="prev", type="array", @OA\Items(type="string", nullable=true)),
-     *                     @OA\Property(property="next", type="array", @OA\Items(type="string", nullable=true))
-     *                 ),
-     *                 @OA\Property(
-     *                     property="meta",
-     *                     type="object",
-     *                     @OA\Property(property="current_page", type="integer"),
-     *                     @OA\Property(property="from", type="integer"),
-     *                     @OA\Property(property="last_page", type="integer"),
-     *                     @OA\Property(property="path", type="string"),
-     *                     @OA\Property(property="per_page", type="integer"),
-     *                     @OA\Property(property="to", type="integer"),
-     *                     @OA\Property(property="total", type="integer")
      *                 )
      *             ),
      *             @OA\Property(
@@ -178,6 +180,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -205,12 +208,9 @@ class StoreController extends Controller
             // Get paginated stores
             $stores = $this->storeService->getStores($filters, $perPage);
 
-            // Transform to resource collection
-            $collection = new StoreCollection($stores);
-
-            return ApiResponse::success(
+            return ApiResponse::paginated(
+                StoreResource::collection($stores),
                 'Stores retrieved successfully',
-                $collection->response()->getData(true)
             );
         } catch (\Exception $e) {
             Log::error('Failed to fetch stores', [
@@ -232,10 +232,13 @@ class StoreController extends Controller
      *     description="Creates a new store with the provided details. The store will be automatically assigned a unique code.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name", "address"},
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, description="Store name", example="Branch Store - Mombasa"),
      *             @OA\Property(property="description", type="string", maxLength=1000, description="Store description", example="Mombasa branch location"),
      *             @OA\Property(property="address", type="string", maxLength=500, description="Store address", example="Moi Avenue, Mombasa"),
@@ -248,10 +251,13 @@ class StoreController extends Controller
      *             @OA\Property(property="manager_id", type="integer", description="Manager user ID (must have manager/owner role)", example=6)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stores retrieved successfully"),
      *             @OA\Property(
@@ -260,7 +266,9 @@ class StoreController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="code", type="string", example="STR-2025-08954"),
      *                         @OA\Property(property="name", type="string", example="Branch Store - Nairobi"),
@@ -327,6 +335,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -334,7 +343,9 @@ class StoreController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -379,18 +390,23 @@ class StoreController extends Controller
      *     description="Retrieves detailed information about a specific store including manager, creator, and updater information.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store retrieved successfully"),
      *             @OA\Property(
@@ -446,6 +462,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -461,7 +478,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
@@ -491,18 +508,23 @@ class StoreController extends Controller
      *     description="Update only specific store details. Only provided fields will be updated, other fields remain unchanged.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Store details to update (all fields are optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, description="Store name", example="Updated Store Name"),
      *             @OA\Property(property="description", type="string", maxLength=1000, description="Store description", example="Updated description"),
      *             @OA\Property(property="address", type="string", maxLength=500, description="Store address", example="New Address Street"),
@@ -512,10 +534,13 @@ class StoreController extends Controller
      *             @OA\Property(property="email", type="string", format="email", maxLength=255, description="Email address", example="updated@store.com")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store details updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store details updated successfully"),
      *             @OA\Property(
@@ -571,6 +596,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -590,7 +616,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
@@ -622,18 +648,23 @@ class StoreController extends Controller
      *     description="Sets the store as the main store. Any existing main store will be automatically unset.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store set as main store successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store set as main store successfully"),
      *             @OA\Property(
@@ -646,6 +677,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -661,7 +693,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
@@ -688,18 +720,23 @@ class StoreController extends Controller
      *     description="Activates a store, making it available for use.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store activated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store activated successfully"),
      *             @OA\Property(
@@ -712,6 +749,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -727,7 +765,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
@@ -754,18 +792,23 @@ class StoreController extends Controller
      *     description="Deactivates a store. Cannot deactivate if it's the only active store.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store deactivated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store deactivated successfully"),
      *             @OA\Property(
@@ -778,10 +821,13 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Cannot deactivate the only active store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot deactivate the only active store. At least one store must remain active."),
      *             @OA\Property(
@@ -794,6 +840,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -809,7 +856,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
@@ -838,18 +885,23 @@ class StoreController extends Controller
      *     description="Assigns a manager to the store. The user must have manager or owner role.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"manager_id"},
+     *
      *             @OA\Property(
      *                 property="manager_id",
      *                 type="integer",
@@ -858,10 +910,13 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Manager assigned successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Manager assigned successfully"),
      *             @OA\Property(
@@ -874,6 +929,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -885,7 +941,9 @@ class StoreController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -894,9 +952,11 @@ class StoreController extends Controller
      *                 @OA\Property(
      *                     property="manager_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected manager must be a user with manager or owner role.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -914,7 +974,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
@@ -944,18 +1004,23 @@ class StoreController extends Controller
      *     description="Removes the assigned manager from the store.",
      *     tags={"Tenant Store Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"manager_id"},
+     *
      *             @OA\Property(
      *                 property="manager_id",
      *                 type="integer",
@@ -964,10 +1029,13 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Manager removed successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Manager removed successfully"),
      *             @OA\Property(
@@ -980,6 +1048,7 @@ class StoreController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -999,7 +1068,7 @@ class StoreController extends Controller
         try {
             $store = $this->storeService->getStoreById($id);
 
-            if (!$store) {
+            if (! $store) {
                 return ApiResponse::notFound('Store not found');
             }
 
