@@ -4,7 +4,9 @@ namespace Tests\Feature\Tenant\Sales;
 
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
+use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\ProductSerial;
+use App\Models\Tenant\ProductVariant;
 use App\Services\Tenant\Sales\SaleCalculationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -111,6 +113,57 @@ class SaleCalculationServiceTest extends TestCase
     }
 
     // =========================================================================
+    // Resolver tax defaults — products created before tax configuration exists
+    // =========================================================================
+
+    public function test_resolve_product_item_treats_missing_tax_rate_as_zero_percent(): void
+    {
+        $product = $this->createProduct([
+            'base_selling_price' => 125.0,
+            'tax_rate_id' => null,
+        ]);
+
+        $lineItem = $this->resolveProductItem(storeId: 1, productId: $product->id, quantity: 2.0);
+
+        $this->assertNull($lineItem['tax_rate_id']);
+        $this->assertSame(0, $lineItem['tax_rate_percentage']);
+        $this->assertEquals(250.0, $lineItem['line_total_after_discount']);
+    }
+
+    public function test_resolve_variant_item_treats_missing_product_tax_rate_as_zero_percent(): void
+    {
+        $product = $this->createProduct([
+            'base_selling_price' => 100.0,
+            'tax_rate_id' => null,
+        ]);
+        $variant = $this->createVariant($product->id, ['variant_price' => 80.0]);
+
+        $lineItem = $this->resolveVariantItem(
+            storeId: 1,
+            productId: $product->id,
+            variantId: $variant->id,
+            quantity: 3.0
+        );
+
+        $this->assertNull($lineItem['tax_rate_id']);
+        $this->assertSame(0, $lineItem['tax_rate_percentage']);
+        $this->assertEquals(240.0, $lineItem['line_total_after_discount']);
+    }
+
+    public function test_resolve_bundle_item_treats_missing_tax_rate_as_zero_percent(): void
+    {
+        $component = $this->createProduct(['base_selling_price' => 50.0]);
+        $bundle = $this->createBundle(['tax_rate_id' => null, 'bundle_price' => 175.0]);
+        $this->createBundleItem($bundle->id, $component->id);
+
+        $lineItem = $this->resolveBundleItem(storeId: 1, bundleId: $bundle->id, quantity: 2.0);
+
+        $this->assertNull($lineItem['tax_rate_id']);
+        $this->assertSame(0, $lineItem['tax_rate_percentage']);
+        $this->assertEquals(350.0, $lineItem['line_total_after_discount']);
+    }
+
+    // =========================================================================
     // Helpers
     // =========================================================================
 
@@ -120,6 +173,30 @@ class SaleCalculationServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invoke(app(SaleCalculationService::class), $product, $storeId, $variantId);
+    }
+
+    private function resolveProductItem(int $storeId, int $productId, float $quantity): array
+    {
+        $method = new ReflectionMethod(SaleCalculationService::class, 'resolveProductItem');
+        $method->setAccessible(true);
+
+        return $method->invoke(app(SaleCalculationService::class), $storeId, $productId, $quantity);
+    }
+
+    private function resolveVariantItem(int $storeId, int $productId, int $variantId, float $quantity): array
+    {
+        $method = new ReflectionMethod(SaleCalculationService::class, 'resolveVariantItem');
+        $method->setAccessible(true);
+
+        return $method->invoke(app(SaleCalculationService::class), $storeId, $productId, $variantId, $quantity);
+    }
+
+    private function resolveBundleItem(int $storeId, int $bundleId, float $quantity): array
+    {
+        $method = new ReflectionMethod(SaleCalculationService::class, 'resolveBundleItem');
+        $method->setAccessible(true);
+
+        return $method->invoke(app(SaleCalculationService::class), $storeId, $bundleId, $quantity);
     }
 
     private function createProduct(array $overrides = []): Product
@@ -132,6 +209,48 @@ class SaleCalculationServiceTest extends TestCase
             'requires_serial_tracking' => false,
             'base_uom_id' => 1,
         ], $overrides)));
+    }
+
+    private function createVariant(int $productId, array $overrides = []): ProductVariant
+    {
+        return Model::withoutEvents(fn () => ProductVariant::create(array_merge([
+            'product_id' => $productId,
+            'variant_name' => 'Small',
+            'sku' => 'VAR-'.uniqid(),
+            'uom_id' => 1,
+            'uom_quantity' => 1.0,
+            'quantity_in_base_uom' => 1.0,
+            'base_selling_price_adjustment' => 0.0,
+            'variant_price' => 80.0,
+            'stock_status' => 'in_stock',
+            'is_active' => true,
+        ], $overrides)));
+    }
+
+    private function createBundle(array $overrides = []): ProductBundle
+    {
+        return Model::withoutEvents(fn () => ProductBundle::create(array_merge([
+            'bundle_name' => 'Test Bundle',
+            'bundle_sku' => 'BUNDLE-'.uniqid(),
+            'base_uom_id' => 1,
+            'bundle_price' => 175.0,
+            'tax_rate_id' => null,
+            'is_active' => true,
+        ], $overrides)));
+    }
+
+    private function createBundleItem(int $bundleId, int $productId): void
+    {
+        DB::connection('tenant')->table('product_bundle_items')->insert([
+            'bundle_id' => $bundleId,
+            'product_id' => $productId,
+            'product_variant_id' => null,
+            'uom_id' => 1,
+            'quantity' => 1.0,
+            'quantity_in_base_uom' => 1.0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function createSerial(int $productId, string $serialNumber, float $cost, string $status = 'available'): ProductSerial
@@ -169,7 +288,12 @@ class SaleCalculationServiceTest extends TestCase
         foreach ([
             'product_serials',
             'product_batches',
+            'store_products',
+            'product_bundle_items',
+            'product_bundles',
+            'product_variants',
             'products',
+            'units_of_measure',
             'stores',
         ] as $table) {
             Schema::connection('tenant')->dropIfExists($table);
@@ -186,6 +310,27 @@ class SaleCalculationServiceTest extends TestCase
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::connection($conn)->create('units_of_measure', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 20)->unique();
+            $table->string('name');
+            $table->string('type');
+            $table->boolean('is_base_unit')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        DB::connection($conn)->table('units_of_measure')->insert([
+            'id' => 1,
+            'code' => 'pcs',
+            'name' => 'Piece',
+            'type' => 'count',
+            'is_base_unit' => true,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         Schema::connection($conn)->create('products', function (Blueprint $table) {
             $table->id();
@@ -217,6 +362,66 @@ class SaleCalculationServiceTest extends TestCase
             $table->text('online_description')->nullable();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_variants', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('product_id');
+            $table->string('variant_name');
+            $table->string('sku')->unique();
+            $table->json('attributes')->nullable();
+            $table->unsignedBigInteger('uom_id');
+            $table->decimal('uom_quantity', 15, 4);
+            $table->decimal('quantity_in_base_uom', 15, 4);
+            $table->decimal('base_selling_price_adjustment', 15, 2)->default(0);
+            $table->decimal('variant_price', 15, 2)->nullable();
+            $table->string('stock_status')->default('in_stock');
+            $table->decimal('reorder_level', 15, 4)->default(0);
+            $table->integer('shelf_life_days')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_bundles', function (Blueprint $table) {
+            $table->id();
+            $table->string('bundle_name');
+            $table->string('bundle_sku')->unique();
+            $table->text('description')->nullable();
+            $table->json('images')->nullable();
+            $table->unsignedBigInteger('base_uom_id');
+            $table->decimal('bundle_price', 15, 2);
+            $table->decimal('calculated_individual_price', 15, 2)->nullable();
+            $table->decimal('discount_amount', 15, 2)->nullable();
+            $table->unsignedBigInteger('tax_rate_id')->nullable();
+            $table->boolean('is_available_online')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->decimal('online_price', 15, 2)->nullable();
+            $table->text('online_description')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_bundle_items', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('bundle_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('uom_id');
+            $table->decimal('quantity', 15, 4);
+            $table->decimal('quantity_in_base_uom', 15, 4);
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('store_products', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('store_selling_price', 15, 2)->nullable();
+            $table->boolean('is_available')->default(true);
+            $table->integer('min_stock_level')->default(0);
+            $table->timestamps();
         });
 
         Schema::connection($conn)->create('product_batches', function (Blueprint $table) {
