@@ -103,6 +103,7 @@ Tenant POS systems push catalog and operational data up to the central marketpla
 ### Prerequisites
 
 - Docker + Docker Compose
+- GNU Make
 - `/etc/hosts` entries for the domains you want to use
 
 ### 1. Add domains to `/etc/hosts`
@@ -112,74 +113,58 @@ Tenant POS systems push catalog and operational data up to the central marketpla
 127.0.0.1   techhaven.poachy.test   # add one line per tenant you'll test locally
 ```
 
-### 2. Clone and configure
+### 2. One-shot setup
 
 ```bash
 git clone git@github.com:godiah/poachy.git
 cd poachy
-cp .env.example .env
+make setup
 ```
 
-Open `.env` and fill in the required values (see [Environment Variables](#environment-variables) below). The `.env.example` ships with Docker-ready defaults (`CENTRAL_DB_HOST=mysql`, `REDIS_HOST=redis`, etc.) so minimal changes are needed for local dev.
+`make setup` handles the fresh-clone path in the required order:
 
-### 3. Generate an application key
+- creates the shared `dbtools` Docker network if missing
+- copies `.env.example` to `.env` if needed
+- builds and starts the local Docker services
+- runs `composer install` inside the app container, so the bind-mounted `vendor/` directory exists
+- generates `APP_KEY` if it is still empty
+- runs central migrations and central seeders
+- rebuilds the full demo tenant with `tenant:seed-demo`
+
+The `.env.example` ships with Docker-ready defaults (`CENTRAL_DB_HOST=mysql`, `REDIS_HOST=redis`, `CENTRAL_API_URL=http://nginx`, etc.) so minimal changes are needed for local dev.
+
+### Manual setup
+
+Use these only when you want to run the bootstrap one step at a time:
 
 ```bash
-# Either on the host (requires PHP 8.4) or inside the container after step 4
-php artisan key:generate
+make ensure-dbtools
+make env
+make up
+make composer-install
+make key
+make migrate
+make seed-central
+make seed-demo
 ```
 
-### 4. Build and start services
-
-```bash
-# Core services (app, nginx, mysql, redis, horizon, scheduler)
-docker compose up -d --build
-
-# Optional: Mailpit for local email catching (dashboard at http://localhost:8025)
-docker compose --profile dev-tools up -d
-```
-
-### 5. Run migrations
-
-```bash
-# Central database
-docker compose exec laravel.test php artisan migrate
-
-# Validate tenant migration files (no-op with no tenants yet — confirms files parse)
-docker compose exec laravel.test php artisan tenants:migrate
-```
-
-### 6. Create your first tenant (via API)
-
-```bash
-curl -X POST http://poachy.test/api/v1/central/auth/admin/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@poachy.com","password":"password"}'
-
-# Then use the returned token to register a tenant:
-curl -X POST http://poachy.test/api/v1/central/tenants \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"domain":"techhaven.poachy.test", ...}'
-```
-
-Stancl automatically creates the tenant database and runs tenant migrations on registration.
+`make seed-central` must run before `make seed-demo`; the demo command needs central business types, categories, plans, roles, and admin data.
 
 ### Useful commands
 
 ```bash
 # Open a shell inside the app container
-docker compose exec laravel.test bash
+make shell
 
 # Run artisan commands (sail-style)
-docker compose exec laravel.test php artisan <command>
+make artisan cmd="route:list"
 
 # Tail logs
-docker compose logs -f laravel.test
+make logs
 docker compose logs -f horizon
 
 # Stop everything
-docker compose down
+make down
 
 # Stop and wipe volumes (destructive — deletes all DB data)
 docker compose down -v
