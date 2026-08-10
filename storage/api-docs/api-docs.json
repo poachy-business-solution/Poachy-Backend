@@ -19642,6 +19642,41 @@
                 ]
             }
         },
+        "/api/v1/central/workspaces/lookup": {
+            "get": {
+                "tags": [
+                    "Central - Public Workspace"
+                ],
+                "summary": "Find workspace",
+                "description": "Resolve a tenant workspace before login by exact tenant id, domain, subdomain slug, or business email.",
+                "operationId": "lookupWorkspace",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Tenant id, full domain, subdomain slug, or business email",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255,
+                            "minLength": 2
+                        },
+                        "example": "demo"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workspace found"
+                    },
+                    "404": {
+                        "description": "Workspace not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
         "/api/v1/central/subscription-plans": {
             "get": {
                 "tags": [
@@ -27434,6 +27469,49 @@
                 "responses": {
                     "200": {
                         "description": "Categories retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/onboarding-template": {
+            "get": {
+                "tags": [
+                    "Tenant Business Details"
+                ],
+                "summary": "Get onboarding template",
+                "description": "Returns the category and unit-of-measure starter template for the current tenant or the supplied business selection.",
+                "operationId": "getOnboardingTemplate",
+                "parameters": [
+                    {
+                        "name": "business_type_id",
+                        "in": "query",
+                        "description": "Business type ID to preview before business details are saved",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "business_category_id",
+                        "in": "query",
+                        "description": "Business category ID to preview before business details are saved",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Onboarding template retrieved successfully"
                     },
                     "401": {
                         "description": "Unauthorized"
@@ -59464,6 +59542,173 @@
                 ]
             }
         },
+        "/api/v1/tenant/serials": {
+            "get": {
+                "tags": [
+                    "Tenant - Product Serials"
+                ],
+                "summary": "List product serials",
+                "description": "Retrieve individually-serialized inventory units (e.g. IMEIs) with filtering by store, product, variant, and availability.",
+                "operationId": "listProductSerials",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 4
+                        }
+                    },
+                    {
+                        "name": "variant_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "only_available",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Serials retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Serials retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "serial_number": {
+                                                        "type": "string",
+                                                        "example": "IMEI-359012345678901"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/serials/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant - Product Serials"
+                ],
+                "summary": "Get single product serial",
+                "description": "Retrieve detailed information about a specific serialized inventory unit by ID.",
+                "operationId": "getProductSerial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Serial retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Serial not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/serials/lookup/{serialNumber}": {
+            "get": {
+                "tags": [
+                    "Tenant - Product Serials"
+                ],
+                "summary": "Look up a serial by its real-world serial number",
+                "description": "Warranty/support lookup — find which sale or store a specific serialized unit belongs to by its manufacturer serial number/IMEI.",
+                "operationId": "lookupProductSerial",
+                "parameters": [
+                    {
+                        "name": "serialNumber",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "IMEI-359012345678901"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Serial found"
+                    },
+                    "404": {
+                        "description": "No serial matches this number"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/purchase-orders": {
             "get": {
                 "tags": [
@@ -85311,7 +85556,7 @@
                                                     "logo_url": {
                                                         "type": "string",
                                                         "format": "url",
-                                                        "example": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/tech-haven-logo_1765886057.jpg"
+                                                        "example": "http://techhaven.localhost/tenancy/assets/products/brands/logos/tech-haven-logo_1765886057.jpg"
                                                     },
                                                     "is_active": {
                                                         "type": "boolean",
@@ -85376,7 +85621,7 @@
                                             "name": "Apple",
                                             "slug": "apple",
                                             "description": "American technology company",
-                                            "logo_url": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/tech-haven-logo_1765886057.jpg",
+                                            "logo_url": "http://techhaven.localhost/tenancy/assets/products/brands/logos/tech-haven-logo_1765886057.jpg",
                                             "is_active": true,
                                             "is_featured": false,
                                             "display_order": 1,
@@ -85388,7 +85633,7 @@
                                             "name": "Samsung",
                                             "slug": "samsung",
                                             "description": "China technology company",
-                                            "logo_url": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/odometer_1765886108.jpg",
+                                            "logo_url": "http://techhaven.localhost/tenancy/assets/products/brands/logos/odometer_1765886108.jpg",
                                             "is_active": true,
                                             "is_featured": true,
                                             "display_order": 2,
@@ -85511,7 +85756,7 @@
                                                 "logo_url": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/odometer_1765886108.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/brands/logos/odometer_1765886108.jpg"
                                                 },
                                                 "is_active": {
                                                     "type": "boolean",
@@ -85639,7 +85884,7 @@
                                                 "logo_url": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://techhaven.localhost/tenancy/assets/storage/products/brands/logos/tech-haven-logo_1765886057.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/brands/logos/tech-haven-logo_1765886057.jpg"
                                                 },
                                                 "is_active": {
                                                     "type": "boolean",
@@ -86346,7 +86591,7 @@
                                                                         },
                                                                         "url": {
                                                                             "type": "string",
-                                                                            "example": "http://localhost/storage/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
+                                                                            "example": "http://techhaven.localhost/tenancy/assets/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
                                                                         },
                                                                         "filename": {
                                                                             "type": "string",
@@ -87055,7 +87300,7 @@
                                                             },
                                                             "url": {
                                                                 "type": "string",
-                                                                "example": "http://localhost/storage/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
+                                                                "example": "http://techhaven.localhost/tenancy/assets/bundles/images/bundle_1_a54-extra_1766482359_0.jpg"
                                                             },
                                                             "filename": {
                                                                 "type": "string",
@@ -90003,7 +90248,7 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "products": {
+                                                "data": {
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
@@ -90103,7 +90348,7 @@
                                                             "primary_image": {
                                                                 "type": "string",
                                                                 "format": "url",
-                                                                "example": "http://localhost/storage/products/images/primary_a54_1766233929.jpg"
+                                                                "example": "http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766233929.jpg"
                                                             },
                                                             "created_at": {
                                                                 "type": "string",
@@ -90303,8 +90548,8 @@
                                     "name",
                                     "category_id",
                                     "base_selling_price",
-                                    "tax_rate_id",
-                                    "base_uom_id"
+                                    "base_uom_id",
+                                    "primary_image"
                                 ],
                                 "properties": {
                                     "name": {
@@ -90333,7 +90578,7 @@
                                         "example": 7
                                     },
                                     "product_type": {
-                                        "description": "Product type",
+                                        "description": "Product type. Defaults to simple when omitted.",
                                         "type": "string",
                                         "enum": [
                                             "simple",
@@ -90539,14 +90784,14 @@
                                                 "primary_image": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://localhost/storage/products/images/primary_a54_1766233929.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766233929.jpg"
                                                 },
                                                 "secondary_images": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
                                                         "format": "url",
-                                                        "example": "http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg"
+                                                        "example": "http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg"
                                                     }
                                                 },
                                                 "image_count": {
@@ -91119,14 +91364,14 @@
                                                 "primary_image": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://localhost/storage/products/images/primary_a54_1766346778.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"
                                                 },
                                                 "secondary_images": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
                                                         "format": "url",
-                                                        "example": "http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg"
+                                                        "example": "http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg"
                                                     }
                                                 },
                                                 "image_count": {
@@ -91754,14 +91999,14 @@
                                                 "primary_image": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://localhost/storage/products/images/primary_a54_1766346778.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"
                                                 },
                                                 "secondary_images": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
                                                         "format": "url",
-                                                        "example": "http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg"
+                                                        "example": "http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg"
                                                     }
                                                 },
                                                 "image_count": {
@@ -92404,14 +92649,14 @@
                                                 "primary_image": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://localhost/storage/products/images/primary_a54_1766346778.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"
                                                 },
                                                 "secondary_images": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
                                                         "format": "url",
-                                                        "example": "http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg"
+                                                        "example": "http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg"
                                                     }
                                                 },
                                                 "image_count": {
@@ -93043,14 +93288,14 @@
                                                 "primary_image": {
                                                     "type": "string",
                                                     "format": "url",
-                                                    "example": "http://localhost/storage/products/images/primary_a54_1766346778.jpg"
+                                                    "example": "http://techhaven.localhost/tenancy/assets/products/images/primary_a54_1766346778.jpg"
                                                 },
                                                 "secondary_images": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
                                                         "format": "url",
-                                                        "example": "http://localhost/storage/products/images/secondary_a54-extra_1766233929_0.jpg"
+                                                        "example": "http://techhaven.localhost/tenancy/assets/products/images/secondary_a54-extra_1766233929_0.jpg"
                                                     }
                                                 },
                                                 "image_count": {
@@ -103997,6 +104242,19 @@
                 "summary": "Create new sale transaction",
                 "description": "Complete POS sale transaction with inventory deduction, payment processing, and loyalty/credit operations. This endpoint performs 16-step atomic transaction including: inventory validation, server-side price recalculation, sale record creation, payment processing, FIFO inventory deduction, coupon/promotion usage tracking, loyalty earning/redemption, credit transaction processing, and customer aggregate updates. All operations wrapped in database transaction with automatic rollback on any error.\n     *\n     *     **Supported Payment Scenarios:**\n     *     - Simple cash/card/mpesa payments\n     *     - Mixed payments (cash + mpesa, cash + card, etc.)\n     *     - Credit sales (customer account charging)\n     *     - Payments with loyalty redemption\n     *     - Walk-in sales (no customer_id)\n     *\n     *     **Key Features:**\n     *     - Server-side price recalculation (send same data as calculate endpoint)\n     *     - Automatic FIFO inventory deduction\n     *     - Coupon and promotion application (coupons take priority)\n     *     - Loyalty points earning and redemption in same transaction\n     *     - Customer aggregate updates (lifetime purchases, visit count, debt balance)\n     *     - Credit limit validation for credit sales",
                 "operationId": "createSale",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "Optional client-generated key for safely retrying offline/mobile sale submissions. Reusing the same key with the same payload returns the original sale without creating a duplicate.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        },
+                        "example": "pos-sale-20260810-8f3b9c"
+                    }
+                ],
                 "requestBody": {
                     "description": "Complete sale data with items and payments. Supports multiple payment methods, loyalty redemption, coupons, and credit sales.",
                     "required": true,
@@ -104786,6 +105044,35 @@
                                                 "tenant_name": {
                                                     "type": "string",
                                                     "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "An idempotent sale request with the same key is still processing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "A sale with this idempotency key is already in progress. Please wait."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "in_progress"
                                                 }
                                             },
                                             "type": "object"
@@ -116238,10 +116525,6 @@
                                                             "type": "integer",
                                                             "example": 1
                                                         },
-                                                        "count": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
                                                         "per_page": {
                                                             "type": "integer",
                                                             "example": 15
@@ -116261,63 +116544,6 @@
                                                         "to": {
                                                             "type": "integer",
                                                             "example": 1
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "links": {
-                                                    "properties": {
-                                                        "first": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "last": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "prev": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string",
-                                                                "nullable": true
-                                                            }
-                                                        },
-                                                        "next": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string",
-                                                                "nullable": true
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "meta": {
-                                                    "properties": {
-                                                        "current_page": {
-                                                            "type": "integer"
-                                                        },
-                                                        "from": {
-                                                            "type": "integer"
-                                                        },
-                                                        "last_page": {
-                                                            "type": "integer"
-                                                        },
-                                                        "path": {
-                                                            "type": "string"
-                                                        },
-                                                        "per_page": {
-                                                            "type": "integer"
-                                                        },
-                                                        "to": {
-                                                            "type": "integer"
-                                                        },
-                                                        "total": {
-                                                            "type": "integer"
                                                         }
                                                     },
                                                     "type": "object"
@@ -128680,6 +128906,10 @@
             "description": "Central - Customer - Marketplace - Delivery"
         },
         {
+            "name": "Central - Public Workspace",
+            "description": "Central - Public Workspace"
+        },
+        {
             "name": "Audit Logs",
             "description": "Audit Logs"
         },
@@ -128742,6 +128972,10 @@
         {
             "name": "Tenant - Product Batches",
             "description": "Tenant - Product Batches"
+        },
+        {
+            "name": "Tenant - Product Serials",
+            "description": "Tenant - Product Serials"
         },
         {
             "name": "Tenant - Purchase Orders",

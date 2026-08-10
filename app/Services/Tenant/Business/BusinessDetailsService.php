@@ -10,6 +10,10 @@ use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
 use App\Services\Tenant\TenantAccessService;
+use Database\Seeders\ProductCategorySeeder;
+use Database\Seeders\UnitsOfMeasureSeeder;
+use Database\Seeders\UomConversionsSeeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -19,7 +23,6 @@ class BusinessDetailsService
 {
     /**
      * Submit business details (tenant creates, stored in central DB).
-     * 
      */
     public function submitBusinessDetails(string $tenantId, array $data): BusinessDetail
     {
@@ -28,7 +31,7 @@ class BusinessDetailsService
             throw new \Exception('Business details already submitted. Please contact admin for updates.');
         }
 
-        return DB::connection('central')->transaction(function () use ($tenantId, $data) {
+        $businessDetail = DB::connection('central')->transaction(function () use ($tenantId, $data) {
             // Handle file uploads
             $logoPath = null;
             $bannerPath = null;
@@ -65,6 +68,10 @@ class BusinessDetailsService
 
             return $businessDetail->fresh(['businessType', 'businessCategory']);
         });
+
+        $this->seedOnboardingTemplateForActiveTenant($tenantId);
+
+        return $businessDetail;
     }
 
     /**
@@ -103,7 +110,7 @@ class BusinessDetailsService
      */
     public function reject(int $businessDetailId, ?string $notes = null): BusinessDetail
     {
-        return DB::connection('central')->transaction(function () use ($businessDetailId, $notes) {
+        return DB::connection('central')->transaction(function () use ($businessDetailId) {
             $businessDetail = BusinessDetail::on('central')->findOrFail($businessDetailId);
 
             // Delete uploaded files if rejecting
@@ -231,7 +238,7 @@ class BusinessDetailsService
                 $updateData['business_banner'] = $data['business_banner']->store('business/banners', 'public');
             }
 
-            if (!empty($updateData)) {
+            if (! empty($updateData)) {
                 $businessDetail->update($updateData);
             }
 
@@ -364,11 +371,12 @@ class BusinessDetailsService
             // Get tenant
             $tenant = Tenant::find($businessDetail->tenant_id);
 
-            if (!$tenant) {
+            if (! $tenant) {
                 Log::warning('Tenant not found for approved business', [
                     'business_id' => $businessDetail->id,
                     'tenant_id' => $businessDetail->tenant_id,
                 ]);
+
                 return;
             }
 
@@ -383,11 +391,12 @@ class BusinessDetailsService
             // End tenancy context
             tenancy()->end();
 
-            if (!$owner) {
+            if (! $owner) {
                 Log::warning('Owner not found for approved business', [
                     'business_id' => $businessDetail->id,
                     'tenant_id' => $businessDetail->tenant_id,
                 ]);
+
                 return;
             }
 
@@ -398,8 +407,8 @@ class BusinessDetailsService
                 ->first();
 
             $loginUrl = $primaryDomain
-                ? 'https://' . $primaryDomain->domain . '/login'
-                : config('app.url') . '/login';
+                ? 'https://'.$primaryDomain->domain.'/login'
+                : config('app.url').'/login';
 
             // Get available subscription plans
             $subscriptionPlans = SubscriptionPlan::on('central')
@@ -447,11 +456,12 @@ class BusinessDetailsService
             // Get tenant
             $tenant = Tenant::find($businessDetail->tenant_id);
 
-            if (!$tenant) {
+            if (! $tenant) {
                 Log::warning('Tenant not found for approved business', [
                     'business_id' => $businessDetail->id,
                     'tenant_id' => $businessDetail->tenant_id,
                 ]);
+
                 return;
             }
 
@@ -466,11 +476,12 @@ class BusinessDetailsService
             // End tenancy context
             tenancy()->end();
 
-            if (!$owner) {
+            if (! $owner) {
                 Log::warning('Owner not found for approved business', [
                     'business_id' => $businessDetail->id,
                     'tenant_id' => $businessDetail->tenant_id,
                 ]);
+
                 return;
             }
 
@@ -505,34 +516,48 @@ class BusinessDetailsService
         if (isset($features['max_products'])) {
             $keyFeatures[] = is_numeric($features['max_products'])
                 ? "Up to {$features['max_products']} products"
-                : "Unlimited products";
+                : 'Unlimited products';
         }
 
         if (isset($features['max_users'])) {
             $keyFeatures[] = is_numeric($features['max_users'])
                 ? "Up to {$features['max_users']} users"
-                : "Unlimited users";
+                : 'Unlimited users';
         }
 
         if (isset($features['max_locations'])) {
             $keyFeatures[] = is_numeric($features['max_locations'])
                 ? "Up to {$features['max_locations']} locations"
-                : "Unlimited locations";
+                : 'Unlimited locations';
         }
 
-        if (!empty($features['enable_ecommerce'])) {
-            $keyFeatures[] = "eCommerce enabled";
+        if (! empty($features['enable_ecommerce'])) {
+            $keyFeatures[] = 'eCommerce enabled';
         }
 
-        if (!empty($features['enable_marketplace'])) {
-            $keyFeatures[] = "Marketplace access";
+        if (! empty($features['enable_marketplace'])) {
+            $keyFeatures[] = 'Marketplace access';
         }
 
-        if (!empty($features['enable_analytics'])) {
+        if (! empty($features['enable_analytics'])) {
             $level = is_string($features['enable_analytics']) ? $features['enable_analytics'] : '';
-            $keyFeatures[] = "Analytics" . ($level ? " ({$level})" : "");
+            $keyFeatures[] = 'Analytics'.($level ? " ({$level})" : '');
         }
 
         return array_slice($keyFeatures, 0, 5); // Top 5 features
+    }
+
+    private function seedOnboardingTemplateForActiveTenant(string $tenantId): void
+    {
+        if (! tenancy()->initialized || (string) tenant()->id !== $tenantId) {
+            return;
+        }
+
+        foreach ([ProductCategorySeeder::class, UnitsOfMeasureSeeder::class, UomConversionsSeeder::class] as $seeder) {
+            Artisan::call('db:seed', [
+                '--class' => $seeder,
+                '--force' => true,
+            ]);
+        }
     }
 }

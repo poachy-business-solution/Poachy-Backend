@@ -753,6 +753,7 @@ Route::prefix('v1/tenant')
         // Business Types & Categories (Helper endpoints)
         Route::get('/business-types', [BusinessHelperController::class, 'index']);
         Route::get('/business-types/{typeId}/categories', [BusinessHelperController::class, 'categories']);
+        Route::get('/onboarding-template', [BusinessHelperController::class, 'onboardingTemplate']);
 
         // Business Details Submission
         Route::prefix('business-details')->group(function () {
