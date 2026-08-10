@@ -12,7 +12,7 @@ use App\Models\Tenant\InventoryMovement;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class InventoryMovementController extends Controller
 {
@@ -29,65 +29,80 @@ class InventoryMovementController extends Controller
      *     operationId="listInventoryMovements",
      *     tags={"Tenant - Inventory Movements"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by specific store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Filter by specific product ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="movement_type",
      *         in="query",
      *         description="Filter by movement type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"purchase", "sale", "adjustment", "transfer_in", "transfer_out", "return", "damage", "expiry", "theft", "stock_take"},
      *             example="adjustment"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         description="Filter movements from this date (inclusive, format: Y-m-d)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-12-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         description="Filter movements up to this date (inclusive, format: Y-m-d, must be after or equal to from_date)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-12-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=20, example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1, example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Inventory movements retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory movements retrieved successfully"),
      *             @OA\Property(
@@ -96,8 +111,10 @@ class InventoryMovementController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=4),
      *                         @OA\Property(
      *                             property="store",
@@ -182,11 +199,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -195,34 +214,46 @@ class InventoryMovementController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected store id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected product id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="movement_type",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected movement type is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="from_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The from date field must be a valid date in Y-m-d format.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="to_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The to date field must be a date after or equal to from date.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="per_page",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The per page field must be between 1 and 100.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -233,11 +264,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -250,11 +283,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -289,19 +324,22 @@ class InventoryMovementController extends Controller
      *     operationId="getInventoryMovement",
      *     tags={"Tenant - Inventory Movements"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the inventory movement record",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Movement record retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Movement record retrieved successfully"),
      *             @OA\Property(
@@ -385,11 +423,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Movement record not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -402,11 +442,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -419,11 +461,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User doesn't have permission to view this movement",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -436,11 +480,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -479,12 +525,14 @@ class InventoryMovementController extends Controller
      *     operationId="createInventoryAdjustment",
      *     tags={"Tenant - Inventory Movements"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Inventory adjustment details",
+     *
      *         @OA\JsonContent(
      *             required={"store_id", "product_id", "adjustment_type", "quantity", "uom_id", "reason"},
+     *
      *             @OA\Property(
      *                 property="store_id",
      *                 type="integer",
@@ -551,11 +599,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Inventory adjustment recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory adjustment recorded successfully"),
      *             @OA\Property(
@@ -632,11 +682,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -645,34 +697,46 @@ class InventoryMovementController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected product id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="adjustment_type",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The adjustment type field must be one of: increase, decrease.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="quantity",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The quantity field must be at least 0.0001.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected uom id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reason field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -683,11 +747,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -700,11 +766,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Resource not found (store, product, or UOM doesn't exist)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -717,11 +785,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -747,9 +817,11 @@ class InventoryMovementController extends Controller
                 'Inventory adjustment recorded successfully',
                 new InventoryMovementResource($movement)
             );
+        } catch (ValidationException $e) {
+            return ApiResponse::validationError($e->errors());
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to record adjustment: ' . $e->getMessage(),
+                'Failed to record adjustment: '.$e->getMessage(),
                 null,
                 500
             );
@@ -764,12 +836,14 @@ class InventoryMovementController extends Controller
      *     operationId="createDamagedGoods",
      *     tags={"Tenant - Inventory Movements"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Damaged goods details",
+     *
      *         @OA\JsonContent(
      *             required={"store_id", "product_id", "quantity", "uom_id", "reason"},
+     *
      *             @OA\Property(
      *                 property="store_id",
      *                 type="integer",
@@ -820,11 +894,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Damaged goods recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Damaged goods recorded successfully"),
      *             @OA\Property(
@@ -893,11 +969,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -906,29 +984,39 @@ class InventoryMovementController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected product id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="quantity",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The quantity field must be at least 0.0001.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected uom id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reason field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -939,11 +1027,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -956,11 +1046,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Resource not found (store, product, or UOM doesn't exist)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -973,11 +1065,13 @@ class InventoryMovementController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1005,7 +1099,7 @@ class InventoryMovementController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to record damage: ' . $e->getMessage(),
+                'Failed to record damage: '.$e->getMessage(),
                 null,
                 500
             );

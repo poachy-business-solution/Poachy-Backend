@@ -9,9 +9,11 @@ use App\Models\Tenant\Inventory;
 use App\Models\Tenant\InventoryMovement;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductUom;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class InventoryMovementService
 {
@@ -29,19 +31,19 @@ class InventoryMovementService
      * 3. Balance verification
      * 4. Event dispatching for downstream processes
      *
-     * @param array $data [
-     *   'store_id' => int (required),
-     *   'product_id' => int (required),
-     *   'variant_id' => int|null (optional),
-     *   'movement_type' => InventoryMovementType|string (required),
-     *   'uom_id' => int (required),
-     *   'quantity' => float (required, can be negative),
-     *   'unit_cost' => float|null (optional),
-     *   'reference_type' => string|null (optional, e.g., 'PurchaseOrder'),
-     *   'reference_id' => int|null (optional),
-     *   'notes' => string|null (optional),
-     * ]
-     * @return InventoryMovement
+     * @param  array  $data  [
+     *                       'store_id' => int (required),
+     *                       'product_id' => int (required),
+     *                       'variant_id' => int|null (optional),
+     *                       'movement_type' => InventoryMovementType|string (required),
+     *                       'uom_id' => int (required),
+     *                       'quantity' => float (required, can be negative),
+     *                       'unit_cost' => float|null (optional),
+     *                       'reference_type' => string|null (optional, e.g., 'PurchaseOrder'),
+     *                       'reference_id' => int|null (optional),
+     *                       'notes' => string|null (optional),
+     *                       ]
+     *
      * @throws \Exception
      */
     public function recordMovement(array $data): InventoryMovement
@@ -66,7 +68,7 @@ class InventoryMovementService
                 ->where('product_variant_id', $data['variant_id'] ?? null)
                 ->first();
 
-            if (!$inventory) {
+            if (! $inventory) {
                 // Create new inventory record if doesn't exist
                 $inventory = Inventory::create([
                     'store_id' => $data['store_id'],
@@ -87,11 +89,11 @@ class InventoryMovementService
             $newBalance = $oldBalance + $quantityInBaseUom;
 
             // Validate non-negative balance (unless it's damage/theft which updates quantity_damaged)
-            if ($newBalance < 0 && !in_array($movementType, [
+            if ($newBalance < 0 && ! in_array($movementType, [
                 InventoryMovementType::DAMAGE,
             ])) {
                 throw new \RuntimeException(
-                    "Insufficient stock. Available: {$oldBalance}, Requested: " . abs($quantityInBaseUom)
+                    "Insufficient stock. Available: {$oldBalance}, Requested: ".abs($quantityInBaseUom)
                 );
             }
 
@@ -173,11 +175,9 @@ class InventoryMovementService
     /**
      * Record purchase receipt (from purchase order)
      *
-     * @param int $purchaseOrderId
-     * @param array $items Array of [product_id, variant_id, quantity, uom_id, unit_cost]
-     * @return \Illuminate\Support\Collection
+     * @param  array  $items  Array of [product_id, variant_id, quantity, uom_id, unit_cost]
      */
-    public function recordPurchase(int $purchaseOrderId, array $items): \Illuminate\Support\Collection
+    public function recordPurchase(int $purchaseOrderId, array $items): Collection
     {
         $movements = collect();
 
@@ -214,11 +214,9 @@ class InventoryMovementService
     /**
      * Record sale (deduct inventory)
      *
-     * @param int $saleId
-     * @param array $items Array of [product_id, variant_id, quantity, uom_id, unit_cost]
-     * @return \Illuminate\Support\Collection
+     * @param  array  $items  Array of [product_id, variant_id, quantity, uom_id, unit_cost]
      */
-    public function recordSale(int $saleId, array $items): \Illuminate\Support\Collection
+    public function recordSale(int $saleId, array $items): Collection
     {
         $movements = collect();
 
@@ -254,9 +252,6 @@ class InventoryMovementService
 
     /**
      * Record inventory adjustment (manual correction)
-     *
-     * @param array $data
-     * @return InventoryMovement
      */
     public function recordAdjustment(array $data): InventoryMovement
     {
@@ -275,9 +270,6 @@ class InventoryMovementService
 
     /**
      * Record damaged goods
-     *
-     * @param array $data
-     * @return InventoryMovement
      */
     public function recordDamage(array $data): InventoryMovement
     {
@@ -290,9 +282,6 @@ class InventoryMovementService
 
     /**
      * Record customer return (increases inventory)
-     *
-     * @param array $data
-     * @return InventoryMovement
      */
     public function recordReturn(array $data): InventoryMovement
     {
@@ -305,12 +294,8 @@ class InventoryMovementService
 
     /**
      * Record stock transfer out (from source store)
-     *
-     * @param int $transferId
-     * @param array $items
-     * @return \Illuminate\Support\Collection
      */
-    public function recordTransferOut(int $transferId, array $items): \Illuminate\Support\Collection
+    public function recordTransferOut(int $transferId, array $items): Collection
     {
         $movements = collect();
 
@@ -335,12 +320,8 @@ class InventoryMovementService
 
     /**
      * Record stock transfer in (to destination store)
-     *
-     * @param int $transferId
-     * @param array $items
-     * @return \Illuminate\Support\Collection
      */
-    public function recordTransferIn(int $transferId, array $items): \Illuminate\Support\Collection
+    public function recordTransferIn(int $transferId, array $items): Collection
     {
         $movements = collect();
 
@@ -374,9 +355,7 @@ class InventoryMovementService
             return $quantity;
         }
 
-        $productUom = ProductUom::where('product_id', $productId)
-            ->where('uom_id', $uomId)
-            ->firstOrFail();
+        $productUom = $this->resolveProductUom($productId, $uomId);
 
         return $quantity * $productUom->conversion_to_base;
     }
@@ -392,11 +371,27 @@ class InventoryMovementService
             return $unitCost;
         }
 
-        $productUom = ProductUom::where('product_id', $productId)
-            ->where('uom_id', $uomId)
-            ->firstOrFail();
+        $productUom = $this->resolveProductUom($productId, $uomId);
 
         // Cost per base unit = (cost per transaction UOM) / (how many base units in 1 transaction UOM)
         return $unitCost / $productUom->conversion_to_base;
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function resolveProductUom(int $productId, int $uomId): ProductUom
+    {
+        $productUom = ProductUom::where('product_id', $productId)
+            ->where('uom_id', $uomId)
+            ->first();
+
+        if (! $productUom) {
+            throw ValidationException::withMessages([
+                'uom_id' => 'The selected unit of measure is not configured for this product.',
+            ]);
+        }
+
+        return $productUom;
     }
 }

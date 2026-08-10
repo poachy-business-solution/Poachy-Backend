@@ -5,19 +5,21 @@ namespace Tests\Feature\Tenant\Inventory;
 use App\Enums\Tenant\InventoryMovementType;
 use App\Events\Tenant\InventoryBalanceUpdated;
 use App\Events\Tenant\InventoryMovementRecorded;
+use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
+use App\Http\Requests\Tenant\Inventory\CreateAdjustmentRequest;
 use App\Models\Tenant\Inventory;
 use App\Models\Tenant\InventoryMovement;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 use Tests\TestCase;
 
@@ -269,13 +271,13 @@ class InventoryMovementServiceTest extends TestCase
                 [
                     'store_id' => 1,
                     'product_id' => 1,
-                    'uom_id' => 999, // no product_uoms row for this uom -> ModelNotFoundException
+                    'uom_id' => 999, // no product_uoms row for this uom -> validation error
                     'quantity' => 5.0,
                     'unit_cost' => 5.0,
                 ],
             ]));
             $this->fail('Expected an exception from the second item.');
-        } catch (ModelNotFoundException) {
+        } catch (ValidationException) {
             // expected
         }
 
@@ -331,6 +333,71 @@ class InventoryMovementServiceTest extends TestCase
         ]));
 
         $this->assertEquals(10.0, (float) $movement->quantity);
+    }
+
+    public function test_record_adjustment_with_uom_not_configured_for_product_throws_validation_exception(): void
+    {
+        DB::connection('tenant')->table('units_of_measure')->insert([
+            'id' => 3,
+            'code' => 'case',
+            'name' => 'Case',
+            'type' => 'count',
+            'is_base_unit' => false,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        try {
+            Model::withoutEvents(fn () => $this->service()->recordAdjustment([
+                'store_id' => 1,
+                'product_id' => 1,
+                'uom_id' => 3,
+                'quantity' => 10.0,
+            ]));
+            $this->fail('Expected ValidationException was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('uom_id', $e->errors());
+        }
+
+        $this->assertSame(0, InventoryMovement::count());
+    }
+
+    public function test_adjustment_controller_maps_product_uom_validation_failure_to_422(): void
+    {
+        DB::connection('tenant')->table('units_of_measure')->insert([
+            'id' => 3,
+            'code' => 'case',
+            'name' => 'Case',
+            'type' => 'count',
+            'is_base_unit' => false,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $controller = new InventoryMovementController($this->service(), new InventoryService);
+        $request = CreateAdjustmentRequest::create('/', 'POST', [
+            'store_id' => 1,
+            'product_id' => 1,
+            'adjustment_type' => 'increase',
+            'quantity' => 10.0,
+            'uom_id' => 3,
+            'reason' => 'Opening stock',
+        ]);
+        $request->setContainer($this->app);
+        $request->setUserResolver(fn () => new class
+        {
+            public function can($ability): bool
+            {
+                return true;
+            }
+        });
+        $request->validateResolved();
+
+        $response = $controller->createAdjustment($request);
+
+        $this->assertSame(422, $response->getStatusCode());
     }
 
     public function test_record_damage_forces_negative_with_default_notes(): void

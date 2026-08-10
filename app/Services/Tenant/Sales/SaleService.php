@@ -75,6 +75,8 @@ class SaleService
     public function createSale(array $data): Sale
     {
         return DB::transaction(function () use ($data) {
+            $customerId = $data['customer_id'] ?? null;
+
             // STEP 1: Validate inventory availability
             $this->validateInventoryAvailability($data['store_id'], $data['items']);
 
@@ -82,16 +84,16 @@ class SaleService
             $calculations = $this->calculationService->calculateSaleTotals($data);
 
             // STEP 3: Validate loyalty redemption (if loyalty enabled)
-            if ($calculations['loyalty_points_to_redeem'] > 0 && $data['customer_id']) {
+            if ($calculations['loyalty_points_to_redeem'] > 0 && $customerId) {
                 $this->validateLoyaltyRedemption(
-                    $data['customer_id'],
+                    $customerId,
                     $calculations['loyalty_points_to_redeem']
                 );
             }
 
             // STEP 4: Validate credit sale (if credit payment used)
-            if ($this->hasCreditPayment($data['payments']) && $data['customer_id']) {
-                $this->validateCreditSale($data['customer_id'], $calculations['amount_payable']);
+            if ($this->hasCreditPayment($data['payments']) && $customerId) {
+                $this->validateCreditSale($customerId, $calculations['amount_payable']);
             }
 
             // STEP 5: Validate payments
@@ -110,12 +112,12 @@ class SaleService
             );
 
             $actualLoyaltyPointsEarned = 0;
-            if ($this->loyaltyService->isEnabled() && $data['customer_id']) {
+            if ($this->loyaltyService->isEnabled() && $customerId) {
                 // Same formula/input as processSaleLoyalty() below, so the stored
                 // value here always matches what's actually awarded to the customer.
                 $actualLoyaltyPointsEarned = $this->loyaltyService->calculatePointsEarned(
                     $paymentInfo['amount_paid'],
-                    $data['customer_id']
+                    $customerId
                 );
             }
 
@@ -123,7 +125,7 @@ class SaleService
                 'sale_number' => $saleNumber,
                 'store_id' => $data['store_id'],
                 'shift_assignment_id' => $activeShift?->id,
-                'customer_id' => $data['customer_id'] ?? null,
+                'customer_id' => $customerId,
                 'sale_date' => now(),
                 'subtotal' => $calculations['subtotal_after_promotions'],
                 'tax_amount' => $calculations['tax_amount'],
@@ -161,8 +163,8 @@ class SaleService
             }
 
             // STEP 14: Process loyalty transactions (if enabled)
-            if ($this->loyaltyService->isEnabled() && $data['customer_id']) {
-                $customer = Customer::findOrFail($data['customer_id']);
+            if ($this->loyaltyService->isEnabled() && $customerId) {
+                $customer = Customer::findOrFail($customerId);
 
                 $this->loyaltyService->processSaleLoyalty(
                     $customer,
@@ -175,8 +177,8 @@ class SaleService
             }
 
             // STEP 15: Process credit transaction (if credit sale & enabled)
-            if ($paymentInfo['amount_due'] > 0 && $data['customer_id'] && $this->creditService->isEnabled()) {
-                $customer = Customer::findOrFail($data['customer_id']);
+            if ($paymentInfo['amount_due'] > 0 && $customerId && $this->creditService->isEnabled()) {
+                $customer = Customer::findOrFail($customerId);
 
                 $this->creditService->recordCreditSale(
                     $customer,
@@ -188,8 +190,8 @@ class SaleService
             }
 
             // STEP 16: Update customer aggregates
-            if ($data['customer_id']) {
-                $this->updateCustomerAggregates($data['customer_id'], $calculations['total_amount']);
+            if ($customerId) {
+                $this->updateCustomerAggregates($customerId, $calculations['total_amount']);
             }
 
             // STEP 17: Dispatch events
