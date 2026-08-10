@@ -43,7 +43,7 @@ class TenantService
             ]);
 
             // Create additional domains if provided
-            if (!empty($data['additional_domains'])) {
+            if (! empty($data['additional_domains'])) {
                 foreach ($data['additional_domains'] as $additionalDomain) {
                     Domain::create([
                         'domain' => $additionalDomain,
@@ -53,8 +53,8 @@ class TenantService
             }
 
             Log::info('Tenant created successfully', [
-                'tenant_id'             => $tenant->id,
-                'domain'                => $data['domain'],
+                'tenant_id' => $tenant->id,
+                'domain' => $data['domain'],
                 'mpesa_paybill_account' => $tenant->mpesa_paybill_account,
             ]);
 
@@ -217,6 +217,63 @@ class TenantService
             ->paginate($perPage);
     }
 
+    /**
+     * Resolve one public workspace by exact identifier.
+     */
+    public function findPublicWorkspace(string $identifier): ?Tenant
+    {
+        $identifier = $this->normalizeWorkspaceIdentifier($identifier);
+
+        if ($identifier === '') {
+            return null;
+        }
+
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false;
+        $domain = $isEmail ? null : $this->normalizeWorkspaceDomain($identifier);
+
+        return Tenant::with(['domains', 'businessDetail'])
+            ->where(function ($query) use ($identifier, $isEmail, $domain) {
+                if (! $isEmail) {
+                    $query->where('id', $identifier)
+                        ->orWhereHas('domains', function ($domainQuery) use ($identifier, $domain) {
+                            $domainQuery->where('domain', $domain)
+                                ->orWhereRaw('LOWER(SUBSTRING_INDEX(domain, ".", 1)) = ?', [$identifier]);
+                        });
+
+                    return;
+                }
+
+                $query->whereHas('businessDetail', function ($businessQuery) use ($identifier) {
+                    $businessQuery->whereRaw('LOWER(business_email) = ?', [$identifier]);
+                });
+            })
+            ->first();
+    }
+
+    protected function normalizeWorkspaceIdentifier(string $identifier): string
+    {
+        $identifier = trim(strtolower($identifier));
+
+        if (str_contains($identifier, '://')) {
+            $host = parse_url($identifier, PHP_URL_HOST);
+            $identifier = $host ? strtolower($host) : $identifier;
+        }
+
+        $identifier = explode('/', $identifier, 2)[0];
+
+        return trim($identifier, " \t\n\r\0\x0B/");
+    }
+
+    protected function normalizeWorkspaceDomain(string $identifier): string
+    {
+        if (str_contains($identifier, '.')) {
+            return $identifier;
+        }
+
+        $centralDomain = collect(config('tenancy.central_domains', []))->first();
+
+        return $centralDomain ? "{$identifier}.{$centralDomain}" : $identifier;
+    }
 
     /**
      * Start a trial period for a tenant.
@@ -226,7 +283,7 @@ class TenantService
         return DB::connection('central')->transaction(function () use ($tenantId, $trialEndsAt) {
             // Verify tenant exists
             $tenant = Tenant::find($tenantId);
-            if (!$tenant) {
+            if (! $tenant) {
                 throw new \Exception("Tenant not found with ID: {$tenantId}");
             }
 
@@ -235,8 +292,8 @@ class TenantService
                 ->where('is_active', true)
                 ->first();
 
-            if (!$freePlan) {
-                throw new \Exception("Free subscription plan not found.");
+            if (! $freePlan) {
+                throw new \Exception('Free subscription plan not found.');
             }
 
             // Check if tenant already has an active trial
@@ -247,7 +304,7 @@ class TenantService
                 ->first();
 
             if ($existingTrial) {
-                throw new \Exception("Tenant already has an active trial period.");
+                throw new \Exception('Tenant already has an active trial period.');
             }
 
             // Create trial subscription
@@ -281,7 +338,7 @@ class TenantService
     {
         // Verify tenant exists
         $tenant = Tenant::find($tenantId);
-        if (!$tenant) {
+        if (! $tenant) {
             throw new \Exception("Tenant not found with ID: {$tenantId}");
         }
 
