@@ -22,6 +22,11 @@ class CreateSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'idempotency_key' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
             'store_id' => [
                 'required',
                 'integer',
@@ -141,6 +146,12 @@ class CreateSaleRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        if ($this->header('Idempotency-Key')) {
+            $this->merge([
+                'idempotency_key' => $this->header('Idempotency-Key'),
+            ]);
+        }
+
         // Ensure loyalty_points_to_redeem is numeric if provided
         if ($this->has('loyalty_points_to_redeem') && $this->loyalty_points_to_redeem === null) {
             $this->merge([

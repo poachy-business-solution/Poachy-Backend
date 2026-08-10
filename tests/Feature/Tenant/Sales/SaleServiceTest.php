@@ -148,6 +148,73 @@ class SaleServiceTest extends TestCase
         $this->assertNull($sale->customer_id);
     }
 
+    public function test_reused_idempotency_key_returns_existing_sale_without_duplicate_side_effects(): void
+    {
+        $this->seedInventory(productId: 1, qtyAvailable: 10);
+
+        $calculation = Mockery::mock(SaleCalculationService::class);
+        $calculation->shouldReceive('calculateSaleTotals')
+            ->once()
+            ->andReturn($this->calculations([$this->lineItem()]));
+
+        $invMock = Mockery::mock(InventoryMovementService::class);
+        $invMock->shouldReceive('recordSale')->once();
+
+        $service = $this->makeService(
+            $calculation,
+            inventoryMovementService: $invMock
+        );
+
+        $data = $this->baseSaleData([
+            'idempotency_key' => 'pos-sale-key-001',
+        ]);
+
+        $first = null;
+        $second = null;
+        Model::withoutEvents(function () use ($service, $data, &$first, &$second) {
+            $first = $service->createSale($data);
+            $second = $service->createSale($data);
+        });
+
+        $this->assertSame($first->id, $second->id);
+        $this->assertSame('pos-sale-key-001', $first->idempotency_key);
+        $this->assertNotNull($first->idempotency_request_hash);
+        $this->assertSame(1, Sale::count());
+        $this->assertSame(1, SaleItem::count());
+        $this->assertSame(1, SalePayment::count());
+    }
+
+    public function test_reused_idempotency_key_with_different_payload_throws_without_duplicate_sale(): void
+    {
+        $this->seedInventory(productId: 1, qtyAvailable: 10);
+
+        $calculation = Mockery::mock(SaleCalculationService::class);
+        $calculation->shouldReceive('calculateSaleTotals')
+            ->once()
+            ->andReturn($this->calculations([$this->lineItem()]));
+
+        $service = $this->makeService($calculation);
+
+        Model::withoutEvents(fn () => $service->createSale($this->baseSaleData([
+            'idempotency_key' => 'pos-sale-key-002',
+            'notes' => 'original offline sale',
+        ])));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Idempotency-Key was already used for a different sale payload.');
+
+        try {
+            Model::withoutEvents(fn () => $service->createSale($this->baseSaleData([
+                'idempotency_key' => 'pos-sale-key-002',
+                'notes' => 'changed offline sale',
+            ])));
+        } finally {
+            $this->assertSame(1, Sale::count());
+            $this->assertSame(1, SaleItem::count());
+            $this->assertSame(1, SalePayment::count());
+        }
+    }
+
     // =========================================================================
     // Validation / failure paths
     // =========================================================================
@@ -648,6 +715,60 @@ class SaleServiceTest extends TestCase
         $this->assertSame(422, $response->getStatusCode());
     }
 
+    public function test_create_sale_request_accepts_idempotency_key_header(): void
+    {
+        $request = CreateSaleRequest::create('/', 'POST', [
+            'store_id' => 1,
+            'items' => [['product_id' => 1, 'quantity' => 1]],
+            'payments' => [['method' => 'cash', 'amount' => 100]],
+        ], server: [
+            'HTTP_IDEMPOTENCY_KEY' => 'pos-sale-header-key-001',
+        ]);
+        $request->setContainer($this->app);
+        $request->setUserResolver(fn () => new class
+        {
+            public function can($ability): bool
+            {
+                return true;
+            }
+        });
+
+        $request->validateResolved();
+
+        $this->assertSame('pos-sale-header-key-001', $request->validated('idempotency_key'));
+    }
+
+    public function test_controller_maps_sale_in_progress_to_409(): void
+    {
+        $mockService = Mockery::mock(SaleService::class);
+        $mockService->shouldReceive('createSale')->andThrow(new \RuntimeException('sale_in_progress'));
+
+        $controller = new SaleController($mockService, Mockery::mock(SaleCalculationService::class));
+
+        $request = CreateSaleRequest::create('/', 'POST', [
+            'store_id' => 1,
+            'items' => [['product_id' => 1, 'quantity' => 1]],
+            'payments' => [['method' => 'cash', 'amount' => 100]],
+        ], server: [
+            'HTTP_IDEMPOTENCY_KEY' => 'pos-sale-header-key-002',
+        ]);
+        $request->setContainer($this->app);
+        $request->setUserResolver(fn () => new class
+        {
+            public function can($ability): bool
+            {
+                return true;
+            }
+        });
+        $request->validateResolved();
+
+        $response = $controller->createSale($request);
+        $payload = $response->getData(true);
+
+        $this->assertSame(409, $response->getStatusCode());
+        $this->assertSame(['status' => 'in_progress'], $payload['errors']);
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
@@ -1042,6 +1163,8 @@ class SaleServiceTest extends TestCase
         Schema::connection($conn)->create('sales', function (Blueprint $table) {
             $table->id();
             $table->string('sale_number')->unique();
+            $table->string('idempotency_key', 100)->nullable()->unique();
+            $table->string('idempotency_request_hash', 64)->nullable();
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('shift_assignment_id')->nullable();
             $table->unsignedBigInteger('customer_id')->nullable();

@@ -813,6 +813,16 @@ class SaleController extends Controller
      *     tags={"Sales - Transactions"},
      *     security={{"sanctum":{}}},
      *
+     *     @OA\Parameter(
+     *         name="Idempotency-Key",
+     *         in="header",
+     *         description="Optional client-generated key for safely retrying offline/mobile sale submissions. Reusing the same key with the same payload returns the original sale without creating a duplicate.",
+     *         required=false,
+     *
+     *         @OA\Schema(type="string", maxLength=100),
+     *         example="pos-sale-20260810-8f3b9c"
+     *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Complete sale data with items and payments. Supports multiple payment methods, loyalty redemption, coupons, and credit sales.",
@@ -1216,6 +1226,23 @@ class SaleController extends Controller
      *     ),
      *
      *     @OA\Response(
+     *         response=409,
+     *         description="An idempotent sale request with the same key is still processing",
+     *
+     *         @OA\JsonContent(
+     *             type="object",
+     *
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="A sale with this idempotency key is already in progress. Please wait."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="status", type="string", example="in_progress")
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
      *
@@ -1283,6 +1310,13 @@ class SaleController extends Controller
                 ]
             );
         } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'sale_in_progress') {
+                return ApiResponse::conflict(
+                    'A sale with this idempotency key is already in progress. Please wait.',
+                    ['status' => 'in_progress']
+                );
+            }
+
             // Business logic errors (validation, insufficient stock, etc.)
             Log::warning('Sale creation failed - business logic', [
                 'error' => $e->getMessage(),

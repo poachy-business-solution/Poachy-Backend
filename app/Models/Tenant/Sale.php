@@ -2,27 +2,29 @@
 
 namespace App\Models\Tenant;
 
-use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\PaymentMethod;
+use App\Enums\Tenant\PaymentStatus;
 use App\Observers\Tenant\SaleObserver;
 use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 #[ObservedBy([SaleObserver::class])]
 class Sale extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'sales';
 
     protected $fillable = [
         'sale_number',
+        'idempotency_key',
+        'idempotency_request_hash',
         'store_id',
         'shift_assignment_id',
         'customer_id',
@@ -360,13 +362,13 @@ class Sale extends Model
 
     public function isCashPayment(): bool
     {
-        return $this->payment_method === \App\Enums\Tenant\PaymentMethod::CASH;
+        return $this->payment_method === PaymentMethod::CASH;
     }
 
     public function getChangeAmount(): float
     {
         // Change only applies to cash payments
-        if (!$this->isCashPayment()) {
+        if (! $this->isCashPayment()) {
             return 0;
         }
 

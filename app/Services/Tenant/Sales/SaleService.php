@@ -25,7 +25,9 @@ use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductSerialService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -73,6 +75,52 @@ class SaleService
      * Following real POS flow
      */
     public function createSale(array $data): Sale
+    {
+        $idempotencyKey = $this->normalizeIdempotencyKey($data['idempotency_key'] ?? null);
+
+        if ($idempotencyKey === null) {
+            return $this->createSaleTransaction($data);
+        }
+
+        $data['idempotency_key'] = $idempotencyKey;
+        $data['idempotency_request_hash'] = $this->buildIdempotencyRequestHash($data);
+
+        $existingSale = $this->findSaleByIdempotencyKey($idempotencyKey);
+
+        if ($existingSale) {
+            return $this->returnIdempotentSale($existingSale, $data['idempotency_request_hash']);
+        }
+
+        $lock = Cache::lock($this->idempotencyLockKey($idempotencyKey), 60);
+
+        if (! $lock->get()) {
+            throw new \RuntimeException('sale_in_progress');
+        }
+
+        try {
+            $existingSale = $this->findSaleByIdempotencyKey($idempotencyKey);
+
+            if ($existingSale) {
+                return $this->returnIdempotentSale($existingSale, $data['idempotency_request_hash']);
+            }
+
+            try {
+                return $this->createSaleTransaction($data);
+            } catch (QueryException $e) {
+                $existingSale = $this->findSaleByIdempotencyKey($idempotencyKey);
+
+                if ($existingSale) {
+                    return $this->returnIdempotentSale($existingSale, $data['idempotency_request_hash']);
+                }
+
+                throw $e;
+            }
+        } finally {
+            $lock->release();
+        }
+    }
+
+    protected function createSaleTransaction(array $data): Sale
     {
         return DB::transaction(function () use ($data) {
             $customerId = $data['customer_id'] ?? null;
@@ -123,6 +171,8 @@ class SaleService
 
             $sale = Sale::create([
                 'sale_number' => $saleNumber,
+                'idempotency_key' => $data['idempotency_key'] ?? null,
+                'idempotency_request_hash' => $data['idempotency_request_hash'] ?? null,
                 'store_id' => $data['store_id'],
                 'shift_assignment_id' => $activeShift?->id,
                 'customer_id' => $customerId,
@@ -209,6 +259,65 @@ class SaleService
 
             return $sale->fresh(['items', 'payments', 'customer', 'store']);
         });
+    }
+
+    protected function normalizeIdempotencyKey(mixed $key): ?string
+    {
+        if (! is_string($key)) {
+            return null;
+        }
+
+        $key = trim($key);
+
+        return $key === '' ? null : $key;
+    }
+
+    protected function findSaleByIdempotencyKey(string $idempotencyKey): ?Sale
+    {
+        return Sale::where('idempotency_key', $idempotencyKey)
+            ->with(['items', 'payments', 'customer', 'store'])
+            ->first();
+    }
+
+    protected function returnIdempotentSale(Sale $sale, string $requestHash): Sale
+    {
+        if ($sale->idempotency_request_hash !== $requestHash) {
+            throw new \RuntimeException('Idempotency-Key was already used for a different sale payload.');
+        }
+
+        Log::info('Returning existing sale for idempotent retry', [
+            'tenant_id' => tenant()->id,
+            'sale_id' => $sale->id,
+            'sale_number' => $sale->sale_number,
+            'idempotency_key' => $sale->idempotency_key,
+        ]);
+
+        return $sale;
+    }
+
+    protected function idempotencyLockKey(string $idempotencyKey): string
+    {
+        return 'tenant:'.tenant()->id.":sales:create:{$idempotencyKey}";
+    }
+
+    protected function buildIdempotencyRequestHash(array $data): string
+    {
+        unset($data['idempotency_key'], $data['idempotency_request_hash']);
+
+        $this->ksortRecursive($data);
+
+        return hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
+    }
+
+    protected function ksortRecursive(array &$data): void
+    {
+        ksort($data);
+
+        foreach ($data as &$value) {
+            if (is_array($value)) {
+                $this->ksortRecursive($value);
+            }
+        }
     }
 
     /**
