@@ -128,6 +128,26 @@ class SaleServiceTest extends TestCase
         $this->assertEquals('paid', $sale->payment_status->value);
     }
 
+    public function test_creates_walk_in_sale_when_customer_id_key_is_omitted(): void
+    {
+        $this->seedInventory(productId: 1, qtyAvailable: 10);
+
+        $service = $this->makeService(
+            $this->mockCalculation($this->calculations([$this->lineItem()]))
+        );
+
+        $data = $this->baseSaleData();
+        unset($data['customer_id']);
+
+        $sale = null;
+        Model::withoutEvents(function () use ($service, $data, &$sale) {
+            $sale = $service->createSale($data);
+        });
+
+        $this->assertSame(1, Sale::count());
+        $this->assertNull($sale->customer_id);
+    }
+
     // =========================================================================
     // Validation / failure paths
     // =========================================================================
