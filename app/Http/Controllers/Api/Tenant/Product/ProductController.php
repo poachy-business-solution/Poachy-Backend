@@ -142,7 +142,7 @@ class ProductController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(
-     *                     property="products",
+     *                     property="data",
      *                     type="array",
      *
      *                     @OA\Items(
@@ -271,19 +271,9 @@ class ProductController extends Controller
 
         $products = $this->productService->list($filters, $perPage);
 
-        return ApiResponse::success(
-            message: 'Products retrieved successfully',
-            data: [
-                'products' => ProductListResource::collection($products->items()),
-                'pagination' => [
-                    'current_page' => $products->currentPage(),
-                    'last_page' => $products->lastPage(),
-                    'per_page' => $products->perPage(),
-                    'total' => $products->total(),
-                    'from' => $products->firstItem(),
-                    'to' => $products->lastItem(),
-                ],
-            ]
+        return ApiResponse::paginated(
+            ProductListResource::collection($products),
+            'Products retrieved successfully'
         );
     }
 
