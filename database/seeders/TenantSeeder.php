@@ -8,8 +8,8 @@ use App\Models\BusinessSubscription;
 use App\Models\Domain;
 use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 class TenantSeeder extends Seeder
@@ -81,6 +81,15 @@ class TenantSeeder extends Seeder
             ],
         ]);
 
+        $tenant1->run(function () {
+            foreach ([ProductCategorySeeder::class, UnitsOfMeasureSeeder::class, UomConversionsSeeder::class] as $seeder) {
+                Artisan::call('db:seed', [
+                    '--class' => $seeder,
+                    '--force' => true,
+                ]);
+            }
+        });
+
         BusinessSubscription::create([
             'tenant_id' => $tenant1->id,
             'subscription_plan_id' => $premiumPlan->id,
@@ -89,7 +98,7 @@ class TenantSeeder extends Seeder
             'amount_paid' => $premiumPlan->price,
             'currency' => 'KES',
             'payment_method' => 'mpesa',
-            'payment_reference' => 'MPESA-' . strtoupper(Str::random(10)),
+            'payment_reference' => 'MPESA-'.strtoupper(Str::random(10)),
             'payment_date' => now()->subMonths(3),
             'status' => 'active',
             'auto_renew' => true,
@@ -100,7 +109,7 @@ class TenantSeeder extends Seeder
             'tenant_id' => $tenant1->id,
         ]);
 
-        $this->command->info("✓ Created tenant: Tech Haven Electronics");
+        $this->command->info('✓ Created tenant: Tech Haven Electronics');
 
         $this->command->info("\n✓ Tenant seeding completed successfully!");
     }

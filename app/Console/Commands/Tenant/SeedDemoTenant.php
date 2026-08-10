@@ -12,6 +12,9 @@ use App\Services\Central\Admin\Tenant\TenantService;
 use App\Services\Tenant\TenantAccessService;
 use Database\Seeders\Demo\DemoStaffSeeder;
 use Database\Seeders\Demo\DemoTenantDataSeeder;
+use Database\Seeders\ProductCategorySeeder;
+use Database\Seeders\UnitsOfMeasureSeeder;
+use Database\Seeders\UomConversionsSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
@@ -74,6 +77,15 @@ class SeedDemoTenant extends Command
         $this->info('Seeding full demo dataset inside the tenant database (this can take a few minutes)...');
 
         $tenant->run(function () {
+            foreach ([ProductCategorySeeder::class, UnitsOfMeasureSeeder::class, UomConversionsSeeder::class] as $seeder) {
+                Artisan::call('db:seed', [
+                    '--class' => $seeder,
+                    '--force' => true,
+                ]);
+
+                $this->output->write(Artisan::output());
+            }
+
             Artisan::call('db:seed', [
                 '--class' => DemoTenantDataSeeder::class,
                 '--force' => true,

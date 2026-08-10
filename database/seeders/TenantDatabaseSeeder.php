@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Services\Tenant\Business\OnboardingTemplateService;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
 
 class TenantDatabaseSeeder extends Seeder
 {
@@ -11,17 +12,28 @@ class TenantDatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        $template = app(OnboardingTemplateService::class)->forCurrentTenant();
+        $hasBusinessSelection = $template['business_type'] || $template['business_category'];
+
         // Seed tenant database
-        $this->call([
+        $seeders = [
             TenantRolesAndPermissionsSeeder::class,
 
-            ProductCategorySeeder::class,
             ProductBrandSeeder::class,
 
-            UnitsOfMeasureSeeder::class,
-            UomConversionsSeeder::class,
-
             TenantConfigurationSeeder::class,
-        ]);
+        ];
+
+        if ($hasBusinessSelection) {
+            array_splice($seeders, 2, 0, [
+                ProductCategorySeeder::class,
+                UnitsOfMeasureSeeder::class,
+                UomConversionsSeeder::class,
+            ]);
+        } else {
+            $this->command?->warn('Skipping catalog template seed until tenant business details are available.');
+        }
+
+        $this->call($seeders);
     }
 }
