@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\Central\Marketplace\ShoppingCartController;
 use App\Http\Controllers\Api\Central\Marketplace\TenantProfileController;
 use App\Http\Controllers\Api\Central\Marketplace\WishlistController;
 use App\Http\Controllers\Api\Central\Mpesa\MpesaC2BController;
+use App\Http\Controllers\Api\Central\PublicWorkspaceController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
@@ -55,6 +56,10 @@ Route::prefix('v1/central')->group(function () {
     // Subscription plans
     Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index']);
     Route::get('/subscription-plans/{slug}', [SubscriptionPlanController::class, 'show']);
+
+    // Workspace discovery for mobile/deep-link login before tenant auth.
+    Route::get('/workspaces/lookup', [PublicWorkspaceController::class, 'lookup'])
+        ->middleware('throttle:workspace');
 
     // M-Pesa callbacks (public — no auth, Safaricom calls these)
     Route::prefix('mpesa')->group(function () {

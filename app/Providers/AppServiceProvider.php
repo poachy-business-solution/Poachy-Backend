@@ -59,6 +59,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        // Public workspace discovery before tenant login. Kept strict because it
+        // accepts unauthenticated tenant/domain/email identifiers.
+        RateLimiter::for('workspace', function (Request $request) {
+            return Limit::perMinute(20)->by($request->ip());
+        });
+
         // Configure analytics rate limiter
         RateLimiter::for('analytics', function (Request $request) {
             return Limit::perMinute(60)->by($request->header('X-Session-Id') ?? $request->ip());
