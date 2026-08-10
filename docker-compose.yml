@@ -7,11 +7,7 @@
 #   docker compose --profile dev-tools up -d      # include Mailpit
 #
 # First-time setup:
-#   docker network create dbtools                 # shared network (already exists if pokeapay is running)
-#   cp .env.example .env && php artisan key:generate
-#   docker compose up -d
-#   docker compose exec laravel.test php artisan migrate
-#   docker compose exec laravel.test php artisan tenants:migrate
+#   make setup
 
 x-common-depends: &common-depends
   mysql:
@@ -29,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
+      target: development
       args:
         WWWUSER: '${WWWUSER:-1000}'
         WWWGROUP: '${WWWGROUP:-1000}'
@@ -162,8 +158,10 @@ services:
     volumes:
       - 'sail-mysql:/var/lib/mysql'
     networks:
-      - sail
-      - dbtools
+      sail:
+      dbtools:
+        aliases:
+          - poachy-mysql
     restart: unless-stopped
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']

@@ -103,7 +103,16 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["php-fpm"]
 
 # =============================================================
-# Stage 3 — Nginx (nginx container, port 80)
+# Stage 3 — Development runtime
+# Keeps Composer available for volume-mounted local installs.
+# Production deployments continue to use the production target.
+# =============================================================
+FROM production AS development
+
+COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
+
+# =============================================================
+# Stage 4 — Nginx (nginx container, port 80)
 # Copies only public/ from the production stage so nginx can
 # serve static files without touching the PHP-FPM container.
 # =============================================================
