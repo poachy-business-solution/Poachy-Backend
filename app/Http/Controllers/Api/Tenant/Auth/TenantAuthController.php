@@ -26,18 +26,24 @@ class TenantAuthController extends Controller
      *     summary="Tenant user login (Step 1 - Initiate)",
      *     description="Verify credentials and send OTP to email (2FA)",
      *     tags={"Tenant Authentication"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"email", "password"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="owner@merchant.com"),
      *             @OA\Property(property="password", type="string", format="password", example="Password123!")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="OTP sent successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Verification code sent to your email"),
      *             @OA\Property(property="data", type="object",
@@ -47,6 +53,7 @@ class TenantAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=422, description="Invalid credentials")
      * )
      */
@@ -74,18 +81,24 @@ class TenantAuthController extends Controller
      *     summary="Verify OTP (Step 2 - Complete Login)",
      *     description="Verify OTP and receive authentication token",
      *     tags={"Tenant Authentication"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"email", "otp"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="owner@merchant.com"),
      *             @OA\Property(property="otp", type="string", example="1234567")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Login successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Login successful"),
      *             @OA\Property(property="data", type="object",
@@ -95,6 +108,7 @@ class TenantAuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=422, description="Invalid or expired OTP")
      * )
      */
@@ -121,13 +135,17 @@ class TenantAuthController extends Controller
      *     summary="Resend OTP",
      *     description="Resend verification code to email",
      *     tags={"Tenant Authentication"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"email"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="owner@merchant.com")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="OTP resent successfully"
@@ -148,16 +166,20 @@ class TenantAuthController extends Controller
      *     summary="Change password (First-time login)",
      *     description="Change temporary password to permanent one (for first-time users)",
      *     tags={"Tenant Authentication"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"email", "current_password", "password", "password_confirmation"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="owner@merchant.com"),
      *             @OA\Property(property="current_password", type="string", format="password", example="TempPassword123!"),
      *             @OA\Property(property="password", type="string", format="password", example="MyNewPassword123!"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="MyNewPassword123!")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password changed successfully"
@@ -185,23 +207,29 @@ class TenantAuthController extends Controller
      *     description="Get authenticated tenant user details",
      *     tags={"Tenant Authentication"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="User details retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="User details retrieved successfully"),
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized")
      * )
      */
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user()->load('roles');
+
         return ApiResponse::success(
             'User details retrieved successfully',
-            new TenantUserResource($request->user())
+            new TenantUserResource($user)
         );
     }
 
@@ -212,14 +240,18 @@ class TenantAuthController extends Controller
      *     description="Logout tenant user and revoke token",
      *     tags={"Tenant Authentication"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Logout successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Logout successful")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized")
      * )
      */
@@ -237,23 +269,30 @@ class TenantAuthController extends Controller
      *     description="Update tenant user password (requires current password)",
      *     tags={"Tenant Authentication"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"current_password", "password", "password_confirmation"},
+     *
      *             @OA\Property(property="current_password", type="string", format="password", example="OldPassword123!"),
      *             @OA\Property(property="password", type="string", format="password", example="NewPassword123!"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="NewPassword123!")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Password updated successfully. Please login again.")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=422, description="Validation error - incorrect current password or weak new password")
      * )
