@@ -9,11 +9,15 @@ use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
+use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\PurchaseOrderService;
+use App\Services\Tenant\Product\ProductStockReceivingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -264,6 +268,60 @@ class PurchaseOrderReceivingTest extends TestCase
         });
     }
 
+    // =========================================================================
+    // One-shot mobile stock receiving
+    // =========================================================================
+
+    public function test_one_shot_receive_stock_allocates_product_and_receives_purchase_order(): void
+    {
+        $this->bindMovementMock();
+        Auth::shouldReceive('id')->andReturn(1);
+
+        $product = Product::findOrFail(1);
+
+        $result = Model::withoutEvents(fn () => $this->makeOneShotService()->receive($product, [
+            'store_id' => 1,
+            'quantity' => 5.0,
+            'unit_cost' => 12.50,
+            'supplier_id' => 1,
+            'expiry_date' => now()->addYear()->toDateString(),
+        ]));
+
+        $this->assertTrue($result['store_product_created']);
+        $this->assertSame(1, StoreProduct::where('store_id', 1)->where('product_id', $product->id)->count());
+        $this->assertSame(1, PurchaseOrder::count());
+        $this->assertSame(PurchaseOrderStatus::RECEIVED, PurchaseOrder::first()->status);
+        $this->assertSame(PurchaseOrderItemStatus::RECEIVED, PurchaseOrderItem::first()->status);
+        $this->assertEquals(5.0, (float) PurchaseOrderItem::first()->quantity_received);
+        $this->assertSame(1, ProductBatch::where('purchase_order_id', PurchaseOrder::first()->id)->count());
+        $this->assertSame(1, Supplier::find(1)->total_orders);
+    }
+
+    public function test_one_shot_receive_stock_reuses_existing_store_assignment(): void
+    {
+        $this->bindMovementMock();
+        Auth::shouldReceive('id')->andReturn(1);
+
+        $product = Product::findOrFail(1);
+
+        Model::withoutEvents(fn () => StoreProduct::create([
+            'store_id' => 1,
+            'product_id' => $product->id,
+            'is_available' => true,
+            'min_stock_level' => 0,
+        ]));
+
+        $result = Model::withoutEvents(fn () => $this->makeOneShotService()->receive($product, [
+            'store_id' => 1,
+            'quantity' => 2.0,
+            'unit_cost' => 10.00,
+            'supplier_id' => 1,
+        ]));
+
+        $this->assertFalse($result['store_product_created']);
+        $this->assertSame(1, StoreProduct::where('store_id', 1)->where('product_id', $product->id)->count());
+    }
+
     public function test_receiving_serial_tracked_product_partial_receipt_across_multiple_calls(): void
     {
         $this->bindMovementMock();
@@ -298,6 +356,14 @@ class PurchaseOrderReceivingTest extends TestCase
         $movementMock = Mockery::mock(InventoryMovementService::class);
         $movementMock->shouldReceive('recordMovement');
         app()->bind(InventoryMovementService::class, fn () => $movementMock);
+    }
+
+    private function makeOneShotService(): ProductStockReceivingService
+    {
+        return new ProductStockReceivingService(
+            new PurchaseOrderService,
+            new ProductBatchService
+        );
     }
 
     private function createPo(PurchaseOrderStatus $status = PurchaseOrderStatus::SENT): PurchaseOrder
@@ -394,6 +460,7 @@ class PurchaseOrderReceivingTest extends TestCase
             'units_of_measure',
             'stores',
             'suppliers',
+            'store_products',
         ] as $table) {
             Schema::connection('tenant')->dropIfExists($table);
         }
@@ -407,6 +474,7 @@ class PurchaseOrderReceivingTest extends TestCase
             $table->id();
             $table->string('name')->default('Test Supplier');
             $table->unsignedInteger('total_orders')->default(0);
+            $table->decimal('outstanding_balance', 15, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -470,6 +538,17 @@ class PurchaseOrderReceivingTest extends TestCase
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('uom_id');
             $table->decimal('conversion_to_base', 12, 4)->default(1.0);
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('store_products', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('store_selling_price', 10, 2)->nullable();
+            $table->boolean('is_available')->default(true);
+            $table->unsignedInteger('min_stock_level')->default(0);
             $table->timestamps();
         });
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
 use App\Services\Central\Admin\Tenant\TenantUserService;
 use App\Services\Tenant\Product\ProductService;
+use App\Services\Tenant\Product\ProductStockReceivingService;
 use App\Services\Tenant\Store\StoreService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -46,7 +47,7 @@ class MobilePaginationEnvelopeTest extends TestCase
             ->with([], 15)
             ->andReturn($this->emptyPaginator());
 
-        $payload = (new ProductController($productService))
+        $payload = (new ProductController($productService, Mockery::mock(ProductStockReceivingService::class)))
             ->index(Request::create('/api/v1/tenant/products', 'GET'))
             ->getData(true);
 
