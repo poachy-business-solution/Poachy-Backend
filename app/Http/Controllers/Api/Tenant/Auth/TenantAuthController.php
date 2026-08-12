@@ -80,17 +80,17 @@ class TenantAuthController extends Controller
      * @OA\Post(
      *     path="/api/v1/tenant/auth/verify-otp",
      *     summary="Verify OTP (Step 2 - Complete Login)",
-     *     description="Verify OTP and receive authentication token",
+     *     description="Verify a 7-digit login OTP and receive a 7-day Sanctum access token plus a 30-day rotating refresh token for mobile/POS sessions.",
      *     tags={"Tenant Authentication"},
      *
      *     @OA\RequestBody(
      *         required=true,
      *
      *         @OA\JsonContent(
-     *             required={"email", "otp"},
+     *             required={"email", "otp_code"},
      *
      *             @OA\Property(property="email", type="string", format="email", example="owner@merchant.com"),
-     *             @OA\Property(property="otp", type="string", example="1234567")
+     *             @OA\Property(property="otp_code", type="string", minLength=7, maxLength=7, example="1234567")
      *         )
      *     ),
      *
@@ -103,9 +103,27 @@ class TenantAuthController extends Controller
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Login successful"),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="user", type="object"),
-     *                 @OA\Property(property="token", type="string"),
-     *                 @OA\Property(property="tenant", type="object")
+     *                 @OA\Property(property="user", type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Demo Owner"),
+     *                     @OA\Property(property="email", type="string", format="email", example="owner@merchant.com"),
+     *                     @OA\Property(property="phone", type="string", nullable=true, example="+254700000000"),
+     *                     @OA\Property(property="is_active", type="boolean", example=true),
+     *                     @OA\Property(property="roles", type="array", @OA\Items(type="string"), example={"owner"}),
+     *                     @OA\Property(property="last_login_at", type="string", format="date-time", nullable=true, example="2026-08-12T10:20:30.000000Z"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-08-01T10:20:30.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-08-12T10:20:30.000000Z")
+     *                 ),
+     *                 @OA\Property(property="token", type="string", example="1|sanctum-access-token"),
+     *                 @OA\Property(property="token_expires_at", type="string", format="date-time", example="2026-08-19T10:20:30.000000Z"),
+     *                 @OA\Property(property="refresh_token", type="string", example="plain-text-refresh-token-returned-once"),
+     *                 @OA\Property(property="refresh_token_expires_at", type="string", format="date-time", example="2026-09-11T10:20:30.000000Z"),
+     *                 @OA\Property(property="tenant", type="object",
+     *                     @OA\Property(property="id", type="string", example="demo"),
+     *                     @OA\Property(property="name", type="string", nullable=true, example="Demo Store"),
+     *                     @OA\Property(property="domains", type="array", @OA\Items(type="string"), example={"demo.poachy.test"}),
+     *                     @OA\Property(property="has_business_details", type="boolean", example=true)
+     *                 )
      *             )
      *         )
      *     ),
@@ -137,7 +155,7 @@ class TenantAuthController extends Controller
      * @OA\Post(
      *     path="/api/v1/tenant/auth/refresh",
      *     summary="Refresh tenant POS token",
-     *     description="Rotate a tenant refresh token and issue a fresh access token without requiring OTP re-authentication.",
+     *     description="Rotate a tenant refresh token and issue a fresh 7-day Sanctum access token without requiring OTP re-authentication. The submitted refresh token is revoked on success and cannot be reused.",
      *     tags={"Tenant Authentication"},
      *
      *     @OA\RequestBody(
@@ -146,13 +164,56 @@ class TenantAuthController extends Controller
      *         @OA\JsonContent(
      *             required={"refresh_token"},
      *
-     *             @OA\Property(property="refresh_token", type="string"),
+     *             @OA\Property(property="refresh_token", type="string", example="plain-text-refresh-token-returned-by-login-or-previous-refresh"),
      *             @OA\Property(property="device_name", type="string", nullable=true, example="iPhone 15 POS")
      *         )
      *     ),
      *
-     *     @OA\Response(response=200, description="Token refreshed successfully"),
-     *     @OA\Response(response=422, description="Invalid or expired refresh token")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token refreshed successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Token refreshed successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Demo Owner"),
+     *                     @OA\Property(property="email", type="string", format="email", example="owner@merchant.com"),
+     *                     @OA\Property(property="phone", type="string", nullable=true, example="+254700000000"),
+     *                     @OA\Property(property="is_active", type="boolean", example=true),
+     *                     @OA\Property(property="roles", type="array", @OA\Items(type="string"), example={"owner"}),
+     *                     @OA\Property(property="last_login_at", type="string", format="date-time", nullable=true, example="2026-08-12T10:20:30.000000Z"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-08-01T10:20:30.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-08-12T10:20:30.000000Z")
+     *                 ),
+     *                 @OA\Property(property="token", type="string", example="2|new-sanctum-access-token"),
+     *                 @OA\Property(property="token_expires_at", type="string", format="date-time", example="2026-08-19T10:20:30.000000Z"),
+     *                 @OA\Property(property="refresh_token", type="string", example="new-plain-text-refresh-token-returned-once"),
+     *                 @OA\Property(property="refresh_token_expires_at", type="string", format="date-time", example="2026-09-11T10:20:30.000000Z"),
+     *                 @OA\Property(property="tenant", type="object",
+     *                     @OA\Property(property="id", type="string", example="demo"),
+     *                     @OA\Property(property="name", type="string", nullable=true, example="Demo Store"),
+     *                     @OA\Property(property="domains", type="array", @OA\Items(type="string"), example={"demo.poachy.test"}),
+     *                     @OA\Property(property="has_business_details", type="boolean", example=true)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error, invalid refresh token, expired refresh token, revoked refresh token, or token replay",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="The refresh token is invalid or has expired."),
+     *             @OA\Property(property="errors", type="object", nullable=true)
+     *         )
+     *     )
      * )
      */
     public function refresh(RefreshTokenRequest $request): JsonResponse
