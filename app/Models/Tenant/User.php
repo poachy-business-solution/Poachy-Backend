@@ -77,6 +77,11 @@ class User extends Authenticatable
         return $this->hasMany(TenantRefreshToken::class);
     }
 
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(TenantDeviceToken::class);
+    }
+
     public function createdPurchaseOrders()
     {
         return $this->hasMany(PurchaseOrder::class, 'created_by');
