@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tenant\Inventory;
 
+use App\Enums\Tenant\ResolutionAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Inventory\Alerts\ResolveExpiryAlertRequest;
 use App\Http\Resources\Tenant\Inventory\ExpiryAlertResource;
@@ -24,38 +25,49 @@ class ExpiryAlertController extends Controller
      *     summary="List expiry alerts",
      *     description="Retrieve a paginated list of expiry alerts with optional filters",
      *     operationId="listExpiryAlerts",
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=false,
      *         description="Filter by store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="alert_level",
      *         in="query",
      *         required=false,
      *         description="Filter by alert level",
+     *
      *         @OA\Schema(type="string", enum={"warning", "urgent", "expired"}, example="urgent")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_resolved",
      *         in="query",
      *         required=false,
      *         description="Filter by resolution status",
+     *
      *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         required=false,
      *         description="Number of items per page",
+     *
      *         @OA\Schema(type="integer", default=20, example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expiry alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expiry alerts retrieved successfully"),
      *             @OA\Property(
@@ -64,8 +76,10 @@ class ExpiryAlertController extends Controller
      *                 @OA\Property(
      *                     property="alerts",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="alert_level", type="string", example="urgent"),
      *                         @OA\Property(property="alert_level_label", type="string", example="Urgent"),
@@ -171,17 +185,22 @@ class ExpiryAlertController extends Controller
      *     summary="Get expiry alert details",
      *     description="Retrieve detailed information about a specific expiry alert",
      *     operationId="getExpiryAlertDetails",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Expiry alert ID",
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expiry alert retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expiry alert retrieved successfully"),
      *             @OA\Property(
@@ -263,18 +282,23 @@ class ExpiryAlertController extends Controller
      *     summary="Resolve expiry alert",
      *     description="Mark an expiry alert as resolved with required resolution action and optional notes",
      *     operationId="resolveExpiryAlert",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Expiry alert ID",
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Resolution details",
+     *
      *         @OA\JsonContent(
      *             required={"resolution_action"},
+     *
      *             @OA\Property(
      *                 property="resolution_action",
      *                 type="string",
@@ -284,10 +308,13 @@ class ExpiryAlertController extends Controller
      *             @OA\Property(property="notes", type="string", example="Sold at 80% discount")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expiry alert resolved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expiry alert resolved successfully"),
      *             @OA\Property(
@@ -362,7 +389,7 @@ class ExpiryAlertController extends Controller
     {
         $alert = $this->expiryAlertService->resolveAlert(
             $id,
-            $request->enum('resolution_action', \App\Enums\Tenant\ResolutionAction::class),
+            $request->enum('resolution_action', ResolutionAction::class),
             $request->input('notes'),
             $request->user()->id
         );
@@ -380,24 +407,31 @@ class ExpiryAlertController extends Controller
      *     summary="Get expiry alerts for a store",
      *     description="Retrieve expiry alerts for a specific store with optional resolution filter",
      *     operationId="getStoreExpiryAlerts",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_resolved",
      *         in="query",
      *         required=false,
      *         description="Filter by resolution status",
+     *
      *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store expiry alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store expiry alerts retrieved successfully"),
      *             @OA\Property(
@@ -406,8 +440,10 @@ class ExpiryAlertController extends Controller
      *                 @OA\Property(
      *                     property="alerts",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=3),
      *                         @OA\Property(property="alert_level", type="string", example="urgent"),
      *                         @OA\Property(property="alert_level_label", type="string", example="Urgent"),
@@ -500,17 +536,22 @@ class ExpiryAlertController extends Controller
      *     summary="Get expiry alert summary",
      *     description="Retrieve summary statistics of expiry alerts for a specific store",
      *     operationId="getExpiryAlertSummary",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expiry alert summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expiry alert summary retrieved successfully"),
      *             @OA\Property(
@@ -551,31 +592,40 @@ class ExpiryAlertController extends Controller
      *     summary="Get dashboard expiry alerts",
      *     description="Retrieve a limited list of expiry alerts for dashboard display",
      *     operationId="getDashboardExpiryAlerts",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         required=false,
      *         description="Number of alerts to return",
+     *
      *         @OA\Schema(type="integer", default=10, example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Dashboard expiry alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Dashboard expiry alerts retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=3),
      *                     @OA\Property(property="alert_level", type="string", example="urgent"),
      *                     @OA\Property(property="alert_level_label", type="string", example="Urgent"),

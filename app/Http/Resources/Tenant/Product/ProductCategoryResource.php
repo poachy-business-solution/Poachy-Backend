@@ -24,28 +24,28 @@ class ProductCategoryResource extends JsonResource
             // Relationships (loaded conditionally)
             'parent' => $this->when(
                 $this->relationLoaded('parent'),
-                fn() => $this->parent ? new ProductCategoryResource($this->parent) : null
+                fn () => $this->parent ? new ProductCategoryResource($this->parent) : null
             ),
 
             'children' => $this->when(
                 $this->relationLoaded('children'),
-                fn() => ProductCategoryResource::collection($this->children)
+                fn () => ProductCategoryResource::collection($this->children)
             ),
 
             'products' => $this->when(
                 $this->relationLoaded('products'),
-                fn() => ProductMinimalResource::collection($this->products)
+                fn () => ProductMinimalResource::collection($this->products)
             ),
 
             // Computed attributes
             'product_count' => $this->when(
                 $this->relationLoaded('products'),
-                fn() => $this->products->count()
+                fn () => $this->products->count()
             ),
 
             'has_children' => $this->when(
                 $this->relationLoaded('children'),
-                fn() => $this->children->isNotEmpty()
+                fn () => $this->children->isNotEmpty()
             ),
 
             'is_root' => is_null($this->parent_id),

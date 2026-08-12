@@ -3,12 +3,14 @@
 namespace App\Repositories\Tenant;
 
 use App\Models\Tenant\ExpenseCategory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ExpenseCategoryRepository
 {
     protected string $cachePrefix = 'expense_categories';
+
     protected int $cacheTtl = 3600; // 1 hour
 
     /**
@@ -27,14 +29,14 @@ class ExpenseCategoryRepository
         Cache::tags([
             'tenant',
             tenant()->id,
-            $this->cachePrefix
+            $this->cachePrefix,
         ])->flush();
     }
 
     /**
      * Get all categories with caching
      */
-    public function all(bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function all(bool $activeOnly = false): Collection
     {
         $cacheKey = $this->getCacheKey($activeOnly ? 'all_active' : 'all');
 
@@ -53,7 +55,7 @@ class ExpenseCategoryRepository
     /**
      * Get hierarchical tree structure
      */
-    public function tree(bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function tree(bool $activeOnly = false): Collection
     {
         $cacheKey = $this->getCacheKey($activeOnly ? 'tree_active' : 'tree');
 
@@ -100,9 +102,9 @@ class ExpenseCategoryRepository
     /**
      * Get children of a category
      */
-    public function getChildren(int $parentId, bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function getChildren(int $parentId, bool $activeOnly = false): Collection
     {
-        $cacheKey = $this->getCacheKey("children:{$parentId}:" . ($activeOnly ? 'active' : 'all'));
+        $cacheKey = $this->getCacheKey("children:{$parentId}:".($activeOnly ? 'active' : 'all'));
 
         return Cache::tags(['tenant', tenant()->id, $this->cachePrefix])
             ->remember($cacheKey, $this->cacheTtl, function () use ($parentId, $activeOnly) {
@@ -163,7 +165,7 @@ class ExpenseCategoryRepository
     public function delete(ExpenseCategory $category): bool
     {
         // Validate deletion is allowed
-        if (!$category->is_deletable) {
+        if (! $category->is_deletable) {
             throw new \Exception(
                 'Cannot delete category: it has associated expenses, active budgets, or child categories.'
             );
@@ -195,13 +197,13 @@ class ExpenseCategoryRepository
             $query->where('id', '!=', $excludeId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     /**
      * Get categories eligible for recurring expenses
      */
-    public function getRecurringEligible(bool $activeOnly = true): \Illuminate\Database\Eloquent\Collection
+    public function getRecurringEligible(bool $activeOnly = true): Collection
     {
         $cacheKey = $this->getCacheKey('recurring_eligible');
 
@@ -220,7 +222,7 @@ class ExpenseCategoryRepository
     /**
      * Get root categories only
      */
-    public function getRootCategories(bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function getRootCategories(bool $activeOnly = false): Collection
     {
         $cacheKey = $this->getCacheKey($activeOnly ? 'roots_active' : 'roots');
 

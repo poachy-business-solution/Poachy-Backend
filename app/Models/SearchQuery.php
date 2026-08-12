@@ -32,13 +32,13 @@ class SearchQuery extends Model
     protected function casts(): array
     {
         return [
-            'results_count'          => 'integer',
-            'has_results'            => 'boolean',
-            'filters_applied'        => 'array',
-            'results_clicked'        => 'integer',
+            'results_count' => 'integer',
+            'has_results' => 'boolean',
+            'filters_applied' => 'array',
+            'results_clicked' => 'integer',
             'products_added_to_cart' => 'integer',
-            'converted_to_purchase'  => 'boolean',
-            'searched_at'            => 'datetime',
+            'converted_to_purchase' => 'boolean',
+            'searched_at' => 'datetime',
         ];
     }
 

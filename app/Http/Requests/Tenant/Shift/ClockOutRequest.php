@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Tenant\Shift;
 
+use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\ShiftStatus;
+use App\Models\Tenant\SalePayment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClockOutRequest extends FormRequest
@@ -75,7 +77,7 @@ class ClockOutRequest extends FormRequest
             if ($assignment->status !== ShiftStatus::IN_PROGRESS) {
                 $validator->errors()->add(
                     'status',
-                    'Can only clock out of in-progress shifts. Current status: ' . $assignment->status->label()
+                    'Can only clock out of in-progress shifts. Current status: '.$assignment->status->label()
                 );
             }
 
@@ -90,10 +92,10 @@ class ClockOutRequest extends FormRequest
             // ✅ FIXED: Calculate variance against EXPECTED cash (including sales)
             if ($this->closing_cash !== null && $assignment->opening_cash !== null) {
                 // Get actual cash received from sales
-                $cashReceived = \App\Models\Tenant\SalePayment::whereHas('sale', function ($query) use ($assignment) {
+                $cashReceived = SalePayment::whereHas('sale', function ($query) use ($assignment) {
                     $query->where('shift_assignment_id', $assignment->id);
                 })
-                    ->where('payment_method', \App\Enums\Tenant\PaymentMethod::CASH)
+                    ->where('payment_method', PaymentMethod::CASH)
                     ->sum('amount');
 
                 // Calculate expected cash
@@ -106,9 +108,9 @@ class ClockOutRequest extends FormRequest
                 if ($variance >= $threshold && empty($this->cash_variance_reason)) {
                     $validator->errors()->add(
                         'cash_variance_reason',
-                        "Cash variance of KES " . number_format($variance, 2) . " requires an explanation. " .
-                            "Expected: KES " . number_format($expectedCash, 2) . ", " .
-                            "Counted: KES " . number_format($this->closing_cash, 2)
+                        'Cash variance of KES '.number_format($variance, 2).' requires an explanation. '.
+                            'Expected: KES '.number_format($expectedCash, 2).', '.
+                            'Counted: KES '.number_format($this->closing_cash, 2)
                     );
                 }
             }

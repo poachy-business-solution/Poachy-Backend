@@ -22,7 +22,7 @@ class SearchAnalyticsService
             ->map(function ($item) {
                 return [
                     'search_query' => $item->search_query,
-                    'count'        => $item->count,
+                    'count' => $item->count,
                 ];
             })
             ->toArray();
@@ -49,12 +49,12 @@ class SearchAnalyticsService
             ->get()
             ->map(function ($item) {
                 return [
-                    'search_query'    => $item->search_query,
-                    'search_count'    => $item->search_count,
-                    'avg_results'     => round($item->total_results / max($item->search_count, 1), 2),
-                    'clicks'          => $item->clicks,
-                    'cart_adds'       => $item->cart_adds,
-                    'conversions'     => $item->conversions,
+                    'search_query' => $item->search_query,
+                    'search_count' => $item->search_count,
+                    'avg_results' => round($item->total_results / max($item->search_count, 1), 2),
+                    'clicks' => $item->clicks,
+                    'cart_adds' => $item->cart_adds,
+                    'conversions' => $item->conversions,
                     'conversion_rate' => $this->calculateRate($item->conversions, $item->search_count),
                 ];
             })
@@ -78,17 +78,17 @@ class SearchAnalyticsService
             ->first();
 
         return [
-            'total_searches'        => $result->total_searches ?? 0,
+            'total_searches' => $result->total_searches ?? 0,
             'searches_with_results' => $result->searches_with_results ?? 0,
-            'zero_result_rate'      => $this->calculateRate(
+            'zero_result_rate' => $this->calculateRate(
                 ($result->total_searches ?? 0) - ($result->searches_with_results ?? 0),
                 $result->total_searches ?? 0
             ),
-            'total_clicks'          => $result->total_clicks ?? 0,
-            'click_through_rate'    => $this->calculateRate($result->total_clicks ?? 0, $result->total_searches ?? 0),
-            'total_cart_adds'       => $result->total_cart_adds ?? 0,
-            'total_conversions'     => $result->total_conversions ?? 0,
-            'conversion_rate'       => $this->calculateRate($result->total_conversions ?? 0, $result->total_searches ?? 0),
+            'total_clicks' => $result->total_clicks ?? 0,
+            'click_through_rate' => $this->calculateRate($result->total_clicks ?? 0, $result->total_searches ?? 0),
+            'total_cart_adds' => $result->total_cart_adds ?? 0,
+            'total_conversions' => $result->total_conversions ?? 0,
+            'conversion_rate' => $this->calculateRate($result->total_conversions ?? 0, $result->total_searches ?? 0),
         ];
     }
 
@@ -106,8 +106,8 @@ class SearchAnalyticsService
             ->map(function ($item) {
                 return [
                     'original_query' => $item->parentSearch->search_query ?? 'unknown',
-                    'refined_query'  => $item->search_query,
-                    'searched_at'    => $item->searched_at,
+                    'refined_query' => $item->search_query,
+                    'searched_at' => $item->searched_at,
                 ];
             })
             ->toArray();

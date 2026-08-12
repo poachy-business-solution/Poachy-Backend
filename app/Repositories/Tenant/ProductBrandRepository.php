@@ -55,7 +55,7 @@ class ProductBrandRepository
                         'stock_status',
                         'primary_image',
                     ]);
-            }
+            },
         ])->find($id);
     }
 
@@ -129,8 +129,8 @@ class ProductBrandRepository
         }
 
         // Search by name
-        if (!empty($filters['search'])) {
-            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        if (! empty($filters['search'])) {
+            $query->where('name', 'like', '%'.$filters['search'].'%');
         }
 
         return $query;

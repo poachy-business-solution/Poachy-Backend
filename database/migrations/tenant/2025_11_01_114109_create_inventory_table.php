@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('quantity_on_hand', 15, 4)->default(0)->comment('In base UOM'); // Always in base UOM
             $table->decimal('quantity_reserved', 15, 4)->default(0)->comment('In base UOM'); // Always in base UOM
             $table->decimal('quantity_available', 15, 4)->default(0)->comment('In base UOM'); // Computed: on_hand - reserved
-            $table->decimal('quantity_damaged', 15,4)->default(0)->comment('Defective/unusable stock');
+            $table->decimal('quantity_damaged', 15, 4)->default(0)->comment('Defective/unusable stock');
 
             // Audit & tracking
             $table->date('last_restock_date')->nullable();

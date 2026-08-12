@@ -10,6 +10,7 @@ class BusinessCategory extends Model
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'business_categories';
 
     protected $fillable = [

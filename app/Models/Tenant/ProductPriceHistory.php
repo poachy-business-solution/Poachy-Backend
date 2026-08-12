@@ -2,9 +2,9 @@
 
 namespace App\Models\Tenant;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class ProductPriceHistory extends Model
 {
@@ -84,7 +84,7 @@ class ProductPriceHistory extends Model
         }
 
         if ($to) {
-            $query->where('created_at', '<=', $to . ' 23:59:59');
+            $query->where('created_at', '<=', $to.' 23:59:59');
         }
 
         return $query;

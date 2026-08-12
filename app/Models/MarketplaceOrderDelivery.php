@@ -44,18 +44,18 @@ class MarketplaceOrderDelivery extends Model
     protected function casts(): array
     {
         return [
-            'delivery_method'         => DeliveryMethod::class,
-            'delivery_status'         => DeliveryStatus::class,
-            'zone_id'                 => 'integer',
-            'delivery_fee'            => 'decimal:2',
-            'estimated_pickup_time'   => 'datetime',
-            'actual_pickup_time'      => 'datetime',
+            'delivery_method' => DeliveryMethod::class,
+            'delivery_status' => DeliveryStatus::class,
+            'zone_id' => 'integer',
+            'delivery_fee' => 'decimal:2',
+            'estimated_pickup_time' => 'datetime',
+            'actual_pickup_time' => 'datetime',
             'estimated_delivery_time' => 'datetime',
-            'actual_delivery_time'    => 'datetime',
-            'delivery_attempts'       => 'integer',
-            'last_latitude'           => 'decimal:8',
-            'last_longitude'          => 'decimal:8',
-            'last_location_update'    => 'datetime',
+            'actual_delivery_time' => 'datetime',
+            'delivery_attempts' => 'integer',
+            'last_latitude' => 'decimal:8',
+            'last_longitude' => 'decimal:8',
+            'last_location_update' => 'datetime',
         ];
     }
 
@@ -85,8 +85,8 @@ class MarketplaceOrderDelivery extends Model
     public function updateLocation(float $latitude, float $longitude): bool
     {
         return $this->update([
-            'last_latitude'       => $latitude,
-            'last_longitude'      => $longitude,
+            'last_latitude' => $latitude,
+            'last_longitude' => $longitude,
             'last_location_update' => now(),
         ]);
     }

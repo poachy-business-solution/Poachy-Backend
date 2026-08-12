@@ -17,7 +17,6 @@ use Illuminate\Http\Request;
  */
 class TenantProfileController extends Controller
 {
-
     /**
      * @OA\Get(
      *     path="/api/v1/central/tenant-profiles",
@@ -26,24 +25,31 @@ class TenantProfileController extends Controller
      *     operationId="listTenantProfiles",
      *     tags={"Central - Tenant Profiles"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=24)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenant profiles retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant profiles retrieved successfully"),
      *             @OA\Property(
@@ -52,8 +58,10 @@ class TenantProfileController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
      *                         @OA\Property(
      *                             property="business",
@@ -124,8 +132,10 @@ class TenantProfileController extends Controller
      *                     @OA\Property(
      *                         property="links",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="url", type="string", nullable=true),
      *                             @OA\Property(property="label", type="string"),
      *                             @OA\Property(property="page", type="integer", nullable=true),
@@ -148,10 +158,13 @@ class TenantProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -213,17 +226,22 @@ class TenantProfileController extends Controller
      *     operationId="getTenantProfile",
      *     tags={"Central - Tenant Profiles"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="Tenant/Merchant ID (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tenant profile retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tenant profile retrieved successfully"),
      *             @OA\Property(
@@ -292,17 +310,23 @@ class TenantProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Tenant profile not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Tenant profile not found."),
      *             @OA\Property(

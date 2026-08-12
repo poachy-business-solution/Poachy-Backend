@@ -33,21 +33,21 @@ class TenantProfile extends Model
     protected function casts(): array
     {
         return [
-            'average_overall_rating'          => 'decimal:2',
-            'average_product_quality_rating'  => 'decimal:2',
-            'average_delivery_rating'         => 'decimal:2',
-            'average_service_rating'          => 'decimal:2',
-            'total_reviews'                   => 'integer',
-            'approved_reviews'                => 'integer',
-            'pending_reviews'                 => 'integer',
-            'total_orders'                    => 'integer',
-            'completed_orders'                => 'integer',
-            'total_revenue'                   => 'decimal:2',
-            'total_marketplace_products'      => 'integer',
-            'active_marketplace_products'     => 'integer',
-            'ratings_last_calculated_at'      => 'datetime',
-            'orders_last_calculated_at'       => 'datetime',
-            'products_last_calculated_at'     => 'datetime',
+            'average_overall_rating' => 'decimal:2',
+            'average_product_quality_rating' => 'decimal:2',
+            'average_delivery_rating' => 'decimal:2',
+            'average_service_rating' => 'decimal:2',
+            'total_reviews' => 'integer',
+            'approved_reviews' => 'integer',
+            'pending_reviews' => 'integer',
+            'total_orders' => 'integer',
+            'completed_orders' => 'integer',
+            'total_revenue' => 'decimal:2',
+            'total_marketplace_products' => 'integer',
+            'active_marketplace_products' => 'integer',
+            'ratings_last_calculated_at' => 'datetime',
+            'orders_last_calculated_at' => 'datetime',
+            'products_last_calculated_at' => 'datetime',
         ];
     }
 

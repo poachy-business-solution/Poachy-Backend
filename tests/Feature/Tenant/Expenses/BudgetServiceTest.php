@@ -54,13 +54,37 @@ class BudgetServiceTest extends TestCase
     {
         return new class implements Authenticatable
         {
-            public function getAuthIdentifierName() { return 'id'; }
-            public function getAuthIdentifier() { return 1; }
-            public function getAuthPasswordName() { return 'password'; }
-            public function getAuthPassword() { return ''; }
-            public function getRememberToken() { return null; }
+            public function getAuthIdentifierName()
+            {
+                return 'id';
+            }
+
+            public function getAuthIdentifier()
+            {
+                return 1;
+            }
+
+            public function getAuthPasswordName()
+            {
+                return 'password';
+            }
+
+            public function getAuthPassword()
+            {
+                return '';
+            }
+
+            public function getRememberToken()
+            {
+                return null;
+            }
+
             public function setRememberToken($value) {}
-            public function getRememberTokenName() { return 'remember_token'; }
+
+            public function getRememberTokenName()
+            {
+                return 'remember_token';
+            }
         };
     }
 

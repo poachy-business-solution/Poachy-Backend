@@ -53,26 +53,26 @@ class UpdateTenantOrderMetricsJob implements ShouldQueue
 
         // Store old values for logging
         $oldValues = [
-            'total_orders'      => $profile->total_orders,
-            'completed_orders'  => $profile->completed_orders,
-            'total_revenue'     => $profile->total_revenue,
+            'total_orders' => $profile->total_orders,
+            'completed_orders' => $profile->completed_orders,
+            'total_revenue' => $profile->total_revenue,
         ];
 
         // Update profile with new order metrics
         $profile->update([
-            'total_orders'               => $totalOrders,
-            'completed_orders'           => $completedOrders,
-            'total_revenue'              => $totalRevenue,
-            'orders_last_calculated_at'  => now(),
+            'total_orders' => $totalOrders,
+            'completed_orders' => $completedOrders,
+            'total_revenue' => $totalRevenue,
+            'orders_last_calculated_at' => now(),
         ]);
 
         Log::info('UpdateTenantOrderMetricsJob: updated tenant profile order metrics', [
-            'tenant_id'   => $this->tenantId,
-            'old_values'  => $oldValues,
-            'new_values'  => [
-                'total_orders'     => $profile->total_orders,
+            'tenant_id' => $this->tenantId,
+            'old_values' => $oldValues,
+            'new_values' => [
+                'total_orders' => $profile->total_orders,
                 'completed_orders' => $profile->completed_orders,
-                'total_revenue'    => $profile->total_revenue,
+                'total_revenue' => $profile->total_revenue,
             ],
         ]);
     }

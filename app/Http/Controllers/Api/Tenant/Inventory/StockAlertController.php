@@ -24,45 +24,58 @@ class StockAlertController extends Controller
      *     summary="List stock alerts",
      *     description="Retrieve a paginated list of stock alerts with optional filters",
      *     operationId="listStockAlerts",
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=false,
      *         description="Filter by store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         required=false,
      *         description="Filter by product ID",
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="alert_type",
      *         in="query",
      *         required=false,
      *         description="Filter by alert type",
+     *
      *         @OA\Schema(type="string", enum={"low_stock", "out_of_stock"}, example="low_stock")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_resolved",
      *         in="query",
      *         required=false,
      *         description="Filter by resolution status",
+     *
      *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         required=false,
      *         description="Number of items per page",
+     *
      *         @OA\Schema(type="integer", default=20, example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Stock alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stock alerts retrieved successfully"),
      *             @OA\Property(
@@ -71,8 +84,10 @@ class StockAlertController extends Controller
      *                 @OA\Property(
      *                     property="alerts",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=3),
      *                         @OA\Property(property="alert_type", type="string", example="out_of_stock"),
      *                         @OA\Property(property="alert_type_label", type="string", example="Out of Stock"),
@@ -169,17 +184,22 @@ class StockAlertController extends Controller
      *     summary="Get stock alert details",
      *     description="Retrieve detailed information about a specific stock alert",
      *     operationId="getStockAlertDetails",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Stock alert ID",
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Stock alert retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stock alert retrieved successfully"),
      *             @OA\Property(
@@ -251,24 +271,32 @@ class StockAlertController extends Controller
      *     summary="Resolve stock alert",
      *     description="Mark a stock alert as resolved with optional notes",
      *     operationId="resolveStockAlert",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Stock alert ID",
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Optional notes about the resolution",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="notes", type="string", example="Stock replenished via PO-2026-001")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Stock alert resolved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stock alert resolved successfully"),
      *             @OA\Property(
@@ -350,24 +378,31 @@ class StockAlertController extends Controller
      *     summary="Get stock alerts for a store",
      *     description="Retrieve stock alerts for a specific store with optional resolution filter",
      *     operationId="getStoreStockAlerts",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_resolved",
      *         in="query",
      *         required=false,
      *         description="Filter by resolution status",
+     *
      *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store stock alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store stock alerts retrieved successfully"),
      *             @OA\Property(
@@ -376,8 +411,10 @@ class StockAlertController extends Controller
      *                 @OA\Property(
      *                     property="alerts",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=3),
      *                         @OA\Property(property="alert_type", type="string", example="out_of_stock"),
      *                         @OA\Property(property="alert_type_label", type="string", example="Out of Stock"),
@@ -467,17 +504,22 @@ class StockAlertController extends Controller
      *     summary="Get stock alert summary",
      *     description="Retrieve summary statistics of stock alerts for a specific store",
      *     operationId="getStockAlertSummary",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Stock alert summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stock alert summary retrieved successfully"),
      *             @OA\Property(
@@ -517,31 +559,40 @@ class StockAlertController extends Controller
      *     summary="Get dashboard stock alerts",
      *     description="Retrieve a limited list of stock alerts for dashboard display",
      *     operationId="getDashboardStockAlerts",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         required=false,
      *         description="Number of alerts to return",
+     *
      *         @OA\Schema(type="integer", default=10, example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Dashboard stock alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Dashboard stock alerts retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=3),
      *                     @OA\Property(property="alert_type", type="string", example="out_of_stock"),
      *                     @OA\Property(property="alert_type_label", type="string", example="Out of Stock"),

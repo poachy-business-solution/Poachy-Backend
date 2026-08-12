@@ -40,14 +40,14 @@ class MerchantReview extends Model
     protected function casts(): array
     {
         return [
-            'overall_rating'         => 'decimal:1',
+            'overall_rating' => 'decimal:1',
             'product_quality_rating' => 'decimal:1',
-            'delivery_rating'        => 'decimal:1',
-            'service_rating'         => 'decimal:1',
-            'status'                 => ReviewStatus::class,
-            'helpful_count'          => 'integer',
-            'not_helpful_count'      => 'integer',
-            'moderated_at'           => 'datetime',
+            'delivery_rating' => 'decimal:1',
+            'service_rating' => 'decimal:1',
+            'status' => ReviewStatus::class,
+            'helpful_count' => 'integer',
+            'not_helpful_count' => 'integer',
+            'moderated_at' => 'datetime',
         ];
     }
 

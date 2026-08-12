@@ -20,14 +20,14 @@ class TrackCheckoutAnalytics
 
         foreach ($event->orders as $order) {
             TrackAnalyticsEventJob::dispatch([
-                'event_type'       => 'purchase',
-                'customer_id'      => $event->customer->id,
-                'session_id'       => $event->sessionId,
-                'tenant_id'        => $order->tenant_id,
+                'event_type' => 'purchase',
+                'customer_id' => $event->customer->id,
+                'session_id' => $event->sessionId,
+                'tenant_id' => $order->tenant_id,
                 'event_properties' => [
-                    'order_id'     => $order->id,
+                    'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'amount'       => $order->total_amount,
+                    'amount' => $order->total_amount,
                 ],
             ]);
         }

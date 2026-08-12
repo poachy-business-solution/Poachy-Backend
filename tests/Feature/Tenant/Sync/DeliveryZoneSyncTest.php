@@ -9,6 +9,7 @@ use App\Listeners\Tenant\EnqueueDeliveryZoneMarketplaceSync;
 use App\Models\Tenant\SyncQueueOutbound;
 use App\Models\Tenant\TenantDeliveryZone;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -209,7 +210,7 @@ class DeliveryZoneSyncTest extends TestCase
         try {
             (new ProcessOutboundDeliveryZoneSync($sync->id))->handle();
             $this->fail('Expected exception was not thrown');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             // Http::retry() defaults to $throw=true — same as inventory count's job.
         }
 

@@ -11,6 +11,7 @@ class TenantBrandMapping extends Model
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'tenant_brand_mappings';
 
     protected $fillable = [
@@ -48,6 +49,6 @@ class TenantBrandMapping extends Model
 
     public function needsVerification(): bool
     {
-        return !$this->is_verified && $this->confidence_score < 80;
+        return ! $this->is_verified && $this->confidence_score < 80;
     }
 }

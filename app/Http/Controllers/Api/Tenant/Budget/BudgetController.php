@@ -28,92 +28,115 @@ class BudgetController extends Controller
      *     operationId="getBudgets",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, example=15)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="category_id",
      *         in="query",
      *         description="Filter by expense category ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="company_wide",
      *         in="query",
      *         description="Filter company-wide budgets (budgets with no specific store)",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="period_type",
      *         in="query",
      *         description="Filter by budget period type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"monthly", "quarterly", "yearly", "custom"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="alert_triggered",
      *         in="query",
      *         description="Filter budgets with triggered alerts (spending exceeded threshold)",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="over_budget",
      *         in="query",
      *         description="Filter budgets that have exceeded their allocated amount",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="current",
      *         in="query",
      *         description="Filter currently active budgets (today falls within period_start and period_end)",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search in budget name or notes",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="Marketing")
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budgets retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budgets retrieved successfully."),
      *             @OA\Property(
@@ -122,8 +145,10 @@ class BudgetController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/BudgetResource")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="pagination",
      *                     type="object",
@@ -145,38 +170,45 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
      *     )
      * )
-     * 
+     *
      * @OA\Schema(
      *     schema="BudgetResource",
      *     type="object",
+     *
      *     @OA\Property(property="id", type="integer", example=1),
      *     @OA\Property(property="budget_name", type="string", example="Q1 2025 Marketing Budget"),
      *     @OA\Property(property="store_id", type="integer", nullable=true, example=1, description="Null for company-wide budgets"),
@@ -275,12 +307,14 @@ class BudgetController extends Controller
      *     operationId="createBudget",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Budget data",
+     *
      *         @OA\JsonContent(
      *             required={"budget_name", "category_id", "period_type", "period_start", "period_end", "budget_amount", "alert_threshold_percentage"},
+     *
      *             @OA\Property(
      *                 property="budget_name",
      *                 type="string",
@@ -356,11 +390,13 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Budget created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget created successfully."),
      *             @OA\Property(property="data", ref="#/components/schemas/BudgetResource"),
@@ -374,11 +410,13 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -387,29 +425,39 @@ class BudgetController extends Controller
      *                 @OA\Property(
      *                     property="budget_name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The budget name field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="category_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The category id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="period_end",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The period end must be a date after period start.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="budget_amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The budget amount must be at least 0.01.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="alert_threshold_percentage",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The alert threshold percentage must be between 0 and 100.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -420,29 +468,35 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -475,19 +529,22 @@ class BudgetController extends Controller
      *     operationId="getBudgetById",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Budget ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budget retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget retrieved successfully."),
      *             @OA\Property(
@@ -607,38 +664,46 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Budget not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -650,7 +715,7 @@ class BudgetController extends Controller
         try {
             $budget = $this->service->getBudgetById($id);
 
-            if (!$budget) {
+            if (! $budget) {
                 return ApiResponse::notFound('Budget not found.');
             }
 
@@ -675,19 +740,22 @@ class BudgetController extends Controller
      *     operationId="updateBudget",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Budget ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Budget update data (all fields optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="budget_name",
      *                 type="string",
@@ -763,11 +831,13 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budget updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget updated successfully."),
      *             @OA\Property(
@@ -887,11 +957,13 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -900,19 +972,25 @@ class BudgetController extends Controller
      *                 @OA\Property(
      *                     property="period_end",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The period end must be a date after period start.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="budget_amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The budget amount must be at least 0.01.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="category_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected category id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -923,38 +1001,46 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Budget not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -987,19 +1073,22 @@ class BudgetController extends Controller
      *     operationId="deleteBudget",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Budget ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budget deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget deleted successfully."),
      *             @OA\Property(
@@ -1012,38 +1101,46 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Budget not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to delete budget."),
      *             @OA\Property(
@@ -1086,19 +1183,22 @@ class BudgetController extends Controller
      *     operationId="recalculateBudget",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Budget ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budget recalculated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget recalculated successfully."),
      *             @OA\Property(
@@ -1147,38 +1247,46 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Budget not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to recalculate budget."),
      *             @OA\Property(
@@ -1224,27 +1332,32 @@ class BudgetController extends Controller
      *     operationId="getBudgetExpenses",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Budget ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budget expenses retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget expenses retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of expenses matching budget criteria (category, store, and period)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=12),
      *                     @OA\Property(property="expense_number", type="string", example="EXP-2026-000001"),
      *                     @OA\Property(property="store_id", type="integer", example=1),
@@ -1309,38 +1422,46 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Budget not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1373,18 +1494,22 @@ class BudgetController extends Controller
      *     operationId="getCurrentBudgets",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Current active budgets retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Current active budgets retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="budget_name", type="string", example="Q1 2025 Marketing Budget"),
      *                     @OA\Property(property="store_id", type="integer", nullable=true, example=1),
@@ -1480,29 +1605,35 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1535,19 +1666,23 @@ class BudgetController extends Controller
      *     operationId="getBudgetsWithAlerts",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budgets with alerts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budgets with alerts retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of budgets where alert_triggered is true (percentage_spent >= alert_threshold_percentage)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=3),
      *                     @OA\Property(property="budget_name", type="string", example="Q1 2025 Utilities Budget"),
      *                     @OA\Property(property="store_id", type="integer", nullable=true, example=1),
@@ -1608,29 +1743,35 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1663,19 +1804,23 @@ class BudgetController extends Controller
      *     operationId="getOverBudgets",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Over-budget budgets retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Over-budget budgets retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of budgets where spent_amount > budget_amount (is_over_budget = true)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=4),
      *                     @OA\Property(property="budget_name", type="string", example="December Operations Budget"),
      *                     @OA\Property(property="store_id", type="integer", nullable=true, example=2),
@@ -1736,29 +1881,35 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1791,40 +1942,49 @@ class BudgetController extends Controller
      *     operationId="getBudgetPerformance",
      *     tags={"Tenant - Budget Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="category_id",
      *         in="query",
      *         description="Filter by expense category ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="period_start",
      *         in="query",
      *         description="Filter budgets starting from this date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="period_end",
      *         in="query",
      *         description="Filter budgets ending until this date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-12-31")
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Budget performance retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Budget performance retrieved successfully."),
      *             @OA\Property(
@@ -1862,29 +2022,35 @@ class BudgetController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1893,21 +2059,26 @@ class BudgetController extends Controller
      *                 @OA\Property(
      *                     property="period_start",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The period start must be a valid date.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="period_end",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The period end must be a date after period start.")
      *                 )
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )

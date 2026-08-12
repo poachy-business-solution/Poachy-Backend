@@ -4,10 +4,10 @@ namespace App\Models\Tenant;
 
 use App\Enums\Tenant\ExpiryAlertLevel;
 use App\Enums\Tenant\ResolutionAction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class ExpiryAlert extends Model
@@ -65,6 +65,7 @@ class ExpiryAlert extends Model
     public function scopeByLevel(Builder $query, ExpiryAlertLevel|string $level): Builder
     {
         $levelValue = $level instanceof ExpiryAlertLevel ? $level->value : $level;
+
         return $query->where('alert_level', $levelValue);
     }
 
@@ -177,7 +178,7 @@ class ExpiryAlert extends Model
 
         $batch = $this->batch;
 
-        if (!$batch || $batch->quantity_remaining_in_base_uom <= 0) {
+        if (! $batch || $batch->quantity_remaining_in_base_uom <= 0) {
             return false;
         }
 

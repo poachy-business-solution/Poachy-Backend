@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([ProductBundleObserver::class])]
 class ProductBundle extends Model
 {
-    use HasFactory, HasAuditLogging, SoftDeletes;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'product_bundles';
 
@@ -92,30 +92,31 @@ class ProductBundle extends Model
 
     public function getFormattedBundlePriceAttribute(): string
     {
-        return 'KES ' . number_format($this->bundle_price, 2);
+        return 'KES '.number_format($this->bundle_price, 2);
     }
 
     public function getFormattedOnlinePriceAttribute(): ?string
     {
         return $this->online_price
-            ? 'KES ' . number_format($this->online_price, 2)
+            ? 'KES '.number_format($this->online_price, 2)
             : null;
     }
 
     public function getFormattedDiscountAttribute(): ?string
     {
         return $this->discount_amount
-            ? 'KES ' . number_format($this->discount_amount, 2)
+            ? 'KES '.number_format($this->discount_amount, 2)
             : null;
     }
 
     public function getSavingsPercentageAttribute(): ?float
     {
-        if (!$this->calculated_individual_price || $this->calculated_individual_price == 0) {
+        if (! $this->calculated_individual_price || $this->calculated_individual_price == 0) {
             return null;
         }
 
         $savings = $this->discount_amount ?? 0;
+
         return round(($savings / $this->calculated_individual_price) * 100, 2);
     }
 
@@ -127,6 +128,7 @@ class ProductBundle extends Model
     public function getPrimaryImageAttribute(): ?string
     {
         $images = $this->images ?? [];
+
         return $images[0] ?? null;
     }
 
@@ -156,7 +158,7 @@ class ProductBundle extends Model
     public function allItemsActive(): bool
     {
         return $this->items()
-            ->whereHas('product', fn($q) => $q->where('is_active', false))
+            ->whereHas('product', fn ($q) => $q->where('is_active', false))
             ->doesntExist();
     }
 
@@ -194,6 +196,7 @@ class ProductBundle extends Model
     public function calculateSavings(): float
     {
         $individualPrice = $this->calculated_individual_price ?? $this->calculateIndividualPrice();
+
         return max(0, $individualPrice - $this->bundle_price);
     }
 

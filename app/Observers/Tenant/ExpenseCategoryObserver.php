@@ -15,7 +15,7 @@ class ExpenseCategoryObserver
     public function creating(ExpenseCategory $expenseCategory): void
     {
         // Auto-set display_order if not provided
-        if (!isset($expenseCategory->display_order)) {
+        if (! isset($expenseCategory->display_order)) {
             $maxOrder = ExpenseCategory::where('parent_id', $expenseCategory->parent_id)
                 ->max('display_order') ?? -1;
 

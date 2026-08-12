@@ -14,10 +14,10 @@ class InboundReviewResponseSyncRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tenant_id'     => ['required', 'string', 'exists:tenants,id'],
-            'review_id'     => ['required', 'integer'],
+            'tenant_id' => ['required', 'string', 'exists:tenants,id'],
+            'review_id' => ['required', 'integer'],
             'response_text' => ['required', 'string', 'min:10', 'max:1000'],
-            'metadata'      => ['sometimes', 'array'],
+            'metadata' => ['sometimes', 'array'],
         ];
     }
 }

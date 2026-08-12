@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Product;
 
+use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductUom;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -51,10 +52,11 @@ class UpdateProductUomRequest extends FormRequest
             $productUuid = $this->route('uuid');
             $productUom = $this->route('productUom');
 
-            $product = \App\Models\Tenant\Product::where('uuid', $productUuid)->first();
+            $product = Product::where('uuid', $productUuid)->first();
 
-            if (!$product) {
+            if (! $product) {
                 $validator->errors()->add('product', 'Product not found');
+
                 return;
             }
 
@@ -62,8 +64,9 @@ class UpdateProductUomRequest extends FormRequest
                 ->where('product_id', $product->id)
                 ->first();
 
-            if (!$productUom) {
+            if (! $productUom) {
                 $validator->errors()->add('productUom', 'Product UOM not found or does not belong to this product');
+
                 return;
             }
 
@@ -92,7 +95,7 @@ class UpdateProductUomRequest extends FormRequest
             $isSales = $this->has('is_sales_uom') ? $this->is_sales_uom : $productUom->is_sales_uom;
             $isInventory = $this->has('is_inventory_uom') ? $this->is_inventory_uom : $productUom->is_inventory_uom;
 
-            if (!$isPurchase && !$isSales && !$isInventory) {
+            if (! $isPurchase && ! $isSales && ! $isInventory) {
                 $validator->errors()->add(
                     'is_purchase_uom',
                     'UOM must be enabled for at least one purpose (purchase, sales, or inventory)'

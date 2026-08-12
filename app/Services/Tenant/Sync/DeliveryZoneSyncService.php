@@ -18,16 +18,16 @@ class DeliveryZoneSyncService
 
             Log::info('Delivery zone marketplace sync triggered', [
                 'tenant_id' => tenant()->id,
-                'zone_id'   => $zone->id,
+                'zone_id' => $zone->id,
                 'zone_name' => $zone->zone_name,
-                'action'    => $action,
-                'priority'  => $priority,
+                'action' => $action,
+                'priority' => $priority,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to trigger delivery zone marketplace sync', [
                 'tenant_id' => tenant()->id,
-                'zone_id'   => $zone->id,
-                'error'     => $e->getMessage(),
+                'zone_id' => $zone->id,
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

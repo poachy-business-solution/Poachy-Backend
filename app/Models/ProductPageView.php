@@ -35,13 +35,13 @@ class ProductPageView extends Model
     protected function casts(): array
     {
         return [
-            'time_spent_seconds'     => 'integer',
+            'time_spent_seconds' => 'integer',
             'scrolled_to_description' => 'boolean',
-            'scrolled_to_reviews'    => 'boolean',
-            'clicked_images'         => 'boolean',
-            'added_to_cart'          => 'boolean',
-            'added_to_wishlist'      => 'boolean',
-            'viewed_at'              => 'datetime',
+            'scrolled_to_reviews' => 'boolean',
+            'clicked_images' => 'boolean',
+            'added_to_cart' => 'boolean',
+            'added_to_wishlist' => 'boolean',
+            'viewed_at' => 'datetime',
         ];
     }
 
@@ -72,7 +72,7 @@ class ProductPageView extends Model
     {
         return $query->where(function ($q) {
             $q->where('added_to_cart', true)
-              ->orWhere('added_to_wishlist', true);
+                ->orWhere('added_to_wishlist', true);
         });
     }
 

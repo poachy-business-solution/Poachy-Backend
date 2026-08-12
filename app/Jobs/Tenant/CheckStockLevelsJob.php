@@ -15,8 +15,11 @@ class CheckStockLevelsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 300; // 5 minutes
+
     public string $queue = 'sync-high';
+
     public array $backoff = [10, 30, 60];
 
     public function __construct()
@@ -70,7 +73,7 @@ class CheckStockLevelsJob implements ShouldQueue
     public function tags(): array
     {
         return [
-            'tenant:' . (tenant()->id ?? 'unknown'),
+            'tenant:'.(tenant()->id ?? 'unknown'),
             'inventory',
             'stock-alerts',
             'scheduled',

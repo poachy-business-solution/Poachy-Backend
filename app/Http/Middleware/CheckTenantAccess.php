@@ -17,14 +17,14 @@ class CheckTenantAccess
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         // Get current tenant
         $tenant = tenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             return ApiResponse::error(
                 'Tenant context not initialized',
                 ['hint' => 'Ensure request is made to a valid tenant domain'],
@@ -36,7 +36,7 @@ class CheckTenantAccess
         $accessCheck = $this->tenantAccessService->checkTenantAccess($tenant->id);
 
         // If access is denied, return appropriate error
-        if (!$accessCheck['allowed']) {
+        if (! $accessCheck['allowed']) {
             return $this->handleAccessDenied($accessCheck);
         }
 

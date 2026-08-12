@@ -2,6 +2,7 @@
 
 namespace App\Services\Central\Shared;
 
+use App\Models\SubscriptionPlan;
 use App\Repositories\Central\SubscriptionPlanRepository;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -13,9 +14,6 @@ class SubscriptionPlanService
 
     /**
      * Get a list of subscription plans with optional filtering and sorting.
-     *
-     * @param array $filters
-     * @return Collection
      */
     public function listPlans(array $filters = []): Collection
     {
@@ -25,8 +23,7 @@ class SubscriptionPlanService
     /**
      * Get a specific subscription plan by ID.
      *
-     * @param int $planId
-     * @return \App\Models\SubscriptionPlan|null
+     * @return SubscriptionPlan|null
      */
     public function getPlanById(int $planId)
     {
@@ -36,8 +33,7 @@ class SubscriptionPlanService
     /**
      * Get a specific subscription plan by slug.
      *
-     * @param string $slug
-     * @return \App\Models\SubscriptionPlan|null
+     * @return SubscriptionPlan|null
      */
     public function getPlanBySlug(string $slug)
     {
@@ -46,8 +42,6 @@ class SubscriptionPlanService
 
     /**
      * Get only active subscription plans.
-     *
-     * @return Collection
      */
     public function getActivePlans(): Collection
     {
@@ -56,8 +50,6 @@ class SubscriptionPlanService
 
     /**
      * Get featured subscription plans.
-     *
-     * @return Collection
      */
     public function getFeaturedPlans(): Collection
     {
@@ -66,9 +58,6 @@ class SubscriptionPlanService
 
     /**
      * Check if a plan is free.
-     *
-     * @param int $planId
-     * @return bool
      */
     public function isPlanFree(int $planId): bool
     {
@@ -80,9 +69,7 @@ class SubscriptionPlanService
     /**
      * Get plan feature value.
      *
-     * @param int $planId
-     * @param string $featureKey
-     * @param mixed $default
+     * @param  mixed  $default
      * @return mixed
      */
     public function getPlanFeature(int $planId, string $featureKey, $default = null)

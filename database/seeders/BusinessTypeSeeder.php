@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\BusinessCategory;
 use App\Models\BusinessType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BusinessTypeSeeder extends Seeder
@@ -15,7 +14,7 @@ class BusinessTypeSeeder extends Seeder
             [
                 'name' => 'Retail & Consumer Goods',
                 'slug' => 'retail-consumer-goods',
-                'description' => 'Businesses selling physical products directly to consumers',                
+                'description' => 'Businesses selling physical products directly to consumers',
                 'categories' => [
                     ['name' => 'Supermarket', 'slug' => 'supermarket', 'description' => 'Large self-service stores offering groceries and household items'],
                     ['name' => 'Grocery Store', 'slug' => 'grocery-store', 'description' => 'Small to medium stores selling food and household supplies'],
@@ -30,7 +29,7 @@ class BusinessTypeSeeder extends Seeder
             [
                 'name' => 'Food & Beverage',
                 'slug' => 'food-beverage',
-                'description' => 'Businesses serving food and drinks',                     
+                'description' => 'Businesses serving food and drinks',
                 'categories' => [
                     ['name' => 'Restaurant', 'slug' => 'restaurant', 'description' => 'Full-service dining establishments'],
                     ['name' => 'Fast Food', 'slug' => 'fast-food', 'description' => 'Quick-service restaurants'],
@@ -43,7 +42,7 @@ class BusinessTypeSeeder extends Seeder
             [
                 'name' => 'Services',
                 'slug' => 'services',
-                'description' => 'Service-based businesses',                   
+                'description' => 'Service-based businesses',
                 'categories' => [
                     ['name' => 'Salon & Spa', 'slug' => 'salon-spa', 'description' => 'Hair, beauty, and wellness services'],
                     ['name' => 'Laundry & Dry Cleaning', 'slug' => 'laundry-dry-cleaning', 'description' => 'Clothing cleaning services'],
@@ -56,7 +55,7 @@ class BusinessTypeSeeder extends Seeder
             [
                 'name' => 'Health & Wellness',
                 'slug' => 'health-wellness',
-                'description' => 'Healthcare and wellness providers',               
+                'description' => 'Healthcare and wellness providers',
                 'categories' => [
                     ['name' => 'Clinic', 'slug' => 'clinic', 'description' => 'Medical clinics and health centers'],
                     ['name' => 'Dental Office', 'slug' => 'dental-office', 'description' => 'Dental care providers'],
@@ -67,7 +66,7 @@ class BusinessTypeSeeder extends Seeder
             [
                 'name' => 'Automotive',
                 'slug' => 'automotive',
-                'description' => 'Vehicle sales and services',                              
+                'description' => 'Vehicle sales and services',
                 'categories' => [
                     ['name' => 'Auto Parts Store', 'slug' => 'auto-parts-store', 'description' => 'Vehicle parts and accessories'],
                     ['name' => 'Car Dealership', 'slug' => 'car-dealership', 'description' => 'New and used car sales'],
@@ -82,12 +81,12 @@ class BusinessTypeSeeder extends Seeder
             unset($typeData['categories']);
 
             $type = BusinessType::updateOrCreate($typeData);
-            
+
             $this->command->info("✓ Created business type: {$type->name}");
 
             foreach ($categories as $index => $categoryData) {
-                $categoryData['business_type_id'] = $type->id;                
-                
+                $categoryData['business_type_id'] = $type->id;
+
                 $category = BusinessCategory::updateOrCreate($categoryData);
                 $this->command->info("  → Category: {$category->name}");
             }

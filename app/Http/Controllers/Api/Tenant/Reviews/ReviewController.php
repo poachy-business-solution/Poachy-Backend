@@ -22,24 +22,31 @@ class ReviewController extends Controller
      *     operationId="tenantListReviews",
      *     tags={"Tenant - Product Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Filter reviews by product ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page (max 50)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=20, maximum=50)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Reviews retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Reviews retrieved successfully."),
      *             @OA\Property(
@@ -49,8 +56,10 @@ class ReviewController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="central_review_id", type="integer", example=1),
      *                         @OA\Property(property="product_id", type="integer", example=4),
@@ -67,8 +76,10 @@ class ReviewController extends Controller
      *                         @OA\Property(
      *                             property="review_images",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                         ),
+     *
      *                         @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                         @OA\Property(property="merchant_response", type="string", nullable=true, example=null),
      *                         @OA\Property(property="merchant_responded_at", type="string", format="date-time", nullable=true, example=null),
@@ -93,8 +104,10 @@ class ReviewController extends Controller
      *                 @OA\Property(
      *                     property="links",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="url", type="string", nullable=true),
      *                         @OA\Property(property="label", type="string"),
      *                         @OA\Property(property="page", type="integer", nullable=true),
@@ -118,10 +131,13 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -149,17 +165,22 @@ class ReviewController extends Controller
      *     operationId="tenantGetReview",
      *     tags={"Tenant - Product Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Tenant Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review retrieved successfully."),
      *             @OA\Property(
@@ -181,8 +202,10 @@ class ReviewController extends Controller
      *                 @OA\Property(
      *                     property="review_images",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                 ),
+     *
      *                 @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                 @OA\Property(property="merchant_response", type="string", nullable=true, example=null),
      *                 @OA\Property(property="merchant_responded_at", type="string", format="date-time", nullable=true, example=null),
@@ -209,17 +232,23 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Review not found."),
      *             @OA\Property(
@@ -249,18 +278,23 @@ class ReviewController extends Controller
      *     operationId="respondToReview",
      *     tags={"Tenant - Product Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Tenant Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Merchant response text",
+     *
      *         @OA\JsonContent(
      *             required={"response_text"},
+     *
      *             @OA\Property(
      *                 property="response_text",
      *                 type="string",
@@ -271,10 +305,13 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Response submitted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Response submitted and will sync to marketplace."),
      *             @OA\Property(
@@ -296,8 +333,10 @@ class ReviewController extends Controller
      *                 @OA\Property(
      *                     property="review_images",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                 ),
+     *
      *                 @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                 @OA\Property(property="merchant_response", type="string", example="Great you loved the product!"),
      *                 @OA\Property(property="merchant_responded_at", type="string", format="date-time", example="2026-02-20T14:26:46.000000Z"),
@@ -317,19 +356,26 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - excessive capitals or contains URL",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Response contains excessive capital letters."),
      *                     @OA\Property(
@@ -341,7 +387,9 @@ class ReviewController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Response may not contain URLs."),
      *                     @OA\Property(
@@ -378,18 +426,23 @@ class ReviewController extends Controller
      *     operationId="updateReviewResponse",
      *     tags={"Tenant - Product Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Tenant Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Updated merchant response text",
+     *
      *         @OA\JsonContent(
      *             required={"response_text"},
+     *
      *             @OA\Property(
      *                 property="response_text",
      *                 type="string",
@@ -400,10 +453,13 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Response updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Response updated and will sync to marketplace."),
      *             @OA\Property(
@@ -425,8 +481,10 @@ class ReviewController extends Controller
      *                 @OA\Property(
      *                     property="review_images",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                 ),
+     *
      *                 @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                 @OA\Property(
      *                     property="merchant_response",
@@ -450,19 +508,26 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - excessive capitals or contains URL",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Response contains excessive capital letters."),
      *                     @OA\Property(
@@ -474,7 +539,9 @@ class ReviewController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Response may not contain URLs."),
      *                     @OA\Property(

@@ -19,9 +19,9 @@ return new class extends Migration
             $table->boolean('is_purchase_uom')->default(true)->comment('Can buy in this UOM');
             $table->boolean('is_sales_uom')->default(true)->comment('Can sell in this UOM');
             $table->boolean('is_inventory_uom')->default(true)->comment('Can track stock in this UOM');
-            $table->decimal('conversion_to_base', 15, 6)->default(1)->comment('Pricing adjustment'); // How many base units in 1 of this UOM           
+            $table->decimal('conversion_to_base', 15, 6)->default(1)->comment('Pricing adjustment'); // How many base units in 1 of this UOM
             $table->timestamps();
-            
+
             $table->unique(['product_id', 'uom_id']);
             $table->index(['product_id', 'is_base_uom']);
         });

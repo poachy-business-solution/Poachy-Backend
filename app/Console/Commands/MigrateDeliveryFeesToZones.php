@@ -22,7 +22,7 @@ class MigrateDeliveryFeesToZones extends Command
             ->get();
 
         $migrated = 0;
-        $skipped  = 0;
+        $skipped = 0;
 
         $bar = $this->output->createProgressBar($businessDetails->count());
         $bar->start();
@@ -47,28 +47,28 @@ class MigrateDeliveryFeesToZones extends Command
             }
 
             // Read legacy flat-fee data that may still exist in old DB records
-            $areas     = $deliveryInfo['areas'] ?? [];
-            $fee       = $deliveryInfo['fee'] ?? 0;
+            $areas = $deliveryInfo['areas'] ?? [];
+            $fee = $deliveryInfo['fee'] ?? 0;
             $threshold = $deliveryInfo['free_delivery_threshold'] ?? null;
-            $time      = $deliveryInfo['estimated_time'] ?? null;
+            $time = $deliveryInfo['estimated_time'] ?? null;
 
             TenantDeliveryZone::on('central')->create([
-                'tenant_id'               => $detail->tenant_id,
-                'zone_name'               => 'Default Zone',
-                'zone_type'               => 'city',
-                'cities'                  => $areas,
-                'standard_fee'            => $fee,
+                'tenant_id' => $detail->tenant_id,
+                'zone_name' => 'Default Zone',
+                'zone_type' => 'city',
+                'cities' => $areas,
+                'standard_fee' => $fee,
                 'free_delivery_threshold' => $threshold,
-                'standard_delivery_time'  => $time,
-                'supported_methods'       => ['standard'],
-                'priority'                => 100,
-                'is_active'               => true,
+                'standard_delivery_time' => $time,
+                'supported_methods' => ['standard'],
+                'priority' => 100,
+                'is_active' => true,
             ]);
 
             // Only update zones_enabled — leave available as-is, strip legacy fields
             $detail->update([
                 'delivery_info' => [
-                    'available'     => true,
+                    'available' => true,
                     'zones_enabled' => (bool) $this->option('enable'),
                 ],
             ]);

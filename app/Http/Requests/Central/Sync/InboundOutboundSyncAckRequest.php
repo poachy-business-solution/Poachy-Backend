@@ -15,20 +15,20 @@ class InboundOutboundSyncAckRequest extends FormRequest
     {
         return [
             'outbound_sync_id' => ['required', 'integer'],
-            'tenant_id'        => ['required', 'string', 'exists:tenants,id'],
-            'status'           => ['required', 'string', 'in:completed,failed'],
-            'reason'           => ['nullable', 'string', 'max:500'],
+            'tenant_id' => ['required', 'string', 'exists:tenants,id'],
+            'status' => ['required', 'string', 'in:completed,failed'],
+            'reason' => ['nullable', 'string', 'max:500'],
             'tenant_record_id' => ['nullable', 'integer'],
-            'tenant_table'     => ['nullable', 'string', 'max:100'],
-            'tenant_response'  => ['nullable', 'array'],
+            'tenant_table' => ['nullable', 'string', 'max:100'],
+            'tenant_response' => ['nullable', 'array'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'tenant_id.exists'          => 'The specified tenant does not exist.',
-            'status.in'                 => 'Status must be either completed or failed.',
+            'tenant_id.exists' => 'The specified tenant does not exist.',
+            'status.in' => 'Status must be either completed or failed.',
             'outbound_sync_id.required' => 'An outbound sync ID is required.',
         ];
     }

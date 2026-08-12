@@ -26,7 +26,7 @@ class LoyaltyService
      */
     public function calculatePointsEarned(float $purchaseAmount, ?int $customerId = null): float
     {
-        if (!$this->isEnabled() || !$customerId) {
+        if (! $this->isEnabled() || ! $customerId) {
             return 0;
         }
 
@@ -40,7 +40,7 @@ class LoyaltyService
      */
     public function calculateRedemptionValue(float $points): float
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return 0;
         }
 
@@ -54,7 +54,7 @@ class LoyaltyService
      */
     public function validateRedemption(Customer $customer, float $pointsToRedeem): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return [
                 'valid' => false,
                 'message' => 'Loyalty program is not enabled',
@@ -86,22 +86,15 @@ class LoyaltyService
 
     /**
      * Award loyalty points for a transaction
-     *
-     * @param Customer $customer
-     * @param float $points
-     * @param string $referenceType
-     * @param int $referenceId
-     * @param string|null $description
-     * @return LoyaltyTransaction
      */
     public function awardPoints(
         Customer $customer,
         float $points,
-        ?string $referenceType = null,
+        ?string $referenceType,
         int $referenceId,
         ?string $description = null
     ): LoyaltyTransaction {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             throw new \RuntimeException('Loyalty program is not enabled');
         }
 
@@ -118,7 +111,7 @@ class LoyaltyService
                 'balance_after' => $customer->loyalty_points + $points,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
-                'description' => $description ?? "Points earned",
+                'description' => $description ?? 'Points earned',
                 'expires_at' => $expiryDate,
             ]);
 
@@ -141,13 +134,6 @@ class LoyaltyService
 
     /**
      * Redeem loyalty points
-     *
-     * @param Customer $customer
-     * @param float $points
-     * @param string $referenceType
-     * @param int $referenceId
-     * @param string|null $description
-     * @return LoyaltyTransaction
      */
     public function redeemPoints(
         Customer $customer,
@@ -156,13 +142,13 @@ class LoyaltyService
         int $referenceId,
         ?string $description = null
     ): LoyaltyTransaction {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             throw new \RuntimeException('Loyalty program is not enabled');
         }
 
         // Validate redemption
         $validation = $this->validateRedemption($customer, $points);
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             throw new \RuntimeException($validation['message']);
         }
 
@@ -175,7 +161,7 @@ class LoyaltyService
                 'balance_after' => $customer->loyalty_points - $points,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
-                'description' => $description ?? "Points redeemed",
+                'description' => $description ?? 'Points redeemed',
             ]);
 
             // Update customer balance
@@ -206,7 +192,7 @@ class LoyaltyService
         int $referenceId,
         string $saleNumber
     ): array {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return [
                 'points_redeemed' => 0,
                 'points_earned' => 0,
@@ -257,7 +243,7 @@ class LoyaltyService
      */
     public function expireOldPoints(): int
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return 0;
         }
 
@@ -308,7 +294,7 @@ class LoyaltyService
      */
     public function getExpiringPoints(Customer $customer, int $days = 30): float
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return 0;
         }
 
@@ -329,15 +315,15 @@ class LoyaltyService
         $query = LoyaltyTransaction::query();
 
         // Apply same filters as main query
-        if (!empty($filters['customer_id'])) {
+        if (! empty($filters['customer_id'])) {
             $query->where('customer_id', $filters['customer_id']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 

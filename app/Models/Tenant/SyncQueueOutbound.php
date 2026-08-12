@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Str;
 
 class SyncQueueOutbound extends Model
 {
@@ -190,7 +191,7 @@ class SyncQueueOutbound extends Model
 
     public function acquireLock(string $workerId): bool
     {
-        $lockToken = \Illuminate\Support\Str::uuid()->toString();
+        $lockToken = Str::uuid()->toString();
 
         return $this->whereNull('lock_token')
             ->where('id', $this->id)

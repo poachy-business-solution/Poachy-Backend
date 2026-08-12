@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
 #[ObservedBy([TenantConfigurationObserver::class])]
 class TenantConfiguration extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'tenant_configurations';
 
@@ -67,7 +67,7 @@ class TenantConfiguration extends Model
      */
     public static function get(string $key, $default = null)
     {
-        $cacheKey = "tenant_config_" . tenant()->id . "_{$key}";
+        $cacheKey = 'tenant_config_'.tenant()->id."_{$key}";
 
         return Cache::tags(['tenant', tenant()->id, 'config'])->remember(
             $cacheKey,
@@ -77,7 +77,7 @@ class TenantConfiguration extends Model
                     ->where('is_active', true)
                     ->first();
 
-                if (!$config) {
+                if (! $config) {
                     return $default;
                 }
 
@@ -127,7 +127,7 @@ class TenantConfiguration extends Model
      */
     public static function getByGroup(string $group): array
     {
-        $cacheKey = "tenant_config_group_" . tenant()->id . "_{$group}";
+        $cacheKey = 'tenant_config_group_'.tenant()->id."_{$group}";
 
         return Cache::tags(['tenant', tenant()->id, 'config'])->remember(
             $cacheKey,

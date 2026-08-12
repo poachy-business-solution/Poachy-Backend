@@ -5,6 +5,7 @@ namespace App\Mail\Central\Business;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -30,8 +31,8 @@ class BusinessVerificationMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $subject = $this->isVerified
-            ? '✅ Business Verification Approved - ' . $this->businessName
-            : '⚠️ Business Verification Update - ' . $this->businessName;
+            ? '✅ Business Verification Approved - '.$this->businessName
+            : '⚠️ Business Verification Update - '.$this->businessName;
 
         return new Envelope(
             subject: $subject,
@@ -51,7 +52,7 @@ class BusinessVerificationMail extends Mailable implements ShouldQueue
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

@@ -12,12 +12,12 @@ class TrackCartAnalytics
     public function handleCartItemAdded(CartItemAdded $event): void
     {
         TrackAnalyticsEventJob::dispatch([
-            'event_type'             => 'add_to_cart',
-            'customer_id'            => $event->customer?->id,
-            'session_id'             => $event->sessionId,
+            'event_type' => 'add_to_cart',
+            'customer_id' => $event->customer?->id,
+            'session_id' => $event->sessionId,
             'marketplace_product_id' => $event->item->marketplace_product_id,
-            'event_properties'       => [
-                'quantity'   => $event->item->quantity,
+            'event_properties' => [
+                'quantity' => $event->item->quantity,
                 'unit_price' => $event->item->unit_price,
             ],
         ]);
@@ -32,9 +32,9 @@ class TrackCartAnalytics
     public function handleCartItemRemoved(CartItemRemoved $event): void
     {
         TrackAnalyticsEventJob::dispatch([
-            'event_type'             => 'remove_from_cart',
-            'customer_id'            => $event->customer?->id,
-            'session_id'             => $event->sessionId,
+            'event_type' => 'remove_from_cart',
+            'customer_id' => $event->customer?->id,
+            'session_id' => $event->sessionId,
             'marketplace_product_id' => $event->removedProductId,
         ]);
     }

@@ -36,7 +36,6 @@ class StockTransferItem extends Model
     /**
      * RELATIONSHIPS
      */
-
     public function transfer(): BelongsTo
     {
         return $this->belongsTo(StockTransfer::class, 'transfer_id');
@@ -60,10 +59,9 @@ class StockTransferItem extends Model
     /**
      * ACCESSORS
      */
-
     public function getHasDiscrepancyAttribute(): bool
     {
-        if (!$this->quantity_received || !$this->quantity_sent) {
+        if (! $this->quantity_received || ! $this->quantity_sent) {
             return false;
         }
 
@@ -72,7 +70,7 @@ class StockTransferItem extends Model
 
     public function getDiscrepancyQuantityAttribute(): ?float
     {
-        if (!$this->has_discrepancy) {
+        if (! $this->has_discrepancy) {
             return null;
         }
 

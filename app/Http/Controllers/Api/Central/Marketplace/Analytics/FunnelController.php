@@ -22,24 +22,31 @@ class FunnelController extends Controller
      *     operationId="getConversionFunnel",
      *     tags={"Central - Analytics - Funnel"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-23")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-02-22")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversion funnel retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Conversion funnel retrieved successfully"),
      *             @OA\Property(
@@ -67,17 +74,23 @@ class FunnelController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - insufficient privileges",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You do not have permission to access this resource."),
      *             @OA\Property(
@@ -96,7 +109,7 @@ class FunnelController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -114,24 +127,31 @@ class FunnelController extends Controller
      *     operationId="getAbandonmentRates",
      *     tags={"Central - Analytics - Funnel"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Abandonment rates retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Abandonment rates retrieved successfully"),
      *             @OA\Property(
@@ -155,10 +175,13 @@ class FunnelController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -168,7 +191,7 @@ class FunnelController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -186,31 +209,40 @@ class FunnelController extends Controller
      *     operationId="getDeviceConversionRates",
      *     tags={"Central - Analytics - Funnel"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Device conversion rates retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Device conversion rates retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="device_type", type="string", example="unknown"),
      *                     @OA\Property(property="total_carts", type="integer", description="Number of carts created on this device", example=19),
      *                     @OA\Property(property="converted_carts", type="string", description="Number of converted carts", example="13"),
@@ -227,10 +259,13 @@ class FunnelController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -240,7 +275,7 @@ class FunnelController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -258,24 +293,31 @@ class FunnelController extends Controller
      *     operationId="getTimeToPurchase",
      *     tags={"Central - Analytics - Funnel"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Time to purchase metrics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Time to purchase metrics retrieved successfully"),
      *             @OA\Property(
@@ -296,10 +338,13 @@ class FunnelController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -309,7 +354,7 @@ class FunnelController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -328,11 +373,11 @@ class FunnelController extends Controller
     {
         $startDate = $request->start_date
             ? new \DateTime($request->start_date)
-            : (new \DateTime())->modify('-30 days');
+            : (new \DateTime)->modify('-30 days');
 
         $endDate = $request->end_date
             ? new \DateTime($request->end_date)
-            : new \DateTime();
+            : new \DateTime;
 
         return [$startDate, $endDate];
     }

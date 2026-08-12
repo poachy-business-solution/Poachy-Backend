@@ -4,8 +4,8 @@ namespace App\Enums\Central;
 
 enum StockStatus: string
 {
-    case InStock    = 'in_stock';
-    case LowStock   = 'low_stock';
+    case InStock = 'in_stock';
+    case LowStock = 'low_stock';
     case OutOfStock = 'out_of_stock';
 
     /**
@@ -14,8 +14,8 @@ enum StockStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::InStock    => 'In Stock',
-            self::LowStock   => 'Low Stock',
+            self::InStock => 'In Stock',
+            self::LowStock => 'Low Stock',
             self::OutOfStock => 'Out of Stock',
         };
     }

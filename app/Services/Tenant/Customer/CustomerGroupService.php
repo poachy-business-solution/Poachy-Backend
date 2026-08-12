@@ -5,7 +5,6 @@ namespace App\Services\Tenant\Customer;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerGroup;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +19,7 @@ class CustomerGroupService
         $query = CustomerGroup::query()->withCount('customers');
 
         // Apply filters
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
@@ -128,7 +127,7 @@ class CustomerGroupService
     public function toggleGroupStatus(CustomerGroup $group): CustomerGroup
     {
         return DB::transaction(function () use ($group) {
-            $newStatus = !$group->is_active;
+            $newStatus = ! $group->is_active;
 
             $group->update([
                 'is_active' => $newStatus,
@@ -235,11 +234,12 @@ class CustomerGroupService
                 try {
                     // Validate customer exists
                     $customer = Customer::find($customerId);
-                    if (!$customer) {
+                    if (! $customer) {
                         $results['failed'][] = [
                             'customer_id' => $customerId,
                             'reason' => 'Customer not found',
                         ];
+
                         continue;
                     }
 
@@ -249,6 +249,7 @@ class CustomerGroupService
                             'customer_id' => $customerId,
                             'reason' => 'Already in group',
                         ];
+
                         continue;
                     }
 

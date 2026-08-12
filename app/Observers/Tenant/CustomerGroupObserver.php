@@ -3,7 +3,6 @@
 namespace App\Observers\Tenant;
 
 use App\Models\Tenant\CustomerGroup;
-use Illuminate\Support\Facades\Auth;
 
 class CustomerGroupObserver
 {

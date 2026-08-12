@@ -20,7 +20,7 @@ class MerchantReviewResponseController extends Controller
 
             $validated = $request->validated();
             $idempotencyKey = md5(
-                $validated['tenant_id'] . 'review_response' . $validated['review_id'] . hash('sha256', $validated['response_text'])
+                $validated['tenant_id'].'review_response'.$validated['review_id'].hash('sha256', $validated['response_text'])
             );
 
             // Check for duplicate
@@ -30,32 +30,32 @@ class MerchantReviewResponseController extends Controller
                 DB::connection('central')->commit();
 
                 return ApiResponse::success('Review response sync already received', [
-                    'sync_id'      => $existing->id,
-                    'status'       => $existing->status,
+                    'sync_id' => $existing->id,
+                    'status' => $existing->status,
                     'is_duplicate' => true,
                 ]);
             }
 
             $syncQueue = SyncQueueInbound::create([
-                'tenant_id'          => $validated['tenant_id'],
-                'syncable_type'      => 'ReviewResponse',
+                'tenant_id' => $validated['tenant_id'],
+                'syncable_type' => 'ReviewResponse',
                 'tenant_syncable_id' => $validated['review_id'],
-                'action'             => 'create',
-                'payload'            => $validated,
-                'metadata'           => [
-                    'received_from_ip'          => $request->ip(),
-                    'received_at_server'        => now()->toISOString(),
+                'action' => 'create',
+                'payload' => $validated,
+                'metadata' => [
+                    'received_from_ip' => $request->ip(),
+                    'received_at_server' => now()->toISOString(),
                     'sync_queue_id_from_tenant' => $request->header('X-Sync-Queue-ID'),
                 ],
-                'priority'           => 2,
-                'received_at'        => now(),
-                'scheduled_at'       => now(),
-                'expires_at'         => now()->addHours(24),
-                'status'             => 'pending',
-                'retry_count'        => 0,
-                'max_retries'        => 3,
-                'idempotency_key'    => $idempotencyKey,
-                'payload_hash'       => hash('sha256', json_encode($validated)),
+                'priority' => 2,
+                'received_at' => now(),
+                'scheduled_at' => now(),
+                'expires_at' => now()->addHours(24),
+                'status' => 'pending',
+                'retry_count' => 0,
+                'max_retries' => 3,
+                'idempotency_key' => $idempotencyKey,
+                'payload_hash' => hash('sha256', json_encode($validated)),
             ]);
 
             DB::connection('central')->commit();
@@ -64,7 +64,7 @@ class MerchantReviewResponseController extends Controller
 
             return ApiResponse::success('Review response queued for processing', [
                 'sync_id' => $syncQueue->id,
-                'status'  => 'pending',
+                'status' => 'pending',
             ], 202);
         } catch (\Exception $e) {
             DB::connection('central')->rollBack();

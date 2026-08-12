@@ -2,10 +2,10 @@
 
 namespace App\Models\Tenant;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class UomConversion extends Model
 {
@@ -80,7 +80,7 @@ class UomConversion extends Model
         $fromUom = $this->fromUom ?? UnitOfMeasure::find($this->from_uom_id);
         $toUom = $this->toUom ?? UnitOfMeasure::find($this->to_uom_id);
 
-        if (!$fromUom || !$toUom) {
+        if (! $fromUom || ! $toUom) {
             throw new \Exception('Both UOMs must exist');
         }
 
@@ -92,7 +92,7 @@ class UomConversion extends Model
         // Check for duplicate (reverse conversion already exists)
         $existingReverse = static::where('from_uom_id', $this->to_uom_id)
             ->where('to_uom_id', $this->from_uom_id)
-            ->when($this->exists, fn($q) => $q->where('id', '!=', $this->id))
+            ->when($this->exists, fn ($q) => $q->where('id', '!=', $this->id))
             ->exists();
 
         if ($existingReverse) {
@@ -127,6 +127,7 @@ class UomConversion extends Model
             if (abs($reverse->conversion_factor - $this->reverse_factor) > 0.000001) {
                 $reverse->update(['conversion_factor' => $this->reverse_factor]);
             }
+
             return $reverse;
         }
 
@@ -143,7 +144,7 @@ class UomConversion extends Model
         $from = $this->fromUom;
         $to = $this->toUom;
 
-        if (!$from || !$to) {
+        if (! $from || ! $to) {
             return 'Unknown conversion';
         }
 

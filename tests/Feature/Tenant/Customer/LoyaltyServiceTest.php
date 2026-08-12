@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Tenant\Customer;
 
+use App\Events\Tenant\LoyaltyPointsEarned;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\LoyaltyTransaction;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Sales\LoyaltyService;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -33,12 +35,12 @@ class LoyaltyServiceTest extends TestCase
         app()->instance(TenantContract::class, $fakeTenant);
 
         Cache::tags(['tenant', 'test-tenant', 'config'])->flush();
-        \Carbon\Carbon::setTestNow('2026-07-30 14:00:00');
+        Carbon::setTestNow('2026-07-30 14:00:00');
     }
 
     protected function tearDown(): void
     {
-        \Carbon\Carbon::setTestNow();
+        Carbon::setTestNow();
         $this->dropTestTables();
         DB::connection('tenant')->statement('SET foreign_key_checks = 1');
         parent::tearDown();
@@ -46,7 +48,7 @@ class LoyaltyServiceTest extends TestCase
 
     private function makeService(): LoyaltyService
     {
-        return new LoyaltyService();
+        return new LoyaltyService;
     }
 
     private function enableLoyalty(array $overrides = []): void
@@ -177,13 +179,13 @@ class LoyaltyServiceTest extends TestCase
 
     public function test_award_points_fires_loyalty_points_earned_event(): void
     {
-        Event::fake([\App\Events\Tenant\LoyaltyPointsEarned::class]);
+        Event::fake([LoyaltyPointsEarned::class]);
         $this->enableLoyalty();
         $customer = $this->createCustomer();
 
         $this->makeService()->awardPoints($customer, 50, 'Sale', 1);
 
-        Event::assertDispatchedTimes(\App\Events\Tenant\LoyaltyPointsEarned::class, 1);
+        Event::assertDispatchedTimes(LoyaltyPointsEarned::class, 1);
     }
 
     public function test_redeem_points_throws_when_disabled(): void

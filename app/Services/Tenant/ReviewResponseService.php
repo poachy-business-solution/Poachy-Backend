@@ -18,9 +18,9 @@ class ReviewResponseService
 
         return DB::transaction(function () use ($review, $responseText) {
             $review->update([
-                'merchant_response'     => $responseText,
+                'merchant_response' => $responseText,
                 'merchant_responded_at' => now(),
-                'response_sync_status'  => 'pending',
+                'response_sync_status' => 'pending',
             ]);
 
             event(new MerchantReviewResponseCreated($review, 'create'));
@@ -39,7 +39,7 @@ class ReviewResponseService
 
         return DB::transaction(function () use ($review, $responseText) {
             $review->update([
-                'merchant_response'    => $responseText,
+                'merchant_response' => $responseText,
                 'response_sync_status' => 'pending',
             ]);
 

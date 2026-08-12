@@ -18,12 +18,12 @@ class CustomerJourneyService
             ->get()
             ->map(function ($event) {
                 return [
-                    'event_type'       => $event->event_type,
-                    'event_timestamp'  => $event->event_timestamp,
-                    'product'          => $event->marketplaceProduct ? ['id' => $event->marketplaceProduct->id, 'name' => $event->marketplaceProduct->name] : null,
-                    'tenant'           => $event->tenant ? ['id' => $event->tenant->id, 'name' => $event->tenant->businessDetail?->business_name] : null,
+                    'event_type' => $event->event_type,
+                    'event_timestamp' => $event->event_timestamp,
+                    'product' => $event->marketplaceProduct ? ['id' => $event->marketplaceProduct->id, 'name' => $event->marketplaceProduct->name] : null,
+                    'tenant' => $event->tenant ? ['id' => $event->tenant->id, 'name' => $event->tenant->businessDetail?->business_name] : null,
                     'event_properties' => $event->event_properties,
-                    'page_url'         => $event->page_url,
+                    'page_url' => $event->page_url,
                 ];
             })
             ->toArray();
@@ -51,7 +51,7 @@ class CustomerJourneyService
 
         return $paths->map(function ($count, $path) {
             return [
-                'path'  => $path,
+                'path' => $path,
                 'count' => $count,
             ];
         })->values()->toArray();

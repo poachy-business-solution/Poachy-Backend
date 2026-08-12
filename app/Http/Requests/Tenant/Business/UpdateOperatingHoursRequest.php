@@ -33,7 +33,7 @@ class UpdateOperatingHoursRequest extends FormRequest
         $validator->after(function ($validator) {
             $operatingHours = $this->operating_hours;
 
-            if (!$operatingHours || !is_array($operatingHours)) {
+            if (! $operatingHours || ! is_array($operatingHours)) {
                 return;
             }
 
@@ -42,20 +42,22 @@ class UpdateOperatingHoursRequest extends FormRequest
             // Validate only the days that are provided
             foreach ($operatingHours as $day => $dayData) {
                 // Check if it's a valid day
-                if (!in_array($day, $validDays)) {
+                if (! in_array($day, $validDays)) {
                     $validator->errors()->add(
                         "operating_hours.{$day}",
-                        "Invalid day '{$day}'. Valid days are: " . implode(', ', $validDays)
+                        "Invalid day '{$day}'. Valid days are: ".implode(', ', $validDays)
                     );
+
                     continue;
                 }
 
                 // Check if dayData is an array
-                if (!is_array($dayData)) {
+                if (! is_array($dayData)) {
                     $validator->errors()->add(
                         "operating_hours.{$day}",
-                        ucfirst($day) . " must be an array."
+                        ucfirst($day).' must be an array.'
                     );
+
                     continue;
                 }
 
@@ -68,28 +70,28 @@ class UpdateOperatingHoursRequest extends FormRequest
                 }
 
                 // If not closed, validate open time
-                if (!isset($dayData['open']) || empty($dayData['open'])) {
+                if (! isset($dayData['open']) || empty($dayData['open'])) {
                     $validator->errors()->add(
                         "operating_hours.{$day}.open",
-                        "Opening time is required for " . ucfirst($day) . " unless marked as closed."
+                        'Opening time is required for '.ucfirst($day).' unless marked as closed.'
                     );
-                } elseif (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $dayData['open'])) {
+                } elseif (! preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $dayData['open'])) {
                     $validator->errors()->add(
                         "operating_hours.{$day}.open",
-                        "Opening time for " . ucfirst($day) . " must be in HH:MM format (e.g., 08:00)."
+                        'Opening time for '.ucfirst($day).' must be in HH:MM format (e.g., 08:00).'
                     );
                 }
 
                 // If not closed, validate close time
-                if (!isset($dayData['close']) || empty($dayData['close'])) {
+                if (! isset($dayData['close']) || empty($dayData['close'])) {
                     $validator->errors()->add(
                         "operating_hours.{$day}.close",
-                        "Closing time is required for " . ucfirst($day) . " unless marked as closed."
+                        'Closing time is required for '.ucfirst($day).' unless marked as closed.'
                     );
-                } elseif (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $dayData['close'])) {
+                } elseif (! preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $dayData['close'])) {
                     $validator->errors()->add(
                         "operating_hours.{$day}.close",
-                        "Closing time for " . ucfirst($day) . " must be in HH:MM format (e.g., 20:00)."
+                        'Closing time for '.ucfirst($day).' must be in HH:MM format (e.g., 20:00).'
                     );
                 }
 
@@ -97,13 +99,13 @@ class UpdateOperatingHoursRequest extends FormRequest
                 if (
                     isset($dayData['open']) &&
                     isset($dayData['close']) &&
-                    !empty($dayData['open']) &&
-                    !empty($dayData['close'])
+                    ! empty($dayData['open']) &&
+                    ! empty($dayData['close'])
                 ) {
                     if (strtotime($dayData['close']) <= strtotime($dayData['open'])) {
                         $validator->errors()->add(
                             "operating_hours.{$day}.close",
-                            "Closing time for " . ucfirst($day) . " must be after opening time."
+                            'Closing time for '.ucfirst($day).' must be after opening time.'
                         );
                     }
                 }

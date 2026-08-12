@@ -101,13 +101,13 @@ class CreatePromotionRequest extends FormRequest
         $validator->after(function ($validator) {
             $promotionType = PromotionType::tryFrom($this->promotion_type);
 
-            if (!$promotionType) {
+            if (! $promotionType) {
                 return;
             }
 
             // Validate based on promotion type
             if ($promotionType === PromotionType::PERCENTAGE_DISCOUNT) {
-                if (!$this->has('discount_value')) {
+                if (! $this->has('discount_value')) {
                     $validator->errors()->add('discount_value', 'Discount value is required for percentage discount.');
                 } elseif ($this->discount_value > 100) {
                     $validator->errors()->add('discount_value', 'Percentage discount cannot exceed 100%.');
@@ -115,17 +115,17 @@ class CreatePromotionRequest extends FormRequest
             }
 
             if ($promotionType === PromotionType::FIXED_DISCOUNT) {
-                if (!$this->has('discount_value')) {
+                if (! $this->has('discount_value')) {
                     $validator->errors()->add('discount_value', 'Discount value is required for fixed discount.');
                 }
             }
 
             if ($promotionType === PromotionType::BUY_X_GET_Y) {
-                if (!$this->has('buy_quantity') || !$this->has('get_quantity')) {
+                if (! $this->has('buy_quantity') || ! $this->has('get_quantity')) {
                     $validator->errors()->add('promotion_type', 'Buy quantity and Get quantity are required for Buy X Get Y promotion.');
                 }
 
-                if (!$this->get_items_free && !$this->has('get_items_discount_percentage')) {
+                if (! $this->get_items_free && ! $this->has('get_items_discount_percentage')) {
                     $validator->errors()->add('get_items_discount_percentage', 'Discount percentage is required when get items are not free.');
                 }
             }
@@ -135,23 +135,23 @@ class CreatePromotionRequest extends FormRequest
 
             if ($applicabilityType && $applicabilityType->requiresRelatedData()) {
                 $hasData = match ($applicabilityType) {
-                    PromotionApplicabilityType::SPECIFIC_PRODUCTS => !empty($this->input('applicability.products')),
-                    PromotionApplicabilityType::SPECIFIC_CATEGORIES => !empty($this->input('applicability.categories')),
-                    PromotionApplicabilityType::SPECIFIC_BRANDS => !empty($this->input('applicability.brands')),
+                    PromotionApplicabilityType::SPECIFIC_PRODUCTS => ! empty($this->input('applicability.products')),
+                    PromotionApplicabilityType::SPECIFIC_CATEGORIES => ! empty($this->input('applicability.categories')),
+                    PromotionApplicabilityType::SPECIFIC_BRANDS => ! empty($this->input('applicability.brands')),
                     default => false,
                 };
 
-                if (!$hasData) {
+                if (! $hasData) {
                     $validator->errors()->add('applicability', "You must provide at least one {$applicabilityType->label()} for this applicability type.");
                 }
             }
 
             // Validate time window consistency
-            if ($this->has('active_time_start') && !$this->has('active_time_end')) {
+            if ($this->has('active_time_start') && ! $this->has('active_time_end')) {
                 $validator->errors()->add('active_time_end', 'End time is required when start time is specified.');
             }
 
-            if (!$this->has('active_time_start') && $this->has('active_time_end')) {
+            if (! $this->has('active_time_start') && $this->has('active_time_end')) {
                 $validator->errors()->add('active_time_start', 'Start time is required when end time is specified.');
             }
         });

@@ -8,6 +8,7 @@ use App\Enums\Tenant\PaymentStatus;
 use App\Enums\Tenant\RecurrenceFrequency;
 use App\Observers\Tenant\ExpenseObserver;
 use App\Traits\Tenant\HasAuditLogging;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
 #[ObservedBy([ExpenseObserver::class])]
 class Expense extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'expenses';
 
@@ -71,7 +72,6 @@ class Expense extends Model
      * RELATIONSHIPS
      * ============================================
      */
-
     public function category(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class, 'category_id');
@@ -112,7 +112,6 @@ class Expense extends Model
      * SCOPES
      * ============================================
      */
-
     public function scopePending($query)
     {
         return $query->where('approval_status', ExpenseStatus::PENDING);
@@ -185,10 +184,9 @@ class Expense extends Model
      * ACCESSORS
      * ============================================
      */
-
     public function getFormattedAmountAttribute(): string
     {
-        return 'KES ' . number_format($this->amount, 2);
+        return 'KES '.number_format($this->amount, 2);
     }
 
     public function getIsEditableAttribute(): bool
@@ -204,12 +202,12 @@ class Expense extends Model
 
     public function getHasReceiptAttribute(): bool
     {
-        return !empty($this->receipt_path);
+        return ! empty($this->receipt_path);
     }
 
     public function getIsRecurrenceInstanceAttribute(): bool
     {
-        return !is_null($this->parent_expense_id);
+        return ! is_null($this->parent_expense_id);
     }
 
     public function getCanBeApprovedAttribute(): bool
@@ -219,7 +217,7 @@ class Expense extends Model
         }
 
         // Check if receipt is required
-        if ($this->category->requires_receipt && !$this->has_receipt) {
+        if ($this->category->requires_receipt && ! $this->has_receipt) {
             return false;
         }
 
@@ -257,7 +255,7 @@ class Expense extends Model
 
         // Use a database lock to prevent race conditions
         return DB::transaction(function () use ($prefix) {
-            $lastExpense = self::where('expense_number', 'like', $prefix . '%')
+            $lastExpense = self::where('expense_number', 'like', $prefix.'%')
                 ->lockForUpdate() // Lock the query to prevent race conditions
                 ->orderByRaw('CAST(SUBSTRING(expense_number, -6) AS UNSIGNED) DESC')
                 ->first();
@@ -276,10 +274,10 @@ class Expense extends Model
             $attempt = 0;
 
             while ($attempt < $maxAttempts) {
-                $expenseNumber = $prefix . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
+                $expenseNumber = $prefix.str_pad($newNumber, 6, '0', STR_PAD_LEFT);
 
                 // Check if this number already exists
-                if (!self::where('expense_number', $expenseNumber)->exists()) {
+                if (! self::where('expense_number', $expenseNumber)->exists()) {
                     return $expenseNumber;
                 }
 
@@ -295,9 +293,9 @@ class Expense extends Model
     /**
      * Calculate next occurrence date
      */
-    public function calculateNextOccurrence(): ?\Carbon\Carbon
+    public function calculateNextOccurrence(): ?Carbon
     {
-        if (!$this->is_recurring || !$this->recurrence_frequency) {
+        if (! $this->is_recurring || ! $this->recurrence_frequency) {
             return null;
         }
 
@@ -334,7 +332,7 @@ class Expense extends Model
      */
     public function getReceiptUrl(): ?string
     {
-        if (!$this->receipt_path) {
+        if (! $this->receipt_path) {
             return null;
         }
 

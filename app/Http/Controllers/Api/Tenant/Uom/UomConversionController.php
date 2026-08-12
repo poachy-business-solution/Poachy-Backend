@@ -8,6 +8,7 @@ use App\Http\Requests\Tenant\Uom\UpdateUomConversionRequest;
 use App\Http\Resources\Tenant\Uom\UomConversionResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Uom\UnitOfMeasureService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,20 +26,26 @@ class UomConversionController extends Controller
      *     operationId="createUomConversion",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"from_uom_id", "to_uom_id", "conversion_factor"},
+     *
      *             @OA\Property(property="from_uom_id", type="integer", example=50, description="Source unit ID"),
      *             @OA\Property(property="to_uom_id", type="integer", example=1, description="Target unit ID (must be different from source)"),
      *             @OA\Property(property="conversion_factor", type="number", format="float", example=6, description="Conversion factor (> 0, max 6 decimal places)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Conversion created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Conversion created successfully"),
      *             @OA\Property(
@@ -97,11 +104,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation failed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -110,19 +120,25 @@ class UomConversionController extends Controller
      *                 @OA\Property(
      *                     property="conversion",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="A conversion between these units already exists.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="from_uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Source and target units must be different.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="conversion_factor",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Conversion factor must be greater than zero.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -133,11 +149,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -150,11 +169,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot create conversion between different types: weight and volume"),
      *             @OA\Property(
@@ -201,25 +223,33 @@ class UomConversionController extends Controller
      *     operationId="updateUomConversion",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Conversion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=100)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"conversion_factor"},
+     *
      *             @OA\Property(property="conversion_factor", type="number", format="float", example=7.5, description="New conversion factor (> 0, max 6 decimal places)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversion updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Conversion updated successfully"),
      *             @OA\Property(
@@ -278,11 +308,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Conversion not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Conversion not found"),
      *             @OA\Property(
@@ -295,11 +328,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation failed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -308,9 +344,11 @@ class UomConversionController extends Controller
      *                 @OA\Property(
      *                     property="conversion_factor",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Conversion factor must be greater than zero.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -321,11 +359,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -338,11 +379,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to update conversion"),
      *             @OA\Property(
@@ -368,7 +412,7 @@ class UomConversionController extends Controller
                 'Conversion updated successfully',
                 new UomConversionResource($conversion)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Conversion not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(
@@ -386,18 +430,23 @@ class UomConversionController extends Controller
      *     operationId="deleteUomConversion",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Conversion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=100)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversion deleted successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Conversion deleted successfully"),
      *             @OA\Property(
@@ -410,11 +459,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Conversion not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Conversion not found"),
      *             @OA\Property(
@@ -427,11 +479,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -444,11 +499,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to delete conversion"),
      *             @OA\Property(
@@ -469,7 +527,7 @@ class UomConversionController extends Controller
             $this->uomService->deleteUomConversion($id);
 
             return ApiResponse::success('Conversion deleted successfully');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Conversion not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(
@@ -487,20 +545,26 @@ class UomConversionController extends Controller
      *     operationId="convertQuantity",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"quantity", "from_uom_id", "to_uom_id"},
+     *
      *             @OA\Property(property="quantity", type="number", format="float", example=5, description="Amount to convert (must be > 0)"),
      *             @OA\Property(property="from_uom_id", type="integer", example=50, description="Source unit ID"),
      *             @OA\Property(property="to_uom_id", type="integer", example=1, description="Target unit ID")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversion calculated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Conversion calculated successfully"),
      *             @OA\Property(
@@ -556,11 +620,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation failed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -569,19 +636,25 @@ class UomConversionController extends Controller
      *                 @OA\Property(
      *                     property="quantity",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The quantity field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="from_uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected from uom id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="to_uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected to uom id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -592,11 +665,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -609,11 +685,14 @@ class UomConversionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot convert between different UOM types: weight and volume"),
      *             @OA\Property(

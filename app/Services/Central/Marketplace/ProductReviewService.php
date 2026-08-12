@@ -11,9 +11,7 @@ use App\Repositories\Central\ProductReviewRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Storage;
 
 class ProductReviewService
 {
@@ -48,14 +46,14 @@ class ProductReviewService
         return DB::connection('central')->transaction(function () use ($customer, $productId, $orderId, $data, $isVerifiedPurchase, $initialStatus, $imagePaths) {
             return ProductReview::create([
                 'marketplace_product_id' => $productId,
-                'customer_id'            => $customer->id,
-                'order_id'               => $orderId,
-                'rating'                 => $data['rating'],
-                'title'                  => $data['title'] ?? null,
-                'review_text'            => $data['review_text'],
-                'review_images'          => $imagePaths ?: null,
-                'is_verified_purchase'   => $isVerifiedPurchase,
-                'status'                 => $initialStatus,
+                'customer_id' => $customer->id,
+                'order_id' => $orderId,
+                'rating' => $data['rating'],
+                'title' => $data['title'] ?? null,
+                'review_text' => $data['review_text'],
+                'review_images' => $imagePaths ?: null,
+                'is_verified_purchase' => $isVerifiedPurchase,
+                'status' => $initialStatus,
             ]);
         });
     }
@@ -85,7 +83,7 @@ class ProductReviewService
         }
 
         $review->update([
-            'merchant_response'     => $responseText,
+            'merchant_response' => $responseText,
             'merchant_responded_at' => now(),
         ]);
 

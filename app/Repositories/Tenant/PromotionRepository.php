@@ -24,31 +24,31 @@ class PromotionRepository
             ->withCount(['products', 'categories', 'brands']);
 
         // Apply filters
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['promotion_type'])) {
+        if (! empty($filters['promotion_type'])) {
             $query->filterByType($filters['promotion_type']);
         }
 
-        if (!empty($filters['applicable_to'])) {
+        if (! empty($filters['applicable_to'])) {
             $query->filterByApplicability($filters['applicable_to']);
         }
 
-        if (!empty($filters['is_active'])) {
+        if (! empty($filters['is_active'])) {
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->applicableToStore($filters['store_id']);
         }
 
-        if (!empty($filters['show_in_pos'])) {
+        if (! empty($filters['show_in_pos'])) {
             $query->showInPos();
         }
 
-        if (!empty($filters['show_on_website'])) {
+        if (! empty($filters['show_on_website'])) {
             $query->showOnWebsite();
         }
 
@@ -261,9 +261,9 @@ class PromotionRepository
                     ->wherePivot('product_variant_id', $variantId)
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     $promotion->products()->attach($productId, [
-                        'product_variant_id' => $variantId
+                        'product_variant_id' => $variantId,
                     ]);
                 }
             }
@@ -406,7 +406,7 @@ class PromotionRepository
 
             // Update promotion
             $promotion->update([
-                'banner_image_url' => $bannerPath
+                'banner_image_url' => $bannerPath,
             ]);
 
             $this->invalidateCache($promotion->id);
@@ -435,7 +435,7 @@ class PromotionRepository
         $extension = $file->getClientOriginalExtension();
 
         // Create filename with timestamp
-        $filename = 'banner_' . Str::slug($originalName) . '_' . time() . '.' . $extension;
+        $filename = 'banner_'.Str::slug($originalName).'_'.time().'.'.$extension;
 
         // Store in public disk under promotions/banners
         $path = $file->storeAs('promotions/banners', $filename, 'public');
@@ -454,7 +454,7 @@ class PromotionRepository
 
             // Update promotion
             $promotion->update([
-                'banner_image_url' => null
+                'banner_image_url' => null,
             ]);
 
             $this->invalidateCache($promotion->id);

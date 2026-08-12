@@ -40,12 +40,12 @@ class MarketplaceSaleService
      * Update a marketplace sale's fulfillment status and sync the change to central.
      *
      * @param  array  $deliveryData  Optional delivery-tracking fields (courier_company,
-     *                                courier_name, courier_phone, tracking_number,
-     *                                tracking_url, delivery_proof_type, delivery_proof_data,
-     *                                received_by_name, received_by_phone). Never persisted
-     *                                tenant-side — passed through the sync payload to
-     *                                central, where MarketplaceOrderDelivery is the real
-     *                                store of record.
+     *                               courier_name, courier_phone, tracking_number,
+     *                               tracking_url, delivery_proof_type, delivery_proof_data,
+     *                               received_by_name, received_by_phone). Never persisted
+     *                               tenant-side — passed through the sync payload to
+     *                               central, where MarketplaceOrderDelivery is the real
+     *                               store of record.
      */
     public function updateFulfillmentStatus(
         MarketplaceSale $sale,

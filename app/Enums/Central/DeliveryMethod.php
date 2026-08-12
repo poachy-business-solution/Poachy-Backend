@@ -4,8 +4,8 @@ namespace App\Enums\Central;
 
 enum DeliveryMethod: string
 {
-    case Standard  = 'standard';
-    case Express   = 'express';
+    case Standard = 'standard';
+    case Express = 'express';
     case Scheduled = 'scheduled';
 
     /**
@@ -14,8 +14,8 @@ enum DeliveryMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::Standard  => 'Standard',
-            self::Express   => 'Express',
+            self::Standard => 'Standard',
+            self::Express => 'Express',
             self::Scheduled => 'Scheduled',
         };
     }

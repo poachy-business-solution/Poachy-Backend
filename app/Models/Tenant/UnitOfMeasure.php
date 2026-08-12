@@ -3,10 +3,10 @@
 namespace App\Models\Tenant;
 
 use App\Enums\Tenant\UomSourceType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 class UnitOfMeasure extends Model
 {
@@ -112,7 +112,7 @@ class UnitOfMeasure extends Model
             ->where('is_base_unit', true)
             ->first();
 
-        if (!$baseUnit) {
+        if (! $baseUnit) {
             throw new \Exception("No base unit defined for type: {$this->type}");
         }
 

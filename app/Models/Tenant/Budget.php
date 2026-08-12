@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[ObservedBy(BudgetObserver::class)]
 class Budget extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'budgets';
 
@@ -56,7 +56,6 @@ class Budget extends Model
      * RELATIONSHIPS
      * ============================================
      */
-
     public function category(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class, 'category_id');
@@ -85,7 +84,6 @@ class Budget extends Model
      * SCOPES
      * ============================================
      */
-
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -131,6 +129,7 @@ class Budget extends Model
     public function scopeCurrent($query)
     {
         $now = now();
+
         return $query->where('period_start', '<=', $now)
             ->where('period_end', '>=', $now);
     }
@@ -140,20 +139,19 @@ class Budget extends Model
      * ACCESSORS
      * ============================================
      */
-
     public function getFormattedBudgetAmountAttribute(): string
     {
-        return 'KES ' . number_format($this->budget_amount, 2);
+        return 'KES '.number_format($this->budget_amount, 2);
     }
 
     public function getFormattedSpentAmountAttribute(): string
     {
-        return 'KES ' . number_format($this->spent_amount, 2);
+        return 'KES '.number_format($this->spent_amount, 2);
     }
 
     public function getFormattedRemainingAmountAttribute(): string
     {
-        return 'KES ' . number_format($this->remaining_amount, 2);
+        return 'KES '.number_format($this->remaining_amount, 2);
     }
 
     public function getPercentageSpentAttribute(): float
@@ -215,14 +213,15 @@ class Budget extends Model
 
     public function getPeriodLabelAttribute(): string
     {
-        return $this->period_type->label() . ' (' .
-            $this->period_start->format('M d, Y') . ' - ' .
-            $this->period_end->format('M d, Y') . ')';
+        return $this->period_type->label().' ('.
+            $this->period_start->format('M d, Y').' - '.
+            $this->period_end->format('M d, Y').')';
     }
 
     public function getIsActiveNowAttribute(): bool
     {
         $now = now();
+
         return $this->is_active
             && $this->period_start->lte($now)
             && $this->period_end->gte($now);
@@ -254,10 +253,10 @@ class Budget extends Model
         // Check if threshold was crossed in either direction — an approved expense
         // getting rejected, or the budget amount being raised, can bring spending back
         // under threshold, and the alert must clear just as reliably as it sets.
-        if (!$this->alert_triggered && $this->is_near_threshold) {
+        if (! $this->alert_triggered && $this->is_near_threshold) {
             $this->alert_triggered = true;
             $this->alert_triggered_at = now();
-        } elseif ($this->alert_triggered && !$this->is_near_threshold) {
+        } elseif ($this->alert_triggered && ! $this->is_near_threshold) {
             $this->alert_triggered = false;
             $this->alert_triggered_at = null;
         }

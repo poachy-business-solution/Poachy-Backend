@@ -13,7 +13,9 @@ class InventoryCountMarketplaceSyncRequested
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public readonly InventoryCountSyncDTO $inventoryDTO;
+
     public readonly string $action;
+
     public readonly int $priority;
 
     public function __construct(

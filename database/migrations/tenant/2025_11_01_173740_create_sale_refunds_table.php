@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->foreignId('processed_by')->constrained('users')->onDelete('restrict');
             $table->timestamps();
-            
+
             $table->index(['original_sale_id']);
             $table->index(['refund_number']);
         });

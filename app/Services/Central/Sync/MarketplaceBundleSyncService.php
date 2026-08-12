@@ -155,7 +155,7 @@ class MarketplaceBundleSyncService
                 ->where('tenant_product_type', 'bundle')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::info('Marketplace bundle product not found for update, creating instead', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_bundle_id' => $dto->bundleId,
@@ -219,7 +219,7 @@ class MarketplaceBundleSyncService
                 ->where('tenant_product_type', 'bundle')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace bundle product not found for deletion', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_bundle_id' => $dto->bundleId,
@@ -277,7 +277,7 @@ class MarketplaceBundleSyncService
                 ->where('tenant_product_type', 'bundle')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace bundle product not found for activation, creating instead', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_bundle_id' => $dto->bundleId,
@@ -343,7 +343,7 @@ class MarketplaceBundleSyncService
                 ->where('tenant_product_type', 'bundle')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace bundle product not found for deactivation', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_bundle_id' => $dto->bundleId,
@@ -430,7 +430,7 @@ class MarketplaceBundleSyncService
         // Track changes for logging
         $changedFields = [];
         foreach ($updateData as $key => $value) {
-            if ($marketplaceProduct->$key != $value) {
+            if ($value != $marketplaceProduct->$key) {
                 $changedFields[$key] = [
                     'old' => $marketplaceProduct->$key,
                     'new' => $value,
@@ -440,7 +440,7 @@ class MarketplaceBundleSyncService
 
         $marketplaceProduct->update($updateData);
 
-        if (!empty($changedFields)) {
+        if (! empty($changedFields)) {
             Log::info('Marketplace bundle product fields updated', [
                 'marketplace_product_id' => $marketplaceProduct->id,
                 'tenant_id' => $dto->tenantId,
@@ -462,7 +462,7 @@ class MarketplaceBundleSyncService
      */
     protected function generateUniqueSlug(string $baseSlug, string $tenantId, ?int $excludeProductId = null): string
     {
-        $slug = $baseSlug . '-' . substr($tenantId, 0, 8);
+        $slug = $baseSlug.'-'.substr($tenantId, 0, 8);
         $originalSlug = $slug;
         $counter = 1;
 
@@ -473,11 +473,11 @@ class MarketplaceBundleSyncService
                 $query->where('id', '!=', $excludeProductId);
             }
 
-            if (!$query->exists()) {
+            if (! $query->exists()) {
                 return $slug;
             }
 
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
     }
@@ -494,7 +494,7 @@ class MarketplaceBundleSyncService
         }
 
         // Build items summary
-        if (!empty($dto->items)) {
+        if (! empty($dto->items)) {
             $itemLines = [];
             foreach ($dto->items as $item) {
                 $itemName = $item->variantName
@@ -502,19 +502,19 @@ class MarketplaceBundleSyncService
                     : $item->productName;
                 $itemLines[] = "- {$item->quantity} x {$itemName} ({$item->uomName})";
             }
-            $parts[] = "Bundle Contains:\n" . implode("\n", $itemLines);
+            $parts[] = "Bundle Contains:\n".implode("\n", $itemLines);
         }
 
         // Pricing info
         if ($dto->discountAmount && $dto->discountAmount > 0) {
-            $parts[] = "Save KES " . number_format($dto->discountAmount, 2) . " compared to buying individually";
+            $parts[] = 'Save KES '.number_format($dto->discountAmount, 2).' compared to buying individually';
         }
 
         if ($dto->savingsPercentage && $dto->savingsPercentage > 0) {
-            $parts[] = number_format($dto->savingsPercentage, 1) . "% savings";
+            $parts[] = number_format($dto->savingsPercentage, 1).'% savings';
         }
 
-        return !empty($parts) ? implode("\n\n", $parts) : null;
+        return ! empty($parts) ? implode("\n\n", $parts) : null;
     }
 
     /**

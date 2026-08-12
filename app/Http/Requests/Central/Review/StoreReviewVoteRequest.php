@@ -22,7 +22,7 @@ class StoreReviewVoteRequest extends FormRequest
     {
         return [
             'vote_type.required' => 'A vote type is required.',
-            'vote_type.in'       => 'Vote type must be either "helpful" or "not_helpful".',
+            'vote_type.in' => 'Vote type must be either "helpful" or "not_helpful".',
         ];
     }
 }

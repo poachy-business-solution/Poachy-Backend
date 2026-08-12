@@ -3,10 +3,13 @@
 namespace Tests\Feature\Tenant\Customer;
 
 use App\Enums\Tenant\PaymentMethod;
+use App\Events\Tenant\CreditLimitExceeded;
+use App\Events\Tenant\CreditSaleCreated;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Sales\CreditService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
@@ -39,12 +42,12 @@ class CreditServiceTest extends TestCase
 
         Cache::tags(['tenant', 'test-tenant', 'config'])->flush();
         Auth::setUser($this->fakeUser());
-        \Carbon\Carbon::setTestNow('2026-07-30 14:00:00');
+        Carbon::setTestNow('2026-07-30 14:00:00');
     }
 
     protected function tearDown(): void
     {
-        \Carbon\Carbon::setTestNow();
+        Carbon::setTestNow();
         $this->dropTestTables();
         DB::connection('tenant')->statement('SET foreign_key_checks = 1');
         parent::tearDown();
@@ -54,19 +57,43 @@ class CreditServiceTest extends TestCase
     {
         return new class implements Authenticatable
         {
-            public function getAuthIdentifierName() { return 'id'; }
-            public function getAuthIdentifier() { return 1; }
-            public function getAuthPasswordName() { return 'password'; }
-            public function getAuthPassword() { return ''; }
-            public function getRememberToken() { return null; }
+            public function getAuthIdentifierName()
+            {
+                return 'id';
+            }
+
+            public function getAuthIdentifier()
+            {
+                return 1;
+            }
+
+            public function getAuthPasswordName()
+            {
+                return 'password';
+            }
+
+            public function getAuthPassword()
+            {
+                return '';
+            }
+
+            public function getRememberToken()
+            {
+                return null;
+            }
+
             public function setRememberToken($value) {}
-            public function getRememberTokenName() { return 'remember_token'; }
+
+            public function getRememberTokenName()
+            {
+                return 'remember_token';
+            }
         };
     }
 
     private function makeService(): CreditService
     {
-        return new CreditService();
+        return new CreditService;
     }
 
     private function enableCredit(array $overrides = []): void
@@ -174,7 +201,7 @@ class CreditServiceTest extends TestCase
 
     public function test_record_credit_sale_throws_and_fires_event_when_limit_exceeded(): void
     {
-        Event::fake([\App\Events\Tenant\CreditLimitExceeded::class]);
+        Event::fake([CreditLimitExceeded::class]);
         $this->enableCredit();
         $customer = $this->createCustomer(['credit_limit' => 100, 'current_debt' => 50]);
 
@@ -183,13 +210,13 @@ class CreditServiceTest extends TestCase
         try {
             $this->makeService()->recordCreditSale($customer, 100, 'Sale', 1);
         } finally {
-            Event::assertDispatchedTimes(\App\Events\Tenant\CreditLimitExceeded::class, 1);
+            Event::assertDispatchedTimes(CreditLimitExceeded::class, 1);
         }
     }
 
     public function test_record_credit_sale_increments_debt_and_fires_event(): void
     {
-        Event::fake([\App\Events\Tenant\CreditSaleCreated::class]);
+        Event::fake([CreditSaleCreated::class]);
         $this->enableCredit();
         $customer = $this->createCustomer(['credit_limit' => 1000, 'current_debt' => 100]);
 
@@ -197,7 +224,7 @@ class CreditServiceTest extends TestCase
 
         $this->assertEquals(400, $customer->fresh()->current_debt);
         $this->assertEquals(400, $transaction->balance_after);
-        Event::assertDispatchedTimes(\App\Events\Tenant\CreditSaleCreated::class, 1);
+        Event::assertDispatchedTimes(CreditSaleCreated::class, 1);
     }
 
     // =========================================================================

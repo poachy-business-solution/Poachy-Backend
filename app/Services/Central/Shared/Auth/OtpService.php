@@ -66,7 +66,7 @@ class OtpService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$otp) {
+        if (! $otp) {
             throw ValidationException::withMessages([
                 'otp_code' => ['No valid OTP found. Please request a new code.'],
             ]);
@@ -91,7 +91,7 @@ class OtpService
             $otp->incrementAttempts();
 
             throw ValidationException::withMessages([
-                'otp_code' => ['Invalid OTP code. ' . (3 - $otp->attempts) . ' attempts remaining.'],
+                'otp_code' => ['Invalid OTP code. '.(3 - $otp->attempts).' attempts remaining.'],
             ]);
         }
 

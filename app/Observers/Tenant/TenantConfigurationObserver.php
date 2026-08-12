@@ -134,7 +134,7 @@ class TenantConfigurationObserver
      */
     private function sanitizeConfigValue(array $data): array
     {
-        if (!isset($data['config_key'], $data['config_value'])) {
+        if (! isset($data['config_key'], $data['config_value'])) {
             return $data;
         }
 
@@ -204,14 +204,14 @@ class TenantConfigurationObserver
 
         // Don't show value if sensitive
         $valueInfo = '';
-        if (!$this->isSensitiveConfig($config->config_key)) {
+        if (! $this->isSensitiveConfig($config->config_key)) {
             $value = is_array($config->config_value)
                 ? json_encode($config->config_value)
                 : $config->config_value;
 
             // Truncate long values
             if (strlen($value) > 50) {
-                $value = substr($value, 0, 47) . '...';
+                $value = substr($value, 0, 47).'...';
             }
 
             $valueInfo = " with value: {$value}";
@@ -242,10 +242,10 @@ class TenantConfigurationObserver
 
             // Truncate long values
             if (strlen($oldValueStr) > 50) {
-                $oldValueStr = substr($oldValueStr, 0, 47) . '...';
+                $oldValueStr = substr($oldValueStr, 0, 47).'...';
             }
             if (strlen($newValueStr) > 50) {
-                $newValueStr = substr($newValueStr, 0, 47) . '...';
+                $newValueStr = substr($newValueStr, 0, 47).'...';
             }
 
             return "{$user} changed configuration '{$config->config_key}' from '{$oldValueStr}' to '{$newValueStr}'";
@@ -254,6 +254,7 @@ class TenantConfigurationObserver
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'enabled' : 'disabled';
+
             return "{$user} {$status} configuration '{$config->config_key}'";
         }
 
@@ -261,6 +262,7 @@ class TenantConfigurationObserver
         if (isset($changes['config_type'])) {
             $oldType = $config->getOriginal('config_type');
             $newType = $changes['config_type'];
+
             return "{$user} changed configuration '{$config->config_key}' type from {$oldType} to {$newType}";
         }
 
@@ -268,11 +270,13 @@ class TenantConfigurationObserver
         if (isset($changes['config_group'])) {
             $oldGroup = $config->getOriginal('config_group') ?? 'none';
             $newGroup = $changes['config_group'] ?? 'none';
+
             return "{$user} moved configuration '{$config->config_key}' from {$oldGroup} to {$newGroup} group";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated configuration '{$config->config_key}' - {$changedFields}";
     }
 

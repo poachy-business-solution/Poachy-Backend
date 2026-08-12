@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources\Tenant\Customer;
 
+use App\Models\Tenant\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Models\Tenant\User;
 
 class LoyaltyTransactionResource extends JsonResource
 {
@@ -44,6 +44,7 @@ class LoyaltyTransactionResource extends JsonResource
         // Handle manual awards (null reference_type with reference_id pointing to user)
         if ($this->reference_type === null && $this->reference_id) {
             $user = User::find($this->reference_id);
+
             return [
                 'type' => 'Manual Award',
                 'awarded_by' => $user?->name ?? 'Unknown User',
@@ -52,7 +53,7 @@ class LoyaltyTransactionResource extends JsonResource
         }
 
         // If no reference at all
-        if (!$this->reference_type || !$this->reference) {
+        if (! $this->reference_type || ! $this->reference) {
             return null;
         }
 
@@ -81,7 +82,7 @@ class LoyaltyTransactionResource extends JsonResource
      */
     private function calculateDaysUntilExpiry(): ?int
     {
-        if (!$this->expires_at) {
+        if (! $this->expires_at) {
             return null;
         }
 

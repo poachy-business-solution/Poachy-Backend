@@ -42,7 +42,7 @@ class SupplierObserver
     {
         $changes = $supplier->getDirty();
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             Log::info('Updating supplier', [
                 'tenant_id' => tenant()->id,
                 'supplier_id' => $supplier->id,
@@ -61,7 +61,7 @@ class SupplierObserver
             $criticalFields = $supplier->getCriticalFields();
             $criticalChanges = array_intersect_key($changes, array_flip($criticalFields));
 
-            if (!empty($criticalChanges)) {
+            if (! empty($criticalChanges)) {
                 $oldValues = $supplier->getOriginal();
 
                 // Generate context-aware description
@@ -186,6 +186,7 @@ class SupplierObserver
         if (isset($changes['name'])) {
             $oldName = $supplier->getOriginal('name');
             $newName = $changes['name'];
+
             return "{$user} changed supplier name from {$oldName} to {$newName}";
         }
 
@@ -193,6 +194,7 @@ class SupplierObserver
         if (isset($changes['email'])) {
             $oldEmail = $supplier->getOriginal('email');
             $newEmail = $changes['email'];
+
             return "{$user} changed supplier {$supplier->name} email from {$oldEmail} to {$newEmail}";
         }
 
@@ -200,6 +202,7 @@ class SupplierObserver
         if (isset($changes['phone'])) {
             $oldPhone = $supplier->getOriginal('phone');
             $newPhone = $changes['phone'];
+
             return "{$user} changed supplier {$supplier->name} phone from {$oldPhone} to {$newPhone}";
         }
 
@@ -207,6 +210,7 @@ class SupplierObserver
         if (isset($changes['credit_limit'])) {
             $oldLimit = number_format($supplier->getOriginal('credit_limit'), 2);
             $newLimit = number_format($changes['credit_limit'], 2);
+
             return "{$user} changed credit limit for {$supplier->name} from KES {$oldLimit} to KES {$newLimit}";
         }
 
@@ -214,6 +218,7 @@ class SupplierObserver
         if (isset($changes['outstanding_balance'])) {
             $oldBalance = number_format($supplier->getOriginal('outstanding_balance'), 2);
             $newBalance = number_format($changes['outstanding_balance'], 2);
+
             return "{$user} updated outstanding balance for {$supplier->name} from KES {$oldBalance} to KES {$newBalance}";
         }
 
@@ -221,17 +226,20 @@ class SupplierObserver
         if (isset($changes['payment_terms'])) {
             $oldTerms = $supplier->getOriginal('payment_terms');
             $newTerms = $changes['payment_terms'];
+
             return "{$user} changed payment terms for {$supplier->name} from {$oldTerms} to {$newTerms}";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} supplier {$supplier->name}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated supplier {$supplier->name} - {$changedFields}";
     }
 

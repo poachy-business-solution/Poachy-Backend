@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\ShiftStatus;
 use App\Observers\Tenant\ShiftAssignmentObserver;
 use Carbon\Carbon;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy(ShiftAssignmentObserver::class)]
 class ShiftAssignment extends Model
@@ -59,7 +59,7 @@ class ShiftAssignment extends Model
     {
         static::saving(function (ShiftAssignment $assignment) {
             // Auto-calculate actual duration if both start and end exist
-            if ($assignment->actual_start && $assignment->actual_end && !$assignment->actual_duration_minutes) {
+            if ($assignment->actual_start && $assignment->actual_end && ! $assignment->actual_duration_minutes) {
                 $assignment->calculateActualDuration();
             }
         });
@@ -207,7 +207,7 @@ class ShiftAssignment extends Model
 
     public function getIsLateAttribute(): bool
     {
-        if (!$this->actual_start || !$this->shift) {
+        if (! $this->actual_start || ! $this->shift) {
             return false;
         }
 
@@ -219,7 +219,7 @@ class ShiftAssignment extends Model
 
     public function getMinutesLateAttribute(): ?int
     {
-        if (!$this->is_late) {
+        if (! $this->is_late) {
             return null;
         }
 
@@ -231,7 +231,7 @@ class ShiftAssignment extends Model
 
     public function getIsEarlyDepartureAttribute(): bool
     {
-        if (!$this->actual_end || !$this->shift) {
+        if (! $this->actual_end || ! $this->shift) {
             return false;
         }
 
@@ -248,7 +248,7 @@ class ShiftAssignment extends Model
 
     public function getMinutesEarlyAttribute(): ?int
     {
-        if (!$this->is_early_departure) {
+        if (! $this->is_early_departure) {
             return null;
         }
 
@@ -292,7 +292,7 @@ class ShiftAssignment extends Model
 
     public function getOvertimeMinutesAttribute(): int
     {
-        if (!$this->actual_duration_minutes || !$this->shift) {
+        if (! $this->actual_duration_minutes || ! $this->shift) {
             return 0;
         }
 
@@ -314,7 +314,7 @@ class ShiftAssignment extends Model
 
     public function getActualDurationHoursAttribute(): ?float
     {
-        if (!$this->actual_duration_minutes) {
+        if (! $this->actual_duration_minutes) {
             return null;
         }
 
@@ -336,10 +336,10 @@ class ShiftAssignment extends Model
         }
 
         // Get actual cash received from sale_payments
-        $cashReceived = \App\Models\Tenant\SalePayment::whereHas('sale', function ($query) {
+        $cashReceived = SalePayment::whereHas('sale', function ($query) {
             $query->where('shift_assignment_id', $this->id);
         })
-            ->where('payment_method', \App\Enums\Tenant\PaymentMethod::CASH)
+            ->where('payment_method', PaymentMethod::CASH)
             ->sum('amount');
 
         // Expected = opening + cash received - cash refunds (refunds not implemented yet)
@@ -352,8 +352,9 @@ class ShiftAssignment extends Model
 
     public function calculateActualDuration(): void
     {
-        if (!$this->actual_start || !$this->actual_end) {
+        if (! $this->actual_start || ! $this->actual_end) {
             $this->actual_duration_minutes = null;
+
             return;
         }
 
@@ -375,7 +376,7 @@ class ShiftAssignment extends Model
 
     public function canBeApproved(): bool
     {
-        return $this->status->canBeApproved() && !$this->is_approved;
+        return $this->status->canBeApproved() && ! $this->is_approved;
     }
 
     public function canBeCancelled(): bool
@@ -394,7 +395,7 @@ class ShiftAssignment extends Model
         }
 
         // Must be completed
-        if (!$this->canBeApproved()) {
+        if (! $this->canBeApproved()) {
             return false;
         }
 
@@ -403,7 +404,7 @@ class ShiftAssignment extends Model
 
     public function getScheduledStartDateTime(): ?Carbon
     {
-        if (!$this->shift) {
+        if (! $this->shift) {
             return null;
         }
 
@@ -413,7 +414,7 @@ class ShiftAssignment extends Model
 
     public function getScheduledEndDateTime(): ?Carbon
     {
-        if (!$this->shift) {
+        if (! $this->shift) {
             return null;
         }
 
@@ -432,7 +433,7 @@ class ShiftAssignment extends Model
     {
         $scheduledStart = $this->getScheduledStartDateTime();
 
-        if (!$scheduledStart) {
+        if (! $scheduledStart) {
             return false;
         }
 
@@ -445,7 +446,7 @@ class ShiftAssignment extends Model
         $start = $this->getScheduledStartDateTime();
         $end = $this->getScheduledEndDateTime();
 
-        if (!$start || !$end) {
+        if (! $start || ! $end) {
             return false;
         }
 

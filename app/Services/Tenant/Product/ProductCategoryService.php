@@ -97,9 +97,9 @@ class ProductCategoryService
             }
 
             // Validate parent category exists if provided
-            if (!empty($data['parent_id'])) {
+            if (! empty($data['parent_id'])) {
                 $parent = $this->repository->findById($data['parent_id']);
-                if (!$parent) {
+                if (! $parent) {
                     throw new \InvalidArgumentException('Parent category not found');
                 }
             }
@@ -121,12 +121,12 @@ class ProductCategoryService
         return DB::transaction(function () use ($id, $data) {
             $category = $this->repository->findById($id);
 
-            if (!$category) {
+            if (! $category) {
                 throw new \InvalidArgumentException('Category not found');
             }
 
             // Validate slug uniqueness if changed
-            if (!empty($data['slug']) && $data['slug'] !== $category->slug) {
+            if (! empty($data['slug']) && $data['slug'] !== $category->slug) {
                 if ($this->repository->slugExists($data['slug'], $id)) {
                     throw new \InvalidArgumentException('Category slug already exists');
                 }
@@ -142,7 +142,7 @@ class ProductCategoryService
                 // Validate parent exists
                 if ($data['parent_id'] !== null) {
                     $parent = $this->repository->findById($data['parent_id']);
-                    if (!$parent) {
+                    if (! $parent) {
                         throw new \InvalidArgumentException('Parent category not found');
                     }
 
@@ -170,7 +170,7 @@ class ProductCategoryService
         return DB::transaction(function () use ($id) {
             $category = $this->repository->findById($id);
 
-            if (!$category) {
+            if (! $category) {
                 throw new \InvalidArgumentException('Category not found');
             }
 
@@ -191,7 +191,7 @@ class ProductCategoryService
         return DB::connection('tenant')->transaction(function () use ($id) {
             $category = $this->repository->findById($id);
 
-            if (!$category) {
+            if (! $category) {
                 throw new \InvalidArgumentException('Category not found');
             }
 
@@ -212,7 +212,7 @@ class ProductCategoryService
         return DB::transaction(function () use ($id) {
             $category = $this->repository->findById($id);
 
-            if (!$category) {
+            if (! $category) {
                 throw new \InvalidArgumentException('Category not found');
             }
 
@@ -269,7 +269,7 @@ class ProductCategoryService
         $slug = Str::slug($name);
 
         if ($attempt > 0) {
-            $slug .= '-' . $attempt;
+            $slug .= '-'.$attempt;
         }
 
         if ($this->repository->slugExists($slug)) {

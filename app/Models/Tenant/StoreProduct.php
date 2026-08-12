@@ -4,10 +4,10 @@ namespace App\Models\Tenant;
 
 use App\Observers\Tenant\StoreProductObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 #[ObservedBy(StoreProductObserver::class)]
 class StoreProduct extends Model
@@ -39,7 +39,6 @@ class StoreProduct extends Model
      * RELATIONSHIPS
      * ========================================
      */
-
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
@@ -60,7 +59,6 @@ class StoreProduct extends Model
      * COMPUTED ATTRIBUTES
      * ========================================
      */
-
     public function getEffectiveSellingPriceAttribute(): float
     {
         // Priority: store_selling_price > variant_price > base_selling_price
@@ -76,7 +74,6 @@ class StoreProduct extends Model
         // Fall back to product base price
         return $this->product->base_selling_price;
     }
-
 
     public function getEffectiveMinStockLevelAttribute(): int
     {
@@ -142,7 +139,6 @@ class StoreProduct extends Model
      * SCOPES
      * ========================================
      */
-
     public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('is_available', true);
@@ -240,7 +236,6 @@ class StoreProduct extends Model
      * HELPER METHODS
      * ========================================
      */
-
     public function hasVariants(): bool
     {
         return $this->product->product_type === 'variable';
@@ -258,7 +253,7 @@ class StoreProduct extends Model
 
     public function getVariants()
     {
-        if (!$this->hasVariants() || !$this->isBaseProduct()) {
+        if (! $this->hasVariants() || ! $this->isBaseProduct()) {
             return collect();
         }
 
@@ -270,7 +265,7 @@ class StoreProduct extends Model
     public function getDisplayNameAttribute(): string
     {
         if ($this->isVariant() && $this->productVariant) {
-            return $this->product->name . ' - ' . $this->productVariant->variant_name;
+            return $this->product->name.' - '.$this->productVariant->variant_name;
         }
 
         return $this->product->name;
@@ -278,13 +273,15 @@ class StoreProduct extends Model
 
     public function toggleAvailability(): bool
     {
-        $this->is_available = !$this->is_available;
+        $this->is_available = ! $this->is_available;
+
         return $this->save();
     }
 
     public function setPriceOverride(?float $price): bool
     {
         $this->store_selling_price = $price;
+
         return $this->save();
     }
 
@@ -296,6 +293,7 @@ class StoreProduct extends Model
     public function setMinStockLevel(int $level): bool
     {
         $this->min_stock_level = $level;
+
         return $this->save();
     }
 

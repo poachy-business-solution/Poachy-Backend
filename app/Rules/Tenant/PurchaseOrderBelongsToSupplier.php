@@ -18,14 +18,15 @@ class PurchaseOrderBelongsToSupplier implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // Skip validation if either value is null (handled by nullable rule)
-        if (!$value || !$this->supplierId) {
+        if (! $value || ! $this->supplierId) {
             return;
         }
 
         $po = PurchaseOrder::find($value);
 
-        if (!$po) {
+        if (! $po) {
             $fail('The selected purchase order does not exist.');
+
             return;
         }
 

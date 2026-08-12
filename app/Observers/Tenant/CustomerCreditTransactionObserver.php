@@ -114,10 +114,10 @@ class CustomerCreditTransactionObserver
 
         if ($transaction->amount > 0) {
             // Debt increase (sale on credit)
-            return "{$user} recorded {$type} of KES {$amount} for {$customerName} (New balance: KES " . number_format($transaction->balance_after, 2) . ")";
+            return "{$user} recorded {$type} of KES {$amount} for {$customerName} (New balance: KES ".number_format($transaction->balance_after, 2).')';
         } else {
             // Payment (debt decrease)
-            return "{$user} recorded {$type} of KES {$amount} from {$customerName} (New balance: KES " . number_format($transaction->balance_after, 2) . ")";
+            return "{$user} recorded {$type} of KES {$amount} from {$customerName} (New balance: KES ".number_format($transaction->balance_after, 2).')';
         }
     }
 
@@ -132,6 +132,7 @@ class CustomerCreditTransactionObserver
         if (isset($changes['amount'])) {
             $oldAmount = number_format(abs($transaction->getOriginal('amount')), 2);
             $newAmount = number_format(abs($changes['amount']), 2);
+
             return "{$user} adjusted credit transaction amount from KES {$oldAmount} to KES {$newAmount}";
         }
 
@@ -139,11 +140,13 @@ class CustomerCreditTransactionObserver
         if (isset($changes['balance_after'])) {
             $oldBalance = number_format($transaction->getOriginal('balance_after'), 2);
             $newBalance = number_format($changes['balance_after'], 2);
+
             return "{$user} adjusted credit balance from KES {$oldBalance} to KES {$newBalance}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated credit transaction ({$changedFields})";
     }
 

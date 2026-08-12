@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 class BusinessHelper
 {
     private const CACHE_TTL = 3600; // 1 hour
+
     private const CACHE_PREFIX = 'business_detail';
 
     /**
@@ -15,7 +16,7 @@ class BusinessHelper
      */
     public static function getBusinessName(string|int|null $tenantId): ?string
     {
-        if (!$tenantId) {
+        if (! $tenantId) {
             return null;
         }
 
@@ -29,14 +30,14 @@ class BusinessHelper
      */
     public static function getBusinessDetail(string|int|null $tenantId): ?BusinessDetail
     {
-        if (!$tenantId) {
+        if (! $tenantId) {
             return null;
         }
 
         return Cache::remember(
-            self::CACHE_PREFIX . ".{$tenantId}",
+            self::CACHE_PREFIX.".{$tenantId}",
             self::CACHE_TTL,
-            fn() => BusinessDetail::on('central')
+            fn () => BusinessDetail::on('central')
                 ->where('tenant_id', $tenantId)
                 ->first()
         );
@@ -50,15 +51,15 @@ class BusinessHelper
     {
         $business = static::getBusinessDetail($tenantId);
 
-        if (!$business) {
+        if (! $business) {
             return null;
         }
 
         return [
-            'tenant_id'     => $business->tenant_id,
+            'tenant_id' => $business->tenant_id,
             'business_name' => $business->business_name,
-            'logo'          => $business->business_logo,
-            'is_verified'   => (bool) $business->is_verified,
+            'logo' => $business->business_logo,
+            'is_verified' => (bool) $business->is_verified,
         ];
     }
 
@@ -77,7 +78,7 @@ class BusinessHelper
         // Only fetch what isn't already cached
         $missing = array_filter(
             $tenantIds,
-            fn($id) => !Cache::has(self::CACHE_PREFIX . ".{$id}")
+            fn ($id) => ! Cache::has(self::CACHE_PREFIX.".{$id}")
         );
 
         if (empty($missing)) {
@@ -90,7 +91,7 @@ class BusinessHelper
 
         foreach ($businesses as $business) {
             Cache::put(
-                self::CACHE_PREFIX . ".{$business->tenant_id}",
+                self::CACHE_PREFIX.".{$business->tenant_id}",
                 $business,
                 self::CACHE_TTL
             );

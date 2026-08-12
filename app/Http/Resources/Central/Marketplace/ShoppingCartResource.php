@@ -16,19 +16,19 @@ class ShoppingCartResource extends JsonResource
         );
 
         return [
-            'id'            => $this->id,
-            'status'        => $this->status->value,
-            'item_count'    => $this->getItemCount(),
-            'subtotal'      => $this->getSubtotal(),
+            'id' => $this->id,
+            'status' => $this->status->value,
+            'item_count' => $this->getItemCount(),
+            'subtotal' => $this->getSubtotal(),
             'tenant_groups' => $tenantGroups->map(function ($items, $tenantId) {
                 return [
                     'tenant_id' => $tenantId,
-                    'items'     => ShoppingCartItemResource::collection($items),
-                    'subtotal'  => $items->sum(fn ($item) => $item->getLineTotal()),
+                    'items' => ShoppingCartItemResource::collection($items),
+                    'subtotal' => $items->sum(fn ($item) => $item->getLineTotal()),
                 ];
             })->values(),
-            'created_at'    => $this->created_at?->toIso8601String(),
-            'updated_at'    => $this->updated_at?->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

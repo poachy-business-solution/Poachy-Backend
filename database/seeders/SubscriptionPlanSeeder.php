@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\SubscriptionPlan;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SubscriptionPlanSeeder extends Seeder
@@ -37,7 +36,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'customer_management' => 'basic',
                 ],
                 'is_active' => true,
-                'is_featured' => false,                
+                'is_featured' => false,
             ],
             [
                 'name' => 'Basic',
@@ -63,7 +62,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'loyalty_program' => false,
                 ],
                 'is_active' => true,
-                'is_featured' => true,                
+                'is_featured' => true,
             ],
             [
                 'name' => 'Premium',
@@ -92,7 +91,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'api_access' => true,
                 ],
                 'is_active' => true,
-                'is_featured' => true,                
+                'is_featured' => true,
             ],
             [
                 'name' => 'Enterprise',
@@ -124,7 +123,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'dedicated_account_manager' => true,
                 ],
                 'is_active' => true,
-                'is_featured' => false,                
+                'is_featured' => false,
             ],
         ];
 

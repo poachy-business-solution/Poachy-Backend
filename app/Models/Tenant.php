@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\Central\ReviewStatus;
-use App\Models\MerchantReview;
 use App\Observers\Central\TenantObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +18,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     use HasDatabase, HasDomains, HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'tenants';
 
     protected $fillable = [
@@ -34,7 +34,6 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected $casts = [
         'data' => 'array',
     ];
-    
 
     // Relationships
 
@@ -103,7 +102,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         $prefix = config('tenancy.database.prefix', 'poachy_tenant_');
         $suffix = config('tenancy.database.suffix', '');
 
-        return $prefix . $this->getTenantKey() . $suffix;
+        return $prefix.$this->getTenantKey().$suffix;
     }
 
     // Helper Methods

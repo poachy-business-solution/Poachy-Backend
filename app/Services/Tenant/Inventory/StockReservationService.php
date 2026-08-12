@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Inventory;
 
 use App\Enums\Tenant\ReservationStatus;
 use App\Models\Tenant\Inventory;
+use App\Models\Tenant\InventoryMovement;
 use App\Models\Tenant\InventoryReservation;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductUom;
@@ -21,19 +22,20 @@ class StockReservationService
     /**
      * Reserve stock for an order (e.g., marketplace order)
      *
-     * @param string $referenceType (e.g., 'MarketplaceOrder')
-     * @param int $referenceId (order ID)
-     * @param array $items [
-     *   [
-     *     'product_id' => int,
-     *     'variant_id' => int|null,
-     *     'quantity' => float,
-     *     'uom_id' => int,
-     *     'store_id' => int
-     *   ]
-     * ]
-     * @param int $expiresInMinutes Default: 30 minutes
+     * @param  string  $referenceType  (e.g., 'MarketplaceOrder')
+     * @param  int  $referenceId  (order ID)
+     * @param  array  $items  [
+     *                        [
+     *                        'product_id' => int,
+     *                        'variant_id' => int|null,
+     *                        'quantity' => float,
+     *                        'uom_id' => int,
+     *                        'store_id' => int
+     *                        ]
+     *                        ]
+     * @param  int  $expiresInMinutes  Default: 30 minutes
      * @return Collection Collection of InventoryReservation models
+     *
      * @throws \Exception If insufficient stock
      */
     public function reserveStock(
@@ -86,11 +88,6 @@ class StockReservationService
     /**
      * Reserve single item (internal method)
      *
-     * @param string $referenceType
-     * @param int $referenceId
-     * @param array $item
-     * @param int $expiresInMinutes
-     * @return InventoryReservation
      * @throws \Exception
      */
     private function reserveSingleItem(
@@ -113,7 +110,7 @@ class StockReservationService
             ->where('product_variant_id', $item['variant_id'] ?? null)
             ->first();
 
-        if (!$inventory) {
+        if (! $inventory) {
             throw new \RuntimeException(
                 "Product not found in store inventory. Product ID: {$item['product_id']}, Store ID: {$item['store_id']}"
             );
@@ -140,7 +137,7 @@ class StockReservationService
         // to prevent the observer from firing with an intermediate state
         $newReserved = $inventory->quantity_reserved + $quantityInBaseUom;
         $inventory->update([
-            'quantity_reserved'  => $newReserved,
+            'quantity_reserved' => $newReserved,
             'quantity_available' => max(0, $inventory->quantity_on_hand - $newReserved),
         ]);
 
@@ -150,10 +147,7 @@ class StockReservationService
     /**
      * Release a reservation (cancel/expire)
      *
-     * @param int $reservationId
-     * @param string $reason
-     * @param int|null $cancelledBy User ID (optional)
-     * @return bool
+     * @param  int|null  $cancelledBy  User ID (optional)
      */
     public function releaseReservation(
         int $reservationId,
@@ -170,6 +164,7 @@ class StockReservationService
                     'reservation_id' => $reservationId,
                     'status' => $reservation->status->value,
                 ]);
+
                 return false;
             }
 
@@ -183,7 +178,7 @@ class StockReservationService
             // to prevent the observer from firing with an intermediate state
             $newReserved = max(0, $inventory->quantity_reserved - $reservation->quantity_reserved);
             $inventory->update([
-                'quantity_reserved'  => $newReserved,
+                'quantity_reserved' => $newReserved,
                 'quantity_available' => max(0, $inventory->quantity_on_hand - $newReserved),
             ]);
 
@@ -202,11 +197,8 @@ class StockReservationService
     /**
      * Confirm reservation and convert to inventory movement
      * (Used when order is confirmed/paid)
-     *
-     * @param int $reservationId
-     * @return \App\Models\Tenant\InventoryMovement
      */
-    public function confirmReservation(int $reservationId): \App\Models\Tenant\InventoryMovement
+    public function confirmReservation(int $reservationId): InventoryMovement
     {
         return DB::transaction(function () use ($reservationId) {
             // Lock reservation
@@ -251,7 +243,7 @@ class StockReservationService
             // to prevent the observer from firing with an intermediate state
             $newReserved = max(0, $inventory->quantity_reserved - $reservation->quantity_reserved);
             $inventory->update([
-                'quantity_reserved'  => $newReserved,
+                'quantity_reserved' => $newReserved,
                 'quantity_available' => max(0, $inventory->quantity_on_hand - $newReserved),
             ]);
 
@@ -312,10 +304,6 @@ class StockReservationService
 
     /**
      * Get active reservations for a store/product
-     *
-     * @param int $storeId
-     * @param int|null $productId
-     * @return Collection
      */
     public function getActiveReservations(int $storeId, ?int $productId = null): Collection
     {
@@ -332,10 +320,6 @@ class StockReservationService
 
     /**
      * Get reservations by reference (e.g., all reservations for an order)
-     *
-     * @param string $referenceType
-     * @param int $referenceId
-     * @return Collection
      */
     public function getReservationsByReference(string $referenceType, int $referenceId): Collection
     {
@@ -348,9 +332,6 @@ class StockReservationService
     /**
      * Release all reservations for a reference (e.g., cancel entire order)
      *
-     * @param string $referenceType
-     * @param int $referenceId
-     * @param string $reason
      * @return int Number of reservations released
      */
     public function releaseAllReservationsForReference(
@@ -407,14 +388,14 @@ class StockReservationService
             } catch (\Exception $e) {
                 Log::error('Failed to confirm reservation', [
                     'reservation_id' => $reservation->id,
-                    'error'          => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
 
         Log::info('Confirmed all reservations for reference', [
-            'reference_type'  => $referenceType,
-            'reference_id'    => $referenceId,
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
             'confirmed_count' => $confirmedCount,
         ]);
 
@@ -423,16 +404,12 @@ class StockReservationService
 
     /**
      * Extend reservation expiry time
-     *
-     * @param int $reservationId
-     * @param int $additionalMinutes
-     * @return bool
      */
     public function extendReservation(int $reservationId, int $additionalMinutes): bool
     {
         $reservation = InventoryReservation::findOrFail($reservationId);
 
-        if (!$reservation->is_active) {
+        if (! $reservation->is_active) {
             throw new \RuntimeException('Cannot extend inactive reservation');
         }
 

@@ -28,11 +28,14 @@ class AnalyticsTrackingController extends Controller
      *     description="Records a product view event for analytics. Tracks referrer source, search queries, device info, and user engagement. Includes deduplication logic - returns deduplicated=true if same session viewed product recently. No authentication required for public tracking.",
      *     operationId="trackProductView",
      *     tags={"Central - Analytics - Marketplace"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Product view tracking data",
+     *
      *         @OA\JsonContent(
      *             required={"product_id", "session_id"},
+     *
      *             @OA\Property(
      *                 property="product_id",
      *                 type="integer",
@@ -125,13 +128,17 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product view tracked or deduplicated",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
      *                     description="New view tracked successfully",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Product view tracked successfully"),
      *                     @OA\Property(
@@ -143,8 +150,10 @@ class AnalyticsTrackingController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="View deduplicated - already tracked recently",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Product view already tracked recently"),
      *                     @OA\Property(
@@ -164,10 +173,13 @@ class AnalyticsTrackingController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -211,17 +223,17 @@ class AnalyticsTrackingController extends Controller
 
         $view = $this->analyticsService->trackProductView([
             'marketplace_product_id' => $request->product_id,
-            'customer_id'            => $customer?->id,
-            'session_id'             => $request->session_id,
-            'referrer_source'        => $request->referrer_source,
-            'referrer_url'           => $request->referrer_url,
-            'search_query'           => $request->search_query,
-            'device_type'            => $request->device_type,
-            'browser'                => $request->browser,
-            'platform'               => $request->platform,
-            'ip_address'             => $request->ip(),
-            'user_agent'             => $request->userAgent(),
-            'viewed_at'              => now(),
+            'customer_id' => $customer?->id,
+            'session_id' => $request->session_id,
+            'referrer_source' => $request->referrer_source,
+            'referrer_url' => $request->referrer_url,
+            'search_query' => $request->search_query,
+            'device_type' => $request->device_type,
+            'browser' => $request->browser,
+            'platform' => $request->platform,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'viewed_at' => now(),
         ]);
 
         return ApiResponse::success('Product view tracked successfully');
@@ -234,23 +246,30 @@ class AnalyticsTrackingController extends Controller
      *     description="Updates engagement metrics for an existing product view tracking record. Used to record time spent, scrolling behavior, and image interactions as the user engages with the product page. No authentication required.",
      *     operationId="updateProductView",
      *     tags={"Central - Analytics - Marketplace"},
+     *
      *     @OA\Parameter(
      *         name="sessionId",
      *         in="path",
      *         description="Session UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="productId",
      *         in="path",
      *         description="Product ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         description="Engagement metrics to update",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="time_spent_seconds",
      *                 type="integer",
@@ -278,10 +297,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product view updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product view updated successfully"),
      *             @OA\Property(
@@ -294,10 +316,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Product view record not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product view record not found."),
      *             @OA\Property(
@@ -310,10 +335,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -369,11 +397,14 @@ class AnalyticsTrackingController extends Controller
      *     description="Records a search query event for analytics. Tracks search terms, results count, applied filters, and filter refinements. Supports parent_search_id to track filter refinement chains. No authentication required for public tracking.",
      *     operationId="trackSearchQuery",
      *     tags={"Central - Analytics - Marketplace"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Search query tracking data",
+     *
      *         @OA\JsonContent(
      *             required={"search_query", "session_id", "results_count"},
+     *
      *             @OA\Property(
      *                 property="search_query",
      *                 type="string",
@@ -411,10 +442,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Search query tracked successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Search query tracked successfully"),
      *             @OA\Property(
@@ -427,10 +461,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -473,14 +510,14 @@ class AnalyticsTrackingController extends Controller
         }
 
         $search = $this->analyticsService->trackSearch([
-            'search_query'     => $request->search_query,
-            'customer_id'      => $customer?->id,
-            'session_id'       => $request->session_id,
-            'has_results'      => $request->results_count > 0,
-            'results_count'    => $request->results_count,
-            'filters_applied'  => $request->filters_applied,
+            'search_query' => $request->search_query,
+            'customer_id' => $customer?->id,
+            'session_id' => $request->session_id,
+            'has_results' => $request->results_count > 0,
+            'results_count' => $request->results_count,
+            'filters_applied' => $request->filters_applied,
             'parent_search_id' => $request->parent_search_id,
-            'searched_at'      => now(),
+            'searched_at' => now(),
         ]);
 
         return ApiResponse::success('Search query tracked successfully');
@@ -493,11 +530,14 @@ class AnalyticsTrackingController extends Controller
      *     description="Records a generic analytics event with flexible properties. Supports various event types including page views, interactions, and custom events. Can be associated with products, categories, and includes page context. No authentication required for public tracking.",
      *     operationId="trackEvent",
      *     tags={"Central - Analytics - Marketplace"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Event tracking data",
+     *
      *         @OA\JsonContent(
      *             required={"event_type", "session_id"},
+     *
      *             @OA\Property(
      *                 property="event_type",
      *                 type="string",
@@ -558,10 +598,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Event tracked successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Event tracked successfully"),
      *             @OA\Property(
@@ -574,10 +617,13 @@ class AnalyticsTrackingController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -603,7 +649,7 @@ class AnalyticsTrackingController extends Controller
      */
     public function trackEvent(TrackEventRequest $request): JsonResponse
     {
-        $customer  = CustomerHelper::getAuthenticatedCustomer();
+        $customer = CustomerHelper::getAuthenticatedCustomer();
         $eventType = TrackEvent::from($request->event_type);
 
         if ($eventType->shouldDeduplicate()) {
@@ -622,18 +668,18 @@ class AnalyticsTrackingController extends Controller
         }
 
         $event = $this->analyticsService->trackEvent([
-            'event_type'              => $eventType->value,
-            'customer_id'             => $customer?->id,
-            'session_id'              => $request->session_id,
-            'marketplace_product_id'  => $request->marketplace_product_id,
+            'event_type' => $eventType->value,
+            'customer_id' => $customer?->id,
+            'session_id' => $request->session_id,
+            'marketplace_product_id' => $request->marketplace_product_id,
             'marketplace_category_id' => $request->marketplace_category_id,
-            'tenant_id'               => $request->tenant_id,
-            'event_properties'        => $request->event_properties,
-            'page_url'                => $request->page_url,
-            'referrer_url'            => $request->referrer_url,
-            'time_on_page_seconds'    => $request->time_on_page_seconds,
-            'ip_address'              => $request->ip(),
-            'user_agent'              => $request->userAgent(),
+            'tenant_id' => $request->tenant_id,
+            'event_properties' => $request->event_properties,
+            'page_url' => $request->page_url,
+            'referrer_url' => $request->referrer_url,
+            'time_on_page_seconds' => $request->time_on_page_seconds,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         return ApiResponse::success('Event tracked successfully');

@@ -11,9 +11,8 @@ class PhoneNumberNormalizer
 
     /**
      * Normalize phone number to international format
-     * 
-     * @param string|null $phone
-     * @param string $countryCode Default country code (without +)
+     *
+     * @param  string  $countryCode  Default country code (without +)
      * @return string|null Normalized phone number with + prefix
      */
     public static function normalize(?string $phone, string $countryCode = self::DEFAULT_COUNTRY_CODE): ?string
@@ -39,24 +38,22 @@ class PhoneNumberNormalizer
 
         // Case 2: Starts with country code without + (e.g., 254745548093)
         if (str_starts_with($cleaned, $countryCode)) {
-            return '+' . $cleaned;
+            return '+'.$cleaned;
         }
 
         // Case 3: Starts with 0 (local format) - remove 0 and add country code
         if (str_starts_with($cleaned, '0')) {
             $withoutZero = substr($cleaned, 1);
-            return '+' . $countryCode . $withoutZero;
+
+            return '+'.$countryCode.$withoutZero;
         }
 
         // Case 4: No prefix at all (e.g., 745548093) - add country code
-        return '+' . $countryCode . $cleaned;
+        return '+'.$countryCode.$cleaned;
     }
 
     /**
      * Validate if phone number is valid Kenyan format
-     * 
-     * @param string $phone
-     * @return bool
      */
     public static function isValidKenyanNumber(string $phone): bool
     {
@@ -66,7 +63,7 @@ class PhoneNumberNormalizer
 
         $normalized = self::normalize($phone);
 
-        if (!$normalized) {
+        if (! $normalized) {
             return false;
         }
 
@@ -76,16 +73,14 @@ class PhoneNumberNormalizer
 
     /**
      * Format phone number for display
-     * 
-     * @param string|null $phone
-     * @param string $format Format: 'international', 'local', 'display'
-     * @return string|null
+     *
+     * @param  string  $format  Format: 'international', 'local', 'display'
      */
     public static function format(?string $phone, string $format = 'international'): ?string
     {
         $normalized = self::normalize($phone);
 
-        if (!$normalized) {
+        if (! $normalized) {
             return null;
         }
 
@@ -98,16 +93,14 @@ class PhoneNumberNormalizer
 
     /**
      * Convert to local format (0745548093)
-     * 
-     * @param string $phone
-     * @return string
      */
     private static function toLocalFormat(string $phone): string
     {
         // Remove + and country code, add leading 0
-        if (str_starts_with($phone, '+' . self::DEFAULT_COUNTRY_CODE)) {
-            $withoutCode = substr($phone, strlen('+' . self::DEFAULT_COUNTRY_CODE));
-            return '0' . $withoutCode;
+        if (str_starts_with($phone, '+'.self::DEFAULT_COUNTRY_CODE)) {
+            $withoutCode = substr($phone, strlen('+'.self::DEFAULT_COUNTRY_CODE));
+
+            return '0'.$withoutCode;
         }
 
         return $phone;
@@ -115,16 +108,14 @@ class PhoneNumberNormalizer
 
     /**
      * Convert to display format (+254 745 548 093)
-     * 
-     * @param string $phone
-     * @return string
      */
     private static function toDisplayFormat(string $phone): string
     {
         // Format: +254 745 548 093
         if (str_starts_with($phone, '+254')) {
             $number = substr($phone, 4); // Get digits after +254
-            return '+254 ' . substr($number, 0, 3) . ' ' . substr($number, 3, 3) . ' ' . substr($number, 6);
+
+            return '+254 '.substr($number, 0, 3).' '.substr($number, 3, 3).' '.substr($number, 6);
         }
 
         return $phone;
@@ -132,15 +123,12 @@ class PhoneNumberNormalizer
 
     /**
      * Extract country code from phone number
-     * 
-     * @param string $phone
-     * @return string|null
      */
     public static function extractCountryCode(string $phone): ?string
     {
         $normalized = self::normalize($phone);
 
-        if (!$normalized) {
+        if (! $normalized) {
             return null;
         }
 
@@ -154,10 +142,6 @@ class PhoneNumberNormalizer
 
     /**
      * Check if two phone numbers are equivalent
-     * 
-     * @param string|null $phone1
-     * @param string|null $phone2
-     * @return bool
      */
     public static function areEquivalent(?string $phone1, ?string $phone2): bool
     {

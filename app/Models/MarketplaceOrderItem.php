@@ -39,17 +39,17 @@ class MarketplaceOrderItem extends Model
     protected function casts(): array
     {
         return [
-            'tenant_product_id'    => 'integer',
-            'tenant_variant_id'    => 'integer',
-            'tenant_bundle_id'     => 'integer',
-            'quantity'             => 'decimal:4',
+            'tenant_product_id' => 'integer',
+            'tenant_variant_id' => 'integer',
+            'tenant_bundle_id' => 'integer',
+            'quantity' => 'decimal:4',
             'quantity_in_base_uom' => 'decimal:4',
-            'unit_price'           => 'decimal:2',
-            'tax_rate'             => 'decimal:2',
-            'tax_amount'           => 'decimal:2',
-            'discount_amount'      => 'decimal:2',
-            'subtotal'             => 'decimal:2',
-            'fulfillment_status'   => OrderFulfillmentStatus::class,
+            'unit_price' => 'decimal:2',
+            'tax_rate' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'subtotal' => 'decimal:2',
+            'fulfillment_status' => OrderFulfillmentStatus::class,
         ];
     }
 

@@ -21,7 +21,7 @@ class MerchantReviewObserver
         Log::info('MerchantReview created', [
             'review_id' => $review->id,
             'tenant_id' => $review->tenant_id,
-            'status'    => $review->status->value,
+            'status' => $review->status->value,
         ]);
     }
 
@@ -42,7 +42,7 @@ class MerchantReviewObserver
         Log::info('MerchantReview updated', [
             'review_id' => $review->id,
             'tenant_id' => $review->tenant_id,
-            'changes'   => $review->getChanges(),
+            'changes' => $review->getChanges(),
         ]);
     }
 
@@ -56,8 +56,8 @@ class MerchantReviewObserver
         }
 
         Log::info('MerchantReview soft-deleted', [
-            'review_id'    => $review->id,
-            'tenant_id'    => $review->tenant_id,
+            'review_id' => $review->id,
+            'tenant_id' => $review->tenant_id,
             'was_approved' => $review->status === ReviewStatus::Approved,
         ]);
     }
@@ -90,7 +90,7 @@ class MerchantReviewObserver
         } catch (\Exception $e) {
             Log::error('MerchantReviewObserver: failed to clear cache', [
                 'review_id' => $review->id,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

@@ -94,7 +94,7 @@ class ShiftAssignmentPolicy
         }
 
         // Only managers, admins, and owners can approve shifts
-        if (!$user->hasAnyRole(['manager', 'admin', 'owner'])) {
+        if (! $user->hasAnyRole(['manager', 'admin', 'owner'])) {
             return false;
         }
 

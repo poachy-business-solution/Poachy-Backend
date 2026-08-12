@@ -16,43 +16,43 @@ class UpdateDeliveryZoneRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'zone_name'  => ['sometimes', 'string', 'max:100'],
-            'zone_type'  => ['sometimes', 'string', 'in:city,county,postal_code,radius'],
+            'zone_name' => ['sometimes', 'string', 'max:100'],
+            'zone_type' => ['sometimes', 'string', 'in:city,county,postal_code,radius'],
 
             // City-based
-            'cities'   => ['sometimes', 'nullable', 'array', 'min:1'],
+            'cities' => ['sometimes', 'nullable', 'array', 'min:1'],
             'cities.*' => ['string', 'max:100'],
 
             // County-based
-            'counties'   => ['sometimes', 'nullable', 'array', 'min:1'],
+            'counties' => ['sometimes', 'nullable', 'array', 'min:1'],
             'counties.*' => ['string', 'max:100'],
 
             // Postal-code-based
-            'postal_codes'   => ['sometimes', 'nullable', 'array', 'min:1'],
+            'postal_codes' => ['sometimes', 'nullable', 'array', 'min:1'],
             'postal_codes.*' => ['string', 'max:20'],
 
             // Radius-based
-            'latitude'  => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
+            'latitude' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
             'radius_km' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:500'],
 
             // Fees
-            'standard_fee'  => ['sometimes', 'numeric', 'min:0'],
-            'express_fee'   => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'standard_fee' => ['sometimes', 'numeric', 'min:0'],
+            'express_fee' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'scheduled_fee' => ['sometimes', 'nullable', 'numeric', 'min:0'],
 
             'free_delivery_threshold' => ['sometimes', 'nullable', 'numeric', 'min:0'],
 
             // Estimated delivery times
-            'standard_delivery_time'  => ['sometimes', 'nullable', 'string', 'max:100'],
-            'express_delivery_time'   => ['sometimes', 'nullable', 'string', 'max:100'],
+            'standard_delivery_time' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'express_delivery_time' => ['sometimes', 'nullable', 'string', 'max:100'],
             'scheduled_delivery_time' => ['sometimes', 'nullable', 'string', 'max:100'],
 
             // Supported methods
-            'supported_methods'   => ['sometimes', 'array', 'min:1'],
-            'supported_methods.*' => ['string', 'in:' . implode(',', DeliveryMethod::values())],
+            'supported_methods' => ['sometimes', 'array', 'min:1'],
+            'supported_methods.*' => ['string', 'in:'.implode(',', DeliveryMethod::values())],
 
-            'priority'  => ['sometimes', 'integer', 'min:1', 'max:999'],
+            'priority' => ['sometimes', 'integer', 'min:1', 'max:999'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -89,7 +89,7 @@ class UpdateDeliveryZoneRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'supported_methods.*.in' => 'Invalid delivery method. Must be one of: ' . implode(', ', DeliveryMethod::values()),
+            'supported_methods.*.in' => 'Invalid delivery method. Must be one of: '.implode(', ', DeliveryMethod::values()),
         ];
     }
 }

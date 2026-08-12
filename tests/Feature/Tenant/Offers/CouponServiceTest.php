@@ -52,7 +52,7 @@ class CouponServiceTest extends TestCase
 
     private function makeService(): CouponService
     {
-        return new CouponService(new CouponRepository());
+        return new CouponService(new CouponRepository);
     }
 
     private function baseCouponData(array $overrides = []): array

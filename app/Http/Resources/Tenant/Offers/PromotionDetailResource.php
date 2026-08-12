@@ -68,7 +68,7 @@ class PromotionDetailResource extends JsonResource
             'applicability' => [
                 'products' => $this->when(
                     $this->relationLoaded('products'),
-                    fn() => $this->products->map(fn($product) => [
+                    fn () => $this->products->map(fn ($product) => [
                         'id' => $product->id,
                         'name' => $product->name,
                         'sku' => $product->sku,
@@ -77,7 +77,7 @@ class PromotionDetailResource extends JsonResource
                 ),
                 'categories' => $this->when(
                     $this->relationLoaded('categories'),
-                    fn() => $this->categories->map(fn($category) => [
+                    fn () => $this->categories->map(fn ($category) => [
                         'id' => $category->id,
                         'name' => $category->name,
                         'slug' => $category->slug,
@@ -85,7 +85,7 @@ class PromotionDetailResource extends JsonResource
                 ),
                 'brands' => $this->when(
                     $this->relationLoaded('brands'),
-                    fn() => $this->brands->map(fn($brand) => [
+                    fn () => $this->brands->map(fn ($brand) => [
                         'id' => $brand->id,
                         'name' => $brand->name,
                         'slug' => $brand->slug,

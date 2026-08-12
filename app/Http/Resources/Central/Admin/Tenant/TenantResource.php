@@ -12,13 +12,16 @@ use Illuminate\Support\Facades\Log;
  *     type="object",
  *     title="Tenant Resource",
  *     description="Tenant resource representation",
+ *
  *     @OA\Property(property="id", type="string", format="uuid", example="9d8e4f2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a"),
  *     @OA\Property(property="database_name", type="string", example="poachy_tenant_9d8e4f2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a"),
  *     @OA\Property(
  *         property="domains",
  *         type="array",
+ *
  *         @OA\Items(ref="#/components/schemas/DomainResource")
  *     ),
+ *
  *     @OA\Property(
  *         property="business_detail",
  *         ref="#/components/schemas/BusinessDetailResource",
@@ -51,6 +54,7 @@ class TenantResource extends JsonResource
             'data_type' => gettype($this->data),
             'data_empty' => empty($this->data),
         ]);
+
         return [
             'id' => $this->id,
             'database_name' => $this->getDatabaseName(),

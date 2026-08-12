@@ -4,18 +4,18 @@ namespace App\Enums\Central;
 
 enum ReviewStatus: string
 {
-    case Pending  = 'pending';
+    case Pending = 'pending';
     case Approved = 'approved';
     case Rejected = 'rejected';
-    case Flagged  = 'flagged';
+    case Flagged = 'flagged';
 
     public function label(): string
     {
         return match ($this) {
-            self::Pending  => 'Pending',
+            self::Pending => 'Pending',
             self::Approved => 'Approved',
             self::Rejected => 'Rejected',
-            self::Flagged  => 'Flagged',
+            self::Flagged => 'Flagged',
         };
     }
 

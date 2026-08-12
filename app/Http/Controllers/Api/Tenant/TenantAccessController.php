@@ -21,10 +21,13 @@ class TenantAccessController extends Controller
      *     description="Check if current tenant has valid access (business status, subscription)",
      *     tags={"Tenant Access"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Access status retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string"),
      *             @OA\Property(property="data", type="object",
@@ -55,6 +58,7 @@ class TenantAccessController extends Controller
      *     description="Get current tenant subscription details",
      *     tags={"Tenant Access"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Subscription info retrieved"
@@ -67,7 +71,7 @@ class TenantAccessController extends Controller
 
         $subscriptionInfo = $this->tenantAccessService->getSubscriptionInfo($tenant->id);
 
-        if (!$subscriptionInfo) {
+        if (! $subscriptionInfo) {
             return ApiResponse::error(
                 'No active subscription found',
                 ['action_required' => 'subscribe'],

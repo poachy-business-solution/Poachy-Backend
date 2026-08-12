@@ -44,7 +44,7 @@ class ProductCategoryObserver
         // Log changes
         $changes = $category->getDirty();
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             Log::info('Updating product category', [
                 'tenant_id' => tenant()->id,
                 'category_id' => $category->id,

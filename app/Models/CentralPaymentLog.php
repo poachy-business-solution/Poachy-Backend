@@ -33,9 +33,9 @@ class CentralPaymentLog extends Model
     protected function casts(): array
     {
         return [
-            'amount'      => 'decimal:2',
+            'amount' => 'decimal:2',
             'raw_payload' => 'array',
-            'created_at'  => 'datetime',
+            'created_at' => 'datetime',
         ];
     }
 
@@ -52,10 +52,10 @@ class CentralPaymentLog extends Model
     ): self {
         return self::create(array_merge([
             'payable_type' => $payableType,
-            'payable_id'   => $payableId,
-            'event'        => $event,
-            'ip_address'   => request()->ip(),
-            'created_at'   => now(),
+            'payable_id' => $payableId,
+            'event' => $event,
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
         ], $data));
     }
 }

@@ -13,6 +13,7 @@ use App\Models\Tenant\Promotion;
 use App\Repositories\Tenant\PromotionRepository;
 use App\Services\Tenant\Offers\PromotionService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +55,7 @@ class PromotionServiceTest extends TestCase
 
     private function makeService(): PromotionService
     {
-        return new PromotionService(new PromotionRepository());
+        return new PromotionService(new PromotionRepository);
     }
 
     private function baseData(array $overrides = []): array
@@ -337,7 +338,7 @@ class PromotionServiceTest extends TestCase
     {
         $promotion = $this->createPromotion();
 
-        $updated = $this->makeService()->updateBanner($promotion, \Illuminate\Http\UploadedFile::fake()->image('banner.jpg'));
+        $updated = $this->makeService()->updateBanner($promotion, UploadedFile::fake()->image('banner.jpg'));
 
         $this->assertNotEmpty($updated->banner_image_url);
         Event::assertDispatched(PromotionUpdated::class);
@@ -346,7 +347,7 @@ class PromotionServiceTest extends TestCase
     public function test_remove_banner_clears_image(): void
     {
         $promotion = $this->createPromotion();
-        $this->makeService()->updateBanner($promotion, \Illuminate\Http\UploadedFile::fake()->image('banner.jpg'));
+        $this->makeService()->updateBanner($promotion, UploadedFile::fake()->image('banner.jpg'));
 
         $updated = $this->makeService()->removeBanner($promotion->fresh());
 

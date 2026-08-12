@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Central;
 
-use App\Exceptions\MpesaException;
 use App\Services\Central\Marketplace\MarketplacePaymentService;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
 use Illuminate\Bus\Queueable;
@@ -37,26 +36,26 @@ class ProcessMpesaC2BConfirmationJob implements ShouldQueue
         MarketplacePaymentService $marketplaceService,
     ): void {
         Log::channel('mpesa')->info('Processing C2B confirmation job', [
-            'payment_type'    => $this->paymentType,
-            'transaction_id'  => $this->parsedPayload['transaction_id'],
+            'payment_type' => $this->paymentType,
+            'transaction_id' => $this->parsedPayload['transaction_id'],
             'bill_ref_number' => $this->parsedPayload['bill_ref_number'],
-            'amount'          => $this->parsedPayload['amount'],
+            'amount' => $this->parsedPayload['amount'],
         ]);
 
         match ($this->paymentType) {
             'subscription' => $subscriptionService->processC2BConfirmation($this->parsedPayload),
-            'marketplace'  => $marketplaceService->processC2BConfirmation($this->parsedPayload),
-            default        => throw new \UnexpectedValueException("Unknown payment type: {$this->paymentType}"),
+            'marketplace' => $marketplaceService->processC2BConfirmation($this->parsedPayload),
+            default => throw new \UnexpectedValueException("Unknown payment type: {$this->paymentType}"),
         };
     }
 
     public function failed(\Throwable $exception): void
     {
         Log::channel('mpesa')->error('C2B confirmation job permanently failed', [
-            'payment_type'    => $this->paymentType,
-            'transaction_id'  => $this->parsedPayload['transaction_id'] ?? null,
+            'payment_type' => $this->paymentType,
+            'transaction_id' => $this->parsedPayload['transaction_id'] ?? null,
             'bill_ref_number' => $this->parsedPayload['bill_ref_number'] ?? null,
-            'error'           => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

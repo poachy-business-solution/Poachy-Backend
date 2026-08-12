@@ -28,7 +28,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['code', 'is_active']);
             $table->index(['valid_from', 'valid_until']);
         });

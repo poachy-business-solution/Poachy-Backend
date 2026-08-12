@@ -58,17 +58,17 @@ class DeliveryFeeService
         }
 
         $originalFee = $zone->getFeeForMethod($method);
-        $threshold   = $zone->free_delivery_threshold;
-        $fee         = ($threshold !== null && $orderSubtotal >= (float) $threshold) ? 0.0 : $originalFee;
+        $threshold = $zone->free_delivery_threshold;
+        $fee = ($threshold !== null && $orderSubtotal >= (float) $threshold) ? 0.0 : $originalFee;
 
         return [
-            'fee'                   => $fee,
-            'original_fee'          => $originalFee,
-            'zone_id'               => $zone->id,
-            'zone_name'             => $zone->zone_name,
-            'method'                => $method->value,
+            'fee' => $fee,
+            'original_fee' => $originalFee,
+            'zone_id' => $zone->id,
+            'zone_name' => $zone->zone_name,
+            'method' => $method->value,
             'free_delivery_applied' => $originalFee > 0 && $fee === 0.0,
-            'estimated_time'        => $zone->getEstimatedTimeForMethod($method),
+            'estimated_time' => $zone->getEstimatedTimeForMethod($method),
         ];
     }
 
@@ -90,13 +90,13 @@ class DeliveryFeeService
                 $details = $this->calculateDeliveryFee($tenantId, $address, $method, $orderSubtotal);
 
                 $available[] = [
-                    'method'                => $details['method'],
-                    'label'                 => $method->label(),
-                    'fee'                   => $details['fee'],
-                    'original_fee'          => $details['original_fee'],
+                    'method' => $details['method'],
+                    'label' => $method->label(),
+                    'fee' => $details['fee'],
+                    'original_fee' => $details['original_fee'],
                     'free_delivery_applied' => $details['free_delivery_applied'],
-                    'estimated_time'        => $details['estimated_time'],
-                    'zone_name'             => $details['zone_name'],
+                    'estimated_time' => $details['estimated_time'],
+                    'zone_name' => $details['zone_name'],
                 ];
             } catch (\RuntimeException) {
                 // Method not available for this address — skip
@@ -153,13 +153,13 @@ class DeliveryFeeService
     private function zeroFeeResponse(DeliveryMethod $method): array
     {
         return [
-            'fee'                   => 0.0,
-            'original_fee'          => 0.0,
-            'zone_id'               => null,
-            'zone_name'             => null,
-            'method'                => $method->value,
+            'fee' => 0.0,
+            'original_fee' => 0.0,
+            'zone_id' => null,
+            'zone_name' => null,
+            'method' => $method->value,
             'free_delivery_applied' => false,
-            'estimated_time'        => null,
+            'estimated_time' => null,
         ];
     }
 

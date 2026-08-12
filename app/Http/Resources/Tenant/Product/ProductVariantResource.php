@@ -20,7 +20,7 @@ class ProductVariantResource extends JsonResource
             'product_id' => $this->product_id,
             'product' => $this->when(
                 $this->relationLoaded('product'),
-                fn() => [
+                fn () => [
                     'id' => $this->product->id,
                     'uuid' => $this->product->uuid,
                     'name' => $this->product->name,
@@ -49,11 +49,11 @@ class ProductVariantResource extends JsonResource
             'variant_price' => $this->variant_price,
             'computed_price' => $this->computed_price,
             'formatted_variant_price' => $this->formatted_variant_price,
-            'formatted_computed_price' => 'KES ' . number_format($this->computed_price, 2),
+            'formatted_computed_price' => 'KES '.number_format($this->computed_price, 2),
             'online_price' => $this->online_price,
             'formatted_online_price' => $this->formatted_online_price,
             'computed_online_price' => $this->computed_online_price,
-            'formatted_computed_online_price' => 'KES ' . number_format($this->computed_online_price, 2),
+            'formatted_computed_online_price' => 'KES '.number_format($this->computed_online_price, 2),
             'is_available_online' => $this->isAvailableOnline(),
 
             // Inventory & Status

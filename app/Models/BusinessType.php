@@ -10,6 +10,7 @@ class BusinessType extends Model
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'business_types';
 
     protected $fillable = [

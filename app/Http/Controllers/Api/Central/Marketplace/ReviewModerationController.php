@@ -12,6 +12,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\MerchantReview;
 use App\Models\ProductReview;
 use App\Services\Central\Marketplace\ReviewModerationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,28 +30,35 @@ class ReviewModerationController extends Controller
      *     operationId="listPendingReviews",
      *     tags={"Central - Admin - Moderate Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filter reviews by type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"all", "product", "merchant"},
      *             default="all"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Pending reviews retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Pending reviews retrieved successfully."),
      *             @OA\Property(
@@ -59,8 +67,10 @@ class ReviewModerationController extends Controller
      *                 @OA\Property(
      *                     property="product_reviews",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="rating", type="number", format="float", example=4),
      *                         @OA\Property(property="title", type="string", example="Excellent TV Quality"),
@@ -72,8 +82,10 @@ class ReviewModerationController extends Controller
      *                         @OA\Property(
      *                             property="review_images",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                         ),
+     *
      *                         @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                         @OA\Property(property="status", type="string", example="pending"),
      *                         @OA\Property(property="helpful_count", type="integer", example=0),
@@ -95,8 +107,10 @@ class ReviewModerationController extends Controller
      *                 @OA\Property(
      *                     property="merchant_reviews",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="overall_rating", type="number", format="float", example=4),
      *                         @OA\Property(
@@ -137,17 +151,23 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - insufficient privileges",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You do not have permission to access this resource."),
      *             @OA\Property(
@@ -184,7 +204,7 @@ class ReviewModerationController extends Controller
 
             return ApiResponse::success('Pending reviews retrieved successfully.', $result);
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to retrieve pending reviews: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to retrieve pending reviews: '.$e->getMessage());
         }
     }
 
@@ -196,28 +216,35 @@ class ReviewModerationController extends Controller
      *     operationId="listFlaggedReviews",
      *     tags={"Central - Reviews - Flag"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filter reviews by type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"all", "product", "merchant"},
      *             default="all"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Flagged reviews retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Flagged reviews retrieved successfully."),
      *             @OA\Property(
@@ -226,8 +253,10 @@ class ReviewModerationController extends Controller
      *                 @OA\Property(
      *                     property="product_reviews",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="rating", type="number", format="float", example=4),
      *                         @OA\Property(property="title", type="string", example="Excellent TV Quality"),
@@ -239,8 +268,10 @@ class ReviewModerationController extends Controller
      *                         @OA\Property(
      *                             property="review_images",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                         ),
+     *
      *                         @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                         @OA\Property(property="status", type="string", example="approved"),
      *                         @OA\Property(property="helpful_count", type="integer", example=1),
@@ -259,8 +290,10 @@ class ReviewModerationController extends Controller
      *                         @OA\Property(
      *                             property="flags",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=1),
      *                                 @OA\Property(property="reason", type="string", example="Inapproriate language used"),
      *                                 @OA\Property(
@@ -279,8 +312,10 @@ class ReviewModerationController extends Controller
      *                 @OA\Property(
      *                     property="merchant_reviews",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="overall_rating", type="number", format="float", example=4),
      *                         @OA\Property(
@@ -310,8 +345,10 @@ class ReviewModerationController extends Controller
      *                         @OA\Property(
      *                             property="flags",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=2),
      *                                 @OA\Property(property="reason", type="string", example="Inapproriate language used"),
      *                                 @OA\Property(
@@ -338,17 +375,23 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - insufficient privileges",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You do not have permission to access this resource."),
      *             @OA\Property(
@@ -385,7 +428,7 @@ class ReviewModerationController extends Controller
 
             return ApiResponse::success('Flagged reviews retrieved successfully.', $result);
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to retrieve flagged reviews: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to retrieve flagged reviews: '.$e->getMessage());
         }
     }
 
@@ -397,18 +440,23 @@ class ReviewModerationController extends Controller
      *     operationId="moderateProductReview",
      *     tags={"Central - Admin - Moderate Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Moderation action and optional rejection reason",
+     *
      *         @OA\JsonContent(
      *             required={"action"},
+     *
      *             @OA\Property(
      *                 property="action",
      *                 type="string",
@@ -426,10 +474,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review moderated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review approved successfully."),
      *             @OA\Property(
@@ -446,8 +497,10 @@ class ReviewModerationController extends Controller
      *                 @OA\Property(
      *                     property="review_images",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="reviews/products/2/hrWffhno7yGBVsOlFejV8KQiPzECDqTCXysOXCgP.jpg")
      *                 ),
+     *
      *                 @OA\Property(property="is_verified_purchase", type="boolean", example=true),
      *                 @OA\Property(property="status", type="string", example="approved"),
      *                 @OA\Property(property="helpful_count", type="integer", example=0),
@@ -469,17 +522,23 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - insufficient privileges",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You do not have permission to moderate reviews."),
      *             @OA\Property(
@@ -492,10 +551,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Review not found."),
      *             @OA\Property(
@@ -508,10 +570,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - missing rejection reason",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -555,10 +620,10 @@ class ReviewModerationController extends Controller
             );
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to moderate review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to moderate review: '.$e->getMessage());
         }
     }
 
@@ -570,18 +635,23 @@ class ReviewModerationController extends Controller
      *     operationId="moderateMerchantReview",
      *     tags={"Central - Admin - Moderate Reviews"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Merchant Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Moderation action and optional rejection reason",
+     *
      *         @OA\JsonContent(
      *             required={"action"},
+     *
      *             @OA\Property(
      *                 property="action",
      *                 type="string",
@@ -599,10 +669,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review moderated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review approved successfully."),
      *             @OA\Property(
@@ -640,17 +713,23 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - insufficient privileges",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You do not have permission to moderate reviews."),
      *             @OA\Property(
@@ -663,10 +742,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Review not found."),
      *             @OA\Property(
@@ -679,10 +761,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - missing rejection reason",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -726,10 +811,10 @@ class ReviewModerationController extends Controller
             );
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to moderate review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to moderate review: '.$e->getMessage());
         }
     }
 
@@ -741,18 +826,23 @@ class ReviewModerationController extends Controller
      *     operationId="flagProductReview",
      *     tags={"Central - Reviews - Flag"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Flag reason",
+     *
      *         @OA\JsonContent(
      *             required={"reason"},
+     *
      *             @OA\Property(
      *                 property="reason",
      *                 type="string",
@@ -763,10 +853,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review flagged successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review flagged. Our team will review it shortly."),
      *             @OA\Property(
@@ -779,17 +872,23 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Cannot flag own review or validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You cannot flag your own review."),
      *             @OA\Property(
@@ -815,10 +914,10 @@ class ReviewModerationController extends Controller
             return ApiResponse::success('Review flagged. Our team will review it shortly.');
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to flag review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to flag review: '.$e->getMessage());
         }
     }
 
@@ -830,18 +929,23 @@ class ReviewModerationController extends Controller
      *     operationId="flagMerchantReview",
      *     tags={"Central - Reviews - Flag"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Merchant Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Flag reason",
+     *
      *         @OA\JsonContent(
      *             required={"reason"},
+     *
      *             @OA\Property(
      *                 property="reason",
      *                 type="string",
@@ -852,10 +956,13 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review flagged successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Review flagged. Our team will review it shortly."),
      *             @OA\Property(
@@ -868,17 +975,23 @@ class ReviewModerationController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Cannot flag own review or validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You cannot flag your own review."),
      *             @OA\Property(
@@ -904,10 +1017,10 @@ class ReviewModerationController extends Controller
             return ApiResponse::success('Review flagged. Our team will review it shortly.');
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to flag review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to flag review: '.$e->getMessage());
         }
     }
 }

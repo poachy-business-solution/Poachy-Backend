@@ -13,7 +13,7 @@ class MarketplaceMappingService
     /**
      * Map tenant category to marketplace category
      *
-     * @param array{id: int, name: string, slug: string} $categoryData
+     * @param  array{id: int, name: string, slug: string}  $categoryData
      */
     public function mapCategory(string $tenantId, array $categoryData): array
     {
@@ -43,11 +43,11 @@ class MarketplaceMappingService
             $categoryData['name']
         );
 
-        if (!$matchResult) {
+        if (! $matchResult) {
             // No match found - use generic category
             $genericCategory = MarketplaceCategory::where('slug', 'uncategorized')->first();
 
-            if (!$genericCategory) {
+            if (! $genericCategory) {
                 throw new \RuntimeException('No suitable marketplace category found and no generic category available');
             }
 
@@ -101,7 +101,7 @@ class MarketplaceMappingService
     /**
      * Map tenant brand to marketplace brand
      *
-     * @param array{id: int, name: string, slug: string} $brandData
+     * @param  array{id: int, name: string, slug: string}  $brandData
      */
     public function mapBrand(string $tenantId, array $brandData): ?array
     {
@@ -131,10 +131,10 @@ class MarketplaceMappingService
             $brandData['name']
         );
 
-        if (!$matchResult) {
+        if (! $matchResult) {
             $genericBrand = MarketplaceBrand::where('slug', 'generic')->first();
 
-            if (!$genericBrand) {
+            if (! $genericBrand) {
                 Log::warning('No brand match found and no generic brand available', [
                     'tenant_id' => $tenantId,
                     'tenant_brand' => $brandData['name'],

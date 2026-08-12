@@ -4,12 +4,12 @@ namespace App\Models\Tenant;
 
 use App\Observers\Tenant\InventoryObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 #[ObservedBy([InventoryObserver::class])]
 class Inventory extends Model
@@ -120,16 +120,17 @@ class Inventory extends Model
     }
 
     // ============================================
-    // ACCESSORS 
+    // ACCESSORS
     // ============================================
 
     public function getIsLowStockAttribute(): bool
     {
-        if (!$this->product) {
+        if (! $this->product) {
             return false;
         }
 
         $threshold = $this->product->reorder_level ?? 0;
+
         return $this->quantity_available <= $threshold && $this->quantity_available > 0;
     }
 
@@ -164,7 +165,7 @@ class Inventory extends Model
     }
 
     // ============================================
-    // HELPER METHODS 
+    // HELPER METHODS
     // ============================================
 
     public function hasStock(float $quantity): bool

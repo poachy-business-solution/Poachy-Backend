@@ -255,6 +255,7 @@ class ProductVariantObserver
                 if ($this->variantSyncService->isEligibleForSync($variant)) {
                     $this->variantSyncService->syncToMarketplace($variant, 'create', 3);
                 }
+
                 return;
             }
 
@@ -265,6 +266,7 @@ class ProductVariantObserver
 
             if ($onlinePriceRemoved && $parentOnline) {
                 $this->variantSyncService->syncToMarketplace($variant, 'deactivate', 3);
+
                 return;
             }
 
@@ -272,6 +274,7 @@ class ProductVariantObserver
             if ($variant->wasChanged('is_active') && $parentOnline && $variant->online_price !== null) {
                 $action = $variant->is_active ? 'activate' : 'deactivate';
                 $this->variantSyncService->syncToMarketplace($variant, $action, 3);
+
                 return;
             }
 
@@ -341,27 +344,32 @@ class ProductVariantObserver
         if (isset($changes['variant_price'])) {
             $oldPrice = $variant->getOriginal('variant_price') ? number_format($variant->getOriginal('variant_price'), 2) : 'N/A';
             $newPrice = number_format($changes['variant_price'], 2);
+
             return "{$user} changed variant {$displayName} price from KES {$oldPrice} to KES {$newPrice}";
         }
 
         if (isset($changes['base_selling_price_adjustment'])) {
             $oldAdj = number_format($variant->getOriginal('base_selling_price_adjustment'), 2);
             $newAdj = number_format($changes['base_selling_price_adjustment'], 2);
+
             return "{$user} changed variant {$displayName} price adjustment from KES {$oldAdj} to KES {$newAdj}";
         }
 
         if (isset($changes['stock_status'])) {
             $oldStatus = $variant->getOriginal('stock_status');
             $newStatus = $changes['stock_status'];
+
             return "{$user} changed variant {$displayName} stock status from {$oldStatus} to {$newStatus}";
         }
 
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} variant {$displayName}";
         }
 
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated variant {$displayName} ({$changedFields})";
     }
 

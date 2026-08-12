@@ -5,12 +5,12 @@ namespace App\Models\Tenant;
 use App\Enums\Tenant\InventoryMovementType;
 use App\Observers\Tenant\InventoryMovementObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 #[ObservedBy([InventoryMovementObserver::class])]
 class InventoryMovement extends Model
@@ -109,6 +109,7 @@ class InventoryMovement extends Model
     public function scopeByType(Builder $query, InventoryMovementType|string $type): Builder
     {
         $typeValue = $type instanceof InventoryMovementType ? $type->value : $type;
+
         return $query->where('movement_type', $typeValue);
     }
 
@@ -169,6 +170,7 @@ class InventoryMovement extends Model
     public function getFormattedQuantityAttribute(): string
     {
         $sign = $this->is_positive ? '+' : '';
+
         return "{$sign}{$this->quantity} {$this->uom->code}";
     }
 
@@ -176,6 +178,7 @@ class InventoryMovement extends Model
     {
         $sign = $this->is_positive ? '+' : '';
         $baseUom = $this->product->baseUom->code ?? 'units';
+
         return "{$sign}{$this->quantity_in_base_uom} {$baseUom}";
     }
 
@@ -185,12 +188,12 @@ class InventoryMovement extends Model
     }
 
     // ============================================
-    // HELPER METHODS 
+    // HELPER METHODS
     // ============================================
 
     public function getSourceTransactionDetails(): ?array
     {
-        if (!$this->reference_type || !$this->reference_id) {
+        if (! $this->reference_type || ! $this->reference_id) {
             return null;
         }
 

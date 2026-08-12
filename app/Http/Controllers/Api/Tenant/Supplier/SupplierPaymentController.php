@@ -29,12 +29,16 @@ class SupplierPaymentController extends Controller
      *     operationId="storeSupplierPayment",
      *     tags={"Supplier Payments"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 required={"supplier_id", "payment_date", "amount", "payment_method"},
+     *
      *                 @OA\Property(property="supplier_id", type="integer", example=1, description="ID of the supplier receiving payment"),
      *                 @OA\Property(property="purchase_order_id", type="integer", example=5, nullable=true, description="Optional purchase order ID to link payment to"),
      *                 @OA\Property(property="payment_date", type="string", format="date", example="2025-01-11", description="Date of payment"),
@@ -44,10 +48,13 @@ class SupplierPaymentController extends Controller
      *                 @OA\Property(property="notes", type="string", example="Payment for January delivery", nullable=true, description="Additional notes about the payment")
      *             )
      *         ),
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"supplier_id", "payment_date", "amount", "payment_method"},
+     *
      *                 @OA\Property(property="supplier_id", type="integer", example=1),
      *                 @OA\Property(property="purchase_order_id", type="integer", example=1, nullable=true),
      *                 @OA\Property(property="payment_date", type="string", format="date", example="2025-01-11"),
@@ -59,10 +66,13 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Payment recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Payment recorded successfully"),
      *             @OA\Property(
@@ -118,6 +128,7 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -129,7 +140,9 @@ class SupplierPaymentController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -138,16 +151,21 @@ class SupplierPaymentController extends Controller
      *                 @OA\Property(
      *                     property="supplier_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The supplier_id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The amount field must be a number.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="receipt",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The receipt must be a file of type: pdf, jpg, png.")
      *                 )
      *             )
@@ -176,7 +194,7 @@ class SupplierPaymentController extends Controller
             ]);
 
             return ApiResponse::error(
-                'Failed to record payment: ' . $e->getMessage(),
+                'Failed to record payment: '.$e->getMessage(),
                 null,
                 400
             );
@@ -203,52 +221,67 @@ class SupplierPaymentController extends Controller
      *     operationId="indexSupplierPayments",
      *     tags={"Supplier Payments"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="supplier_id",
      *         in="query",
      *         description="Filter by supplier ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="purchase_order_id",
      *         in="query",
      *         description="Filter by purchase order ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_method",
      *         in="query",
      *         description="Filter by payment method",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"cash","bank_transfer","mpesa","cheque","card","other"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         description="Filter payments from this date",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         description="Filter payments to this date",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=20, example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payments retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Payments retrieved successfully"),
      *             @OA\Property(
@@ -257,7 +290,9 @@ class SupplierPaymentController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="payment_number", type="string", example="PAY-SUP-2026-0002"),
      *                         @OA\Property(
@@ -320,6 +355,7 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -339,7 +375,7 @@ class SupplierPaymentController extends Controller
         ]);
 
         // If supplier_id provided, get supplier payments
-        if (!empty($filters['supplier_id'])) {
+        if (! empty($filters['supplier_id'])) {
             $payments = $this->supplierPaymentService->getSupplierPayments(
                 $filters['supplier_id'],
                 $filters
@@ -348,15 +384,15 @@ class SupplierPaymentController extends Controller
             // Get all payments with filters
             $query = SupplierPayment::withDetails();
 
-            if (!empty($filters['purchase_order_id'])) {
+            if (! empty($filters['purchase_order_id'])) {
                 $query->byPurchaseOrder($filters['purchase_order_id']);
             }
 
-            if (!empty($filters['payment_method'])) {
+            if (! empty($filters['payment_method'])) {
                 $query->byPaymentMethod($filters['payment_method']);
             }
 
-            if (!empty($filters['from_date']) || !empty($filters['to_date'])) {
+            if (! empty($filters['from_date']) || ! empty($filters['to_date'])) {
                 $query->byDateRange($filters['from_date'] ?? null, $filters['to_date'] ?? null);
             }
 
@@ -379,17 +415,22 @@ class SupplierPaymentController extends Controller
      *     operationId="showSupplierPayment",
      *     tags={"Supplier Payments"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Payment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payment retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Payment retrieved successfully"),
      *             @OA\Property(
@@ -445,6 +486,7 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -474,24 +516,31 @@ class SupplierPaymentController extends Controller
      *     operationId="supplierPayments",
      *     tags={"Supplier Payments", "Suppliers"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="supplierId",
      *         in="path",
      *         description="Supplier ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=20, example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier payment history retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Supplier payment history retrieved successfully"),
      *             @OA\Property(
@@ -500,7 +549,9 @@ class SupplierPaymentController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="payment_number", type="string", example="PAY-SUP-2026-0002"),
      *                         @OA\Property(
@@ -562,6 +613,7 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -602,24 +654,31 @@ class SupplierPaymentController extends Controller
      *     operationId="supplierPaymentSummary",
      *     tags={"Supplier Payments", "Suppliers"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="supplierId",
      *         in="path",
      *         description="Supplier ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="purchase_order_id",
      *         in="query",
      *         description="Filter summary by specific purchase order",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payment summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Payment summary retrieved successfully"),
      *             @OA\Property(
@@ -633,7 +692,9 @@ class SupplierPaymentController extends Controller
      *                     property="by_method",
      *                     type="array",
      *                     description="Breakdown of payments by payment method",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="method", type="string", example="mpesa", description="Payment method code"),
      *                         @OA\Property(property="method_label", type="string", example="M-Pesa", description="Human-readable payment method label"),
      *                         @OA\Property(property="count", type="integer", example=2, description="Number of payments using this method"),
@@ -652,6 +713,7 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -686,23 +748,30 @@ class SupplierPaymentController extends Controller
      *     operationId="purchaseOrderPayments",
      *     tags={"Supplier Payments", "Purchase Orders"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="poId",
      *         in="path",
      *         description="Purchase Order ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order payment history retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase order payment history retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="id", type="integer", example=3),
      *                     @OA\Property(property="payment_number", type="string", example="PAY-SUP-2026-0003"),
      *                     @OA\Property(
@@ -752,6 +821,7 @@ class SupplierPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"

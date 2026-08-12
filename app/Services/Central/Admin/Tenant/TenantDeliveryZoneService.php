@@ -12,7 +12,7 @@ class TenantDeliveryZoneService
     /**
      * Return a paginated list of all tenant delivery zones, with optional filters.
      *
-     * @param array{tenant_id?: string, sync_status?: string, is_active?: bool} $filters
+     * @param  array{tenant_id?: string, sync_status?: string, is_active?: bool}  $filters
      */
     public function getAllDeliveryZones(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {

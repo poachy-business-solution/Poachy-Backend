@@ -28,70 +28,85 @@ class CustomerGroupController extends Controller
      *     operationId="listCustomerGroups",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by group name or description",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="VIP")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="requires_approval",
      *         in="query",
      *         description="Filter by approval requirement",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"created_at", "name", "discount_percentage"},
      *             default="created_at"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"asc", "desc"},
      *             default="desc"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, minimum=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, minimum=1, maximum=100)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer groups retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer groups retrieved successfully"),
      *             @OA\Property(
@@ -100,8 +115,10 @@ class CustomerGroupController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="name", type="string", example="Basic Members"),
      *                         @OA\Property(property="description", type="string", example="Basic customers with 3% discount", nullable=true),
@@ -134,12 +151,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -152,12 +171,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -199,13 +220,15 @@ class CustomerGroupController extends Controller
      *     operationId="createCustomerGroup",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Customer group details",
+     *
      *         @OA\JsonContent(
      *             required={"name"},
      *             type="object",
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, example="VIP Members", description="Group name (must be unique)"),
      *             @OA\Property(property="description", type="string", maxLength=1000, example="Premium customers with 10% discount", nullable=true, description="Group description"),
      *             @OA\Property(property="discount_percentage", type="number", format="float", minimum=0, maximum=100, example=10.00, nullable=true, description="Automatic discount percentage for group members"),
@@ -213,12 +236,14 @@ class CustomerGroupController extends Controller
      *             @OA\Property(property="is_active", type="boolean", example=true, nullable=true, description="Whether this group is active")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Customer group created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer group created successfully"),
      *             @OA\Property(
@@ -243,12 +268,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -261,12 +288,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -275,14 +304,18 @@ class CustomerGroupController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The name field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="discount_percentage",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The discount percentage must be between 0 and 100.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -293,12 +326,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -331,20 +366,23 @@ class CustomerGroupController extends Controller
      *     operationId="getCustomerGroup",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer group retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer group retrieved successfully"),
      *             @OA\Property(
@@ -370,12 +408,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -388,12 +428,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -406,12 +448,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -430,7 +474,7 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 
@@ -448,20 +492,23 @@ class CustomerGroupController extends Controller
      *     operationId="updateCustomerGroup",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Customer group fields to update (all optional)",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, example="Updated Group Name", description="Group name (must be unique)"),
      *             @OA\Property(property="description", type="string", maxLength=1000, example="Updated description", nullable=true, description="Group description"),
      *             @OA\Property(property="discount_percentage", type="number", format="float", minimum=0, maximum=100, example=12.00, nullable=true, description="Automatic discount percentage for group members"),
@@ -469,12 +516,14 @@ class CustomerGroupController extends Controller
      *             @OA\Property(property="is_active", type="boolean", example=true, nullable=true, description="Whether this group is active")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer group updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer group updated successfully"),
      *             @OA\Property(
@@ -499,12 +548,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -517,12 +568,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -535,12 +588,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -549,14 +604,18 @@ class CustomerGroupController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The name has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="discount_percentage",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The discount percentage must be between 0 and 100.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -567,12 +626,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -591,7 +652,7 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 
@@ -611,20 +672,23 @@ class CustomerGroupController extends Controller
      *     operationId="toggleCustomerGroupStatus",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer group status updated successfully - Active to Inactive",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer group status updated successfully"),
      *             @OA\Property(
@@ -648,12 +712,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response="200-active",
      *         description="Customer group status updated successfully - Inactive to Active",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer group status updated successfully"),
      *             @OA\Property(
@@ -677,12 +743,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -695,12 +763,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -713,12 +783,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -737,7 +809,7 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 
@@ -759,34 +831,41 @@ class CustomerGroupController extends Controller
      *     operationId="listCustomerGroupMembers",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, minimum=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, minimum=1, maximum=100)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Group members retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Group members retrieved successfully"),
      *             @OA\Property(
@@ -795,8 +874,10 @@ class CustomerGroupController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=3),
      *                         @OA\Property(property="customer_number", type="string", example="CUST-2025-000002"),
      *                         @OA\Property(property="name", type="string", example="John Doe"),
@@ -851,12 +932,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -869,12 +952,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -887,12 +972,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -911,7 +998,7 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 
@@ -932,30 +1019,35 @@ class CustomerGroupController extends Controller
      *     operationId="addCustomerToGroup",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Customer to add to group",
+     *
      *         @OA\JsonContent(
      *             required={"customer_id"},
      *             type="object",
+     *
      *             @OA\Property(property="customer_id", type="integer", example=2, description="ID of the customer to add to the group")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer added to group successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer added to group successfully"),
      *             @OA\Property(
@@ -968,12 +1060,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -986,12 +1080,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group or customer not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1004,12 +1100,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=409,
      *         description="Customer already in group",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="A record with similar data already exists."),
      *             @OA\Property(
@@ -1022,12 +1120,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1036,9 +1136,11 @@ class CustomerGroupController extends Controller
      *                 @OA\Property(
      *                     property="customer_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The customer id field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1049,12 +1151,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1073,7 +1177,7 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 
@@ -1094,27 +1198,32 @@ class CustomerGroupController extends Controller
      *     operationId="removeCustomerFromGroup",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="customerId",
      *         in="path",
      *         description="Customer ID to remove from the group",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer removed from group successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer removed from group successfully"),
      *             @OA\Property(
@@ -1127,12 +1236,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1145,12 +1256,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group, customer, or membership not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1163,12 +1276,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1187,13 +1302,13 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 
         $removed = $this->groupService->removeMemberFromGroup($group, $customerId);
 
-        if (!$removed) {
+        if (! $removed) {
             return ApiResponse::notFound('Customer not found in this group');
         }
 
@@ -1208,24 +1323,28 @@ class CustomerGroupController extends Controller
      *     operationId="bulkAddCustomersToGroup",
      *     tags={"Customer Groups"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer Group ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Array of customer IDs to add to group",
+     *
      *         @OA\JsonContent(
      *             required={"customer_ids"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="customer_ids",
      *                 type="array",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={3, 4, 5, 6},
      *                 description="Array of customer IDs to add to the group",
@@ -1233,12 +1352,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Bulk operation completed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Bulk operation completed"),
      *             @OA\Property(
@@ -1253,26 +1374,32 @@ class CustomerGroupController extends Controller
      *                     @OA\Property(
      *                         property="added",
      *                         type="array",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={3, 4, 5, 6},
      *                         description="IDs of customers successfully added"
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="skipped",
      *                         type="array",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={},
      *                         description="IDs of customers skipped (already in group)"
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="failed",
      *                         type="array",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={},
      *                         description="IDs of customers that failed to add"
      *                     )
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1283,12 +1410,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response="200-partial",
      *         description="Bulk operation completed with some skipped/failed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Bulk operation completed"),
      *             @OA\Property(
@@ -1303,26 +1432,32 @@ class CustomerGroupController extends Controller
      *                     @OA\Property(
      *                         property="added",
      *                         type="array",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={3, 4},
      *                         description="IDs of customers successfully added"
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="skipped",
      *                         type="array",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={5},
      *                         description="IDs of customers skipped (already in group)"
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="failed",
      *                         type="array",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={99},
      *                         description="IDs of customers that failed to add (not found)"
      *                     )
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1333,12 +1468,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1351,12 +1488,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer group not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1369,12 +1508,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1383,9 +1524,11 @@ class CustomerGroupController extends Controller
      *                 @OA\Property(
      *                     property="customer_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The customer ids field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1396,12 +1539,14 @@ class CustomerGroupController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1420,7 +1565,7 @@ class CustomerGroupController extends Controller
     {
         $group = $this->groupService->getGroupById($id);
 
-        if (!$group) {
+        if (! $group) {
             return ApiResponse::notFound('Customer group not found');
         }
 

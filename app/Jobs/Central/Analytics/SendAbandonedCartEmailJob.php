@@ -40,10 +40,10 @@ class SendAbandonedCartEmailJob implements ShouldQueue
 
         if (! $cart->customer->accepts_marketing || ! $cart->customer->is_active) {
             Log::info('Skipping cart recovery email - customer does not accept marketing or is inactive', [
-                'cart_id'          => $cart->id,
-                'customer_id'      => $cart->customer->id,
+                'cart_id' => $cart->id,
+                'customer_id' => $cart->customer->id,
                 'accepts_marketing' => $cart->customer->accepts_marketing,
-                'is_active'        => $cart->customer->is_active,
+                'is_active' => $cart->customer->is_active,
             ]);
 
             return;
@@ -63,24 +63,24 @@ class SendAbandonedCartEmailJob implements ShouldQueue
             Mail::to($cart->customer->user->email)->send(new CartRecoveryMail(
                 cart: $cart,
                 customerName: $cart->customer->user->name,
-                cartUrl: config('app.frontend_url') . '/cart',
+                cartUrl: config('app.frontend_url').'/cart',
             ));
 
             // Mark as sent
             $cart->update([
-                'recovery_email_sent'    => true,
+                'recovery_email_sent' => true,
                 'recovery_email_sent_at' => now(),
             ]);
 
             Log::info('Cart recovery email sent successfully', [
-                'cart_id'     => $cart->id,
+                'cart_id' => $cart->id,
                 'customer_id' => $cart->customer->id,
-                'email'       => $cart->customer->user->email,
+                'email' => $cart->customer->user->email,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send cart recovery email', [
                 'cart_id' => $cart->id,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

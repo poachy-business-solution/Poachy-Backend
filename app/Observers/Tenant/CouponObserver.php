@@ -4,6 +4,7 @@ namespace App\Observers\Tenant;
 
 use App\Models\Tenant\Coupon;
 use App\Services\Tenant\AuditService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -52,7 +53,7 @@ class CouponObserver
             $criticalFields = $coupon->getCriticalFields();
             $criticalChanges = array_intersect_key($changes, array_flip($criticalFields));
 
-            if (!empty($criticalChanges)) {
+            if (! empty($criticalChanges)) {
                 $oldValues = $coupon->getOriginal();
 
                 // Generate context-aware description
@@ -182,7 +183,7 @@ class CouponObserver
         $discountType = $coupon->discount_type->label();
         $discountValue = $coupon->discount_type->value === 'percentage'
             ? "{$coupon->discount_value}%"
-            : "KES " . number_format($coupon->discount_value, 2);
+            : 'KES '.number_format($coupon->discount_value, 2);
         $validFrom = $coupon->valid_from->format('M d, Y');
         $validUntil = $coupon->valid_until->format('M d, Y');
 
@@ -200,6 +201,7 @@ class CouponObserver
         if (isset($changes['code'])) {
             $oldCode = $coupon->getOriginal('code');
             $newCode = $changes['code'];
+
             return "{$user} changed coupon code from '{$oldCode}' to '{$newCode}'";
         }
 
@@ -209,31 +211,36 @@ class CouponObserver
             $newValue = $changes['discount_value'];
 
             $discountType = $coupon->discount_type->value === 'percentage' ? '%' : ' KES';
+
             return "{$user} changed coupon '{$coupon->code}' discount from {$oldValue}{$discountType} to {$newValue}{$discountType}";
         }
 
         // Valid from date change
         if (isset($changes['valid_from'])) {
-            $oldDate = \Carbon\Carbon::parse($coupon->getOriginal('valid_from'))->format('M d, Y');
-            $newDate = \Carbon\Carbon::parse($changes['valid_from'])->format('M d, Y');
+            $oldDate = Carbon::parse($coupon->getOriginal('valid_from'))->format('M d, Y');
+            $newDate = Carbon::parse($changes['valid_from'])->format('M d, Y');
+
             return "{$user} changed coupon '{$coupon->code}' start date from {$oldDate} to {$newDate}";
         }
 
         // Valid until date change
         if (isset($changes['valid_until'])) {
-            $oldDate = \Carbon\Carbon::parse($coupon->getOriginal('valid_until'))->format('M d, Y');
-            $newDate = \Carbon\Carbon::parse($changes['valid_until'])->format('M d, Y');
+            $oldDate = Carbon::parse($coupon->getOriginal('valid_until'))->format('M d, Y');
+            $newDate = Carbon::parse($changes['valid_until'])->format('M d, Y');
+
             return "{$user} changed coupon '{$coupon->code}' end date from {$oldDate} to {$newDate}";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} coupon '{$coupon->code}'";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated coupon '{$coupon->code}' - {$changedFields}";
     }
 

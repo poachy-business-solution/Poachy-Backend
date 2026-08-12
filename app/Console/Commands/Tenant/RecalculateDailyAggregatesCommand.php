@@ -36,14 +36,16 @@ class RecalculateDailyAggregatesCommand extends Command
         $tenantId = $this->option('tenant');
 
         // Validate tenant
-        if (!$tenantId) {
+        if (! $tenantId) {
             $this->error('Tenant ID is required. Use --tenant=<tenant_id>');
+
             return self::FAILURE;
         }
 
         // Validate date
-        if (!$dateInput) {
+        if (! $dateInput) {
             $this->error('Date is required. Use --date=YYYY-MM-DD');
+
             return self::FAILURE;
         }
 
@@ -51,6 +53,7 @@ class RecalculateDailyAggregatesCommand extends Command
             $date = Carbon::parse($dateInput)->toDateString();
         } catch (\Exception $e) {
             $this->error('Invalid date format. Use YYYY-MM-DD');
+
             return self::FAILURE;
         }
 
@@ -59,6 +62,7 @@ class RecalculateDailyAggregatesCommand extends Command
             tenancy()->initialize($tenantId);
         } catch (\Exception $e) {
             $this->error("Failed to initialize tenant: {$e->getMessage()}");
+
             return self::FAILURE;
         }
 
@@ -70,6 +74,7 @@ class RecalculateDailyAggregatesCommand extends Command
         if ($stores->isEmpty()) {
             $this->error('No stores found');
             tenancy()->end();
+
             return self::FAILURE;
         }
 

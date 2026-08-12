@@ -11,24 +11,24 @@ class ProductReviewResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'                    => $this->id,
-            'rating'                => (float) $this->rating,
-            'title'                 => $this->title,
-            'review_text'           => $this->review_text,
-            'review_images'         => $this->review_images ?? [],
-            'is_verified_purchase'  => (bool) $this->is_verified_purchase,
-            'status'                => $this->status->value,
-            'helpful_count'         => $this->helpful_count,
-            'not_helpful_count'     => $this->not_helpful_count,
-            'merchant_name'         => BusinessHelper::getBusinessName($this->order->tenant_id),
-            'merchant_response'     => $this->merchant_response,
+            'id' => $this->id,
+            'rating' => (float) $this->rating,
+            'title' => $this->title,
+            'review_text' => $this->review_text,
+            'review_images' => $this->review_images ?? [],
+            'is_verified_purchase' => (bool) $this->is_verified_purchase,
+            'status' => $this->status->value,
+            'helpful_count' => $this->helpful_count,
+            'not_helpful_count' => $this->not_helpful_count,
+            'merchant_name' => BusinessHelper::getBusinessName($this->order->tenant_id),
+            'merchant_response' => $this->merchant_response,
             'merchant_responded_at' => $this->merchant_responded_at?->toISOString(),
 
             // Customer info — display name only, no PII
             'customer' => $this->when(
                 $this->relationLoaded('customer') && $this->customer,
                 fn () => [
-                    'id'   => $this->customer->id,
+                    'id' => $this->customer->id,
                     'name' => $this->customer->user?->name ?? 'Customer',
                 ]
             ),
@@ -51,10 +51,10 @@ class ProductReviewResource extends JsonResource
             'flags' => $this->when(
                 $request->user()?->hasRole('admin') && $this->relationLoaded('flags'),
                 fn () => $this->flags->map(fn ($flag) => [
-                    'id'         => $flag->id,
-                    'reason'     => $flag->reason,
+                    'id' => $flag->id,
+                    'reason' => $flag->reason,
                     'flagged_by' => [
-                        'id'   => $flag->customer->id,
+                        'id' => $flag->customer->id,
                         'name' => $flag->customer->user?->name ?? 'Customer',
                     ],
                     'flagged_at' => $flag->created_at->toISOString(),

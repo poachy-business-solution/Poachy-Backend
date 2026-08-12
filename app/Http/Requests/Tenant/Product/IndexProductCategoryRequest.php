@@ -48,7 +48,7 @@ class IndexProductCategoryRequest extends FormRequest
             'search' => $this->input('search'),
             'with_children' => $this->boolean('with_children'),
             'with_parent' => $this->boolean('with_parent'),
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
     }
 
     /**

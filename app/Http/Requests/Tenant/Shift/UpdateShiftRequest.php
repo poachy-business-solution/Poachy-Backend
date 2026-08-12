@@ -15,6 +15,7 @@ class UpdateShiftRequest extends FormRequest
     public function authorize(): bool
     {
         $shift = $this->route('shift');
+
         return $this->user()->can('update', $shift);
     }
 

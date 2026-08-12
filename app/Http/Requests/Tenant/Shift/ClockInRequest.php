@@ -63,15 +63,15 @@ class ClockInRequest extends FormRequest
             if ($assignment->status !== ShiftStatus::SCHEDULED) {
                 $validator->errors()->add(
                     'status',
-                    'Can only clock in to scheduled shifts. Current status: ' . $assignment->status->label()
+                    'Can only clock in to scheduled shifts. Current status: '.$assignment->status->label()
                 );
             }
 
             // Validate shift is for today or in the past (allow late clock-ins)
-            if ($assignment->shift_date->isFuture() && !$assignment->shift_date->isToday()) {
+            if ($assignment->shift_date->isFuture() && ! $assignment->shift_date->isToday()) {
                 $validator->errors()->add(
                     'shift_date',
-                    'Cannot clock in to future shifts. Shift is scheduled for ' . $assignment->shift_date->format('Y-m-d')
+                    'Cannot clock in to future shifts. Shift is scheduled for '.$assignment->shift_date->format('Y-m-d')
                 );
             }
 

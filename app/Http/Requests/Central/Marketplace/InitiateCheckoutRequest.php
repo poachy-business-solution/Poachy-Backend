@@ -20,10 +20,10 @@ class InitiateCheckoutRequest extends FormRequest
     {
         return [
             'delivery_address_id' => ['required_if:fulfillment_type,delivery', 'nullable', 'integer', 'exists:central.customer_addresses,id'],
-            'fulfillment_type'    => ['required', 'string', 'in:' . implode(',', FulfillmentType::values())],
-            'delivery_method'     => ['required_if:fulfillment_type,delivery', 'nullable', 'string', 'in:' . implode(',', DeliveryMethod::values())],
-            'payment_method'      => ['required', 'string', 'in:' . implode(',', MarketplacePaymentMethod::values())],
-            'customer_notes'      => ['nullable', 'string', 'max:500'],
+            'fulfillment_type' => ['required', 'string', 'in:'.implode(',', FulfillmentType::values())],
+            'delivery_method' => ['required_if:fulfillment_type,delivery', 'nullable', 'string', 'in:'.implode(',', DeliveryMethod::values())],
+            'payment_method' => ['required', 'string', 'in:'.implode(',', MarketplacePaymentMethod::values())],
+            'customer_notes' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -55,10 +55,10 @@ class InitiateCheckoutRequest extends FormRequest
     {
         return [
             'delivery_address_id.required_if' => 'A delivery address is required for delivery orders.',
-            'delivery_method.required_if'     => 'A delivery method is required for delivery orders.',
-            'fulfillment_type.in'             => 'Invalid fulfillment type. Must be one of: ' . implode(', ', FulfillmentType::values()),
-            'delivery_method.in'              => 'Invalid delivery method. Must be one of: ' . implode(', ', DeliveryMethod::values()),
-            'payment_method.in'               => 'Invalid payment method. Must be one of: ' . implode(', ', MarketplacePaymentMethod::values()),
+            'delivery_method.required_if' => 'A delivery method is required for delivery orders.',
+            'fulfillment_type.in' => 'Invalid fulfillment type. Must be one of: '.implode(', ', FulfillmentType::values()),
+            'delivery_method.in' => 'Invalid delivery method. Must be one of: '.implode(', ', DeliveryMethod::values()),
+            'payment_method.in' => 'Invalid payment method. Must be one of: '.implode(', ', MarketplacePaymentMethod::values()),
         ];
     }
 }

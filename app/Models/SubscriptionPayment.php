@@ -34,11 +34,11 @@ class SubscriptionPayment extends Model
     protected function casts(): array
     {
         return [
-            'amount'           => 'decimal:2',
-            'payment_status'   => SubscriptionPaymentStatus::class,
-            'initiated_at'     => 'datetime',
-            'completed_at'     => 'datetime',
-            'failed_at'        => 'datetime',
+            'amount' => 'decimal:2',
+            'payment_status' => SubscriptionPaymentStatus::class,
+            'initiated_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'failed_at' => 'datetime',
             'payment_metadata' => 'array',
         ];
     }
@@ -84,9 +84,9 @@ class SubscriptionPayment extends Model
     public function markAsCompleted(string $providerReference): bool
     {
         return $this->update([
-            'payment_status'     => SubscriptionPaymentStatus::Completed,
+            'payment_status' => SubscriptionPaymentStatus::Completed,
             'provider_reference' => $providerReference,
-            'completed_at'       => now(),
+            'completed_at' => now(),
         ]);
     }
 
@@ -94,9 +94,9 @@ class SubscriptionPayment extends Model
     {
         return $this->update([
             'payment_status' => SubscriptionPaymentStatus::Failed,
-            'failed_at'      => now(),
+            'failed_at' => now(),
             'failure_reason' => $reason,
-            'failure_code'   => $code,
+            'failure_code' => $code,
         ]);
     }
 }

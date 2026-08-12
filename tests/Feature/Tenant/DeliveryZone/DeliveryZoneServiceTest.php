@@ -3,7 +3,6 @@
 namespace Tests\Feature\Tenant\DeliveryZone;
 
 use App\Events\Tenant\DeliveryZoneMarketplaceSyncRequested;
-use App\Models\Tenant\TenantDeliveryZone;
 use App\Repositories\Tenant\DeliveryZoneRepository;
 use App\Services\Tenant\Business\DeliveryZoneService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;

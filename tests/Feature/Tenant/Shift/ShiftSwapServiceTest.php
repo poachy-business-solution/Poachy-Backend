@@ -4,8 +4,8 @@ namespace Tests\Feature\Tenant\Shift;
 
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
-use App\Models\Tenant\ShiftSwapRequest;
 use App\Services\Tenant\Shift\ShiftSwapService;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -37,12 +37,12 @@ class ShiftSwapServiceTest extends TestCase
             ['id' => 3, 'name' => 'Manager One', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        \Carbon\Carbon::setTestNow('2026-07-30 14:00:00');
+        Carbon::setTestNow('2026-07-30 14:00:00');
     }
 
     protected function tearDown(): void
     {
-        \Carbon\Carbon::setTestNow();
+        Carbon::setTestNow();
         $this->dropTestTables();
         DB::connection('tenant')->statement('SET foreign_key_checks = 1');
         parent::tearDown();
@@ -50,7 +50,7 @@ class ShiftSwapServiceTest extends TestCase
 
     private function makeService(): ShiftSwapService
     {
-        return new ShiftSwapService();
+        return new ShiftSwapService;
     }
 
     private function createShift(array $overrides = []): Shift

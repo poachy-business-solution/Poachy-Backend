@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class MarketplaceCategorySeeder extends Seeder
@@ -123,7 +123,7 @@ class MarketplaceCategorySeeder extends Seeder
                 'display_order' => $parent['display_order'],
                 'is_featured' => $parent['is_featured'],
                 'is_active' => true,
-                'meta_title' => $parent['name'] . ' - Marketplace Categories',
+                'meta_title' => $parent['name'].' - Marketplace Categories',
                 'meta_description' => $parent['description'],
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -198,7 +198,7 @@ class MarketplaceCategorySeeder extends Seeder
                 'display_order' => $child['display_order'],
                 'is_featured' => false,
                 'is_active' => true,
-                'meta_title' => $child['name'] . ' - Marketplace Categories',
+                'meta_title' => $child['name'].' - Marketplace Categories',
                 'meta_description' => $child['description'],
                 'created_at' => $now,
                 'updated_at' => $now,

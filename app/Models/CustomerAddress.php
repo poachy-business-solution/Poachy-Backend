@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CustomerAddress extends Model
 {
     protected $connection = 'central';
+
     protected $table = 'customer_addresses';
 
     protected $fillable = [
@@ -31,10 +32,10 @@ class CustomerAddress extends Model
     protected function casts(): array
     {
         return [
-            'latitude'   => 'decimal:8',
-            'longitude'  => 'decimal:8',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
             'is_default' => 'boolean',
-            'is_active'  => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

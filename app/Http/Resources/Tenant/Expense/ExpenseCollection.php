@@ -24,7 +24,7 @@ class ExpenseCollection extends ResourceCollection
             'meta' => [
                 'total_count' => $this->collection->count(),
                 'total_amount' => $totalAmount,
-                'formatted_total_amount' => 'KES ' . number_format($totalAmount, 2),
+                'formatted_total_amount' => 'KES '.number_format($totalAmount, 2),
                 'approved_count' => $approvedCount,
                 'pending_count' => $pendingCount,
                 'rejected_count' => $this->collection->where('approval_status', 'rejected')->count(),

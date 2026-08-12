@@ -60,7 +60,7 @@ class StoreCustomerGroupRequest extends FormRequest
         ];
 
         foreach ($defaults as $key => $value) {
-            if (!$this->has($key)) {
+            if (! $this->has($key)) {
                 $this->merge([$key => $value]);
             }
         }

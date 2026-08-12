@@ -6,16 +6,16 @@ use App\Enums\Tenant\PaymentMethod;
 use App\Observers\Tenant\SupplierPaymentObserver;
 use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 
 #[ObservedBy([SupplierPaymentObserver::class])]
 class SupplierPayment extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'supplier_payments';
 
@@ -74,6 +74,7 @@ class SupplierPayment extends Model
     public function scopeByPaymentMethod(Builder $query, PaymentMethod|string $method): Builder
     {
         $methodValue = $method instanceof PaymentMethod ? $method->value : $method;
+
         return $query->where('payment_method', $methodValue);
     }
 
@@ -116,12 +117,12 @@ class SupplierPayment extends Model
 
     public function getHasReceiptAttribute(): bool
     {
-        return !empty($this->receipt_path);
+        return ! empty($this->receipt_path);
     }
 
     public function getReceiptUrlAttribute(): ?string
     {
-        if (!$this->has_receipt) {
+        if (! $this->has_receipt) {
             return null;
         }
 
@@ -145,7 +146,7 @@ class SupplierPayment extends Model
      */
     public function isLinkedToPurchaseOrder(): bool
     {
-        return !is_null($this->purchase_order_id);
+        return ! is_null($this->purchase_order_id);
     }
 
     /**

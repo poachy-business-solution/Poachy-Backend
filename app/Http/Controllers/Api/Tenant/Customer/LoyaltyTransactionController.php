@@ -10,8 +10,8 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\LoyaltyTransaction;
 use App\Services\Tenant\Sales\LoyaltyService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -29,80 +29,103 @@ class LoyaltyTransactionController extends Controller
      *     operationId="getLoyaltyTransactions",
      *     tags={"Loyalty Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="customer_id",
      *         in="query",
      *         description="Filter by customer ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="transaction_type",
      *         in="query",
      *         description="Filter by transaction type (earned, redeemed, expired, adjustment)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"earned", "redeemed", "expired", "adjustment"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Filter transactions from this date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="Filter transactions until this date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="expiring_within_days",
      *         in="query",
      *         description="Filter points expiring within specified days",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=30)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="reference_type",
      *         in="query",
      *         description="Filter by reference type (e.g., App\Models\Tenant\Sale)",
      *         required=false,
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="include_expired",
      *         in="query",
      *         description="Include expired points (default: false)",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=false)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of records per page (default: 15, max: 100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field (created_at, points, balance_after)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"created_at", "points", "balance_after"}, example="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction (asc, desc)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Loyalty transactions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Loyalty transactions retrieved successfully"),
      *             @OA\Property(
@@ -114,7 +137,9 @@ class LoyaltyTransactionController extends Controller
      *                     @OA\Property(
      *                         property="data",
      *                         type="array",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="id", type="integer", example=22),
      *                             @OA\Property(property="customer_id", type="integer", example=4),
      *                             @OA\Property(property="customer_name", type="string", example="Jane Smith"),
@@ -159,7 +184,9 @@ class LoyaltyTransactionController extends Controller
      *                         @OA\Property(
      *                             property="links",
      *                             type="array",
+     *
      *                             @OA\Items(
+     *
      *                                 @OA\Property(property="url", type="string", nullable=true, example="http://techhaven.localhost/api/v1/tenant/loyalty-transactions?page=1"),
      *                                 @OA\Property(property="label", type="string", example="1"),
      *                                 @OA\Property(property="page", type="integer", nullable=true, example=1),
@@ -195,10 +222,13 @@ class LoyaltyTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="User does not have the right permissions."),
      *             @OA\Property(
@@ -223,23 +253,23 @@ class LoyaltyTransactionController extends Controller
                 ->select('loyalty_transactions.*');
 
             // Apply filters
-            if (!empty($validated['customer_id'])) {
+            if (! empty($validated['customer_id'])) {
                 $query->where('customer_id', $validated['customer_id']);
             }
 
-            if (!empty($validated['transaction_type'])) {
+            if (! empty($validated['transaction_type'])) {
                 $query->where('transaction_type', $validated['transaction_type']);
             }
 
-            if (!empty($validated['reference_type'])) {
+            if (! empty($validated['reference_type'])) {
                 $query->where('reference_type', $validated['reference_type']);
             }
 
-            if (!empty($validated['date_from'])) {
+            if (! empty($validated['date_from'])) {
                 $query->whereDate('created_at', '>=', $validated['date_from']);
             }
 
-            if (!empty($validated['date_to'])) {
+            if (! empty($validated['date_to'])) {
                 $query->whereDate('created_at', '<=', $validated['date_to']);
             }
 
@@ -293,17 +323,22 @@ class LoyaltyTransactionController extends Controller
      *     operationId="getLoyaltyTransactionById",
      *     tags={"Loyalty Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Loyalty transaction ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=22)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Loyalty transaction retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Loyalty transaction retrieved successfully"),
      *             @OA\Property(
@@ -325,17 +360,21 @@ class LoyaltyTransactionController extends Controller
      *                     nullable=true,
      *                     description="Reference object structure varies: for sales it contains type, sale_number, total_amount, sale_date; for manual awards it contains type, awarded_by, awarded_by_id",
      *                     oneOf={
+     *
      *                         @OA\Schema(
      *                             type="object",
      *                             description="Sale reference",
+     *
      *                             @OA\Property(property="type", type="string", example="sale"),
      *                             @OA\Property(property="sale_number", type="string", example="INV-STR-2025-74622-2026-01-000009"),
      *                             @OA\Property(property="total_amount", type="number", format="float", example=166650),
      *                             @OA\Property(property="sale_date", type="string", format="date", example="2026-01-09")
      *                         ),
+     *
      *                         @OA\Schema(
      *                             type="object",
      *                             description="Manual award reference",
+     *
      *                             @OA\Property(property="type", type="string", example="Manual Award"),
      *                             @OA\Property(property="awarded_by", type="string", example="John Doe"),
      *                             @OA\Property(property="awarded_by_id", type="integer", example=1)
@@ -359,10 +398,13 @@ class LoyaltyTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="User does not have the right permissions."),
      *             @OA\Property(
@@ -375,6 +417,7 @@ class LoyaltyTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Loyalty transaction not found"
@@ -390,7 +433,7 @@ class LoyaltyTransactionController extends Controller
                 'Loyalty transaction retrieved successfully',
                 new LoyaltyTransactionResource($transaction)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Loyalty transaction not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve loyalty transaction', [
@@ -414,24 +457,31 @@ class LoyaltyTransactionController extends Controller
      *     operationId="getCustomerLoyaltyTransactions",
      *     tags={"Loyalty Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="customer_id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Records per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer loyalty history retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer loyalty history retrieved successfully"),
      *             @OA\Property(
@@ -451,7 +501,9 @@ class LoyaltyTransactionController extends Controller
      *                     @OA\Property(
      *                         property="data",
      *                         type="array",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="id", type="integer", example=22),
      *                             @OA\Property(property="customer_id", type="integer", example=4),
      *                             @OA\Property(property="customer_name", type="string", example="Jane Smith"),
@@ -496,7 +548,9 @@ class LoyaltyTransactionController extends Controller
      *                         @OA\Property(
      *                             property="links",
      *                             type="array",
+     *
      *                             @OA\Items(
+     *
      *                                 @OA\Property(property="url", type="string", nullable=true, example="http://techhaven.localhost/api/v1/tenant/customers/4/loyalty-transactions?page=1"),
      *                                 @OA\Property(property="label", type="string", example="1"),
      *                                 @OA\Property(property="page", type="integer", nullable=true, example=1),
@@ -529,6 +583,7 @@ class LoyaltyTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -566,7 +621,7 @@ class LoyaltyTransactionController extends Controller
                     'balance_summary' => $balanceSummary,
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Customer not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve customer loyalty history', [
@@ -590,19 +645,25 @@ class LoyaltyTransactionController extends Controller
      *     operationId="awardManualLoyaltyPoints",
      *     tags={"Loyalty Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"customer_id", "points", "reason"},
+     *
      *             @OA\Property(property="customer_id", type="integer", example=5, description="ID of the customer to award points to"),
      *             @OA\Property(property="points", type="number", format="float", example=100.00, description="Points to award"),
      *             @OA\Property(property="reason", type="string", example="Promotional bonus for January 2025", description="Reason for manual award")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Loyalty points awarded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Loyalty points awarded successfully"),
      *             @OA\Property(
@@ -626,6 +687,7 @@ class LoyaltyTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -637,7 +699,9 @@ class LoyaltyTransactionController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -646,16 +710,21 @@ class LoyaltyTransactionController extends Controller
      *                 @OA\Property(
      *                     property="customer_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The customer_id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="points",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The points field must be a number.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reason field is required.")
      *                 )
      *             )
@@ -689,7 +758,7 @@ class LoyaltyTransactionController extends Controller
                     'reason' => $validated['reason'],
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Customer not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to award loyalty points', [
@@ -713,24 +782,31 @@ class LoyaltyTransactionController extends Controller
      *     operationId="getLoyaltyAnalyticsOverview",
      *     tags={"Loyalty Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Analytics start date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="Analytics end date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Loyalty analytics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Loyalty analytics retrieved successfully"),
      *             @OA\Property(
@@ -771,7 +847,9 @@ class LoyaltyTransactionController extends Controller
      *                     property="top_earners",
      *                     type="array",
      *                     description="List of customers who earned the most points",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="customer_id", type="integer", example=4),
      *                         @OA\Property(property="customer_name", type="string", example="Jane Smith"),
      *                         @OA\Property(property="points_earned", type="number", format="float", example=34304.5)
@@ -781,7 +859,9 @@ class LoyaltyTransactionController extends Controller
      *                     property="top_redeemers",
      *                     type="array",
      *                     description="List of customers who redeemed the most points",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="customer_id", type="integer", example=4),
      *                         @OA\Property(property="customer_name", type="string", example="Jane Smith"),
      *                         @OA\Property(property="points_redeemed", type="number", format="float", example=5000)
@@ -798,6 +878,7 @@ class LoyaltyTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -805,7 +886,9 @@ class LoyaltyTransactionController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid date format",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -814,11 +897,14 @@ class LoyaltyTransactionController extends Controller
      *                 @OA\Property(
      *                     property="date_from",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The date_from field must be a valid date.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="date_to",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The date_to field must be a valid date.")
      *                 )
      *             )

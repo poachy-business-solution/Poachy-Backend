@@ -33,11 +33,11 @@ class TenantObserver
                 ->value('value');
 
             $tenant->mpesa_paybill_account = config('mpesa.account_prefix', 'POA')
-                . str_pad((string) $counter, 5, '0', STR_PAD_LEFT);
+                .str_pad((string) $counter, 5, '0', STR_PAD_LEFT);
         } catch (\Throwable $e) {
             Log::error('Failed to assign Paybill account number to tenant', [
                 'tenant_id' => $tenant->id ?? 'unknown',
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

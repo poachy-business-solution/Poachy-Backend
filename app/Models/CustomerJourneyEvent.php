@@ -44,8 +44,8 @@ class CustomerJourneyEvent extends Model
     protected function casts(): array
     {
         return [
-            'event_properties'    => 'array',
-            'event_timestamp'     => 'datetime',
+            'event_properties' => 'array',
+            'event_timestamp' => 'datetime',
             'time_on_page_seconds' => 'integer',
             'sequence_in_session' => 'integer',
         ];

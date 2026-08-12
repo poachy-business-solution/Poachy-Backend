@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ProcessInboundMarketplaceFulfillmentSync implements ShouldQueue
 {
@@ -232,7 +233,7 @@ class ProcessInboundMarketplaceFulfillmentSync implements ShouldQueue
 
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Validation\ValidationException) {
+        if ($e instanceof ValidationException) {
             return 'VALIDATION_ERROR';
         }
 

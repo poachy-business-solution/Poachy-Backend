@@ -41,7 +41,7 @@ return new class extends Migration
                 'delete',
                 'activate',
                 'deactivate',
-                'bulk_update'
+                'bulk_update',
             ])->default('create');
 
             // ============================================
@@ -81,7 +81,7 @@ return new class extends Migration
                 'failed',
                 'cancelled',
                 'stale',
-                'duplicate'
+                'duplicate',
             ])->default('pending');
 
             // ============================================

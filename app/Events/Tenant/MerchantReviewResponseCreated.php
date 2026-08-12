@@ -11,7 +11,9 @@ class MerchantReviewResponseCreated
     use Dispatchable;
 
     public readonly ReviewResponseSyncDTO $responseDTO;
+
     public readonly string $action;
+
     public readonly int $priority;
 
     public function __construct(ProductReview $review, string $action = 'create', int $priority = 2)

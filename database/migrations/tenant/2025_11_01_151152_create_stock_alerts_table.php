@@ -26,9 +26,9 @@ return new class extends Migration
             $table->timestamp('resolved_at')->nullable();
             $table->json('notified_users')->nullable(); // Array of user IDs notified
             $table->text('notes')->nullable();
-            
+
             $table->timestamps();
-            
+
             $table->index(['store_id', 'product_id', 'is_resolved']);
             $table->index(['alert_type', 'is_resolved']);
         });

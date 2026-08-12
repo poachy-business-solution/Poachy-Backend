@@ -52,10 +52,10 @@ class CancelShiftAssignmentRequest extends FormRequest
             $assignment = $this->route('assignment');
 
             // Validate shift can be cancelled
-            if (!$assignment->canBeCancelled()) {
+            if (! $assignment->canBeCancelled()) {
                 $validator->errors()->add(
                     'status',
-                    'Cannot cancel shift with status: ' . $assignment->status->label()
+                    'Cannot cancel shift with status: '.$assignment->status->label()
                 );
             }
         });

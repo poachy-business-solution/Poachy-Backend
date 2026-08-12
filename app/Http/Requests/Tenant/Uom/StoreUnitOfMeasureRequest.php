@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Uom;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,7 @@ class StoreUnitOfMeasureRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -40,8 +41,6 @@ class StoreUnitOfMeasureRequest extends FormRequest
 
     /**
      * Get custom messages for validator errors.
-     *
-     * @return array
      */
     public function messages(): array
     {
@@ -75,7 +74,7 @@ class StoreUnitOfMeasureRequest extends FormRequest
         ]);
 
         // If is_base_unit is not provided, default to false
-        if (!$this->has('is_base_unit')) {
+        if (! $this->has('is_base_unit')) {
             $this->merge(['is_base_unit' => false]);
         }
     }

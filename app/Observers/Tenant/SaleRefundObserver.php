@@ -43,7 +43,7 @@ class SaleRefundObserver
 
     public function updated(SaleRefund $refund): void
     {
-        if (!$refund->wasChanged()) {
+        if (! $refund->wasChanged()) {
             return;
         }
 

@@ -13,8 +13,8 @@ class MarketplaceOrderObserver
         $this->dispatchMetricsJob($order);
 
         Log::info('MarketplaceOrder created', [
-            'order_id'     => $order->id,
-            'tenant_id'    => $order->tenant_id,
+            'order_id' => $order->id,
+            'tenant_id' => $order->tenant_id,
             'order_status' => $order->order_status->value,
         ]);
     }
@@ -27,9 +27,9 @@ class MarketplaceOrderObserver
         }
 
         Log::info('MarketplaceOrder updated', [
-            'order_id'  => $order->id,
+            'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
-            'changes'   => $order->getChanges(),
+            'changes' => $order->getChanges(),
         ]);
     }
 
@@ -38,8 +38,8 @@ class MarketplaceOrderObserver
         $this->dispatchMetricsJob($order);
 
         Log::info('MarketplaceOrder soft-deleted', [
-            'order_id'     => $order->id,
-            'tenant_id'    => $order->tenant_id,
+            'order_id' => $order->id,
+            'tenant_id' => $order->tenant_id,
             'order_status' => $order->order_status->value,
         ]);
     }
@@ -49,7 +49,7 @@ class MarketplaceOrderObserver
         $this->dispatchMetricsJob($order);
 
         Log::info('MarketplaceOrder restored', [
-            'order_id'  => $order->id,
+            'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
         ]);
     }

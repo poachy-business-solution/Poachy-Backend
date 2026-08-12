@@ -78,8 +78,8 @@ class CheckoutServiceTest extends TestCase
             'phone_verified' => true,
         ]);
 
-        $this->cartService = new ShoppingCartService();
-        $this->service = new CheckoutService($this->cartService, new DeliveryFeeService());
+        $this->cartService = new ShoppingCartService;
+        $this->service = new CheckoutService($this->cartService, new DeliveryFeeService);
     }
 
     protected function tearDown(): void

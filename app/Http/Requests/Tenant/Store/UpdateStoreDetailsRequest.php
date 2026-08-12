@@ -74,13 +74,13 @@ class UpdateStoreDetailsRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Clean phone number
-        if ($this->has('phone') && !empty($this->phone)) {
+        if ($this->has('phone') && ! empty($this->phone)) {
             $phone = preg_replace('/[^0-9+]/', '', $this->phone);
             $this->merge(['phone' => $phone]);
         }
 
         // Normalize email
-        if ($this->has('email') && !empty($this->email)) {
+        if ($this->has('email') && ! empty($this->email)) {
             $this->merge(['email' => strtolower(trim($this->email))]);
         }
     }
@@ -102,8 +102,8 @@ class UpdateStoreDetailsRequest extends FormRequest
 
         // Only return fields that were actually present in the request
         return collect($allowedFields)
-            ->filter(fn($field) => $this->has($field))
-            ->mapWithKeys(fn($field) => [$field => $this->input($field)])
+            ->filter(fn ($field) => $this->has($field))
+            ->mapWithKeys(fn ($field) => [$field => $this->input($field)])
             ->toArray();
     }
 }

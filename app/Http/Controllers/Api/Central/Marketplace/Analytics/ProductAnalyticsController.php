@@ -14,7 +14,6 @@ class ProductAnalyticsController extends Controller
         private readonly ProductAnalyticsService $productService
     ) {}
 
-
     /**
      * @OA\Get(
      *     path="/api/v1/central/reports/products/top",
@@ -23,38 +22,49 @@ class ProductAnalyticsController extends Controller
      *     operationId="getTopProducts",
      *     tags={"Central - Analytics - Product Performance"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Number of top products to return",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=10, minimum=1, example=10)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Top performing products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Top performing products retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="product_id", type="integer", example=2),
      *                     @OA\Property(property="total_views", type="integer", description="Total product views", example=1),
      *                     @OA\Property(property="conversions", type="string", description="Number of purchases", example="0"),
@@ -71,10 +81,13 @@ class ProductAnalyticsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -87,31 +100,40 @@ class ProductAnalyticsController extends Controller
      *     operationId="getProductPerformance",
      *     tags={"Central - Analytics - Product Performance"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product performance metrics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product performance metrics retrieved successfully"),
      *             @OA\Property(
@@ -138,17 +160,23 @@ class ProductAnalyticsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product not found."),
      *             @OA\Property(
@@ -163,12 +191,11 @@ class ProductAnalyticsController extends Controller
      *     )
      * )
      */
-
     public function show(int $productId, Request $request): JsonResponse
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -186,8 +213,8 @@ class ProductAnalyticsController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
-            'limit'      => ['nullable', 'integer', 'min:1', 'max:100'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -205,7 +232,7 @@ class ProductAnalyticsController extends Controller
     {
         $request->validate([
             'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
         ]);
 
         $referrers = $this->productService->getReferrerSourceBreakdown(
@@ -216,7 +243,7 @@ class ProductAnalyticsController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $referrers,
+            'data' => $referrers,
         ]);
     }
 
@@ -224,11 +251,11 @@ class ProductAnalyticsController extends Controller
     {
         $startDate = $request->start_date
             ? new \DateTime($request->start_date)
-            : (new \DateTime())->modify('-30 days');
+            : (new \DateTime)->modify('-30 days');
 
         $endDate = $request->end_date
             ? new \DateTime($request->end_date)
-            : new \DateTime();
+            : new \DateTime;
 
         return [$startDate, $endDate];
     }

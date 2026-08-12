@@ -6,7 +6,6 @@ use App\Enums\Tenant\StockAlertType;
 use App\Events\Tenant\StockAlertCreated;
 use App\Events\Tenant\StockAlertResolved;
 use App\Models\Tenant\Inventory;
-use App\Models\Tenant\Product;
 use App\Models\Tenant\StockAlert;
 use App\Models\Tenant\Store;
 use App\Models\Tenant\TenantConfiguration;
@@ -20,14 +19,11 @@ class StockAlertService
 {
     /**
      * Check and generate alerts for a specific inventory record
-     *
-     * @param Inventory $inventory
-     * @return StockAlert|null
      */
     public function checkAndGenerateAlert(Inventory $inventory): ?StockAlert
     {
         // Check if stock alerts are enabled
-        if (!TenantConfiguration::isEnabled('stock_alerts_enabled')) {
+        if (! TenantConfiguration::isEnabled('stock_alerts_enabled')) {
             return null;
         }
 
@@ -45,8 +41,9 @@ class StockAlertService
             }
 
             // If no alert needed, resolve any existing alerts
-            if (!$alertType) {
+            if (! $alertType) {
                 $this->autoResolveAlertsForInventory($inventory);
+
                 return null;
             }
 
@@ -100,7 +97,6 @@ class StockAlertService
     /**
      * Auto-resolve alerts when stock is replenished
      *
-     * @param Inventory $inventory
      * @return int Number of alerts resolved
      */
     public function autoResolveAlertsForInventory(Inventory $inventory): int
@@ -114,7 +110,7 @@ class StockAlertService
             ->get();
 
         foreach ($alerts as $alert) {
-            if (!$alert->isStillValid()) {
+            if (! $alert->isStillValid()) {
                 $alert->resolve('Stock replenished - auto-resolved', 1); // System user
                 event(new StockAlertResolved($alert));
                 $resolved++;
@@ -136,9 +132,6 @@ class StockAlertService
 
     /**
      * Check all inventory in a store for alerts
-     *
-     * @param int $storeId
-     * @return Collection
      */
     public function checkStoreInventory(int $storeId): Collection
     {
@@ -196,24 +189,21 @@ class StockAlertService
 
     /**
      * Get active alerts with filters
-     *
-     * @param array $filters
-     * @return LengthAwarePaginator
      */
     public function getAlerts(array $filters = []): LengthAwarePaginator
     {
         $query = StockAlert::withDetails();
 
         // Apply filters
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->byStore($filters['store_id']);
         }
 
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->byProduct($filters['product_id']);
         }
 
-        if (!empty($filters['alert_type'])) {
+        if (! empty($filters['alert_type'])) {
             $query->byType($filters['alert_type']);
         }
 
@@ -235,11 +225,6 @@ class StockAlertService
 
     /**
      * Manually resolve an alert
-     *
-     * @param int $alertId
-     * @param string|null $notes
-     * @param int|null $userId
-     * @return StockAlert
      */
     public function resolveAlert(int $alertId, ?string $notes = null, ?int $userId = null): StockAlert
     {
@@ -266,9 +251,6 @@ class StockAlertService
 
     /**
      * Get alert summary for a store
-     *
-     * @param int $storeId
-     * @return array
      */
     public function getStoreSummary(int $storeId): array
     {
@@ -285,10 +267,6 @@ class StockAlertService
 
     /**
      * Get alerts for dashboard
-     *
-     * @param int $storeId
-     * @param int $limit
-     * @return Collection
      */
     public function getDashboardAlerts(int $storeId, int $limit = 10): Collection
     {

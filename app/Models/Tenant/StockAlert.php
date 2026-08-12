@@ -3,10 +3,10 @@
 namespace App\Models\Tenant;
 
 use App\Enums\Tenant\StockAlertType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class StockAlert extends Model
@@ -87,6 +87,7 @@ class StockAlert extends Model
     public function scopeByType(Builder $query, StockAlertType|string $type): Builder
     {
         $typeValue = $type instanceof StockAlertType ? $type->value : $type;
+
         return $query->where('alert_type', $typeValue);
     }
 
@@ -180,7 +181,7 @@ class StockAlert extends Model
             $this->product_variant_id
         );
 
-        if (!$inventory) {
+        if (! $inventory) {
             return false;
         }
 

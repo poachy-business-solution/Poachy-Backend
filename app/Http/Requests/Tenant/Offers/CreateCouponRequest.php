@@ -81,13 +81,13 @@ class CreateCouponRequest extends FormRequest
 
             if ($applicabilityType && $applicabilityType->requiresRelatedData()) {
                 $hasData = match ($applicabilityType) {
-                    CouponApplicabilityType::SPECIFIC_PRODUCTS => !empty($this->input('applicability.products')),
-                    CouponApplicabilityType::SPECIFIC_CATEGORIES => !empty($this->input('applicability.categories')),
-                    CouponApplicabilityType::SPECIFIC_BRANDS => !empty($this->input('applicability.brands')),
+                    CouponApplicabilityType::SPECIFIC_PRODUCTS => ! empty($this->input('applicability.products')),
+                    CouponApplicabilityType::SPECIFIC_CATEGORIES => ! empty($this->input('applicability.categories')),
+                    CouponApplicabilityType::SPECIFIC_BRANDS => ! empty($this->input('applicability.brands')),
                     default => false,
                 };
 
-                if (!$hasData) {
+                if (! $hasData) {
                     $validator->errors()->add('applicability', "You must provide at least one {$applicabilityType->label()} for this applicability type.");
                 }
             }

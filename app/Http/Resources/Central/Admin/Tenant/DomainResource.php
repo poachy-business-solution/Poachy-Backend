@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     type="object",
  *     title="Domain Resource",
  *     description="Domain resource representation",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="domain", type="string", example="merchant.poachy.com"),
  *     @OA\Property(property="tenant_id", type="string", format="uuid", example="9d8e4f2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a"),

@@ -20,7 +20,7 @@ return new class extends Migration
 
             // Notification Details
             $table->string('type');
-            // order_update, payment_received, product_review, low_stock, 
+            // order_update, payment_received, product_review, low_stock,
             // subscription_expiring, abandoned_cart, price_drop, back_in_stock
 
             $table->string('title');

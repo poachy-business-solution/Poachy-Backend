@@ -15,11 +15,15 @@ class UpdateUniqueCustomerCountJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $timeout = 60;
+
     public $backoff = [15, 30, 60];
 
     protected string $tenantId;
+
     protected string $aggregateDate;
+
     protected int $storeId;
 
     /**

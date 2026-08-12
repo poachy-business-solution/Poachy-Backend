@@ -15,7 +15,7 @@ class AddToCartRequest extends FormRequest
     {
         return [
             'marketplace_product_id' => ['required', 'integer', 'exists:central.marketplace_products,id'],
-            'quantity'               => ['required', 'numeric', 'min:0.0001'],
+            'quantity' => ['required', 'numeric', 'min:0.0001'],
         ];
     }
 
@@ -23,7 +23,7 @@ class AddToCartRequest extends FormRequest
     {
         return [
             'marketplace_product_id.exists' => 'The selected product does not exist.',
-            'quantity.min'                  => 'Quantity must be greater than zero.',
+            'quantity.min' => 'Quantity must be greater than zero.',
         ];
     }
 }

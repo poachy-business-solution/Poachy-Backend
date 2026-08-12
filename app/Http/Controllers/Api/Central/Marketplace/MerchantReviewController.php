@@ -24,31 +24,40 @@ class MerchantReviewController extends Controller
      *     description="Retrieves a paginated list of all approved reviews for a specific merchant/tenant. No authentication required. Returns overall rating and breakdown of product quality, delivery, and service ratings.",
      *     operationId="listMerchantReviews",
      *     tags={"Central - Reviews - Merchants"},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="path",
      *         description="Merchant/Tenant ID (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of results per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Merchant reviews retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Merchant reviews retrieved successfully."),
      *             @OA\Property(
@@ -57,8 +66,10 @@ class MerchantReviewController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="overall_rating", type="number", format="float", example=4),
      *                         @OA\Property(
@@ -122,7 +133,7 @@ class MerchantReviewController extends Controller
                 'Merchant reviews retrieved successfully.'
             );
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to retrieve reviews: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to retrieve reviews: '.$e->getMessage());
         }
     }
 
@@ -134,18 +145,23 @@ class MerchantReviewController extends Controller
      *     operationId="createMerchantReview",
      *     tags={"Central - Reviews - Merchants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Order ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Merchant review data",
+     *
      *         @OA\JsonContent(
      *             required={"overall_rating", "review_text"},
+     *
      *             @OA\Property(
      *                 property="overall_rating",
      *                 type="number",
@@ -193,10 +209,13 @@ class MerchantReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Merchant review submitted successfully and pending moderation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="message",
@@ -236,17 +255,23 @@ class MerchantReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - invalid rating increment",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -255,12 +280,14 @@ class MerchantReviewController extends Controller
      *                 @OA\Property(
      *                     property="service_rating",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="string",
      *                         example="The service rating must be in 0.5 increments (e.g., 1.0, 1.5, 2.0, 2.5)."
      *                     )
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -298,7 +325,7 @@ class MerchantReviewController extends Controller
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to submit review: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to submit review: '.$e->getMessage());
         }
     }
 }

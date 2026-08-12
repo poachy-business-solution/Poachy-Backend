@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     type="object",
  *     title="Business Detail Resource",
  *     description="Business detail resource representation",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="tenant_id", type="string", format="uuid"),
  *     @OA\Property(property="business_name", type="string", example="Tech Haven Electronics"),
@@ -53,8 +54,8 @@ class BusinessDetailResource extends JsonResource
             'tenant_id' => $this->tenant_id,
             'business_name' => $this->business_name,
             'business_description' => $this->business_description,
-            'business_logo' => $this->business_logo ? asset('storage/' . $this->business_logo) : null,
-            'business_banner' => $this->business_banner ? asset('storage/' . $this->business_banner) : null,
+            'business_logo' => $this->business_logo ? asset('storage/'.$this->business_logo) : null,
+            'business_banner' => $this->business_banner ? asset('storage/'.$this->business_banner) : null,
             'business_type' => [
                 'id' => $this->businessType->id,
                 'name' => $this->businessType->name,

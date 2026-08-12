@@ -13,7 +13,9 @@ class VariantMarketplaceSyncRequested
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public readonly ProductVariantSyncDTO $variantDTO;
+
     public readonly string $action;
+
     public readonly int $priority;
 
     /**

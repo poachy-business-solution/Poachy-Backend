@@ -18,15 +18,15 @@ class ProcessCentralOutboundSync extends Command
 
     /** @var array<string, class-string> */
     private array $actionJobMap = [
-        'reserve_inventory'   => ProcessInboundOrderSync::class,
-        'payment_confirmed'   => ProcessInboundPaymentSync::class,
-        'cancel'              => ProcessInboundCancellationSync::class,
+        'reserve_inventory' => ProcessInboundOrderSync::class,
+        'payment_confirmed' => ProcessInboundPaymentSync::class,
+        'cancel' => ProcessInboundCancellationSync::class,
         'release_reservation' => ProcessInboundCancellationSync::class,
     ];
 
     public function handle(): int
     {
-        $limit    = (int) $this->option('limit');
+        $limit = (int) $this->option('limit');
         $workerId = (string) getmypid();
 
         $entries = SyncQueueOutbound::on('central')
@@ -51,7 +51,7 @@ class ProcessCentralOutboundSync extends Command
             ->get();
 
         $processed = 0;
-        $failed    = 0;
+        $failed = 0;
 
         foreach ($entries as $entry) {
             if (! $entry->acquireLock($workerId)) {
@@ -79,15 +79,15 @@ class ProcessCentralOutboundSync extends Command
                     $failed++;
 
                     Log::warning('ProcessCentralOutboundSync: tenant not found', [
-                        'sync_id'   => $entry->id,
+                        'sync_id' => $entry->id,
                         'tenant_id' => $entry->tenant_id,
-                        'action'    => $entry->action,
+                        'action' => $entry->action,
                     ]);
 
                     continue;
                 }
 
-                $payload                      = $entry->payload;
+                $payload = $entry->payload;
                 $payload['_outbound_sync_id'] = $entry->id;
 
                 $tenant->run(function () use ($jobClass, $payload) {
@@ -98,10 +98,10 @@ class ProcessCentralOutboundSync extends Command
                 $entry->releaseLock();
 
                 Log::info('ProcessCentralOutboundSync: dispatched to tenant', [
-                    'sync_id'   => $entry->id,
+                    'sync_id' => $entry->id,
                     'tenant_id' => $entry->tenant_id,
-                    'action'    => $entry->action,
-                    'job'       => $jobClass,
+                    'action' => $entry->action,
+                    'job' => $jobClass,
                 ]);
 
                 $processed++;
@@ -109,10 +109,10 @@ class ProcessCentralOutboundSync extends Command
                 $this->handleFailure($entry, $e->getMessage(), $failed);
 
                 Log::error('ProcessCentralOutboundSync: dispatch failed', [
-                    'sync_id'   => $entry->id,
+                    'sync_id' => $entry->id,
                     'tenant_id' => $entry->tenant_id,
-                    'action'    => $entry->action,
-                    'error'     => $e->getMessage(),
+                    'action' => $entry->action,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

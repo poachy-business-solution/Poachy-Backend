@@ -17,13 +17,13 @@ class RequiredForPaymentMethod implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$this->paymentMethod) {
+        if (! $this->paymentMethod) {
             return;
         }
 
         $method = PaymentMethod::tryFrom($this->paymentMethod);
 
-        if (!$method) {
+        if (! $method) {
             return;
         }
 

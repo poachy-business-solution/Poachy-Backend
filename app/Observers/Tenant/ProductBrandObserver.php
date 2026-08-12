@@ -25,7 +25,7 @@ class ProductBrandObserver
     {
         $changes = $brand->getDirty();
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             Log::info('Updating product brand', [
                 'tenant_id' => tenant()->id,
                 'brand_id' => $brand->id,

@@ -22,20 +22,20 @@ return new class extends Migration
             $table->date('expected_arrival_date')->nullable();
             $table->date('actual_arrival_date')->nullable();
 
-            $table->foreignId('requested_by')->constrained('users')->onDelete('restrict');            
+            $table->foreignId('requested_by')->constrained('users')->onDelete('restrict');
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('restrict');
             $table->timestamp('approved_at')->nullable();
 
             $table->foreignId('sent_by')->nullable()->constrained('users')->onDelete('restrict');
             $table->timestamp('sent_at')->nullable();
 
-            $table->foreignId('received_by')->nullable()->constrained('users')->onDelete('restrict');                     
+            $table->foreignId('received_by')->nullable()->constrained('users')->onDelete('restrict');
             $table->timestamp('received_at')->nullable();
-            
+
             $table->text('notes')->nullable();
             $table->text('rejection_reason')->nullable(); // If cancelled
             $table->timestamps();
-            
+
             $table->index(['from_store_id', 'status']);
             $table->index(['to_store_id', 'status']);
             $table->index('transfer_number');

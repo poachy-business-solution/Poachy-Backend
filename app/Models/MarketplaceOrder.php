@@ -54,18 +54,18 @@ class MarketplaceOrder extends Model
     protected function casts(): array
     {
         return [
-            'subtotal'                  => 'decimal:2',
-            'tax_amount'                => 'decimal:2',
-            'discount_amount'           => 'decimal:2',
-            'delivery_fee'              => 'decimal:2',
-            'total_amount'              => 'decimal:2',
-            'fulfillment_type'          => FulfillmentType::class,
-            'order_status'              => OrderStatus::class,
-            'reservation_status'        => ReservationStatus::class,
-            'reservation_expires_at'    => 'datetime',
-            'reservation_confirmed_at'  => 'datetime',
-            'payment_deadline_at'       => 'datetime',
-            'cancelled_at'              => 'datetime',
+            'subtotal' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'delivery_fee' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'fulfillment_type' => FulfillmentType::class,
+            'order_status' => OrderStatus::class,
+            'reservation_status' => ReservationStatus::class,
+            'reservation_expires_at' => 'datetime',
+            'reservation_confirmed_at' => 'datetime',
+            'payment_deadline_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -155,7 +155,7 @@ class MarketplaceOrder extends Model
         $year = now()->year;
         $nextId = (static::on('central')->withTrashed()->max('id') ?? 0) + 1;
 
-        return 'MKT-ORD-' . $year . '-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
+        return 'MKT-ORD-'.$year.'-'.str_pad($nextId, 6, '0', STR_PAD_LEFT);
     }
 
     public function canBeCancelled(): bool
@@ -166,10 +166,10 @@ class MarketplaceOrder extends Model
     public function cancel(string $reason, ?int $cancelledBy = null): bool
     {
         return $this->update([
-            'order_status'        => OrderStatus::Cancelled,
+            'order_status' => OrderStatus::Cancelled,
             'cancellation_reason' => $reason,
-            'cancelled_at'        => now(),
-            'cancelled_by'        => $cancelledBy,
+            'cancelled_at' => now(),
+            'cancelled_by' => $cancelledBy,
         ]);
     }
 

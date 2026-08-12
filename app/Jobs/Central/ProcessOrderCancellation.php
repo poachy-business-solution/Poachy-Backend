@@ -43,7 +43,7 @@ class ProcessOrderCancellation implements ShouldQueue
         $syncService->queueCancellationSync($order);
 
         Log::info('Order cancellation sync queued', [
-            'order_id'  => $order->id,
+            'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
         ]);
     }
@@ -52,7 +52,7 @@ class ProcessOrderCancellation implements ShouldQueue
     {
         Log::error('ProcessOrderCancellation job failed', [
             'order_id' => $this->orderId,
-            'error'    => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

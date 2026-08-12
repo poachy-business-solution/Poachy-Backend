@@ -40,20 +40,20 @@ class TenantDeliveryZone extends Model
     protected function casts(): array
     {
         return [
-            'cities'                   => 'array',
-            'counties'                 => 'array',
-            'postal_codes'             => 'array',
-            'supported_methods'        => 'array',
-            'latitude'                 => 'decimal:8',
-            'longitude'                => 'decimal:8',
-            'standard_fee'             => 'decimal:2',
-            'express_fee'              => 'decimal:2',
-            'scheduled_fee'            => 'decimal:2',
-            'free_delivery_threshold'  => 'decimal:2',
-            'radius_km'                => 'integer',
-            'priority'                 => 'integer',
-            'is_active'                => 'boolean',
-            'last_synced_at'           => 'datetime',
+            'cities' => 'array',
+            'counties' => 'array',
+            'postal_codes' => 'array',
+            'supported_methods' => 'array',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+            'standard_fee' => 'decimal:2',
+            'express_fee' => 'decimal:2',
+            'scheduled_fee' => 'decimal:2',
+            'free_delivery_threshold' => 'decimal:2',
+            'radius_km' => 'integer',
+            'priority' => 'integer',
+            'is_active' => 'boolean',
+            'last_synced_at' => 'datetime',
         ];
     }
 
@@ -112,11 +112,11 @@ class TenantDeliveryZone extends Model
     public function matchesAddress(CustomerAddress $address): bool
     {
         return match ($this->zone_type) {
-            'city'        => $this->matchesCity($address->city),
-            'county'      => $this->matchesCounty($address->county),
+            'city' => $this->matchesCity($address->city),
+            'county' => $this->matchesCounty($address->county),
             'postal_code' => $this->matchesPostalCode($address->postal_code),
-            'radius'      => $this->matchesRadius($address->latitude, $address->longitude, $address),
-            default       => false,
+            'radius' => $this->matchesRadius($address->latitude, $address->longitude, $address),
+            default => false,
         };
     }
 
@@ -210,8 +210,8 @@ class TenantDeliveryZone extends Model
         }
 
         return match ($method) {
-            DeliveryMethod::Standard  => (float) ($this->standard_fee ?? 0),
-            DeliveryMethod::Express   => (float) ($this->express_fee ?? 0),
+            DeliveryMethod::Standard => (float) ($this->standard_fee ?? 0),
+            DeliveryMethod::Express => (float) ($this->express_fee ?? 0),
             DeliveryMethod::Scheduled => (float) ($this->scheduled_fee ?? 0),
         };
     }
@@ -222,8 +222,8 @@ class TenantDeliveryZone extends Model
     public function getEstimatedTimeForMethod(DeliveryMethod $method): ?string
     {
         return match ($method) {
-            DeliveryMethod::Standard  => $this->standard_delivery_time,
-            DeliveryMethod::Express   => $this->express_delivery_time,
+            DeliveryMethod::Standard => $this->standard_delivery_time,
+            DeliveryMethod::Express => $this->express_delivery_time,
             DeliveryMethod::Scheduled => $this->scheduled_delivery_time,
         };
     }

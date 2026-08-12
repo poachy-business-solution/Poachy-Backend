@@ -5,7 +5,6 @@ namespace App\Notifications\Central\Auth;
 use App\Mail\Central\Auth\CustomerOtpMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class CustomerOtpNotification extends Notification implements ShouldQueue
@@ -15,7 +14,7 @@ class CustomerOtpNotification extends Notification implements ShouldQueue
     public function __construct(
         public readonly string $otpCode,
         public readonly string $type,
-        public readonly int    $expiresInMinutes = 10,
+        public readonly int $expiresInMinutes = 10,
     ) {
         $this->onQueue('sync-normal');
     }
@@ -45,9 +44,9 @@ class CustomerOtpNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): CustomerOtpMail
     {
         return (new CustomerOtpMail(
-            otpCode:          $this->otpCode,
-            userName:         $notifiable->name,
-            type:             $this->type,
+            otpCode: $this->otpCode,
+            userName: $notifiable->name,
+            type: $this->type,
             expiresInMinutes: $this->expiresInMinutes,
         ))->to($notifiable->email, $notifiable->name);
     }
@@ -58,7 +57,7 @@ class CustomerOtpNotification extends Notification implements ShouldQueue
      */
     public function toSms(object $notifiable): string
     {
-        $label   = $this->typeLabel();
+        $label = $this->typeLabel();
         $message = "Your Poachy {$label} code is: {$this->otpCode}. Valid for {$this->expiresInMinutes} minutes. Do not share.";
 
         return $message;
@@ -69,12 +68,12 @@ class CustomerOtpNotification extends Notification implements ShouldQueue
     private function typeLabel(): string
     {
         return match ($this->type) {
-            'login'            => 'login verification',
-            'password_reset'   => 'password reset',
-            'verify_email'     => 'email verification',
-            'verify_phone'     => 'phone verification',
-            'update_password'  => 'password change confirmation',
-            default            => 'verification',
+            'login' => 'login verification',
+            'password_reset' => 'password reset',
+            'verify_email' => 'email verification',
+            'verify_phone' => 'phone verification',
+            'update_password' => 'password change confirmation',
+            default => 'verification',
         };
     }
 }

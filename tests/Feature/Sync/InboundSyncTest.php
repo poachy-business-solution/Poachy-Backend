@@ -148,7 +148,7 @@ class InboundSyncTest extends TestCase
      */
     private function getVariantValidationRulesWithoutDbChecks(): array
     {
-        $request = new InboundVariantSyncRequest();
+        $request = new InboundVariantSyncRequest;
         $rules = $request->rules();
 
         // Remove the exists:tenants,id rule since we cannot hit the DB
@@ -164,7 +164,7 @@ class InboundSyncTest extends TestCase
      */
     private function getBundleValidationRulesWithoutDbChecks(): array
     {
-        $request = new InboundBundleSyncRequest();
+        $request = new InboundBundleSyncRequest;
         $rules = $request->rules();
 
         // Remove the exists:tenants,id rule since we cannot hit the DB
@@ -173,17 +173,17 @@ class InboundSyncTest extends TestCase
         return $rules;
     }
 
-    public function testReceiveVariantSyncWithValidPayload(): void
+    public function test_receive_variant_sync_with_valid_payload(): void
     {
         $payload = $this->getValidVariantPayload();
         $rules = $this->getVariantValidationRulesWithoutDbChecks();
 
         $validator = Validator::make($payload, $rules);
 
-        $this->assertFalse($validator->fails(), 'Valid variant payload should pass validation. Errors: ' . $validator->errors()->toJson());
+        $this->assertFalse($validator->fails(), 'Valid variant payload should pass validation. Errors: '.$validator->errors()->toJson());
     }
 
-    public function testReceiveVariantSyncRejectsInvalidPayload(): void
+    public function test_receive_variant_sync_rejects_invalid_payload(): void
     {
         $payload = [
             'tenant_id' => 'test-tenant',
@@ -202,17 +202,17 @@ class InboundSyncTest extends TestCase
         $this->assertContains('payload', $errorKeys);
     }
 
-    public function testReceiveBundleSyncWithValidPayload(): void
+    public function test_receive_bundle_sync_with_valid_payload(): void
     {
         $payload = $this->getValidBundlePayload();
         $rules = $this->getBundleValidationRulesWithoutDbChecks();
 
         $validator = Validator::make($payload, $rules);
 
-        $this->assertFalse($validator->fails(), 'Valid bundle payload should pass validation. Errors: ' . $validator->errors()->toJson());
+        $this->assertFalse($validator->fails(), 'Valid bundle payload should pass validation. Errors: '.$validator->errors()->toJson());
     }
 
-    public function testReceiveBundleSyncRejectsInvalidPayload(): void
+    public function test_receive_bundle_sync_rejects_invalid_payload(): void
     {
         $payload = [
             'tenant_id' => 'test-tenant',
@@ -231,13 +231,13 @@ class InboundSyncTest extends TestCase
         $this->assertContains('payload', $errorKeys);
     }
 
-    public function testReceiveVariantSyncDeduplicatesWithIdempotencyKey(): void
+    public function test_receive_variant_sync_deduplicates_with_idempotency_key(): void
     {
         // Simulate the controller's deduplication logic without hitting the DB.
         // The controller checks: SyncQueueInbound::where('idempotency_key', $key)->first()
         // If found, it returns existing sync instead of creating a new one.
 
-        $existingSyncRecord = new SyncQueueInbound();
+        $existingSyncRecord = new SyncQueueInbound;
         $existingSyncRecord->forceFill([
             'id' => 99,
             'tenant_id' => 'test-tenant',
@@ -273,7 +273,7 @@ class InboundSyncTest extends TestCase
         $this->assertNotSame($differentKey, $found->idempotency_key);
     }
 
-    public function testVariantSyncRequestAuthorizesWithCorrectToken(): void
+    public function test_variant_sync_request_authorizes_with_correct_token(): void
     {
         $request = InboundVariantSyncRequest::create(
             '/api/v1/central/sync/inbound/variant',
@@ -287,7 +287,7 @@ class InboundSyncTest extends TestCase
         $this->assertTrue($request->authorize());
     }
 
-    public function testVariantSyncRequestRejectsInvalidToken(): void
+    public function test_variant_sync_request_rejects_invalid_token(): void
     {
         $request = InboundVariantSyncRequest::create(
             '/api/v1/central/sync/inbound/variant',
@@ -301,7 +301,7 @@ class InboundSyncTest extends TestCase
         $this->assertFalse($request->authorize());
     }
 
-    public function testBundleSyncRequestAuthorizesWithCorrectToken(): void
+    public function test_bundle_sync_request_authorizes_with_correct_token(): void
     {
         $request = InboundBundleSyncRequest::create(
             '/api/v1/central/sync/inbound/bundle',
@@ -315,7 +315,7 @@ class InboundSyncTest extends TestCase
         $this->assertTrue($request->authorize());
     }
 
-    public function testVariantSyncRejectsInvalidAction(): void
+    public function test_variant_sync_rejects_invalid_action(): void
     {
         $payload = $this->getValidVariantPayload();
         $payload['action'] = 'invalid_action';
@@ -327,7 +327,7 @@ class InboundSyncTest extends TestCase
         $this->assertTrue($validator->errors()->has('action'));
     }
 
-    public function testBundleSyncRejectsInvalidAction(): void
+    public function test_bundle_sync_rejects_invalid_action(): void
     {
         $payload = $this->getValidBundlePayload();
         $payload['action'] = 'invalid_action';
@@ -338,5 +338,4 @@ class InboundSyncTest extends TestCase
         $this->assertTrue($validator->fails());
         $this->assertTrue($validator->errors()->has('action'));
     }
-
 }

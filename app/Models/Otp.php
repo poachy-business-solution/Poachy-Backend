@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Otp extends Model
 {
     protected $connection = 'central';
+
     protected $table = 'otps';
 
     public const OTP_TYPE = ['login', 'password_reset'];
@@ -40,7 +41,7 @@ class Otp extends Model
 
     public function isValid(): bool
     {
-        return !$this->is_used
+        return ! $this->is_used
             && $this->expires_at->isFuture()
             && $this->attempts < 3;
     }

@@ -27,41 +27,50 @@ class ShiftSwapController extends Controller
      *     description="Retrieves a paginated list of shift swap records with optional filtering by user or store",
      *     operationId="listShiftSwaps",
      *     tags={"Tenant - Shift Swaps"},
+     *
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
      *         description="Filter by user ID (involved in swap)",
      *         required=false,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store",
      *         required=false,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
      *         example=15,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift swap records retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -78,8 +87,10 @@ class ShiftSwapController extends Controller
      *                 @OA\Property(
      *                     property="swap_requests",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="requester_assignment_id", type="integer", example=2),
      *                         @OA\Property(
@@ -251,7 +262,7 @@ class ShiftSwapController extends Controller
             'targetAssignment.shift',
             'requester',
             'targetUser',
-            'manager'
+            'manager',
         ]);
 
         // Filter by user (if they're involved in the swap)
@@ -291,10 +302,13 @@ class ShiftSwapController extends Controller
      *     description="Manager swaps two shift assignments in one action. Both assignments must belong to different users.",
      *     operationId="createShiftSwap",
      *     tags={"Tenant - Shift Swaps"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"requester_assignment_id", "target_assignment_id", "reason"},
+     *
      *             @OA\Property(
      *                 property="requester_assignment_id",
      *                 type="integer",
@@ -321,11 +335,14 @@ class ShiftSwapController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift swap executed successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift swap executed successfully"),
      *             @OA\Property(
@@ -443,11 +460,14 @@ class ShiftSwapController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Error - Cannot swap shifts with the same user",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot swap shifts with the same user. Both assignments belong to the same employee."),
      *             @OA\Property(
@@ -479,21 +499,26 @@ class ShiftSwapController extends Controller
      *     description="Retrieves detailed information about a specific shift swap record including all assignment details and involved users",
      *     operationId="getShiftSwapDetails",
      *     tags={"Tenant - Shift Swaps"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Swap request ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift swap record retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift swap record retrieved successfully"),
      *             @OA\Property(
@@ -658,7 +683,7 @@ class ShiftSwapController extends Controller
             'targetAssignment.shift',
             'requester',
             'targetUser',
-            'manager'
+            'manager',
         ]);
 
         return ApiResponse::success(
@@ -674,21 +699,26 @@ class ShiftSwapController extends Controller
      *     description="Retrieves statistical information about shift swaps including total swaps, swaps this month, and swaps this week",
      *     operationId="getShiftSwapStatistics",
      *     tags={"Tenant - Shift Swaps"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store",
      *         required=false,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Swap statistics retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",

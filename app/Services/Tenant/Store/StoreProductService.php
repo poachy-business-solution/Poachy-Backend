@@ -23,7 +23,7 @@ class StoreProductService
      */
     protected function getTenantCachePrefix(): string
     {
-        return 'tenant_' . tenant()->id . '_';
+        return 'tenant_'.tenant()->id.'_';
     }
 
     /**
@@ -32,9 +32,9 @@ class StoreProductService
     protected function getCacheTags(int $storeId): array
     {
         return [
-            'tenant:' . tenant()->id,
+            'tenant:'.tenant()->id,
             'store_products',
-            'store:' . $storeId,
+            'store:'.$storeId,
         ];
     }
 
@@ -47,7 +47,7 @@ class StoreProductService
         if ($storeId) {
             $store = Store::where('is_active', true)->find($storeId);
 
-            if (!$store) {
+            if (! $store) {
                 throw new InvalidArgumentException('Store not found or inactive.');
             }
 
@@ -67,7 +67,7 @@ class StoreProductService
 
         // Multiple stores exist, store ID is required
         throw new InvalidArgumentException(
-            'Multiple stores exist. Please specify store_id. Available stores: ' .
+            'Multiple stores exist. Please specify store_id. Available stores: '.
                 $activeStores->pluck('name', 'id')->toJson()
         );
     }
@@ -80,8 +80,8 @@ class StoreProductService
         array $filters = [],
         int $perPage = 15
     ): LengthAwarePaginator {
-        $cacheKey = $this->getTenantCachePrefix() . "store_{$storeId}_products_" .
-            md5(json_encode($filters) . $perPage);
+        $cacheKey = $this->getTenantCachePrefix()."store_{$storeId}_products_".
+            md5(json_encode($filters).$perPage);
 
         return Cache::tags($this->getCacheTags($storeId))
             ->remember($cacheKey, 300, function () use ($storeId, $filters, $perPage) {
@@ -102,7 +102,7 @@ class StoreProductService
      */
     public function getStoreProduct(int $id, int $storeId): ?StoreProduct
     {
-        $cacheKey = $this->getTenantCachePrefix() . "store_product_{$id}";
+        $cacheKey = $this->getTenantCachePrefix()."store_product_{$id}";
 
         return Cache::tags($this->getCacheTags($storeId))
             ->remember($cacheKey, 600, function () use ($id, $storeId) {
@@ -153,7 +153,7 @@ class StoreProductService
                         $storeProduct = $this->repository->updateOrCreate($storeId, $productId, $defaults);
                         $results['updated'][] = $productId;
 
-                        Log::info("Updated product assignment", [
+                        Log::info('Updated product assignment', [
                             'tenant_id' => tenant()->id,
                             'store_id' => $storeId,
                             'product_id' => $productId,
@@ -163,7 +163,7 @@ class StoreProductService
                         $storeProduct = $this->repository->assignProduct($storeId, $productId, $defaults);
                         $results['assigned'][] = $productId;
 
-                        Log::info("Assigned product to store", [
+                        Log::info('Assigned product to store', [
                             'tenant_id' => tenant()->id,
                             'store_id' => $storeId,
                             'product_id' => $productId,
@@ -193,7 +193,7 @@ class StoreProductService
                         'reason' => $e->getMessage(),
                     ];
 
-                    Log::error("Failed to assign product to store", [
+                    Log::error('Failed to assign product to store', [
                         'tenant_id' => tenant()->id,
                         'store_id' => $storeId,
                         'product_id' => $productId,
@@ -221,7 +221,7 @@ class StoreProductService
             try {
                 // Check if variant is already assigned
                 // Use product_id (parent) + product_variant_id (this variant)
-                if (!$this->repository->isProductAssignedToStore($storeId, $productId, $variant->id)) {
+                if (! $this->repository->isProductAssignedToStore($storeId, $productId, $variant->id)) {
                     $this->repository->assignProduct($storeId, $productId, [
                         'product_variant_id' => $variant->id,
                         'store_selling_price' => $defaults['store_selling_price'] ?? null,
@@ -236,7 +236,7 @@ class StoreProductService
                     ];
                 }
             } catch (\Exception $e) {
-                Log::warning("Failed to assign variant", [
+                Log::warning('Failed to assign variant', [
                     'tenant_id' => tenant()->id,
                     'store_id' => $storeId,
                     'product_id' => $productId,
@@ -261,7 +261,7 @@ class StoreProductService
             try {
                 $bundleId = $bundle->bundle_id;
 
-                if (!$this->repository->isProductAssignedToStore($storeId, $bundleId)) {
+                if (! $this->repository->isProductAssignedToStore($storeId, $bundleId)) {
                     $this->repository->assignProduct($storeId, $bundleId, $defaults);
                     $assigned[] = [
                         'bundle_id' => $bundleId,
@@ -269,7 +269,7 @@ class StoreProductService
                     ];
                 }
             } catch (\Exception $e) {
-                Log::warning("Failed to assign bundle", [
+                Log::warning('Failed to assign bundle', [
                     'tenant_id' => tenant()->id,
                     'store_id' => $storeId,
                     'bundle_id' => $bundle->bundle_id,
@@ -320,7 +320,7 @@ class StoreProductService
 
             $result = $this->repository->deleteStoreProduct($storeProduct);
 
-            Log::info("Removed product from store", [
+            Log::info('Removed product from store', [
                 'tenant_id' => tenant()->id,
                 'store_id' => $storeId,
                 'product_id' => $productId,
@@ -341,7 +341,7 @@ class StoreProductService
      */
     public function getStoreProductsStats(int $storeId): array
     {
-        $cacheKey = $this->getTenantCachePrefix() . "store_{$storeId}_stats";
+        $cacheKey = $this->getTenantCachePrefix()."store_{$storeId}_stats";
 
         return Cache::tags($this->getCacheTags($storeId))
             ->remember($cacheKey, 600, function () use ($storeId) {
@@ -352,8 +352,8 @@ class StoreProductService
                     'available_products' => $allProducts->where('is_available', true)->count(),
                     'unavailable_products' => $allProducts->where('is_available', false)->count(),
                     'price_overrides' => $allProducts->whereNotNull('store_selling_price')->count(),
-                    'low_stock_products' => $allProducts->filter(fn($sp) => $sp->is_low_stock)->count(),
-                    'out_of_stock_products' => $allProducts->filter(fn($sp) => $sp->is_out_of_stock)->count(),
+                    'low_stock_products' => $allProducts->filter(fn ($sp) => $sp->is_low_stock)->count(),
+                    'out_of_stock_products' => $allProducts->filter(fn ($sp) => $sp->is_out_of_stock)->count(),
                 ];
             });
     }

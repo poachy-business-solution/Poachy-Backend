@@ -5,7 +5,7 @@ namespace App\Enums\Central;
 enum FulfillmentType: string
 {
     case Delivery = 'delivery';
-    case Pickup   = 'pickup';
+    case Pickup = 'pickup';
 
     /**
      * Human-readable label for display.
@@ -14,7 +14,7 @@ enum FulfillmentType: string
     {
         return match ($this) {
             self::Delivery => 'Delivery',
-            self::Pickup   => 'Pickup',
+            self::Pickup => 'Pickup',
         };
     }
 

@@ -10,7 +10,6 @@ use App\Models\ShoppingCart;
 use App\Models\ShoppingCartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ShoppingCartService
@@ -81,7 +80,7 @@ class ShoppingCartService
             if ($existingItem) {
                 $newQuantity = (float) $existingItem->quantity + (float) $data['quantity'];
                 $existingItem->update([
-                    'quantity'   => $newQuantity,
+                    'quantity' => $newQuantity,
                     'updated_at' => now(),
                 ]);
 
@@ -89,18 +88,18 @@ class ShoppingCartService
             }
 
             return ShoppingCartItem::create([
-                'cart_id'                => $cart->id,
+                'cart_id' => $cart->id,
                 'marketplace_product_id' => $product->id,
-                'product_name'           => $product->name,
-                'product_sku'            => $product->sku,
-                'tenant_product_id'      => $product->tenant_product_id,
-                'tenant_variant_id'      => $product->tenant_variant_id,
-                'quantity'               => $data['quantity'],
-                'uom_code'               => $product->base_uom_code,
-                'unit_price'             => $product->online_price,
-                'current_price'          => $product->online_price,
-                'added_at'               => now(),
-                'updated_at'             => now(),
+                'product_name' => $product->name,
+                'product_sku' => $product->sku,
+                'tenant_product_id' => $product->tenant_product_id,
+                'tenant_variant_id' => $product->tenant_variant_id,
+                'quantity' => $data['quantity'],
+                'uom_code' => $product->base_uom_code,
+                'unit_price' => $product->online_price,
+                'current_price' => $product->online_price,
+                'added_at' => now(),
+                'updated_at' => now(),
             ]);
         });
 
@@ -132,7 +131,7 @@ class ShoppingCartService
             }
 
             $item->update([
-                'quantity'   => $quantity,
+                'quantity' => $quantity,
                 'updated_at' => now(),
             ]);
 
@@ -195,17 +194,17 @@ class ShoppingCartService
 
             if (bccomp((string) $item->unit_price, (string) $currentMarketPrice, 2) !== 0) {
                 $changed[] = [
-                    'item_id'       => $item->id,
-                    'product_name'  => $item->product_name,
-                    'old_price'     => (float) $item->unit_price,
+                    'item_id' => $item->id,
+                    'product_name' => $item->product_name,
+                    'old_price' => (float) $item->unit_price,
                     'current_price' => $currentMarketPrice,
-                    'difference'    => round($currentMarketPrice - (float) $item->unit_price, 2),
+                    'difference' => round($currentMarketPrice - (float) $item->unit_price, 2),
                 ];
             }
         }
 
         return [
-            'changed'   => $changed,
+            'changed' => $changed,
             'unchanged' => $cart->items->count() - count($changed),
         ];
     }
@@ -230,8 +229,8 @@ class ShoppingCartService
             if (! $guestCart) {
                 return $customerCart ?? ShoppingCart::create([
                     'customer_id' => $customerId,
-                    'session_id'  => $sessionId,
-                    'status'      => CartStatus::Active,
+                    'session_id' => $sessionId,
+                    'status' => CartStatus::Active,
                 ]);
             }
 
@@ -277,8 +276,8 @@ class ShoppingCartService
             if (! isset($tenantGroups[$tenantId])) {
                 $tenantGroups[$tenantId] = [
                     'tenant_id' => $tenantId,
-                    'items'     => [],
-                    'subtotal'  => 0,
+                    'items' => [],
+                    'subtotal' => 0,
                 ];
             }
 
@@ -288,8 +287,8 @@ class ShoppingCartService
         }
 
         return [
-            'subtotal'      => $cart->getSubtotal(),
-            'item_count'    => $cart->getItemCount(),
+            'subtotal' => $cart->getSubtotal(),
+            'item_count' => $cart->getItemCount(),
             'tenant_groups' => array_values($tenantGroups),
         ];
     }

@@ -13,7 +13,9 @@ class ProductMarketplaceSyncRequested
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public readonly ProductSyncDTO $productDTO;
+
     public readonly string $action;
+
     public readonly int $priority;
 
     /**

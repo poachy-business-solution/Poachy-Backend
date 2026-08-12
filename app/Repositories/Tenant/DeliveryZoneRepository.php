@@ -85,7 +85,7 @@ class DeliveryZoneRepository
         }
 
         if (! empty($filters['search'])) {
-            $query->where('zone_name', 'like', '%' . $filters['search'] . '%');
+            $query->where('zone_name', 'like', '%'.$filters['search'].'%');
         }
 
         return $query;

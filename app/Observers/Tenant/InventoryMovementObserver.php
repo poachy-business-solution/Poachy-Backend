@@ -3,7 +3,6 @@
 namespace App\Observers\Tenant;
 
 use App\Models\Tenant\InventoryMovement;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class InventoryMovementObserver

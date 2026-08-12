@@ -31,8 +31,9 @@ class SyncController extends Controller
 {
     /**
      * Receive product sync request from tenant
-     * 
+     *
      * @group Central Sync API
+     *
      * @authenticated
      */
     public function receiveProductSync(InboundProductSyncRequest $request)
@@ -141,6 +142,7 @@ class SyncController extends Controller
      * Receive variant sync request from tenant
      *
      * @group Central Sync API
+     *
      * @authenticated
      */
     public function receiveVariantSync(InboundVariantSyncRequest $request)
@@ -249,6 +251,7 @@ class SyncController extends Controller
      * Receive bundle sync request from tenant
      *
      * @group Central Sync API
+     *
      * @authenticated
      */
     public function receiveBundleSync(InboundBundleSyncRequest $request)
@@ -357,6 +360,7 @@ class SyncController extends Controller
      * Receive inventory count sync request from tenant
      *
      * @group Central Sync API
+     *
      * @authenticated
      */
     public function receiveInventoryCountSync(InboundInventoryCountSyncRequest $request): JsonResponse
@@ -462,6 +466,7 @@ class SyncController extends Controller
      * Receive delivery zone sync request from tenant.
      *
      * @group Central Sync API
+     *
      * @authenticated
      */
     public function receiveDeliveryZoneSync(InboundDeliveryZoneSyncRequest $request): JsonResponse
@@ -482,10 +487,10 @@ class SyncController extends Controller
 
             if ($existingSync) {
                 Log::info('Duplicate delivery zone sync request received, returning existing sync', [
-                    'tenant_id'        => $tenantId,
-                    'idempotency_key'  => $idempotencyKey,
+                    'tenant_id' => $tenantId,
+                    'idempotency_key' => $idempotencyKey,
                     'existing_sync_id' => $existingSync->id,
-                    'status'           => $existingSync->status,
+                    'status' => $existingSync->status,
                 ]);
 
                 DB::connection('central')->commit();
@@ -493,8 +498,8 @@ class SyncController extends Controller
                 return ApiResponse::success(
                     message: 'Delivery zone sync request already received',
                     data: [
-                        'sync_id'      => $existingSync->id,
-                        'status'       => $existingSync->status,
+                        'sync_id' => $existingSync->id,
+                        'status' => $existingSync->status,
                         'is_duplicate' => true,
                     ],
                     status: 200
@@ -502,37 +507,37 @@ class SyncController extends Controller
             }
 
             $syncQueue = SyncQueueInbound::create([
-                'tenant_id'           => $tenantId,
-                'syncable_type'       => 'DeliveryZone',
-                'tenant_syncable_id'  => $payload['zone_id'],
-                'action'              => $action,
-                'payload'             => $payload,
-                'changes'             => null,
-                'metadata'            => array_merge($metadata, [
-                    'received_from_ip'            => $request->ip(),
-                    'received_at_server'          => now()->toISOString(),
-                    'sync_queue_id_from_tenant'   => $request->header('X-Sync-Queue-ID'),
+                'tenant_id' => $tenantId,
+                'syncable_type' => 'DeliveryZone',
+                'tenant_syncable_id' => $payload['zone_id'],
+                'action' => $action,
+                'payload' => $payload,
+                'changes' => null,
+                'metadata' => array_merge($metadata, [
+                    'received_from_ip' => $request->ip(),
+                    'received_at_server' => now()->toISOString(),
+                    'sync_queue_id_from_tenant' => $request->header('X-Sync-Queue-ID'),
                 ]),
-                'priority'            => $priority,
-                'received_at'         => now(),
-                'scheduled_at'        => now(),
-                'expires_at'          => now()->addHours(24),
-                'status'              => 'pending',
-                'retry_count'         => 0,
-                'max_retries'         => 3,
-                'backoff_strategy'    => 'exponential',
-                'idempotency_key'     => $idempotencyKey,
-                'payload_hash'        => hash('sha256', json_encode($payload)),
+                'priority' => $priority,
+                'received_at' => now(),
+                'scheduled_at' => now(),
+                'expires_at' => now()->addHours(24),
+                'status' => 'pending',
+                'retry_count' => 0,
+                'max_retries' => 3,
+                'backoff_strategy' => 'exponential',
+                'idempotency_key' => $idempotencyKey,
+                'payload_hash' => hash('sha256', json_encode($payload)),
             ]);
 
             DB::connection('central')->commit();
 
             Log::info('Delivery zone sync request received and queued', [
-                'tenant_id'     => $tenantId,
+                'tenant_id' => $tenantId,
                 'sync_queue_id' => $syncQueue->id,
-                'zone_id'       => $payload['zone_id'],
-                'zone_name'     => $payload['zone_name'],
-                'action'        => $action,
+                'zone_id' => $payload['zone_id'],
+                'zone_name' => $payload['zone_name'],
+                'action' => $action,
             ]);
 
             ProcessInboundDeliveryZoneSync::dispatch($syncQueue->id)
@@ -541,8 +546,8 @@ class SyncController extends Controller
             return ApiResponse::success(
                 message: 'Delivery zone sync request received and queued for processing',
                 data: [
-                    'sync_id'                  => $syncQueue->id,
-                    'status'                   => $syncQueue->status,
+                    'sync_id' => $syncQueue->id,
+                    'status' => $syncQueue->status,
                     'estimated_processing_time' => '1-2 minutes',
                 ],
                 status: 202
@@ -552,8 +557,8 @@ class SyncController extends Controller
 
             Log::error('Failed to receive delivery zone sync request', [
                 'tenant_id' => $request->input('tenant_id'),
-                'error'     => $e->getMessage(),
-                'trace'     => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return ApiResponse::serverError(
@@ -567,13 +572,14 @@ class SyncController extends Controller
      * Get sync status
      *
      * @group Central Sync API
+     *
      * @authenticated
      */
     public function getSyncStatus(string $syncId)
     {
         $syncQueue = SyncQueueInbound::find($syncId);
 
-        if (!$syncQueue) {
+        if (! $syncQueue) {
             return ApiResponse::notFound('Sync record not found');
         }
 
@@ -624,16 +630,16 @@ class SyncController extends Controller
         if (! empty($validated['outbound_sync_id'])) {
             $this->closeOutboundSyncEntry(
                 outboundSyncId: $validated['outbound_sync_id'],
-                tenantId:       $validated['tenant_id'],
-                status:         $validated['status'] === 'confirmed' ? 'completed' : 'failed',
-                reason:         $validated['reason'] ?? null,
+                tenantId: $validated['tenant_id'],
+                status: $validated['status'] === 'confirmed' ? 'completed' : 'failed',
+                reason: $validated['reason'] ?? null,
             );
         }
 
         Log::info('Order confirmation received from tenant', [
-            'order_id'         => $orderId,
-            'tenant_id'        => $validated['tenant_id'],
-            'status'           => $validated['status'],
+            'order_id' => $orderId,
+            'tenant_id' => $validated['tenant_id'],
+            'status' => $validated['status'],
             'outbound_sync_id' => $validated['outbound_sync_id'] ?? null,
         ]);
 
@@ -758,17 +764,17 @@ class SyncController extends Controller
 
         $this->closeOutboundSyncEntry(
             outboundSyncId: $validated['outbound_sync_id'],
-            tenantId:       $validated['tenant_id'],
-            status:         $validated['status'],
-            reason:         $validated['reason'] ?? null,
+            tenantId: $validated['tenant_id'],
+            status: $validated['status'],
+            reason: $validated['reason'] ?? null,
             tenantRecordId: $validated['tenant_record_id'] ?? null,
-            tenantTable:    $validated['tenant_table'] ?? null,
+            tenantTable: $validated['tenant_table'] ?? null,
         );
 
         Log::info('Outbound sync ack received from tenant', [
             'outbound_sync_id' => $validated['outbound_sync_id'],
-            'tenant_id'        => $validated['tenant_id'],
-            'status'           => $validated['status'],
+            'tenant_id' => $validated['tenant_id'],
+            'status' => $validated['status'],
         ]);
 
         return ApiResponse::success(
@@ -797,8 +803,8 @@ class SyncController extends Controller
         if ($entry->tenant_id !== $tenantId) {
             Log::warning('closeOutboundSyncEntry: tenant_id mismatch', [
                 'outbound_sync_id' => $outboundSyncId,
-                'expected'         => $entry->tenant_id,
-                'provided'         => $tenantId,
+                'expected' => $entry->tenant_id,
+                'provided' => $tenantId,
             ]);
 
             return;

@@ -15,8 +15,8 @@ class ReviewResponseSyncAckRequest extends FormRequest
     {
         return [
             'outbound_sync_queue_id' => ['required', 'integer'],
-            'status'                 => ['required', 'string', 'in:completed,failed'],
-            'reason'                 => ['nullable', 'string', 'max:500'],
+            'status' => ['required', 'string', 'in:completed,failed'],
+            'reason' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

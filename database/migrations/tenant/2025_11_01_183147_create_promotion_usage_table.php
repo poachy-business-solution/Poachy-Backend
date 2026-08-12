@@ -20,7 +20,7 @@ return new class extends Migration
             $table->text('promotion_details')->nullable(); // JSON: what was the deal
             $table->timestamp('used_at')->useCurrent();
             $table->timestamps();
-            
+
             $table->index(['promotion_id']);
             $table->index(['customer_id']);
         });

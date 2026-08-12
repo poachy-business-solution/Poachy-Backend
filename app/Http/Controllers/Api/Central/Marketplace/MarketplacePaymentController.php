@@ -9,6 +9,7 @@ use App\Http\Resources\Central\Marketplace\MarketplaceOrderPaymentResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Marketplace\MarketplaceOrderService;
 use App\Services\Central\Marketplace\MarketplacePaymentService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,17 +28,22 @@ class MarketplacePaymentController extends Controller
      *     operationId="initiateOrderPayment",
      *     tags={"Central - Customer - Marketplace - Payment"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Order ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Payment initiation data (required fields vary by payment method)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="phone_number",
      *                 type="string",
@@ -47,13 +53,17 @@ class MarketplacePaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payment initiated or confirmed successfully",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
      *                     description="Cash on delivery confirmed",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(
      *                         property="message",
@@ -109,8 +119,10 @@ class MarketplacePaymentController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="M-Pesa STK push initiated",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(
      *                         property="message",
@@ -166,17 +178,23 @@ class MarketplacePaymentController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Order not found."),
      *             @OA\Property(
@@ -189,10 +207,13 @@ class MarketplacePaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Payment cannot be initiated - reservation not confirmed or deadline passed",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -223,11 +244,11 @@ class MarketplacePaymentController extends Controller
             return ApiResponse::success(
                 $result['message'],
                 array_filter([
-                    'payment'      => new MarketplaceOrderPaymentResource($result['payment']),
+                    'payment' => new MarketplaceOrderPaymentResource($result['payment']),
                     'instructions' => $result['instructions'] ?? null,
                 ]),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Order not found');
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
@@ -242,17 +263,22 @@ class MarketplacePaymentController extends Controller
      *     operationId="getOrderPaymentStatus",
      *     tags={"Central - Customer - Marketplace - Payment"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Order ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payment status retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Payment status retrieved"),
      *             @OA\Property(
@@ -348,17 +374,23 @@ class MarketplacePaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Order or payment not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Order not found."),
      *             @OA\Property(
@@ -389,7 +421,7 @@ class MarketplacePaymentController extends Controller
                 'Payment status retrieved',
                 new MarketplaceOrderPaymentResource($payment),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Order not found');
         }
     }
@@ -407,7 +439,7 @@ class MarketplacePaymentController extends Controller
                 'Callback processed',
                 new MarketplaceOrderPaymentResource($payment),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Payment not found');
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
@@ -426,7 +458,7 @@ class MarketplacePaymentController extends Controller
                 'Webhook processed',
                 new MarketplaceOrderPaymentResource($payment),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Payment not found');
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);

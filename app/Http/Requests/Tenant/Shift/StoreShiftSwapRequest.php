@@ -55,7 +55,7 @@ class StoreShiftSwapRequest extends FormRequest
 
     /**
      * Get the validated data from the request.
-     * 
+     *
      * Override to include manager_id automatically
      */
     public function validated($key = null, $default = null)

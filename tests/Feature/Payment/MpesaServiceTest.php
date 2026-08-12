@@ -17,7 +17,7 @@ class MpesaServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new MpesaService();
+        $this->service = new MpesaService;
 
         Config::set('mpesa.environment', 'sandbox');
         Config::set('mpesa.sandbox.base_url', 'https://sandbox.safaricom.co.ke');
@@ -64,7 +64,7 @@ class MpesaServiceTest extends TestCase
 
         Http::fake([
             '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok-123'], 200),
-            '*/mpesa/stkpush/*'    => Http::response(['CheckoutRequestID' => 'ws_CO_1', 'MerchantRequestID' => 'MR-1'], 200),
+            '*/mpesa/stkpush/*' => Http::response(['CheckoutRequestID' => 'ws_CO_1', 'MerchantRequestID' => 'MR-1'], 200),
         ]);
 
         $this->service->initiateSTKPush('0712345678', 100, 'REF', 'Pay');
@@ -98,10 +98,10 @@ class MpesaServiceTest extends TestCase
 
         Http::fake([
             '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok'], 200),
-            '*/mpesa/stkpush/*'    => Http::response([
-                'CheckoutRequestID'  => 'ws_CO_TEST_123',
-                'MerchantRequestID'  => 'MR-TEST-456',
-                'ResponseCode'       => '0',
+            '*/mpesa/stkpush/*' => Http::response([
+                'CheckoutRequestID' => 'ws_CO_TEST_123',
+                'MerchantRequestID' => 'MR-TEST-456',
+                'ResponseCode' => '0',
                 'ResponseDescription' => 'Success',
             ], 200),
         ]);
@@ -118,8 +118,8 @@ class MpesaServiceTest extends TestCase
 
         Http::fake([
             '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok'], 200),
-            '*/mpesa/stkpush/*'    => Http::response([
-                'errorCode'    => '500.001.1001',
+            '*/mpesa/stkpush/*' => Http::response([
+                'errorCode' => '500.001.1001',
                 'errorMessage' => 'Invalid Access Token',
             ], 400),
         ]);
@@ -136,12 +136,12 @@ class MpesaServiceTest extends TestCase
 
         Http::fake([
             '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok'], 200),
-            '*/mpesa/stkpush/*'    => Http::response(['CheckoutRequestID' => 'ws_X', 'MerchantRequestID' => 'MR-X'], 200),
+            '*/mpesa/stkpush/*' => Http::response(['CheckoutRequestID' => 'ws_X', 'MerchantRequestID' => 'MR-X'], 200),
         ]);
 
         $this->service->initiateSTKPush('0712345678', 500, 'REF', 'Pay', 'https://custom.example.com/cb');
 
-        Http::assertSent(fn($req) => str_contains($req->url(), 'stkpush')
+        Http::assertSent(fn ($req) => str_contains($req->url(), 'stkpush')
             && $req['CallBackURL'] === 'https://custom.example.com/cb');
     }
 
@@ -151,12 +151,12 @@ class MpesaServiceTest extends TestCase
 
         Http::fake([
             '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok'], 200),
-            '*/mpesa/stkpush/*'    => Http::response(['CheckoutRequestID' => 'ws_X', 'MerchantRequestID' => 'MR-X'], 200),
+            '*/mpesa/stkpush/*' => Http::response(['CheckoutRequestID' => 'ws_X', 'MerchantRequestID' => 'MR-X'], 200),
         ]);
 
         $this->service->initiateSTKPush('+254 712 345 678', 100, 'REF', 'Pay');
 
-        Http::assertSent(fn($req) => str_contains($req->url(), 'stkpush')
+        Http::assertSent(fn ($req) => str_contains($req->url(), 'stkpush')
             && $req['PhoneNumber'] === '254712345678');
     }
 
@@ -169,11 +169,11 @@ class MpesaServiceTest extends TestCase
         Cache::forget('mpesa_access_token_sandbox');
 
         Http::fake([
-            '*/oauth/v1/generate*'          => Http::response(['access_token' => 'tok'], 200),
-            '*/mpesa/c2b/v1/registerurl*'   => Http::response([
-                'ResponseCode'        => '0',
+            '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok'], 200),
+            '*/mpesa/c2b/v1/registerurl*' => Http::response([
+                'ResponseCode' => '0',
                 'ResponseDescription' => 'Success',
-                'CustomerMessage'     => 'Success',
+                'CustomerMessage' => 'Success',
             ], 200),
         ]);
 
@@ -190,9 +190,9 @@ class MpesaServiceTest extends TestCase
         Cache::forget('mpesa_access_token_sandbox');
 
         Http::fake([
-            '*/oauth/v1/generate*'         => Http::response(['access_token' => 'tok'], 200),
-            '*/mpesa/c2b/v1/registerurl*'  => Http::response([
-                'errorCode'    => '400.002.02',
+            '*/oauth/v1/generate*' => Http::response(['access_token' => 'tok'], 200),
+            '*/mpesa/c2b/v1/registerurl*' => Http::response([
+                'errorCode' => '400.002.02',
                 'errorMessage' => 'Bad request',
             ], 400),
         ]);
@@ -212,9 +212,9 @@ class MpesaServiceTest extends TestCase
             'Body' => [
                 'stkCallback' => [
                     'CheckoutRequestID' => 'ws_CO_123',
-                    'ResultCode'        => 0,
-                    'ResultDesc'        => 'Success',
-                    'CallbackMetadata'  => [
+                    'ResultCode' => 0,
+                    'ResultDesc' => 'Success',
+                    'CallbackMetadata' => [
                         'Item' => [
                             ['Name' => 'Amount',             'Value' => 1000.0],
                             ['Name' => 'MpesaReceiptNumber', 'Value' => 'LHG31AA5TX'],
@@ -240,8 +240,8 @@ class MpesaServiceTest extends TestCase
             'Body' => [
                 'stkCallback' => [
                     'CheckoutRequestID' => 'ws_CO_456',
-                    'ResultCode'        => 1032,
-                    'ResultDesc'        => 'Request cancelled by user',
+                    'ResultCode' => 1032,
+                    'ResultDesc' => 'Request cancelled by user',
                 ],
             ],
         ];
@@ -261,16 +261,16 @@ class MpesaServiceTest extends TestCase
     public function test_parse_c2b_payload_extracts_all_fields(): void
     {
         $payload = [
-            'TransactionType'    => 'Pay Bill',
-            'TransID'            => 'LHG31AA5TX',
-            'TransTime'          => '20260620120000',
-            'TransAmount'        => '2500.00',
-            'BusinessShortCode'  => '174379',
-            'BillRefNumber'      => 'POA00001',
-            'MSISDN'             => '254712345678',
-            'FirstName'          => 'John',
-            'LastName'           => 'Doe',
-            'OrgAccountBalance'  => '100000.00',
+            'TransactionType' => 'Pay Bill',
+            'TransID' => 'LHG31AA5TX',
+            'TransTime' => '20260620120000',
+            'TransAmount' => '2500.00',
+            'BusinessShortCode' => '174379',
+            'BillRefNumber' => 'POA00001',
+            'MSISDN' => '254712345678',
+            'FirstName' => 'John',
+            'LastName' => 'Doe',
+            'OrgAccountBalance' => '100000.00',
         ];
 
         $result = $this->service->parseC2BPayload($payload);

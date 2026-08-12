@@ -4,10 +4,10 @@ namespace App\Enums\Central;
 
 enum CartStatus: string
 {
-    case Active    = 'active';
+    case Active = 'active';
     case Abandoned = 'abandoned';
     case Converted = 'converted';
-    case Expired   = 'expired';
+    case Expired = 'expired';
 
     /**
      * Human-readable label for display.
@@ -15,10 +15,10 @@ enum CartStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Active    => 'Active',
+            self::Active => 'Active',
             self::Abandoned => 'Abandoned',
             self::Converted => 'Converted',
-            self::Expired   => 'Expired',
+            self::Expired => 'Expired',
         };
     }
 

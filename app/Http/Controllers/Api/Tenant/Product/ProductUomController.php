@@ -27,18 +27,23 @@ class ProductUomController extends Controller
      *     description="Retrieves all Units of Measure (UOMs) configured for a specific product, including base UOM identification and conversion factors.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product UOMs retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product UOMs retrieved successfully"),
      *             @OA\Property(
@@ -54,8 +59,10 @@ class ProductUomController extends Controller
      *                 @OA\Property(
      *                     property="uoms",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="product_id", type="integer", example=4),
      *                         @OA\Property(
@@ -104,6 +111,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -111,7 +119,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product not found"),
      *             @OA\Property(
@@ -154,18 +164,23 @@ class ProductUomController extends Controller
      *     description="Adds a new Unit of Measure configuration to a product. Can be set as base UOM, purchase UOM, sales UOM, or inventory UOM with conversion factor.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"uom_id"},
+     *
      *             @OA\Property(property="uom_id", type="integer", example=3, description="Unit of Measure ID"),
      *             @OA\Property(property="is_base_uom", type="boolean", example=true, description="Set as base UOM (if true, conversion_to_base must be 1)"),
      *             @OA\Property(property="is_purchase_uom", type="boolean", example=true, description="Enable for purchase transactions"),
@@ -174,10 +189,13 @@ class ProductUomController extends Controller
      *             @OA\Property(property="conversion_to_base", type="number", format="decimal", example=1, description="Conversion factor to base UOM (must be 1 for base UOM)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Product UOM created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product UOM created successfully"),
      *             @OA\Property(
@@ -227,6 +245,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -238,7 +257,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -247,14 +268,18 @@ class ProductUomController extends Controller
      *                 @OA\Property(
      *                     property="uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The uom id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="conversion_to_base",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Base UOM must have conversion factor of 1")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -291,26 +316,33 @@ class ProductUomController extends Controller
      *     description="Updates an existing UOM configuration for a product. Cannot change conversion factor of base UOM (must remain 1). All fields are optional.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product UOM ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="UOM configuration fields to update (all fields optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="uom_id", type="integer", example=20, description="Change to different UOM"),
      *             @OA\Property(property="is_purchase_uom", type="boolean", example=true, description="Enable/disable for purchases"),
      *             @OA\Property(property="is_sales_uom", type="boolean", example=false, description="Enable/disable for sales"),
@@ -318,10 +350,13 @@ class ProductUomController extends Controller
      *             @OA\Property(property="conversion_to_base", type="number", format="decimal", example=50, description="Conversion factor (cannot be changed for base UOM)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product UOM updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product UOM updated successfully"),
      *             @OA\Property(
@@ -371,6 +406,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -382,7 +418,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Cannot change base UOM conversion factor",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -391,9 +429,11 @@ class ProductUomController extends Controller
      *                 @OA\Property(
      *                     property="conversion_to_base",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Cannot change conversion factor of base UOM. It must always be 1")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -435,26 +475,33 @@ class ProductUomController extends Controller
      *     description="Deletes a UOM configuration from a product. Cannot delete the base UOM - you must assign a different base UOM first before deleting the current one.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Product UOM ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product UOM deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product UOM deleted successfully"),
      *             @OA\Property(
@@ -467,10 +514,13 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad Request - Cannot delete base UOM",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot delete the base UOM. Assign a different base UOM first."),
      *             @OA\Property(
@@ -483,6 +533,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -490,7 +541,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Product or Product UOM not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product UOM not found"),
      *             @OA\Property(
@@ -536,18 +589,23 @@ class ProductUomController extends Controller
      *     description="Retrieves the base Unit of Measure configured for a product. The base UOM has a conversion factor of 1 and is used as the reference for all other UOMs.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Base UOM retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Base UOM retrieved successfully"),
      *             @OA\Property(
@@ -597,6 +655,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -604,7 +663,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Product not found or no base UOM configured",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Base UOM not found for this product"),
      *             @OA\Property(
@@ -625,7 +686,7 @@ class ProductUomController extends Controller
 
         $baseUom = $this->productUomService->getBaseUom($product);
 
-        if (!$baseUom) {
+        if (! $baseUom) {
             return ApiResponse::notFound(
                 message: 'No base UOM configured for this product'
             );
@@ -644,25 +705,32 @@ class ProductUomController extends Controller
      *     description="Retrieves all Units of Measure that are enabled for purchase transactions for a specific product. These UOMs can be used when creating purchase orders.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase UOMs retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase UOMs retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="product_id", type="integer", example=4),
      *                     @OA\Property(
@@ -708,6 +776,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -715,7 +784,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product not found"),
      *             @OA\Property(
@@ -749,25 +820,32 @@ class ProductUomController extends Controller
      *     description="Retrieves all Units of Measure that are enabled for sales transactions for a specific product. These UOMs can be used when creating sales orders and invoices.",
      *     tags={"Tenant Product UOMs"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Sales UOMs retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Sales UOMs retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="product_id", type="integer", example=4),
      *                     @OA\Property(
@@ -813,6 +891,7 @@ class ProductUomController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -820,7 +899,9 @@ class ProductUomController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product not found"),
      *             @OA\Property(

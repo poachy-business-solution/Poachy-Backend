@@ -4,6 +4,7 @@ namespace App\Console\Commands\Tenant;
 
 use App\Models\Tenant;
 use App\Models\Tenant\AuditLog;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -38,7 +39,7 @@ class PruneAuditLogsCommand extends Command
             if ($specificTenantId) {
                 $tenant = Tenant::find($specificTenantId);
 
-                if (!$tenant) {
+                if (! $tenant) {
                     throw new \RuntimeException("Tenant not found: {$specificTenantId}");
                 }
 
@@ -52,7 +53,7 @@ class PruneAuditLogsCommand extends Command
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('✗ Failed to prune audit logs: ' . $e->getMessage());
+            $this->error('✗ Failed to prune audit logs: '.$e->getMessage());
             Log::error('PruneAuditLogsCommand failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -65,7 +66,7 @@ class PruneAuditLogsCommand extends Command
     /**
      * Prune audit logs for a single tenant and return the number of rows deleted.
      */
-    protected function pruneForTenant(Tenant $tenant, \Carbon\Carbon $cutoff): int
+    protected function pruneForTenant(Tenant $tenant, Carbon $cutoff): int
     {
         return $tenant->run(function () use ($cutoff) {
             return AuditLog::where('created_at', '<', $cutoff)->delete();
@@ -75,13 +76,14 @@ class PruneAuditLogsCommand extends Command
     /**
      * Prune audit logs across every tenant, reporting progress and a summary table.
      */
-    protected function pruneForAllTenants(\Carbon\Carbon $cutoff): void
+    protected function pruneForAllTenants(Carbon $cutoff): void
     {
         $tenants = Tenant::all();
         $totalTenants = $tenants->count();
 
         if ($totalTenants === 0) {
             $this->warn('No tenants found');
+
             return;
         }
 

@@ -19,14 +19,14 @@ return new class extends Migration
             $table->decimal('price', 10, 2)->default(0.00); // Monthly price
             $table->string('currency')->default('KES');
             $table->integer('billing_cycle_days')->default(30); // 30 days, 365 days, etc.
-            
+
             // Feature Limits (JSON for flexibility)
-            $table->json('features')->nullable(); 
-            
+            $table->json('features')->nullable();
+
             $table->boolean('is_active')->default(true);
             $table->boolean('is_featured')->default(false);
             $table->timestamps();
-            
+
             $table->index('slug');
             $table->index('is_active');
         });

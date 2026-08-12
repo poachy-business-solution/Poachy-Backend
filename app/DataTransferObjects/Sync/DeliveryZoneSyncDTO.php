@@ -105,26 +105,26 @@ class DeliveryZoneSyncDTO
     public function toArray(): array
     {
         return [
-            'tenant_id'               => $this->tenantId,
-            'zone_id'                 => $this->zoneId,
-            'zone_name'               => $this->zoneName,
-            'zone_type'               => $this->zoneType,
-            'cities'                  => $this->cities,
-            'counties'                => $this->counties,
-            'postal_codes'            => $this->postalCodes,
-            'latitude'                => $this->latitude,
-            'longitude'               => $this->longitude,
-            'radius_km'               => $this->radiusKm,
-            'standard_fee'            => $this->standardFee,
-            'express_fee'             => $this->expressFee,
-            'scheduled_fee'           => $this->scheduledFee,
+            'tenant_id' => $this->tenantId,
+            'zone_id' => $this->zoneId,
+            'zone_name' => $this->zoneName,
+            'zone_type' => $this->zoneType,
+            'cities' => $this->cities,
+            'counties' => $this->counties,
+            'postal_codes' => $this->postalCodes,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'radius_km' => $this->radiusKm,
+            'standard_fee' => $this->standardFee,
+            'express_fee' => $this->expressFee,
+            'scheduled_fee' => $this->scheduledFee,
             'free_delivery_threshold' => $this->freeDeliveryThreshold,
-            'standard_delivery_time'  => $this->standardDeliveryTime,
-            'express_delivery_time'   => $this->expressDeliveryTime,
+            'standard_delivery_time' => $this->standardDeliveryTime,
+            'express_delivery_time' => $this->expressDeliveryTime,
             'scheduled_delivery_time' => $this->scheduledDeliveryTime,
-            'supported_methods'       => $this->supportedMethods,
-            'priority'                => $this->priority,
-            'is_active'               => $this->isActive,
+            'supported_methods' => $this->supportedMethods,
+            'priority' => $this->priority,
+            'is_active' => $this->isActive,
         ];
     }
 
@@ -137,10 +137,10 @@ class DeliveryZoneSyncDTO
         $payloadHash = hash('sha256', $payload);
 
         return md5(
-            $this->tenantId .
-                'delivery_zone' .
-                $this->zoneId .
-                $action .
+            $this->tenantId.
+                'delivery_zone'.
+                $this->zoneId.
+                $action.
                 $payloadHash
         );
     }

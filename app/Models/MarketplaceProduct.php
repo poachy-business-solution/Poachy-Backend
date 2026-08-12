@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Central\ReviewStatus;
 use App\Observers\Central\MarketplaceProductObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +17,7 @@ class MarketplaceProduct extends Model
     use HasFactory, SoftDeletes;
 
     protected $connection = 'central';
+
     protected $table = 'marketplace_products';
 
     protected $fillable = [
@@ -111,7 +113,7 @@ class MarketplaceProduct extends Model
     public function approvedReviews(): HasMany
     {
         return $this->hasMany(ProductReview::class, 'marketplace_product_id')
-            ->where('status', \App\Enums\Central\ReviewStatus::Approved);
+            ->where('status', ReviewStatus::Approved);
     }
 
     public function wishlistItems(): HasMany

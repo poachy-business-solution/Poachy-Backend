@@ -7,7 +7,7 @@ enum PromotionType: string
     case PERCENTAGE_DISCOUNT = 'percentage_discount';
     case FIXED_DISCOUNT = 'fixed_discount';
     case BUY_X_GET_Y = 'buy_x_get_y';
-    
+
     // Future implementation
     // case BUNDLE_DISCOUNT = 'bundle_discount';
     // case FREE_SHIPPING = 'free_shipping';

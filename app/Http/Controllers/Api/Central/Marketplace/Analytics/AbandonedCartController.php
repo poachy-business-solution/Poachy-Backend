@@ -21,24 +21,31 @@ class AbandonedCartController extends Controller
      *     operationId="getAbandonedCartStats",
      *     tags={"Central - Analytics - Abandoned Cart"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for the analysis window",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-06-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for the analysis window",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-06-30")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Abandonment statistics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
@@ -52,14 +59,18 @@ class AbandonedCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Unauthenticated."))
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="The start date field is required."))
      *     )
      * )
@@ -68,7 +79,7 @@ class AbandonedCartController extends Controller
     {
         $request->validate([
             'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
         ]);
 
         $stats = $this->cartService->getAbandonmentStats(
@@ -78,7 +89,7 @@ class AbandonedCartController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $stats,
+            'data' => $stats,
         ]);
     }
 
@@ -90,23 +101,30 @@ class AbandonedCartController extends Controller
      *     operationId="getEmailEligibleAbandonedCarts",
      *     tags={"Central - Analytics - Abandoned Cart"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="since",
      *         in="query",
      *         description="Only include carts abandoned on or after this date (defaults to no lower bound)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-06-01")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Eligible carts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="cart_id", type="integer", example=42),
      *                     @OA\Property(property="customer_id", type="integer", example=7),
      *                     @OA\Property(property="email", type="string", format="email", example="jane@example.com"),
@@ -117,9 +135,11 @@ class AbandonedCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Unauthenticated."))
      *     )
      * )
@@ -135,7 +155,7 @@ class AbandonedCartController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $eligible,
+            'data' => $eligible,
         ]);
     }
 
@@ -147,23 +167,30 @@ class AbandonedCartController extends Controller
      *     operationId="getSmsEligibleAbandonedCarts",
      *     tags={"Central - Analytics - Abandoned Cart"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="since",
      *         in="query",
      *         description="Only include carts abandoned on or after this date (defaults to no lower bound)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-06-01")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Eligible carts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="cart_id", type="integer", example=42),
      *                     @OA\Property(property="customer_id", type="integer", example=7),
      *                     @OA\Property(property="phone", type="string", example="+254712345678"),
@@ -174,9 +201,11 @@ class AbandonedCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Unauthenticated."))
      *     )
      * )
@@ -192,7 +221,7 @@ class AbandonedCartController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $eligible,
+            'data' => $eligible,
         ]);
     }
 }

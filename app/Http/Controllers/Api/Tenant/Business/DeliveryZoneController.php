@@ -26,38 +26,49 @@ class DeliveryZoneController extends Controller
      *     operationId="listDeliveryZones",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="zone_type",
      *         in="query",
      *         description="Filter by zone type",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"city", "county", "postal_code", "radius"}, example="city")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by zone name",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="Nairobi")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery zones retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zones retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="zone_name", type="string", example="Nairobi City Zone"),
      *                     @OA\Property(property="zone_type", type="string", enum={"city", "county", "postal_code", "radius"}, example="city"),
@@ -91,10 +102,13 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -118,11 +132,14 @@ class DeliveryZoneController extends Controller
      *     operationId="createDeliveryZone",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Delivery zone configuration",
+     *
      *         @OA\JsonContent(
      *             required={"zone_name", "zone_type", "standard_fee", "supported_methods"},
+     *
      *             @OA\Property(property="zone_name", type="string", example="Nairobi City Zone", maxLength=100),
      *             @OA\Property(property="zone_type", type="string", enum={"city", "county", "postal_code", "radius"}, example="city"),
      *             @OA\Property(property="cities", type="array", description="Required if zone_type is 'city'", @OA\Items(type="string", maxLength=100, example="Nairobi"), nullable=true),
@@ -143,10 +160,13 @@ class DeliveryZoneController extends Controller
      *             @OA\Property(property="is_active", type="boolean", example=true, nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Delivery zone created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zone created successfully"),
      *             @OA\Property(
@@ -184,17 +204,23 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - e.g., missing fee for supported method",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -203,9 +229,11 @@ class DeliveryZoneController extends Controller
      *                 @OA\Property(
      *                     property="scheduled_fee",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Scheduled delivery fee is required when scheduled delivery is a supported method.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -236,17 +264,22 @@ class DeliveryZoneController extends Controller
      *     operationId="getDeliveryZone",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Delivery zone ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery zone retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zone retrieved successfully"),
      *             @OA\Property(
@@ -284,17 +317,23 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Delivery zone not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Delivery zone not found."),
      *             @OA\Property(
@@ -331,16 +370,21 @@ class DeliveryZoneController extends Controller
      *     operationId="updateDeliveryZone",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Delivery zone ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         description="Fields to update (all optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="zone_name", type="string", maxLength=100, example="Updated Zone Name"),
      *             @OA\Property(property="zone_type", type="string", enum={"city", "county", "postal_code", "radius"}, example="city"),
      *             @OA\Property(property="cities", type="array", @OA\Items(type="string", maxLength=100, example="Kilimani"), nullable=true),
@@ -361,10 +405,13 @@ class DeliveryZoneController extends Controller
      *             @OA\Property(property="is_active", type="boolean")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery zone updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zone updated successfully"),
      *             @OA\Property(
@@ -402,17 +449,23 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Delivery zone not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Delivery zone not found."),
      *             @OA\Property(
@@ -425,10 +478,13 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -476,17 +532,22 @@ class DeliveryZoneController extends Controller
      *     operationId="deleteDeliveryZone",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Delivery zone ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=3)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery zone deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zone deleted successfully"),
      *             @OA\Property(
@@ -499,17 +560,23 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Delivery zone not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Delivery zone not found."),
      *             @OA\Property(
@@ -537,7 +604,7 @@ class DeliveryZoneController extends Controller
         return ApiResponse::success('Delivery zone deleted successfully');
     }
 
-    /** 
+    /**
      * @OA\Post(
      *     path="/api/v1/tenant/business-details/delivery-zones/reorder",
      *     summary="Reorder delivery zone priorities",
@@ -545,28 +612,36 @@ class DeliveryZoneController extends Controller
      *     operationId="reorderDeliveryZones",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Zone IDs with new priorities",
+     *
      *         @OA\JsonContent(
      *             required={"zones"},
+     *
      *             @OA\Property(
      *                 property="zones",
      *                 type="array",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"id", "priority"},
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="priority", type="integer", minimum=1, maximum=999, example=2)
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Zone priorities updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Zone priorities updated successfully"),
      *             @OA\Property(
@@ -579,17 +654,23 @@ class DeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -616,8 +697,8 @@ class DeliveryZoneController extends Controller
     public function reorder(Request $request): JsonResponse
     {
         $request->validate([
-            'zones'            => ['required', 'array', 'min:1'],
-            'zones.*.id'       => ['required', 'integer'],
+            'zones' => ['required', 'array', 'min:1'],
+            'zones.*.id' => ['required', 'integer'],
             'zones.*.priority' => ['required', 'integer', 'min:1', 'max:999'],
         ]);
 

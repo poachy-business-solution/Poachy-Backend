@@ -4,6 +4,7 @@ namespace App\Observers\Tenant;
 
 use App\Models\Tenant\TaxRate;
 use App\Services\Tenant\AuditService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -129,7 +130,7 @@ class TaxRateObserver
 
     private function checkForDuplicateActiveTaxRates(TaxRate $taxRate): void
     {
-        if (!$taxRate->is_active) {
+        if (! $taxRate->is_active) {
             return;
         }
 
@@ -174,7 +175,7 @@ class TaxRateObserver
         $user = Auth::user()?->name ?? 'System';
         $rate = number_format($taxRate->rate, 2);
         $effectiveFrom = $taxRate->effective_from->format('M d, Y');
-        $effectiveUntil = $taxRate->effective_until ? ' until ' . $taxRate->effective_until->format('M d, Y') : '';
+        $effectiveUntil = $taxRate->effective_until ? ' until '.$taxRate->effective_until->format('M d, Y') : '';
         $default = $taxRate->is_default ? ' (set as default)' : '';
 
         return "{$user} created tax rate {$taxRate->tax_name} at {$rate}% effective from {$effectiveFrom}{$effectiveUntil}{$default}";
@@ -191,29 +192,33 @@ class TaxRateObserver
         if (isset($changes['rate'])) {
             $oldRate = number_format($taxRate->getOriginal('rate'), 2);
             $newRate = number_format($changes['rate'], 2);
+
             return "{$user} changed {$taxRate->tax_name} tax rate from {$oldRate}% to {$newRate}%";
         }
 
         // Effective date changes
         if (isset($changes['effective_from'])) {
-            $oldDate = \Carbon\Carbon::parse($taxRate->getOriginal('effective_from'))->format('M d, Y');
-            $newDate = \Carbon\Carbon::parse($changes['effective_from'])->format('M d, Y');
+            $oldDate = Carbon::parse($taxRate->getOriginal('effective_from'))->format('M d, Y');
+            $newDate = Carbon::parse($changes['effective_from'])->format('M d, Y');
+
             return "{$user} changed {$taxRate->tax_name} effective from date from {$oldDate} to {$newDate}";
         }
 
         if (isset($changes['effective_until'])) {
             $oldDate = $taxRate->getOriginal('effective_until')
-                ? \Carbon\Carbon::parse($taxRate->getOriginal('effective_until'))->format('M d, Y')
+                ? Carbon::parse($taxRate->getOriginal('effective_until'))->format('M d, Y')
                 : 'ongoing';
             $newDate = $changes['effective_until']
-                ? \Carbon\Carbon::parse($changes['effective_until'])->format('M d, Y')
+                ? Carbon::parse($changes['effective_until'])->format('M d, Y')
                 : 'ongoing';
+
             return "{$user} changed {$taxRate->tax_name} effective until date from {$oldDate} to {$newDate}";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} tax rate {$taxRate->tax_name} ({$taxRate->rate}%)";
         }
 
@@ -228,6 +233,7 @@ class TaxRateObserver
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated tax rate {$taxRate->tax_name} - {$changedFields}";
     }
 

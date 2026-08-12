@@ -8,7 +8,6 @@ use App\Http\Resources\Central\SubscriptionPlanResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Shared\SubscriptionPlanService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SubscriptionPlanController extends Controller
 {
@@ -22,70 +21,87 @@ class SubscriptionPlanController extends Controller
      *     summary="Get all subscription plans",
      *     description="Retrieves a list of all available subscription plans with optional filtering and sorting. This endpoint is public and does not require authentication.",
      *     tags={"Central - Subscription Plans"},
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_featured",
      *         in="query",
      *         description="Filter by featured status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="min_price",
      *         in="query",
      *         description="Minimum price filter",
      *         required=false,
+     *
      *         @OA\Schema(type="number", format="float"),
      *         example=2500
      *     ),
+     *
      *     @OA\Parameter(
      *         name="max_price",
      *         in="query",
      *         description="Maximum price filter (must be greater than min_price)",
      *         required=false,
+     *
      *         @OA\Schema(type="number", format="float"),
      *         example=10000
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"price", "name", "created_at", "billing_cycle_days"}
      *         ),
      *         example="price"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"asc", "desc"}
      *         ),
      *         example="asc"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Subscription plans retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Subscription plans retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Free"),
      *                     @OA\Property(property="slug", type="string", example="free"),
@@ -119,13 +135,17 @@ class SubscriptionPlanController extends Controller
      *                     @OA\Property(
      *                         property="feature_highlights",
      *                         type="array",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="category", type="string", example="Products"),
      *                             @OA\Property(property="value", oneOf={
+     *
      *                                 @OA\Schema(type="integer"),
      *                                 @OA\Schema(type="string"),
      *                                 @OA\Schema(type="boolean")
      *                             }, example=50),
+     *
      *                             @OA\Property(property="display", type="string", example="Up to 50 Products")
      *                         )
      *                     ),
@@ -366,10 +386,13 @@ class SubscriptionPlanController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -378,14 +401,18 @@ class SubscriptionPlanController extends Controller
      *                 @OA\Property(
      *                     property="max_price",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The max price must be greater than min price.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="sort_by",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected sort by is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -416,18 +443,23 @@ class SubscriptionPlanController extends Controller
      *     summary="Get subscription plan by slug",
      *     description="Retrieves detailed information about a specific subscription plan using its slug identifier. This endpoint is public and does not require authentication.",
      *     tags={"Central - Subscription Plans"},
+     *
      *     @OA\Parameter(
      *         name="slug",
      *         in="path",
      *         description="The unique slug identifier of the subscription plan (e.g., 'free', 'basic', 'premium', 'enterprise')",
      *         required=true,
+     *
      *         @OA\Schema(type="string"),
      *         example="basic"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Subscription plan retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Subscription plan retrieved successfully"),
      *             @OA\Property(
@@ -467,14 +499,18 @@ class SubscriptionPlanController extends Controller
      *                 @OA\Property(
      *                     property="feature_highlights",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="category", type="string", example="Products"),
      *                         @OA\Property(property="value", oneOf={
+     *
      *                             @OA\Schema(type="integer"),
      *                             @OA\Schema(type="string"),
      *                             @OA\Schema(type="boolean")
      *                         }, example=500),
+     *
      *                         @OA\Property(property="display", type="string", example="Up to 500 Products")
      *                     )
      *                 ),
@@ -605,10 +641,13 @@ class SubscriptionPlanController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Subscription plan not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Subscription plan not found"),
      *             @OA\Property(
@@ -649,7 +688,7 @@ class SubscriptionPlanController extends Controller
     {
         $plan = $this->subscriptionPlanService->getPlanBySlug($slug);
 
-        if (!$plan) {
+        if (! $plan) {
             return ApiResponse::notFound(
                 message: 'Subscription plan not found',
                 errors: ['slug' => "No subscription plan found with name: {$slug}"]

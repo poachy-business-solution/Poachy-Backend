@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 class BudgetRepository
 {
     protected string $cachePrefix = 'budgets';
+
     protected int $cacheTtl = 3600;
 
     /**
@@ -30,7 +31,7 @@ class BudgetRepository
         Cache::tags([
             'tenant',
             tenant()->id,
-            $this->cachePrefix
+            $this->cachePrefix,
         ])->flush();
     }
 
@@ -53,11 +54,11 @@ class BudgetRepository
      */
     protected function applyFilters($query, array $filters): void
     {
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->where('store_id', $filters['store_id']);
         }
 
@@ -65,7 +66,7 @@ class BudgetRepository
             $query->whereNull('store_id');
         }
 
-        if (!empty($filters['period_type'])) {
+        if (! empty($filters['period_type'])) {
             $query->where('period_type', $filters['period_type']);
         }
 
@@ -81,11 +82,11 @@ class BudgetRepository
             $query->whereColumn('spent_amount', '>', 'budget_amount');
         }
 
-        if (!empty($filters['period_start'])) {
+        if (! empty($filters['period_start'])) {
             $query->where('period_start', '>=', $filters['period_start']);
         }
 
-        if (!empty($filters['period_end'])) {
+        if (! empty($filters['period_end'])) {
             $query->where('period_end', '<=', $filters['period_end']);
         }
 
@@ -93,7 +94,7 @@ class BudgetRepository
             $query->current();
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('budget_name', 'like', "%{$search}%")
@@ -242,19 +243,19 @@ class BudgetRepository
     {
         $query = Budget::active();
 
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->where('store_id', $filters['store_id']);
         }
 
-        if (!empty($filters['period_start'])) {
+        if (! empty($filters['period_start'])) {
             $query->where('period_start', '>=', $filters['period_start']);
         }
 
-        if (!empty($filters['period_end'])) {
+        if (! empty($filters['period_end'])) {
             $query->where('period_end', '<=', $filters['period_end']);
         }
 

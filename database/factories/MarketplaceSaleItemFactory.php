@@ -7,7 +7,7 @@ use App\Models\Tenant\MarketplaceSaleItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Tenant\MarketplaceSaleItem>
+ * @extends Factory<MarketplaceSaleItem>
  */
 class MarketplaceSaleItemFactory extends Factory
 {
@@ -21,17 +21,17 @@ class MarketplaceSaleItemFactory extends Factory
         $taxAmount = round($subtotal * 0.16, 2);
 
         return [
-            'marketplace_sale_id'  => MarketplaceSale::factory(),
-            'product_id'           => 1,
-            'product_variant_id'   => null,
-            'bundle_id'            => null,
-            'uom_id'               => 1,
-            'quantity'             => $quantity,
+            'marketplace_sale_id' => MarketplaceSale::factory(),
+            'product_id' => 1,
+            'product_variant_id' => null,
+            'bundle_id' => null,
+            'uom_id' => 1,
+            'quantity' => $quantity,
             'quantity_in_base_uom' => $quantity,
-            'unit_price'           => $unitPrice,
-            'tax_amount'           => $taxAmount,
-            'discount_amount'      => 0,
-            'subtotal'             => round($subtotal + $taxAmount, 2),
+            'unit_price' => $unitPrice,
+            'tax_amount' => $taxAmount,
+            'discount_amount' => 0,
+            'subtotal' => round($subtotal + $taxAmount, 2),
         ];
     }
 }

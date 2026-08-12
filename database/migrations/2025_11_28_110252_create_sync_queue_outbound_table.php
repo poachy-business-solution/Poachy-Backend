@@ -39,7 +39,7 @@ return new class extends Migration
                 'review_posted',
                 'cancel',
                 'reserve_inventory',
-                'release_reservation'
+                'release_reservation',
             ])->default('create');
 
             // ============================================
@@ -69,7 +69,7 @@ return new class extends Migration
                 'completed',
                 'failed',
                 'cancelled',
-                'stale'
+                'stale',
             ])->default('pending');
 
             // ============================================

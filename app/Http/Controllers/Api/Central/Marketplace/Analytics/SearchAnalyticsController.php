@@ -22,31 +22,40 @@ class SearchAnalyticsController extends Controller
      *     operationId="getZeroResultSearches",
      *     tags={"Central - Analytics - Search Queries"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Catalog gap metrics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Catalog gap metrics retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="search_query", type="string", example="waterproof leather sandals size 52"),
      *                     @OA\Property(property="count", type="integer", description="Number of times this query returned zero results", example=1)
      *                 )
@@ -61,10 +70,13 @@ class SearchAnalyticsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -77,38 +89,49 @@ class SearchAnalyticsController extends Controller
      *     operationId="getPopularSearches",
      *     tags={"Central - Analytics - Search Queries"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Number of popular searches to return",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=20, example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Popular searches retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Popular searches retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="search_query", type="string", example="laptop backpack"),
      *                     @OA\Property(property="search_count", type="integer", description="Number of times searched", example=1),
      *                     @OA\Property(property="avg_results", type="integer", description="Average number of results returned", example=12),
@@ -128,10 +151,13 @@ class SearchAnalyticsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -144,24 +170,31 @@ class SearchAnalyticsController extends Controller
      *     operationId="getSearchMetrics",
      *     tags={"Central - Analytics - Search Queries"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for analysis (defaults to 30 days ago)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for analysis (defaults to today)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Search conversion metrics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Search conversion metrics retrieved successfully"),
      *             @OA\Property(
@@ -186,22 +219,24 @@ class SearchAnalyticsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
      * )
      */
-
     public function zeroResults(Request $request): JsonResponse
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
-            'limit'      => ['nullable', 'integer', 'min:1', 'max:100'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -219,8 +254,8 @@ class SearchAnalyticsController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
-            'limit'      => ['nullable', 'integer', 'min:1', 'max:100'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -238,7 +273,7 @@ class SearchAnalyticsController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         [$startDate, $endDate] = $this->resolveDateRange($request);
@@ -255,8 +290,8 @@ class SearchAnalyticsController extends Controller
     {
         $request->validate([
             'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
-            'limit'      => ['nullable', 'integer', 'min:1', 'max:100'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         $refinements = $this->searchService->getSearchRefinements(
@@ -267,7 +302,7 @@ class SearchAnalyticsController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $refinements,
+            'data' => $refinements,
         ]);
     }
 
@@ -280,11 +315,11 @@ class SearchAnalyticsController extends Controller
     {
         $startDate = $request->start_date
             ? new \DateTime($request->start_date)
-            : (new \DateTime())->modify('-30 days');
+            : (new \DateTime)->modify('-30 days');
 
         $endDate = $request->end_date
             ? new \DateTime($request->end_date)
-            : new \DateTime();
+            : new \DateTime;
 
         return [$startDate, $endDate];
     }

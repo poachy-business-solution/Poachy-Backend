@@ -12,8 +12,8 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Services\Tenant\Sales\CreditService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -31,73 +31,94 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="getCreditTransactions",
      *     tags={"Credit Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="customer_id",
      *         in="query",
      *         description="Filter by customer ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="transaction_type",
      *         in="query",
      *         description="Filter by transaction type (sale_on_credit, payment, adjustment, write_off)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"sale_on_credit", "payment", "adjustment", "write_off"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_method",
      *         in="query",
      *         description="Filter by payment method (cash, mpesa, card, etc.)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"cash", "mpesa", "card", "bank_transfer"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Filter transactions from this date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="Filter transactions until this date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="reference_type",
      *         in="query",
      *         description="Filter by reference type (e.g., App\Models\Tenant\Sale)",
      *         required=false,
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of records per page (default: 15, max: 100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field (created_at, amount, balance_after)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"created_at", "amount", "balance_after"}, example="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction (asc, desc)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credit transactions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Credit transactions retrieved successfully"),
      *             @OA\Property(
@@ -109,7 +130,9 @@ class CustomerCreditTransactionController extends Controller
      *                     @OA\Property(
      *                         property="data",
      *                         type="array",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="id", type="integer", example=7),
      *                             @OA\Property(property="customer_id", type="integer", example=4),
      *                             @OA\Property(property="customer_name", type="string", example="Jane Smith"),
@@ -159,7 +182,9 @@ class CustomerCreditTransactionController extends Controller
      *                         @OA\Property(
      *                             property="links",
      *                             type="array",
+     *
      *                             @OA\Items(
+     *
      *                                 @OA\Property(property="url", type="string", nullable=true, example="http://techhaven.localhost/api/v1/tenant/credit-transactions?page=1"),
      *                                 @OA\Property(property="label", type="string", example="1"),
      *                                 @OA\Property(property="page", type="integer", nullable=true, example=1),
@@ -194,6 +219,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -210,27 +236,27 @@ class CustomerCreditTransactionController extends Controller
                 ->select('customer_credit_transactions.*');
 
             // Apply filters
-            if (!empty($validated['customer_id'])) {
+            if (! empty($validated['customer_id'])) {
                 $query->where('customer_id', $validated['customer_id']);
             }
 
-            if (!empty($validated['transaction_type'])) {
+            if (! empty($validated['transaction_type'])) {
                 $query->where('transaction_type', $validated['transaction_type']);
             }
 
-            if (!empty($validated['payment_method'])) {
+            if (! empty($validated['payment_method'])) {
                 $query->where('payment_method', $validated['payment_method']);
             }
 
-            if (!empty($validated['reference_type'])) {
+            if (! empty($validated['reference_type'])) {
                 $query->where('reference_type', $validated['reference_type']);
             }
 
-            if (!empty($validated['date_from'])) {
+            if (! empty($validated['date_from'])) {
                 $query->whereDate('created_at', '>=', $validated['date_from']);
             }
 
-            if (!empty($validated['date_to'])) {
+            if (! empty($validated['date_to'])) {
                 $query->whereDate('created_at', '<=', $validated['date_to']);
             }
 
@@ -275,17 +301,22 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="getCreditTransactionById",
      *     tags={"Credit Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Credit transaction ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=7)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credit transaction retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Credit transaction retrieved successfully"),
      *             @OA\Property(
@@ -333,6 +364,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -352,7 +384,7 @@ class CustomerCreditTransactionController extends Controller
                 'Credit transaction retrieved successfully',
                 new CustomerCreditTransactionResource($transaction)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Credit transaction not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve credit transaction', [
@@ -376,24 +408,31 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="getCustomerCreditTransactions",
      *     tags={"Credit Transactions", "Customers"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="customer_id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Records per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer credit history retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer credit history retrieved successfully"),
      *             @OA\Property(
@@ -415,7 +454,9 @@ class CustomerCreditTransactionController extends Controller
      *                     @OA\Property(
      *                         property="data",
      *                         type="array",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="id", type="integer", example=7),
      *                             @OA\Property(property="customer_id", type="integer", example=4),
      *                             @OA\Property(property="customer_name", type="string", example="Jane Smith"),
@@ -465,7 +506,9 @@ class CustomerCreditTransactionController extends Controller
      *                         @OA\Property(
      *                             property="links",
      *                             type="array",
+     *
      *                             @OA\Items(
+     *
      *                                 @OA\Property(property="url", type="string", nullable=true, example="http://techhaven.localhost/api/v1/tenant/customers/4/credit-transactions?page=1"),
      *                                 @OA\Property(property="label", type="string", example="1"),
      *                                 @OA\Property(property="page", type="integer", nullable=true, example=1),
@@ -500,6 +543,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -539,7 +583,7 @@ class CustomerCreditTransactionController extends Controller
                     'debt_summary' => $debtSummary,
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Customer not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve customer credit history', [
@@ -563,10 +607,13 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="recordCreditPayment",
      *     tags={"Credit Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"customer_id", "amount", "payment_method"},
+     *
      *             @OA\Property(property="customer_id", type="integer", example=5, description="ID of the customer making the payment"),
      *             @OA\Property(property="amount", type="number", format="float", example=5000.00, description="Payment amount"),
      *             @OA\Property(property="payment_method", type="string", enum={"cash", "mpesa", "card", "bank_transfer"}, example="mpesa", description="Method of payment"),
@@ -574,10 +621,13 @@ class CustomerCreditTransactionController extends Controller
      *             @OA\Property(property="notes", type="string", example="Payment for credit sales", description="Additional notes about the payment", nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credit payment recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Credit payment recorded successfully"),
      *             @OA\Property(
@@ -600,6 +650,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -611,7 +662,9 @@ class CustomerCreditTransactionController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -620,16 +673,21 @@ class CustomerCreditTransactionController extends Controller
      *                 @OA\Property(
      *                     property="customer_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The customer_id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The amount field must be a number.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="payment_method",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The payment_method field is required.")
      *                 )
      *             )
@@ -676,7 +734,7 @@ class CustomerCreditTransactionController extends Controller
                     'payment_reference' => $validated['payment_reference'] ?? null,
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Customer not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to record credit payment', [
@@ -700,19 +758,25 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="recordCreditAdjustment",
      *     tags={"Credit Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"customer_id", "amount", "reason"},
+     *
      *             @OA\Property(property="customer_id", type="integer", example=5, description="ID of the customer"),
      *             @OA\Property(property="amount", type="number", format="float", example=-2000.00, description="Adjustment amount (positive increases debt, negative decreases debt)"),
      *             @OA\Property(property="reason", type="string", example="Correction", description="Reason for the adjustment")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credit adjustment recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Credit adjustment recorded successfully"),
      *             @OA\Property(
@@ -734,6 +798,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -745,7 +810,9 @@ class CustomerCreditTransactionController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -754,16 +821,21 @@ class CustomerCreditTransactionController extends Controller
      *                 @OA\Property(
      *                     property="customer_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The customer_id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The amount field must be a number.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reason field is required.")
      *                 )
      *             )
@@ -794,7 +866,7 @@ class CustomerCreditTransactionController extends Controller
                     'reason' => $validated['reason'],
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Customer not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to record credit adjustment', [
@@ -818,19 +890,25 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="recordCreditWriteOff",
      *     tags={"Credit Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"customer_id", "amount", "reason"},
+     *
      *             @OA\Property(property="customer_id", type="integer", example=5, description="ID of the customer"),
      *             @OA\Property(property="amount", type="number", format="float", example=-2000.00, description="Write-off amount (typically negative to reduce debt)"),
      *             @OA\Property(property="reason", type="string", example="Bad debt write-off - customer bankrupt", description="Reason for the write-off")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credit write-off recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Credit write-off recorded successfully"),
      *             @OA\Property(
@@ -852,6 +930,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -863,7 +942,9 @@ class CustomerCreditTransactionController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -872,16 +953,21 @@ class CustomerCreditTransactionController extends Controller
      *                 @OA\Property(
      *                     property="customer_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The customer_id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The amount field must be a number.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reason field is required.")
      *                 )
      *             )
@@ -912,7 +998,7 @@ class CustomerCreditTransactionController extends Controller
                     'reason' => $validated['reason'],
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::error('Customer not found', 404);
         } catch (\Exception $e) {
             Log::error('Failed to record credit write-off', [
@@ -936,24 +1022,31 @@ class CustomerCreditTransactionController extends Controller
      *     operationId="getCreditAnalyticsOverview",
      *     tags={"Credit Transactions"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Analytics start date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="Analytics end date (Y-m-d format)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Credit analytics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Credit analytics retrieved successfully"),
      *             @OA\Property(
@@ -995,7 +1088,9 @@ class CustomerCreditTransactionController extends Controller
      *                     property="top_debtors",
      *                     type="array",
      *                     description="List of customers with the highest outstanding debt",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="customer_id", type="integer", example=4),
      *                         @OA\Property(property="customer_name", type="string", example="Jane Smith"),
      *                         @OA\Property(property="customer_phone", type="string", example="+254712345602"),
@@ -1008,7 +1103,9 @@ class CustomerCreditTransactionController extends Controller
      *                     property="best_payers",
      *                     type="array",
      *                     description="List of customers who have made the most payments",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="customer_id", type="integer", example=4),
      *                         @OA\Property(property="customer_name", type="string", example="Jane Smith"),
      *                         @OA\Property(property="customer_phone", type="string", example="+254712345602"),
@@ -1026,6 +1123,7 @@ class CustomerCreditTransactionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -1033,7 +1131,9 @@ class CustomerCreditTransactionController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid date format",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -1042,11 +1142,14 @@ class CustomerCreditTransactionController extends Controller
      *                 @OA\Property(
      *                     property="date_from",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The date_from field must be a valid date.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="date_to",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The date_to field must be a valid date.")
      *                 )
      *             )

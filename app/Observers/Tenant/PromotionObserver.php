@@ -4,6 +4,7 @@ namespace App\Observers\Tenant;
 
 use App\Models\Tenant\Promotion;
 use App\Services\Tenant\AuditService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -77,7 +78,7 @@ class PromotionObserver
             $criticalFields = $promotion->getCriticalFields();
             $criticalChanges = array_intersect_key($changes, array_flip($criticalFields));
 
-            if (!empty($criticalChanges)) {
+            if (! empty($criticalChanges)) {
                 $oldValues = $promotion->getOriginal();
 
                 // Generate context-aware description
@@ -206,7 +207,7 @@ class PromotionObserver
     protected function generateUniqueCode(): string
     {
         do {
-            $code = 'PROMO-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            $code = 'PROMO-'.strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
         } while (Promotion::where('code', $code)->exists());
 
         return $code;
@@ -244,6 +245,7 @@ class PromotionObserver
         if (isset($changes['name'])) {
             $oldName = $promotion->getOriginal('name');
             $newName = $changes['name'];
+
             return "{$user} changed promotion name from '{$oldName}' to '{$newName}' ({$promotion->code})";
         }
 
@@ -258,26 +260,30 @@ class PromotionObserver
 
         // Start date change
         if (isset($changes['start_date'])) {
-            $oldDate = \Carbon\Carbon::parse($promotion->getOriginal('start_date'))->format('M d, Y');
-            $newDate = \Carbon\Carbon::parse($changes['start_date'])->format('M d, Y');
+            $oldDate = Carbon::parse($promotion->getOriginal('start_date'))->format('M d, Y');
+            $newDate = Carbon::parse($changes['start_date'])->format('M d, Y');
+
             return "{$user} changed promotion '{$promotion->name}' start date from {$oldDate} to {$newDate}";
         }
 
         // End date change
         if (isset($changes['end_date'])) {
-            $oldDate = \Carbon\Carbon::parse($promotion->getOriginal('end_date'))->format('M d, Y');
-            $newDate = \Carbon\Carbon::parse($changes['end_date'])->format('M d, Y');
+            $oldDate = Carbon::parse($promotion->getOriginal('end_date'))->format('M d, Y');
+            $newDate = Carbon::parse($changes['end_date'])->format('M d, Y');
+
             return "{$user} changed promotion '{$promotion->name}' end date from {$oldDate} to {$newDate}";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} promotion '{$promotion->name}' ({$promotion->code})";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated promotion '{$promotion->name}' ({$promotion->code}) - {$changedFields}";
     }
 

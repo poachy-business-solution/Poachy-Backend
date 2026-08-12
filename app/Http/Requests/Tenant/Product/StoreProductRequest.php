@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Tenant\Product;
 
-use App\Enums\Tenant\ProductStatus;
 use App\Enums\Tenant\ProductType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -60,7 +59,6 @@ class StoreProductRequest extends FormRequest
         ];
     }
 
-
     public function messages(): array
     {
         return [
@@ -104,7 +102,7 @@ class StoreProductRequest extends FormRequest
         ];
 
         foreach ($defaults as $key => $value) {
-            if (!$this->has($key)) {
+            if (! $this->has($key)) {
                 $this->merge([$key => $value]);
             }
         }

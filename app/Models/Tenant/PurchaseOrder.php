@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([PurchaseOrderObserver::class])]
 class PurchaseOrder extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'po_number',
@@ -53,7 +53,6 @@ class PurchaseOrder extends Model
     /**
      * RELATIONSHIPS
      */
-
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
@@ -92,7 +91,6 @@ class PurchaseOrder extends Model
     /**
      * SCOPES
      */
-
     public function scopeBySupplier($query, int $supplierId)
     {
         return $query->where('supplier_id', $supplierId);
@@ -126,7 +124,6 @@ class PurchaseOrder extends Model
     /**
      * ACCESSORS
      */
-
     public function getIsDraftAttribute(): bool
     {
         return $this->status === 'draft';

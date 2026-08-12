@@ -62,7 +62,7 @@ class MarketplaceVariantSyncService
 
             // Step 4: Create marketplace product for variant
             $syncQueue->markAsSyncing();
-            $variantDisplayName = $dto->parentProductName . ' - ' . $dto->variantName;
+            $variantDisplayName = $dto->parentProductName.' - '.$dto->variantName;
             $variantSlug = Str::slug($variantDisplayName);
 
             $marketplaceProduct = MarketplaceProduct::create([
@@ -175,7 +175,7 @@ class MarketplaceVariantSyncService
                 ->first();
 
             // If variant product doesn't exist, CREATE instead of UPDATE
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::info('Marketplace variant product not found for update, creating instead', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -246,7 +246,7 @@ class MarketplaceVariantSyncService
                 ->where('tenant_variant_id', $dto->variantId)
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace variant product not found for deletion', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -309,7 +309,7 @@ class MarketplaceVariantSyncService
                 ->where('tenant_variant_id', $dto->variantId)
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace variant product not found for activation, creating instead', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -382,7 +382,7 @@ class MarketplaceVariantSyncService
                 ->where('tenant_variant_id', $dto->variantId)
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace variant product not found for deactivation', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -452,7 +452,7 @@ class MarketplaceVariantSyncService
      */
     protected function mapBrand(ProductVariantSyncDTO $dto): ?array
     {
-        if (!$dto->brand) {
+        if (! $dto->brand) {
             return null;
         }
 
@@ -472,7 +472,7 @@ class MarketplaceVariantSyncService
         array $categoryMapping,
         ?array $brandMapping
     ): array {
-        $variantDisplayName = $dto->parentProductName . ' - ' . $dto->variantName;
+        $variantDisplayName = $dto->parentProductName.' - '.$dto->variantName;
         $variantSlug = Str::slug($variantDisplayName);
 
         $updateData = [
@@ -517,7 +517,7 @@ class MarketplaceVariantSyncService
         // Track changes for logging
         $changedFields = [];
         foreach ($updateData as $key => $value) {
-            if ($marketplaceProduct->$key != $value) {
+            if ($value != $marketplaceProduct->$key) {
                 $changedFields[$key] = [
                     'old' => $marketplaceProduct->$key,
                     'new' => $value,
@@ -528,7 +528,7 @@ class MarketplaceVariantSyncService
         $marketplaceProduct->update($updateData);
 
         // Log what changed
-        if (!empty($changedFields)) {
+        if (! empty($changedFields)) {
             Log::info('Marketplace variant product fields updated', [
                 'marketplace_product_id' => $marketplaceProduct->id,
                 'tenant_id' => $dto->tenantId,
@@ -560,7 +560,7 @@ class MarketplaceVariantSyncService
      */
     protected function generateUniqueSlug(string $baseSlug, string $tenantId, ?int $excludeProductId = null): string
     {
-        $slug = $baseSlug . '-' . substr($tenantId, 0, 8);
+        $slug = $baseSlug.'-'.substr($tenantId, 0, 8);
         $originalSlug = $slug;
         $counter = 1;
 
@@ -571,11 +571,11 @@ class MarketplaceVariantSyncService
                 $query->where('id', '!=', $excludeProductId);
             }
 
-            if (!$query->exists()) {
+            if (! $query->exists()) {
                 return $slug;
             }
 
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
     }
@@ -591,19 +591,19 @@ class MarketplaceVariantSyncService
             $parts[] = $dto->description;
         }
 
-        if (!empty($dto->attributes)) {
+        if (! empty($dto->attributes)) {
             $attributeLines = [];
             foreach ($dto->attributes as $key => $value) {
-                $attributeLines[] = ucfirst($key) . ': ' . $value;
+                $attributeLines[] = ucfirst($key).': '.$value;
             }
-            $parts[] = 'Variant Attributes: ' . implode(', ', $attributeLines);
+            $parts[] = 'Variant Attributes: '.implode(', ', $attributeLines);
         }
 
         if ($dto->variantUom->code !== $dto->baseUom->code) {
-            $parts[] = 'Unit: ' . $dto->variantUom->name . ' (' . $dto->uomQuantity . ' x ' . $dto->baseUom->name . ')';
+            $parts[] = 'Unit: '.$dto->variantUom->name.' ('.$dto->uomQuantity.' x '.$dto->baseUom->name.')';
         }
 
-        return !empty($parts) ? implode("\n\n", $parts) : null;
+        return ! empty($parts) ? implode("\n\n", $parts) : null;
     }
 
     /**
@@ -623,7 +623,7 @@ class MarketplaceVariantSyncService
             throw new \InvalidArgumentException('Available quantity cannot be negative');
         }
 
-        if (!in_array($dto->inventory->stockStatus, ['in_stock', 'low_stock', 'out_of_stock'])) {
+        if (! in_array($dto->inventory->stockStatus, ['in_stock', 'low_stock', 'out_of_stock'])) {
             throw new \InvalidArgumentException('Invalid stock status');
         }
     }

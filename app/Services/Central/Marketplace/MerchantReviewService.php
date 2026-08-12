@@ -35,15 +35,15 @@ class MerchantReviewService
 
         return DB::connection('central')->transaction(function () use ($customer, $order, $data, $initialStatus) {
             return MerchantReview::create([
-                'tenant_id'              => $order->tenant_id,
-                'customer_id'            => $customer->id,
-                'order_id'               => $order->id,
-                'overall_rating'         => $data['overall_rating'],
+                'tenant_id' => $order->tenant_id,
+                'customer_id' => $customer->id,
+                'order_id' => $order->id,
+                'overall_rating' => $data['overall_rating'],
                 'product_quality_rating' => $data['product_quality_rating'],
-                'delivery_rating'        => $data['delivery_rating'],
-                'service_rating'         => $data['service_rating'] ?? null,
-                'review_text'            => $data['review_text'],
-                'status'                 => $initialStatus,
+                'delivery_rating' => $data['delivery_rating'],
+                'service_rating' => $data['service_rating'] ?? null,
+                'review_text' => $data['review_text'],
+                'status' => $initialStatus,
             ]);
         });
     }

@@ -10,6 +10,7 @@ use App\Services\Central\Customer\CustomerAuthService;
 use App\Services\Central\Customer\CustomerOtpService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -78,7 +79,7 @@ class CustomerRegistrationTest extends TestCase
         $this->assertSame($data['name'], $user->name);
         $this->assertSame($data['email'], $user->email);
         $this->assertSame('customer', $user->user_type);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check($data['password'], $user->password));
+        $this->assertTrue(Hash::check($data['password'], $user->password));
 
         $this->assertNotNull($customer->customer_number);
         $this->assertStringStartsWith('MKT-CUST-', $customer->customer_number);

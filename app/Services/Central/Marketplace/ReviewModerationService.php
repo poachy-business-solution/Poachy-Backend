@@ -35,9 +35,9 @@ class ReviewModerationService
         $status = $this->actionToStatus($action);
 
         $review->update([
-            'status'           => $status,
-            'moderated_at'     => now(),
-            'moderated_by'     => $moderatorId,
+            'status' => $status,
+            'moderated_at' => now(),
+            'moderated_by' => $moderatorId,
             'rejection_reason' => $action === 'reject' ? $rejectionReason : null,
         ]);
 
@@ -59,9 +59,9 @@ class ReviewModerationService
         $status = $this->actionToStatus($action);
 
         $review->update([
-            'status'           => $status,
-            'moderated_at'     => now(),
-            'moderated_by'     => $moderatorId,
+            'status' => $status,
+            'moderated_at' => now(),
+            'moderated_by' => $moderatorId,
             'rejection_reason' => $action === 'reject' ? $rejectionReason : null,
         ]);
 
@@ -80,9 +80,9 @@ class ReviewModerationService
         return DB::connection('central')->transaction(function () use ($review, $customer, $reason) {
             return ReviewFlag::firstOrCreate(
                 [
-                    'customer_id'    => $customer->id,
+                    'customer_id' => $customer->id,
                     'flaggable_type' => ProductReview::class,
-                    'flaggable_id'   => $review->id,
+                    'flaggable_id' => $review->id,
                 ],
                 ['reason' => $reason]
             );
@@ -101,9 +101,9 @@ class ReviewModerationService
         return DB::connection('central')->transaction(function () use ($review, $customer, $reason) {
             return ReviewFlag::firstOrCreate(
                 [
-                    'customer_id'    => $customer->id,
+                    'customer_id' => $customer->id,
                     'flaggable_type' => MerchantReview::class,
-                    'flaggable_id'   => $review->id,
+                    'flaggable_id' => $review->id,
                 ],
                 ['reason' => $reason]
             );
@@ -142,17 +142,17 @@ class ReviewModerationService
 
             if ($alsoApprove && $review->status !== ReviewStatus::Approved) {
                 $review->update([
-                    'status'       => ReviewStatus::Approved,
+                    'status' => ReviewStatus::Approved,
                     'moderated_at' => now(),
                     'moderated_by' => $moderatorId,
                 ]);
             }
 
             Log::info('Review flags dismissed', [
-                'review_id'            => $review->id,
-                'review_type'          => get_class($review),
+                'review_id' => $review->id,
+                'review_type' => get_class($review),
                 'flag_count_dismissed' => $flagCount,
-                'also_approved'        => $alsoApprove,
+                'also_approved' => $alsoApprove,
             ]);
 
             return $review->refresh();
@@ -174,8 +174,8 @@ class ReviewModerationService
     {
         return match ($action) {
             'approve' => ReviewStatus::Approved,
-            'reject'  => ReviewStatus::Rejected,
-            'flag'    => ReviewStatus::Flagged,
+            'reject' => ReviewStatus::Rejected,
+            'flag' => ReviewStatus::Flagged,
         };
     }
 }

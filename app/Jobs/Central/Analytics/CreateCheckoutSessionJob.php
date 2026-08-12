@@ -22,12 +22,12 @@ class CreateCheckoutSessionJob implements ShouldQueue
     public function handle(): void
     {
         CheckoutSession::create([
-            'cart_id'             => $this->cartId,
-            'customer_id'         => $this->customerId,
-            'current_step'        => 'completed',
-            'is_completed'        => true,
-            'completed_at'        => now(),
-            'completed_order_id'  => $this->orderId,
+            'cart_id' => $this->cartId,
+            'customer_id' => $this->customerId,
+            'current_step' => 'completed',
+            'is_completed' => true,
+            'completed_at' => now(),
+            'completed_order_id' => $this->orderId,
         ]);
     }
 }

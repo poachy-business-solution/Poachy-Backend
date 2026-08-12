@@ -18,10 +18,3 @@ class ForgotPasswordRequest extends FormRequest
         ];
     }
 }
-
-
-
-
-
-
-

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Central\Mpesa;
 
 use App\Http\Controllers\Controller;
+use App\Services\Central\Marketplace\MarketplacePaymentService;
+use App\Services\Central\Subscription\SubscriptionPaymentService;
 use App\Services\Shared\Mpesa\MpesaC2BRouterService;
 use App\Services\Shared\Mpesa\MpesaService;
 use Illuminate\Http\JsonResponse;
@@ -26,12 +28,12 @@ class MpesaC2BController extends Controller
     {
         try {
             $parsedPayload = $this->mpesa->parseC2BPayload($request->all());
-            $response      = $this->router->handleValidation($parsedPayload);
+            $response = $this->router->handleValidation($parsedPayload);
 
             return response()->json($response);
         } catch (\Throwable $e) {
             Log::channel('mpesa')->error('C2B validation handler threw an exception', [
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'payload' => $request->all(),
             ]);
 
@@ -55,7 +57,7 @@ class MpesaC2BController extends Controller
             // Log the error but still return success — the payment is already complete on Safaricom's side.
             // The queued job's retry logic handles failed processing.
             Log::channel('mpesa')->error('C2B confirmation handler threw an exception', [
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'payload' => $request->all(),
             ]);
         }
@@ -72,14 +74,14 @@ class MpesaC2BController extends Controller
         try {
             $parsedPayload = $this->mpesa->parseSTKCallbackPayload($request->all());
 
-            /** @var \App\Services\Central\Marketplace\MarketplacePaymentService $paymentService */
-            $paymentService = app(\App\Services\Central\Marketplace\MarketplacePaymentService::class);
+            /** @var MarketplacePaymentService $paymentService */
+            $paymentService = app(MarketplacePaymentService::class);
             $paymentService->processSTKCallback($parsedPayload);
 
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
         } catch (\Throwable $e) {
             Log::channel('mpesa')->error('STK callback handler failed', [
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'payload' => $request->all(),
             ]);
 
@@ -95,14 +97,14 @@ class MpesaC2BController extends Controller
         try {
             $parsedPayload = $this->mpesa->parseSTKCallbackPayload($request->all());
 
-            /** @var \App\Services\Central\Subscription\SubscriptionPaymentService $subscriptionService */
-            $subscriptionService = app(\App\Services\Central\Subscription\SubscriptionPaymentService::class);
+            /** @var SubscriptionPaymentService $subscriptionService */
+            $subscriptionService = app(SubscriptionPaymentService::class);
             $subscriptionService->processSTKCallback($parsedPayload);
 
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
         } catch (\Throwable $e) {
             Log::channel('mpesa')->error('Subscription STK callback handler failed', [
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'payload' => $request->all(),
             ]);
 

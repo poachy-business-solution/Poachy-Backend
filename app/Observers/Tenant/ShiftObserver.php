@@ -13,7 +13,7 @@ class ShiftObserver
     public function creating(Shift $shift): void
     {
         // Ensure duration is calculated
-        if ($shift->scheduled_start_time && $shift->scheduled_end_time && !$shift->duration_minutes) {
+        if ($shift->scheduled_start_time && $shift->scheduled_end_time && ! $shift->duration_minutes) {
             $shift->calculateDuration();
         }
     }

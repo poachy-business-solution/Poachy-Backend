@@ -30,23 +30,23 @@ class MpesaService
      */
     public function getAccessToken(): string
     {
-        $env         = config('mpesa.environment', 'sandbox');
-        $cacheKey    = "mpesa_access_token_{$env}";
+        $env = config('mpesa.environment', 'sandbox');
+        $cacheKey = "mpesa_access_token_{$env}";
         $credentials = $this->getActiveCredentials();
 
         return Cache::remember($cacheKey, 3480, function () use ($credentials, $env) {
             $response = Http::withBasicAuth(
                 $credentials['consumer_key'],
                 $credentials['consumer_secret'],
-            )->get($credentials['base_url'] . '/oauth/v1/generate', [
+            )->get($credentials['base_url'].'/oauth/v1/generate', [
                 'grant_type' => 'client_credentials',
             ]);
 
             if (! $response->successful() || ! $response->json('access_token')) {
                 Log::channel('mpesa')->error('Daraja OAuth token request failed', [
                     'environment' => $env,
-                    'status'      => $response->status(),
-                    'body'        => $response->body(),
+                    'status' => $response->status(),
+                    'body' => $response->body(),
                 ]);
 
                 throw MpesaException::oauthFailed($response->body());
@@ -74,32 +74,32 @@ class MpesaService
         ?string $callbackUrl = null,
     ): array {
         $credentials = $this->getActiveCredentials();
-        $shortcode   = $credentials['shortcode'];
-        $passkey     = $credentials['passkey'];
-        $timestamp   = now()->format('YmdHis');
-        $password    = base64_encode($shortcode . $passkey . $timestamp);
+        $shortcode = $credentials['shortcode'];
+        $passkey = $credentials['passkey'];
+        $timestamp = now()->format('YmdHis');
+        $password = base64_encode($shortcode.$passkey.$timestamp);
         $callbackUrl = $callbackUrl ?? config('mpesa.stk_callback_url');
-        $phone       = PhoneNumber::normalize($phoneNumber);
+        $phone = PhoneNumber::normalize($phoneNumber);
 
         Log::channel('mpesa')->info('Initiating STK push', [
-            'phone'  => PhoneNumber::mask($phoneNumber),
+            'phone' => PhoneNumber::mask($phoneNumber),
             'amount' => $amount,
-            'ref'    => $accountReference,
+            'ref' => $accountReference,
         ]);
 
         $response = Http::withToken($this->getAccessToken())
-            ->post($credentials['base_url'] . '/mpesa/stkpush/v1/processrequest', [
+            ->post($credentials['base_url'].'/mpesa/stkpush/v1/processrequest', [
                 'BusinessShortCode' => $shortcode,
-                'Password'          => $password,
-                'Timestamp'         => $timestamp,
-                'TransactionType'   => 'CustomerPayBillOnline',
-                'Amount'            => (int) ceil($amount), // M-Pesa requires integer amounts
-                'PartyA'            => $phone,
-                'PartyB'            => $shortcode,
-                'PhoneNumber'       => $phone,
-                'CallBackURL'       => $callbackUrl,
-                'AccountReference'  => substr($accountReference, 0, 12), // Daraja max 12 chars
-                'TransactionDesc'   => substr($transactionDesc, 0, 13),  // Daraja max 13 chars
+                'Password' => $password,
+                'Timestamp' => $timestamp,
+                'TransactionType' => 'CustomerPayBillOnline',
+                'Amount' => (int) ceil($amount), // M-Pesa requires integer amounts
+                'PartyA' => $phone,
+                'PartyB' => $shortcode,
+                'PhoneNumber' => $phone,
+                'CallBackURL' => $callbackUrl,
+                'AccountReference' => substr($accountReference, 0, 12), // Daraja max 12 chars
+                'TransactionDesc' => substr($transactionDesc, 0, 13),  // Daraja max 13 chars
             ]);
 
         if (! $response->successful() || isset($response->json()['errorCode'])) {
@@ -108,13 +108,13 @@ class MpesaService
                 ?? 'STK push failed';
 
             Log::channel('mpesa')->error('STK push failed', [
-                'status'   => $response->status(),
+                'status' => $response->status(),
                 'response' => $response->json(),
-                'phone'    => PhoneNumber::mask($phoneNumber),
+                'phone' => PhoneNumber::mask($phoneNumber),
             ]);
 
             throw MpesaException::stkPushFailed($error, [
-                'status'   => $response->status(),
+                'status' => $response->status(),
                 'response' => $response->json(),
             ]);
         }
@@ -124,8 +124,8 @@ class MpesaService
 
         Log::channel('mpesa')->info('STK push initiated successfully', [
             'checkout_request_id' => $checkoutRequestId,
-            'phone'               => PhoneNumber::mask($phoneNumber),
-            'amount'              => $amount,
+            'phone' => PhoneNumber::mask($phoneNumber),
+            'amount' => $amount,
         ]);
 
         return [
@@ -152,18 +152,18 @@ class MpesaService
         $credentials = $this->getActiveCredentials();
 
         Log::channel('mpesa')->info('Registering C2B URLs', [
-            'validation_url'   => $validationUrl,
+            'validation_url' => $validationUrl,
             'confirmation_url' => $confirmationUrl,
-            'response_type'    => $responseType,
-            'environment'      => config('mpesa.environment'),
+            'response_type' => $responseType,
+            'environment' => config('mpesa.environment'),
         ]);
 
         $response = Http::withToken($this->getAccessToken())
-            ->post($credentials['base_url'] . '/mpesa/c2b/v1/registerurl', [
-                'ShortCode'       => $credentials['shortcode'],
-                'ResponseType'    => $responseType,
+            ->post($credentials['base_url'].'/mpesa/c2b/v1/registerurl', [
+                'ShortCode' => $credentials['shortcode'],
+                'ResponseType' => $responseType,
                 'ConfirmationURL' => $confirmationUrl,
-                'ValidationURL'   => $validationUrl,
+                'ValidationURL' => $validationUrl,
             ]);
 
         if (! $response->successful() || isset($response->json()['errorCode'])) {
@@ -172,7 +172,7 @@ class MpesaService
                 ?? 'C2B URL registration failed';
 
             Log::channel('mpesa')->error('C2B URL registration failed', [
-                'status'   => $response->status(),
+                'status' => $response->status(),
                 'response' => $response->json(),
             ]);
 
@@ -202,14 +202,14 @@ class MpesaService
         }
 
         $credentials = $this->getActiveCredentials();
-        $phone       = PhoneNumber::normalize($phoneNumber);
+        $phone = PhoneNumber::normalize($phoneNumber);
 
         $response = Http::withToken($this->getAccessToken())
-            ->post($credentials['base_url'] . '/mpesa/c2b/v1/simulate', [
-                'ShortCode'     => $credentials['shortcode'],
-                'CommandID'     => 'CustomerPayBillOnline',
-                'Amount'        => (int) ceil($amount),
-                'Msisdn'        => $phone,
+            ->post($credentials['base_url'].'/mpesa/c2b/v1/simulate', [
+                'ShortCode' => $credentials['shortcode'],
+                'CommandID' => 'CustomerPayBillOnline',
+                'Amount' => (int) ceil($amount),
+                'Msisdn' => $phone,
                 'BillRefNumber' => $billRefNumber,
             ]);
 
@@ -217,7 +217,7 @@ class MpesaService
             $error = $response->json('errorMessage') ?? 'C2B simulation failed';
 
             Log::channel('mpesa')->error('C2B simulation failed', [
-                'status'   => $response->status(),
+                'status' => $response->status(),
                 'response' => $response->json(),
             ]);
 
@@ -226,8 +226,8 @@ class MpesaService
 
         Log::channel('mpesa')->info('C2B simulation triggered', [
             'bill_ref_number' => $billRefNumber,
-            'amount'          => $amount,
-            'phone'           => PhoneNumber::mask($phoneNumber),
+            'amount' => $amount,
+            'phone' => PhoneNumber::mask($phoneNumber),
         ]);
 
         return $response->json();
@@ -240,11 +240,11 @@ class MpesaService
      */
     public function parseSTKCallbackPayload(array $payload): array
     {
-        $callback      = $payload['Body']['stkCallback'] ?? [];
-        $resultCode    = $callback['ResultCode'] ?? null;
-        $resultDesc    = $callback['ResultDesc'] ?? null;
+        $callback = $payload['Body']['stkCallback'] ?? [];
+        $resultCode = $callback['ResultCode'] ?? null;
+        $resultDesc = $callback['ResultDesc'] ?? null;
         $checkoutReqId = $callback['CheckoutRequestID'] ?? null;
-        $isSuccess     = $resultCode === 0;
+        $isSuccess = $resultCode === 0;
 
         $mpesaReceiptNumber = null;
 
@@ -259,17 +259,17 @@ class MpesaService
 
         Log::channel('mpesa')->info('STK callback received', [
             'checkout_request_id' => $checkoutReqId,
-            'result_code'         => $resultCode,
-            'result_desc'         => $resultDesc,
-            'receipt'             => $mpesaReceiptNumber,
+            'result_code' => $resultCode,
+            'result_desc' => $resultDesc,
+            'receipt' => $mpesaReceiptNumber,
         ]);
 
         return [
             'transaction_reference' => $checkoutReqId,
-            'status'                => $isSuccess ? 'success' : 'failed',
-            'provider_reference'    => $mpesaReceiptNumber,
-            'failure_reason'        => $isSuccess ? null : $resultDesc,
-            'failure_code'          => $isSuccess ? null : (string) $resultCode,
+            'status' => $isSuccess ? 'success' : 'failed',
+            'provider_reference' => $mpesaReceiptNumber,
+            'failure_reason' => $isSuccess ? null : $resultDesc,
+            'failure_code' => $isSuccess ? null : (string) $resultCode,
         ];
     }
 
@@ -283,20 +283,20 @@ class MpesaService
     {
         Log::channel('mpesa')->info('C2B payload received', [
             'bill_ref_number' => $payload['BillRefNumber'] ?? null,
-            'trans_id'        => $payload['TransID'] ?? null,
-            'amount'          => $payload['TransAmount'] ?? null,
+            'trans_id' => $payload['TransID'] ?? null,
+            'amount' => $payload['TransAmount'] ?? null,
         ]);
 
         return [
-            'transaction_id'      => $payload['TransID'] ?? null,
-            'transaction_type'    => $payload['TransactionType'] ?? null,
-            'transaction_time'    => $payload['TransTime'] ?? null,
-            'amount'              => (float) ($payload['TransAmount'] ?? 0),
-            'shortcode'           => $payload['BusinessShortCode'] ?? null,
-            'bill_ref_number'     => $payload['BillRefNumber'] ?? null,
-            'phone'               => $payload['MSISDN'] ?? null,
-            'first_name'          => $payload['FirstName'] ?? null,
-            'last_name'           => $payload['LastName'] ?? null,
+            'transaction_id' => $payload['TransID'] ?? null,
+            'transaction_type' => $payload['TransactionType'] ?? null,
+            'transaction_time' => $payload['TransTime'] ?? null,
+            'amount' => (float) ($payload['TransAmount'] ?? 0),
+            'shortcode' => $payload['BusinessShortCode'] ?? null,
+            'bill_ref_number' => $payload['BillRefNumber'] ?? null,
+            'phone' => $payload['MSISDN'] ?? null,
+            'first_name' => $payload['FirstName'] ?? null,
+            'last_name' => $payload['LastName'] ?? null,
             'org_account_balance' => $payload['OrgAccountBalance'] ?? null,
         ];
     }

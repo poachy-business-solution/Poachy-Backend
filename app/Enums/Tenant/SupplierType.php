@@ -49,7 +49,7 @@ enum SupplierType: string
     public static function options(): array
     {
         return array_map(
-            fn(self $type) => [
+            fn (self $type) => [
                 'value' => $type->value,
                 'label' => $type->displayName(),
                 'description' => $type->description(),

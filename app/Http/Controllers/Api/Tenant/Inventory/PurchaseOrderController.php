@@ -29,48 +29,57 @@ class PurchaseOrderController extends Controller
      *     operationId="listPurchaseOrders",
      *     tags={"Tenant - Purchase Orders"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by purchase order status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"draft", "sent", "confirmed", "partially_received", "received", "cancelled"},
      *             example="draft"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_status",
      *         in="query",
      *         description="Filter by payment status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"unpaid", "partially_paid", "paid"},
      *             example="unpaid"
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase orders retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase orders retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="po_number", type="string", example="PO-2025-0001", description="Unique purchase order number"),
      *                     @OA\Property(
@@ -133,8 +142,10 @@ class PurchaseOrderController extends Controller
      *                         property="items",
      *                         type="array",
      *                         description="Ordered products/items",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1, description="PO item record ID"),
      *                             @OA\Property(
      *                                 property="product",
@@ -215,11 +226,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -228,9 +241,11 @@ class PurchaseOrderController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -241,11 +256,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -258,11 +275,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -309,19 +328,22 @@ class PurchaseOrderController extends Controller
      *     operationId="getPurchaseOrder",
      *     tags={"Tenant - Purchase Orders"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the purchase order",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase order retrieved successfully"),
      *             @OA\Property(
@@ -385,8 +407,10 @@ class PurchaseOrderController extends Controller
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(
      *                             property="product",
@@ -464,11 +488,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Purchase order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -481,11 +507,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -498,11 +526,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -515,11 +545,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -561,12 +593,14 @@ class PurchaseOrderController extends Controller
      *     operationId="createPurchaseOrder",
      *     tags={"Tenant - Purchase Orders"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Purchase order creation details",
+     *
      *         @OA\JsonContent(
      *             required={"supplier_id", "store_id", "order_date", "items"},
+     *
      *             @OA\Property(
      *                 property="supplier_id",
      *                 type="integer",
@@ -615,9 +649,11 @@ class PurchaseOrderController extends Controller
      *                 type="array",
      *                 description="Array of products to order (at least one item required)",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"product_id", "quantity_ordered", "uom_id", "unit_cost"},
+     *
      *                     @OA\Property(
      *                         property="product_id",
      *                         type="integer",
@@ -672,11 +708,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Purchase order created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase order created successfully"),
      *             @OA\Property(
@@ -744,8 +782,10 @@ class PurchaseOrderController extends Controller
      *                     property="items",
      *                     type="array",
      *                     description="Ordered products with calculated costs and quantities",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1, description="PO item record ID"),
      *                         @OA\Property(
      *                             property="product",
@@ -826,11 +866,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -839,34 +881,46 @@ class PurchaseOrderController extends Controller
      *                 @OA\Property(
      *                     property="supplier_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The supplier id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The items field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items.0.product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected items.0.product id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items.0.quantity_ordered",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The items.0.quantity ordered field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="items.0.unit_cost",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The items.0.unit cost must be at least 0.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -877,11 +931,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -894,11 +950,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -926,7 +984,7 @@ class PurchaseOrderController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to create purchase order: ' . $e->getMessage(),
+                'Failed to create purchase order: '.$e->getMessage(),
                 null,
                 500
             );
@@ -941,19 +999,22 @@ class PurchaseOrderController extends Controller
      *     operationId="updatePurchaseOrder",
      *     tags={"Tenant - Purchase Orders"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the purchase order to update",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Fields to update (all optional - send only what needs to change)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="supplier_id", type="integer", nullable=true, example=2, description="Change supplier"),
      *             @OA\Property(property="order_date", type="string", format="date", nullable=true, example="2025-12-26"),
      *             @OA\Property(property="expected_delivery_date", type="string", format="date", nullable=true, example="2026-01-05"),
@@ -961,11 +1022,13 @@ class PurchaseOrderController extends Controller
      *             @OA\Property(property="notes", type="string", nullable=true, example="Updated notes")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase order updated successfully"),
      *             @OA\Property(
@@ -1047,11 +1110,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation - PO is not in draft status",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Only draft purchase orders can be updated."),
      *             @OA\Property(
@@ -1064,11 +1129,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Purchase order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1081,11 +1148,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1094,9 +1163,11 @@ class PurchaseOrderController extends Controller
      *                 @OA\Property(
      *                     property="supplier_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected supplier id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1107,11 +1178,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1124,11 +1197,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1141,11 +1216,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1173,7 +1250,7 @@ class PurchaseOrderController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to update purchase order: ' . $e->getMessage(),
+                'Failed to update purchase order: '.$e->getMessage(),
                 null,
                 400
             );
@@ -1188,19 +1265,22 @@ class PurchaseOrderController extends Controller
      *     operationId="sendPurchaseOrder",
      *     tags={"Tenant - Purchase Orders"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the purchase order to send",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order sent successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase order sent to supplier successfully"),
      *             @OA\Property(
@@ -1283,11 +1363,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation - PO is not in draft status",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Only draft purchase orders can be sent."),
      *             @OA\Property(
@@ -1300,11 +1382,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Purchase order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1317,11 +1401,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1334,11 +1420,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1351,11 +1439,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1381,7 +1471,7 @@ class PurchaseOrderController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to send purchase order: ' . $e->getMessage(),
+                'Failed to send purchase order: '.$e->getMessage(),
                 null,
                 400
             );
@@ -1396,19 +1486,22 @@ class PurchaseOrderController extends Controller
      *     operationId="cancelPurchaseOrder",
      *     tags={"Tenant - Purchase Orders"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the purchase order to cancel",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order cancelled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Purchase order cancelled successfully"),
      *             @OA\Property(
@@ -1491,11 +1584,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid operation - Cannot cancel PO with received items",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot cancel purchase order with received items."),
      *             @OA\Property(
@@ -1508,11 +1603,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Purchase order not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1525,11 +1622,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1542,11 +1641,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1559,11 +1660,13 @@ class PurchaseOrderController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1589,7 +1692,7 @@ class PurchaseOrderController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::error(
-                'Failed to cancel purchase order: ' . $e->getMessage(),
+                'Failed to cancel purchase order: '.$e->getMessage(),
                 null,
                 400
             );

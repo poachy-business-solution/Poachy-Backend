@@ -4,6 +4,7 @@ namespace App\Services\Central\Admin\Tenant;
 
 use App\Mail\Tenant\Auth\TenantCredentialsMail;
 use App\Mail\Tenant\Auth\TenantUserCredentialsMail;
+use App\Models\Domain;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
 use Illuminate\Support\Facades\Auth;
@@ -44,8 +45,8 @@ class TenantUserService
             if ($data['send_credentials'] ?? true) {
                 $primaryDomain = $tenant->domains()->first();
                 $loginUrl = $primaryDomain
-                    ? 'https://' . $primaryDomain->domain . '/login'
-                    : config('app.url') . '/login';
+                    ? 'https://'.$primaryDomain->domain.'/login'
+                    : config('app.url').'/login';
 
                 Mail::to($user->email)->queue(
                     new TenantCredentialsMail(
@@ -205,13 +206,13 @@ class TenantUserService
         $numbers = '23456789';
         $special = '!@#$%^&*';
 
-        $allChars = $uppercase . $lowercase . $numbers . $special;
+        $allChars = $uppercase.$lowercase.$numbers.$special;
 
         // Ensure at least one character from each set
         $password = $uppercase[random_int(0, strlen($uppercase) - 1)]
-            . $lowercase[random_int(0, strlen($lowercase) - 1)]
-            . $numbers[random_int(0, strlen($numbers) - 1)]
-            . $special[random_int(0, strlen($special) - 1)];
+            .$lowercase[random_int(0, strlen($lowercase) - 1)]
+            .$numbers[random_int(0, strlen($numbers) - 1)]
+            .$special[random_int(0, strlen($special) - 1)];
 
         // Fill the rest randomly
         for ($i = 4; $i < $length; $i++) {
@@ -230,18 +231,18 @@ class TenantUserService
         // Get current tenant from context
         $tenant = tenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             throw new \Exception('Tenant context not initialized');
         }
 
-        $primaryDomain = \App\Models\Domain::on('central')
+        $primaryDomain = Domain::on('central')
             ->where('tenant_id', $tenant->id)
             ->orderBy('id', 'asc')
             ->first();
 
         $loginUrl = $primaryDomain
-            ? 'https://' . $primaryDomain->domain . '/login'
-            : config('app.url') . '/login';
+            ? 'https://'.$primaryDomain->domain.'/login'
+            : config('app.url').'/login';
 
         Mail::to($user->email)->send(
             new TenantUserCredentialsMail(

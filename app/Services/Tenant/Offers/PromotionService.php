@@ -108,7 +108,7 @@ class PromotionService
     public function updatePromotion(Promotion $promotion, array $data): Promotion
     {
         // Check if promotion can be edited
-        if (!$promotion->canBeEdited() && $this->hasRestrictedChanges($data, $promotion)) {
+        if (! $promotion->canBeEdited() && $this->hasRestrictedChanges($data, $promotion)) {
             throw ValidationException::withMessages([
                 'promotion' => ['Cannot modify core attributes of a promotion that has already been used.'],
             ]);
@@ -123,7 +123,7 @@ class PromotionService
 
         // Check if changing applicability type
         if (isset($data['applicable_to']) && $data['applicable_to'] !== $promotion->applicable_to->value) {
-            if (!$promotion->canChangeApplicabilityType()) {
+            if (! $promotion->canChangeApplicabilityType()) {
                 throw ValidationException::withMessages([
                     'applicable_to' => ['Cannot change applicability type when promotion already has related data.'],
                 ]);
@@ -203,7 +203,7 @@ class PromotionService
      */
     public function deactivatePromotion(Promotion $promotion): Promotion
     {
-        if (!$promotion->is_active) {
+        if (! $promotion->is_active) {
             throw ValidationException::withMessages([
                 'promotion' => ['Promotion is already inactive.'],
             ]);
@@ -227,9 +227,9 @@ class PromotionService
      */
     public function attachProducts(Promotion $promotion, array $productsData): Promotion
     {
-        if (!in_array($promotion->applicable_to, [
+        if (! in_array($promotion->applicable_to, [
             PromotionApplicabilityType::SPECIFIC_PRODUCTS,
-            PromotionApplicabilityType::ALL_PRODUCTS
+            PromotionApplicabilityType::ALL_PRODUCTS,
         ])) {
             throw ValidationException::withMessages([
                 'applicable_to' => ['Can only attach products to promotions with applicable_to set to "specific_products".'],
@@ -270,11 +270,11 @@ class PromotionService
     {
         if (! in_array($promotion->applicable_to, [
             PromotionApplicabilityType::SPECIFIC_CATEGORIES,
-            PromotionApplicabilityType::ALL_PRODUCTS
+            PromotionApplicabilityType::ALL_PRODUCTS,
         ], true)) {
             throw ValidationException::withMessages([
                 'applicable_to' => [
-                    'Categories can only be attached when applicable_to is "specific_categories" or "all_products".'
+                    'Categories can only be attached when applicable_to is "specific_categories" or "all_products".',
                 ],
             ]);
         }
@@ -313,11 +313,11 @@ class PromotionService
     {
         if (! in_array($promotion->applicable_to, [
             PromotionApplicabilityType::SPECIFIC_BRANDS,
-            PromotionApplicabilityType::ALL_PRODUCTS
+            PromotionApplicabilityType::ALL_PRODUCTS,
         ], true)) {
             throw ValidationException::withMessages([
                 'applicable_to' => [
-                    'Brands can only be attached when applicable_to is "specific_brands" or "all_products".'
+                    'Brands can only be attached when applicable_to is "specific_brands" or "all_products".',
                 ],
             ]);
         }

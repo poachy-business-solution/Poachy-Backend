@@ -43,7 +43,7 @@ class TenantOtp extends Model
 
     public function isValid(): bool
     {
-        return !$this->is_used
+        return ! $this->is_used
             && $this->expires_at->isFuture()
             && $this->attempts < 3;
     }

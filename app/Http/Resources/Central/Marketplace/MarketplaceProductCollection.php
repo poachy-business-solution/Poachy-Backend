@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 /**
  * Wraps a paginated collection of MarketplaceProductResource items.
-*/
+ */
 class MarketplaceProductCollection extends ResourceCollection
 {
     public $collects = MarketplaceProductResource::class;

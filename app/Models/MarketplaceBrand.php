@@ -12,6 +12,7 @@ class MarketplaceBrand extends Model
     use HasFactory, SoftDeletes;
 
     protected $connection = 'central';
+
     protected $table = 'marketplace_brands';
 
     protected $fillable = [

@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Tenant\Product;
 
 use App\Enums\Tenant\ProductStatus;
+use App\Models\Tenant\Product;
+use App\Models\Tenant\UnitOfMeasure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -95,7 +97,7 @@ class StoreProductVariantRequest extends FormRequest
         ];
 
         foreach ($defaults as $key => $value) {
-            if (!$this->has($key)) {
+            if (! $this->has($key)) {
                 $this->merge([$key => $value]);
             }
         }
@@ -109,15 +111,16 @@ class StoreProductVariantRequest extends FormRequest
         $validator->after(function ($validator) {
             $product = $this->route('uuid');
 
-            $product = \App\Models\Tenant\Product::where('uuid', $product)->first();
+            $product = Product::where('uuid', $product)->first();
 
-            if (!$product) {
+            if (! $product) {
                 $validator->errors()->add('product', 'Product not found');
+
                 return;
             }
 
             // Verify product is variable type
-            if (!$product->isVariable()) {
+            if (! $product->isVariable()) {
                 $validator->errors()->add(
                     'product_id',
                     'Cannot create variants for a simple product. Change product type to variable first.'
@@ -130,7 +133,7 @@ class StoreProductVariantRequest extends FormRequest
                     ->where('uom_id', $this->uom_id)
                     ->first();
 
-                if (!$productUom) {
+                if (! $productUom) {
                     $validator->errors()->add(
                         'uom_id',
                         'This UOM is not configured for the product. Please add it to product UOMs first.'
@@ -140,8 +143,8 @@ class StoreProductVariantRequest extends FormRequest
 
             // Verify UOM is active
             if ($this->uom_id) {
-                $uom = \App\Models\Tenant\UnitOfMeasure::find($this->uom_id);
-                if ($uom && !$uom->is_active) {
+                $uom = UnitOfMeasure::find($this->uom_id);
+                if ($uom && ! $uom->is_active) {
                     $validator->errors()->add(
                         'uom_id',
                         'Cannot use an inactive unit of measure'
@@ -150,7 +153,7 @@ class StoreProductVariantRequest extends FormRequest
             }
 
             // Validate online_price if product is available online
-            if ($this->online_price !== null && !$product->is_available_online) {
+            if ($this->online_price !== null && ! $product->is_available_online) {
                 $validator->errors()->add(
                     'online_price',
                     'Cannot set online price for a product that is not available online. Enable online availability for the product first.'

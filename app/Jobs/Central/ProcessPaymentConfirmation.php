@@ -58,9 +58,9 @@ class ProcessPaymentConfirmation implements ShouldQueue
         $syncService->queuePaymentSync($completedPayment);
 
         Log::info('Payment confirmation sync queued', [
-            'order_id'   => $order->id,
+            'order_id' => $order->id,
             'payment_id' => $completedPayment->id,
-            'tenant_id'  => $order->tenant_id,
+            'tenant_id' => $order->tenant_id,
         ]);
     }
 
@@ -68,7 +68,7 @@ class ProcessPaymentConfirmation implements ShouldQueue
     {
         Log::error('ProcessPaymentConfirmation job failed', [
             'order_id' => $this->orderId,
-            'error'    => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

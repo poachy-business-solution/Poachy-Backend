@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Tenant\Audit;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -75,7 +76,7 @@ class AuditLogResource extends JsonResource
             ];
         }
 
-        if ($this->isUpdate() && !empty($this->old_values) && !empty($this->new_values)) {
+        if ($this->isUpdate() && ! empty($this->old_values) && ! empty($this->new_values)) {
             $differences = [];
 
             foreach ($this->new_values as $key => $newValue) {
@@ -159,7 +160,7 @@ class AuditLogResource extends JsonResource
         // Handle dates (fields ending with _at or _date)
         if (str_ends_with($field, '_at') || str_ends_with($field, '_date')) {
             try {
-                return \Carbon\Carbon::parse($value)->format('M d, Y h:i A');
+                return Carbon::parse($value)->format('M d, Y h:i A');
             } catch (\Exception $e) {
                 return $value;
             }
@@ -173,7 +174,7 @@ class AuditLogResource extends JsonResource
             str_contains($field, 'total') ||
             str_contains($field, 'subtotal')
         ) {
-            return 'KES ' . number_format((float) $value, 2);
+            return 'KES '.number_format((float) $value, 2);
         }
 
         // Handle quantity fields

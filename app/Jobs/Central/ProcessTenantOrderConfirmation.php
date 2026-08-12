@@ -37,7 +37,7 @@ class ProcessTenantOrderConfirmation implements ShouldQueue
 
             Log::info('Tenant order confirmation processed', [
                 'order_id' => $this->orderId,
-                'status'   => 'confirmed',
+                'status' => 'confirmed',
             ]);
         } else {
             $orderService->handleReservationFailure($this->orderId, [
@@ -46,7 +46,7 @@ class ProcessTenantOrderConfirmation implements ShouldQueue
 
             Log::info('Tenant reservation failure processed', [
                 'order_id' => $this->orderId,
-                'reason'   => $this->reason,
+                'reason' => $this->reason,
             ]);
         }
     }
@@ -55,8 +55,8 @@ class ProcessTenantOrderConfirmation implements ShouldQueue
     {
         Log::error('ProcessTenantOrderConfirmation job failed', [
             'order_id' => $this->orderId,
-            'status'   => $this->status,
-            'error'    => $exception->getMessage(),
+            'status' => $this->status,
+            'error' => $exception->getMessage(),
         ]);
     }
 }

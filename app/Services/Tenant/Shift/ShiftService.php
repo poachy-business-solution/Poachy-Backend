@@ -2,7 +2,9 @@
 
 namespace App\Services\Tenant\Shift;
 
+use App\Enums\Tenant\DayOfWeek;
 use App\Models\Tenant\Shift;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -203,9 +205,9 @@ class ShiftService
     /**
      * Get shifts applicable on a specific date
      */
-    public function getShiftsForDate(\Carbon\Carbon $date, ?int $storeId = null): Collection
+    public function getShiftsForDate(Carbon $date, ?int $storeId = null): Collection
     {
-        $dayOfWeek = \App\Enums\Tenant\DayOfWeek::fromCarbonDayOfWeek($date->dayOfWeek);
+        $dayOfWeek = DayOfWeek::fromCarbonDayOfWeek($date->dayOfWeek);
 
         $query = Shift::active()->forDay($dayOfWeek);
 
@@ -224,7 +226,7 @@ class ShiftService
         try {
             DB::beginTransaction();
 
-            $shift->update(['is_active' => !$shift->is_active]);
+            $shift->update(['is_active' => ! $shift->is_active]);
 
             $this->clearShiftCache();
             $this->clearShiftSpecificCache($shift->id);
@@ -256,7 +258,7 @@ class ShiftService
      */
     public function getShiftStatistics(?int $storeId = null): array
     {
-        $cacheKey = "shifts:stats:" . ($storeId ?? 'all');
+        $cacheKey = 'shifts:stats:'.($storeId ?? 'all');
 
         return Cache::tags(['tenant', tenant()->id, 'shifts', 'stats'])
             ->remember($cacheKey, 1800, function () use ($storeId) {
@@ -297,8 +299,8 @@ class ShiftService
             );
 
             // Ensure shift name is unique
-            if (!isset($overrides['shift_name'])) {
-                $data['shift_name'] = $shift->shift_name . ' (Copy)';
+            if (! isset($overrides['shift_name'])) {
+                $data['shift_name'] = $shift->shift_name.' (Copy)';
             }
 
             $newShift = Shift::create($data);
@@ -330,7 +332,7 @@ class ShiftService
     /**
      * Get shifts with assignment count for a date range
      */
-    public function getShiftsWithAssignmentCounts(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, ?int $storeId = null): Collection
+    public function getShiftsWithAssignmentCounts(Carbon $startDate, Carbon $endDate, ?int $storeId = null): Collection
     {
         $query = Shift::active();
 
@@ -376,6 +378,7 @@ class ShiftService
     protected function getShiftsCacheKey(int $storeId, array $filters): string
     {
         $filterHash = md5(json_encode($filters));
+
         return "shifts:store:{$storeId}:filters:{$filterHash}";
     }
 
@@ -385,6 +388,7 @@ class ShiftService
     protected function getActiveShiftsCacheKey(?int $storeId): string
     {
         $storeKey = $storeId ?? 'all';
+
         return "shifts:active:store:{$storeKey}";
     }
 

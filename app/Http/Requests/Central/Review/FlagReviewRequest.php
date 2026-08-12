@@ -22,8 +22,8 @@ class FlagReviewRequest extends FormRequest
     {
         return [
             'reason.required' => 'A reason for flagging is required.',
-            'reason.min'      => 'Reason must be at least 10 characters.',
-            'reason.max'      => 'Reason may not exceed 500 characters.',
+            'reason.min' => 'Reason must be at least 10 characters.',
+            'reason.max' => 'Reason may not exceed 500 characters.',
         ];
     }
 }

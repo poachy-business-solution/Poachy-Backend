@@ -50,8 +50,8 @@ class UpdateProductAggregateRatingJob implements ShouldQueue
 
         Log::info('UpdateProductAggregateRatingJob: updated product rating aggregate', [
             'marketplace_product_id' => $this->marketplaceProductId,
-            'average_rating'         => $product->average_rating,
-            'rating_count'           => $product->rating_count,
+            'average_rating' => $product->average_rating,
+            'rating_count' => $product->rating_count,
         ]);
     }
 }

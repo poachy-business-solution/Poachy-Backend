@@ -27,59 +27,76 @@ class InventoryWasteController extends Controller
      *     summary="List inventory waste records",
      *     description="Retrieve a paginated list of inventory waste records with optional filters",
      *     operationId="listInventoryWaste",
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=false,
      *         description="Filter by store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         required=false,
      *         description="Filter by product ID",
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="waste_type",
      *         in="query",
      *         required=false,
      *         description="Filter by waste type",
+     *
      *         @OA\Schema(type="string", example="damaged")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="approval_status",
      *         in="query",
      *         required=false,
      *         description="Filter by approval status",
+     *
      *         @OA\Schema(type="string", enum={"pending", "approved", "rejected"}, example="pending")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         required=false,
      *         description="Filter waste records from this date",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         required=false,
      *         description="Filter waste records up to this date",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         required=false,
      *         description="Number of items per page",
+     *
      *         @OA\Schema(type="integer", default=20, example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste records retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste records retrieved successfully"),
      *             @OA\Property(
@@ -88,8 +105,10 @@ class InventoryWasteController extends Controller
      *                 @OA\Property(
      *                     property="waste_records",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="waste_type", type="string", example="damaged"),
      *                         @OA\Property(property="waste_type_label", type="string", example="Damaged"),
@@ -201,11 +220,14 @@ class InventoryWasteController extends Controller
      *     summary="Record inventory waste",
      *     description="Create a new inventory waste record. The record will be in pending status awaiting approval.",
      *     operationId="createInventoryWaste",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Waste record details",
+     *
      *         @OA\JsonContent(
      *             required={"store_id", "product_id", "waste_type", "quantity_wasted"},
+     *
      *             @OA\Property(property="store_id", type="integer", example=1),
      *             @OA\Property(property="product_id", type="integer", example=10),
      *             @OA\Property(property="batch_id", type="integer", example=5),
@@ -220,10 +242,13 @@ class InventoryWasteController extends Controller
      *             @OA\Property(property="reason", type="string", example="Product expired and removed from shelf")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Waste recorded successfully. Pending approval.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste recorded successfully. Pending approval."),
      *             @OA\Property(
@@ -308,17 +333,22 @@ class InventoryWasteController extends Controller
      *     summary="Get waste record details",
      *     description="Retrieve detailed information about a specific inventory waste record",
      *     operationId="getInventoryWasteDetails",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Waste record ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste record retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste record retrieved successfully"),
      *             @OA\Property(
@@ -403,27 +433,35 @@ class InventoryWasteController extends Controller
      *     summary="Update waste record (Only Pending)",
      *     description="Update an inventory waste record. Only pending records can be updated.",
      *     operationId="updateInventoryWaste",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Waste record ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Fields to update",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="waste_type", type="string", example="damaged"),
      *             @OA\Property(property="quantity_wasted", type="number", format="float", example=10),
      *             @OA\Property(property="waste_date", type="string", format="date", example="2026-01-12"),
      *             @OA\Property(property="reason", type="string", example="Updated reason for waste")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste record updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste record updated successfully"),
      *             @OA\Property(
@@ -508,24 +546,32 @@ class InventoryWasteController extends Controller
      *     summary="Approve waste record",
      *     description="Approve an inventory waste record. This will update the inventory accordingly.",
      *     operationId="approveInventoryWaste",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Waste record ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Optional approval notes",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="notes", type="string", example="Approved - verified damaged goods")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste approved successfully. Inventory has been updated.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste approved successfully. Inventory has been updated."),
      *             @OA\Property(
@@ -616,25 +662,33 @@ class InventoryWasteController extends Controller
      *     summary="Reject waste record",
      *     description="Reject an inventory waste record with a required reason",
      *     operationId="rejectInventoryWaste",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Waste record ID",
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Rejection reason",
+     *
      *         @OA\JsonContent(
      *             required={"reason"},
+     *
      *             @OA\Property(property="reason", type="string", example="Quantity discrepancy - requires re-verification")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste rejected successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste rejected successfully"),
      *             @OA\Property(
@@ -729,17 +783,22 @@ class InventoryWasteController extends Controller
      *     summary="Delete waste record (Soft deletes - Pending only)",
      *     description="Delete an inventory waste record. Only pending records can be deleted (soft delete).",
      *     operationId="deleteInventoryWaste",
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Waste record ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste record deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste record deleted successfully"),
      *             @OA\Property(
@@ -752,10 +811,13 @@ class InventoryWasteController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Only pending waste records can be deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Only pending waste records can be deleted"),
      *             @OA\Property(
@@ -774,7 +836,7 @@ class InventoryWasteController extends Controller
     {
         $waste = InventoryWaste::findOrFail($id);
 
-        if (!$waste->is_pending) {
+        if (! $waste->is_pending) {
             return ApiResponse::error(
                 'Only pending waste records can be deleted',
                 null,
@@ -794,31 +856,40 @@ class InventoryWasteController extends Controller
      *     summary="Get waste summary for a store",
      *     description="Retrieve summary statistics of inventory waste for a specific store with optional date range",
      *     operationId="getStoreWasteSummary",
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         required=false,
      *         description="Filter waste records from this date",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         required=false,
      *         description="Filter waste records up to this date",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Waste summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Waste summary retrieved successfully"),
      *             @OA\Property(

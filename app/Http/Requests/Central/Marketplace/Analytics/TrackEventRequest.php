@@ -17,14 +17,14 @@ class TrackEventRequest extends FormRequest
     {
         return [
             'event_type' => ['required', new Enum(TrackEvent::class)],
-            'session_id'                => ['required', 'string', 'uuid'],
-            'marketplace_product_id'    => ['nullable', 'exists:marketplace_products,id'],
-            'marketplace_category_id'   => ['nullable', 'integer'],
-            'tenant_id'                 => ['nullable', 'string', 'max:255'],
-            'event_properties'          => ['nullable', 'array'],
-            'page_url'                  => ['nullable', 'url:http,https'],
-            'referrer_url'              => ['nullable', 'url:http,https'],
-            'time_on_page_seconds'      => ['nullable', 'integer', 'min:0'],
+            'session_id' => ['required', 'string', 'uuid'],
+            'marketplace_product_id' => ['nullable', 'exists:marketplace_products,id'],
+            'marketplace_category_id' => ['nullable', 'integer'],
+            'tenant_id' => ['nullable', 'string', 'max:255'],
+            'event_properties' => ['nullable', 'array'],
+            'page_url' => ['nullable', 'url:http,https'],
+            'referrer_url' => ['nullable', 'url:http,https'],
+            'time_on_page_seconds' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

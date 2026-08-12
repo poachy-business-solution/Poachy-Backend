@@ -39,7 +39,7 @@ class BrandMappingService
     {
         $mapping = TenantBrandMapping::find($mappingId);
 
-        if (!$mapping) {
+        if (! $mapping) {
             return false;
         }
 
@@ -64,13 +64,13 @@ class BrandMappingService
     {
         $mapping = TenantBrandMapping::find($mappingId);
 
-        if (!$mapping) {
+        if (! $mapping) {
             return false;
         }
 
         $newBrand = MarketplaceBrand::find($newMarketplaceBrandId);
 
-        if (!$newBrand) {
+        if (! $newBrand) {
             return false;
         }
 
@@ -117,7 +117,7 @@ class BrandMappingService
             ->get();
 
         foreach ($partialMatches as $match) {
-            if (!$suggestions->contains('brand.id', $match->id)) {
+            if (! $suggestions->contains('brand.id', $match->id)) {
                 $suggestions->push([
                     'brand' => $match,
                     'confidence' => 80.0,
@@ -133,7 +133,7 @@ class BrandMappingService
             ->get();
 
         foreach ($nameMatches as $match) {
-            if (!$suggestions->contains('brand.id', $match->id)) {
+            if (! $suggestions->contains('brand.id', $match->id)) {
                 $suggestions->push([
                     'brand' => $match,
                     'confidence' => 60.0,

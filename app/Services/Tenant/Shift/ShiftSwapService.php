@@ -6,6 +6,7 @@ use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\ShiftSwapRequest;
 use App\Models\Tenant\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +44,7 @@ class ShiftSwapService
             if ($conflictingAssignment) {
                 throw new \InvalidArgumentException(
                     "Cannot swap: Target user (ID: {$originalTargetUserId}) already has a shift assignment (ID: {$conflictingAssignment->id}) on {$requesterAssignment->shift_date->format('Y-m-d')}. "
-                        . "Employee cannot have duplicate shifts on the same date."
+                        .'Employee cannot have duplicate shifts on the same date.'
                 );
             }
 
@@ -58,7 +59,7 @@ class ShiftSwapService
             if ($conflictingAssignment) {
                 throw new \InvalidArgumentException(
                     "Cannot swap: Requester user (ID: {$originalRequesterUserId}) already has a shift assignment (ID: {$conflictingAssignment->id}) on {$targetAssignment->shift_date->format('Y-m-d')}. "
-                        . "Employee cannot have duplicate shifts on the same date."
+                        .'Employee cannot have duplicate shifts on the same date.'
                 );
             }
 
@@ -68,14 +69,14 @@ class ShiftSwapService
                 $requesterAssignment->update([
                     'user_id' => $originalTargetUserId,
                     'notes' => $requesterAssignment->notes
-                        ? $requesterAssignment->notes . "\n\nSwapped with user #{$originalTargetUserId}"
+                        ? $requesterAssignment->notes."\n\nSwapped with user #{$originalTargetUserId}"
                         : "Swapped with user #{$originalTargetUserId}",
                 ]);
 
                 $targetAssignment->update([
                     'user_id' => $originalRequesterUserId,
                     'notes' => $targetAssignment->notes
-                        ? $targetAssignment->notes . "\n\nSwapped with user #{$originalRequesterUserId}"
+                        ? $targetAssignment->notes."\n\nSwapped with user #{$originalRequesterUserId}"
                         : "Swapped with user #{$originalRequesterUserId}",
                 ]);
             });
@@ -107,7 +108,7 @@ class ShiftSwapService
             ]);
 
             return $swapRequest->load(['requesterAssignment', 'targetAssignment', 'requester', 'targetUser', 'manager']);
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             DB::rollBack();
 
             // Handle duplicate entry errors with better messaging
@@ -120,8 +121,8 @@ class ShiftSwapService
 
                 throw new \InvalidArgumentException(
                     'Cannot complete swap: This would create a duplicate shift assignment. '
-                        . 'One of the users already has another shift on the target date. '
-                        . 'Please check for existing assignments and try again.'
+                        .'One of the users already has another shift on the target date. '
+                        .'Please check for existing assignments and try again.'
                 );
             }
 
@@ -186,7 +187,7 @@ class ShiftSwapService
             'targetAssignment.shift',
             'requester',
             'targetUser',
-            'manager'
+            'manager',
         ])->find($id);
     }
 

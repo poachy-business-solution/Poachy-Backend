@@ -4,10 +4,10 @@ namespace App\Enums\Central;
 
 enum OrderFulfillmentStatus: string
 {
-    case Pending   = 'pending';
+    case Pending = 'pending';
     case Confirmed = 'confirmed';
     case Preparing = 'preparing';
-    case Ready     = 'ready';
+    case Ready = 'ready';
     case Delivered = 'delivered';
     case Cancelled = 'cancelled';
 
@@ -17,10 +17,10 @@ enum OrderFulfillmentStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending   => 'Pending',
+            self::Pending => 'Pending',
             self::Confirmed => 'Confirmed',
             self::Preparing => 'Preparing',
-            self::Ready     => 'Ready',
+            self::Ready => 'Ready',
             self::Delivered => 'Delivered',
             self::Cancelled => 'Cancelled',
         };

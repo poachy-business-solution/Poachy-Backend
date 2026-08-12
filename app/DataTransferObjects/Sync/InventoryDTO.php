@@ -2,7 +2,6 @@
 
 namespace App\DataTransferObjects\Sync;
 
-use App\Enums\Tenant\ProductStatus;
 use App\Models\Tenant\Product;
 
 class InventoryDTO

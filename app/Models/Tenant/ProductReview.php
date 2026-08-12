@@ -20,10 +20,10 @@ class ProductReview extends Model
     protected function casts(): array
     {
         return [
-            'rating'                => 'decimal:1',
-            'review_images'         => 'array',
-            'is_verified_purchase'  => 'boolean',
-            'reviewed_at'           => 'datetime',
+            'rating' => 'decimal:1',
+            'review_images' => 'array',
+            'is_verified_purchase' => 'boolean',
+            'reviewed_at' => 'datetime',
             'merchant_responded_at' => 'datetime',
         ];
     }

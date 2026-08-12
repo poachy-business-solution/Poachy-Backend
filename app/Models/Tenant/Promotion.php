@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy(PromotionObserver::class)]
 class Promotion extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'promotions';
 
@@ -85,7 +85,6 @@ class Promotion extends Model
     /**
      * Relationships
      */
-
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'promotion_products')
@@ -108,7 +107,6 @@ class Promotion extends Model
     /**
      * Scopes
      */
-
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
@@ -117,6 +115,7 @@ class Promotion extends Model
     public function scopeValid(Builder $query, ?Carbon $now = null): Builder
     {
         $now = $now ?? now();
+
         return $query->where('start_date', '<=', $now)
             ->where('end_date', '>=', $now);
     }
@@ -244,7 +243,6 @@ class Promotion extends Model
     /**
      * Accessors & Mutators
      */
-
     public function getIsExpiredAttribute(): bool
     {
         return $this->end_date < now();
@@ -253,6 +251,7 @@ class Promotion extends Model
     public function getIsValidAttribute(): bool
     {
         $now = now();
+
         return $this->start_date <= $now && $this->end_date >= $now;
     }
 
@@ -276,7 +275,7 @@ class Promotion extends Model
 
     public function getStatusTextAttribute(): string
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return 'Inactive';
         }
 
@@ -292,7 +291,7 @@ class Promotion extends Model
             return 'Exhausted';
         }
 
-        if (!$this->isActiveNow()) {
+        if (! $this->isActiveNow()) {
             return 'Outside Active Hours';
         }
 
@@ -302,12 +301,11 @@ class Promotion extends Model
     /**
      * Business Logic Methods
      */
-
     public function canBeUsed(): bool
     {
         return $this->is_active
             && $this->is_valid
-            && !$this->is_exhausted
+            && ! $this->is_exhausted
             && $this->isActiveNow();
     }
 
@@ -352,7 +350,7 @@ class Promotion extends Model
         // Check active days if specified
         if ($this->active_days) {
             $currentDay = strtolower($now->format('l')); // 'monday', 'tuesday', etc.
-            if (!in_array($currentDay, $this->active_days)) {
+            if (! in_array($currentDay, $this->active_days)) {
                 return false;
             }
         }
@@ -389,7 +387,7 @@ class Promotion extends Model
             return true; // NULL = all customers
         }
 
-        return !empty(array_intersect($customerGroupIds, $this->applicable_customer_group_ids));
+        return ! empty(array_intersect($customerGroupIds, $this->applicable_customer_group_ids));
     }
 
     /**
@@ -397,7 +395,7 @@ class Promotion extends Model
      */
     public function getTimeWindowAttribute(): ?string
     {
-        if (!$this->active_time_start || !$this->active_time_end) {
+        if (! $this->active_time_start || ! $this->active_time_end) {
             return null;
         }
 
@@ -413,7 +411,7 @@ class Promotion extends Model
      */
     public function getActiveDaysFormattedAttribute(): ?string
     {
-        if (!$this->active_days) {
+        if (! $this->active_days) {
             return null;
         }
 

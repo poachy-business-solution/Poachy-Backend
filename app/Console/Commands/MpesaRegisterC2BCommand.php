@@ -8,17 +8,17 @@ use Illuminate\Console\Command;
 
 class MpesaRegisterC2BCommand extends Command
 {
-    protected $signature   = 'mpesa:register-c2b
+    protected $signature = 'mpesa:register-c2b
                                 {--response-type=Cancelled : ResponseType sent to Daraja (Cancelled or Completed)}';
 
     protected $description = 'Register C2B (Paybill) ValidationURL and ConfirmationURL with Safaricom Daraja. Run once per shortcode per environment.';
 
     public function handle(MpesaService $mpesa): int
     {
-        $env              = config('mpesa.environment', 'sandbox');
-        $validationUrl    = config('mpesa.c2b_validation_url');
-        $confirmationUrl  = config('mpesa.c2b_confirmation_url');
-        $responseType     = $this->option('response-type');
+        $env = config('mpesa.environment', 'sandbox');
+        $validationUrl = config('mpesa.c2b_validation_url');
+        $confirmationUrl = config('mpesa.c2b_confirmation_url');
+        $responseType = $this->option('response-type');
 
         $this->info("Registering C2B URLs ({$env})...");
         $this->line("  Validation URL:   {$validationUrl}");
@@ -36,7 +36,7 @@ class MpesaRegisterC2BCommand extends Command
 
             $this->info('C2B URLs registered successfully.');
             $this->table(['Field', 'Value'], array_map(
-                fn($k, $v) => [$k, $v],
+                fn ($k, $v) => [$k, $v],
                 array_keys($result),
                 array_values($result),
             ));

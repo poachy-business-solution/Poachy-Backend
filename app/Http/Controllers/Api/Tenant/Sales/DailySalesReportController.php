@@ -25,31 +25,40 @@ class DailySalesReportController extends Controller
      *     summary="Get daily sales aggregates",
      *     description="Retrieve detailed sales aggregates for a specific date and store",
      *     operationId="getDailySalesAggregates",
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         required=true,
      *         description="Date for which to retrieve sales data",
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-14")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Daily sales aggregates retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Daily sales aggregates retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="aggregate_date", type="string", format="date", example="2026-01-09"),
      *                     @OA\Property(
@@ -141,38 +150,49 @@ class DailySalesReportController extends Controller
      *     summary="Get daily sales aggregates for date range",
      *     description="Retrieve sales aggregates for a date range and specific store",
      *     operationId="getDailySalesRange",
+     *
      *     @OA\Parameter(
      *         name="from",
      *         in="query",
      *         required=true,
      *         description="Start date of range",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to",
      *         in="query",
      *         required=true,
      *         description="End date of range",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Daily sales aggregates retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Daily sales aggregates retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=13),
      *                     @OA\Property(property="aggregate_date", type="string", format="date", example="2026-01-12"),
      *                     @OA\Property(
@@ -275,24 +295,31 @@ class DailySalesReportController extends Controller
      *     summary="Get store-level daily sales summary",
      *     description="Retrieve aggregated summary of all sales for a specific date and store",
      *     operationId="getDailySalesSummary",
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         required=true,
      *         description="Date for which to retrieve summary",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-09")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store summary retrieved successfully"),
      *             @OA\Property(
@@ -350,38 +377,49 @@ class DailySalesReportController extends Controller
      *     summary="Get top selling products",
      *     description="Retrieve top selling products by quantity for a specific date and store",
      *     operationId="getTopSellingProducts",
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         required=true,
      *         description="Date for which to retrieve top sellers",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-09")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         required=false,
      *         description="Number of top products to return",
+     *
      *         @OA\Schema(type="integer", default=10, maximum=50, example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Top selling products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Top selling products retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=25),
      *                     @OA\Property(property="aggregate_date", type="string", format="date", example="2026-01-09"),
      *                     @OA\Property(
@@ -475,38 +513,49 @@ class DailySalesReportController extends Controller
      *     summary="Get top revenue products",
      *     description="Retrieve top revenue-generating products for a specific date and store",
      *     operationId="getTopRevenueProducts",
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         required=true,
      *         description="Date for which to retrieve top revenue products",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-09")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         required=false,
      *         description="Number of top products to return",
+     *
      *         @OA\Schema(type="integer", default=10, maximum=50, example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Top revenue products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Top revenue products retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=25),
      *                     @OA\Property(property="aggregate_date", type="string", format="date", example="2026-01-09"),
      *                     @OA\Property(
@@ -600,31 +649,40 @@ class DailySalesReportController extends Controller
      *     summary="Get sales summary by category",
      *     description="Retrieve sales aggregates grouped by product category for a specific date and store",
      *     operationId="getSalesByCategory",
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         required=true,
      *         description="Date for which to retrieve category summary",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-09")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         required=true,
      *         description="Store ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category summary retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="category_id", type="integer", example=1),
      *                     @OA\Property(property="total_quantity", type="string", example="9.0000"),
      *                     @OA\Property(property="total_revenue", type="string", example="1494350.00"),
@@ -686,19 +744,25 @@ class DailySalesReportController extends Controller
      *     summary="Recalculate daily aggregates",
      *     description="Queue a job to recalculate daily sales aggregates for a specific date and store",
      *     operationId="recalculateDailyAggregates",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Date and store for recalculation",
+     *
      *         @OA\JsonContent(
      *             required={"date", "store_id"},
+     *
      *             @OA\Property(property="date", type="string", format="date", example="2026-01-12"),
      *             @OA\Property(property="store_id", type="integer", example=1)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Recalculation job queued successfully. Aggregates will be rebuilt shortly.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Recalculation job queued successfully. Aggregates will be rebuilt shortly."),
      *             @OA\Property(

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('group_id')->constrained('customer_groups')->onDelete('cascade');
             $table->timestamp('joined_at')->useCurrent();
             $table->timestamps();
-            
+
             $table->unique(['customer_id', 'group_id']);
             $table->index(['group_id']);
         });

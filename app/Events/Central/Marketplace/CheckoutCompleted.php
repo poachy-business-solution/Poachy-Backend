@@ -5,9 +5,9 @@ namespace App\Events\Central\Marketplace;
 use App\Models\MarketplaceCustomer;
 use App\Models\ShoppingCart;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Support\Collection;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 
 class CheckoutCompleted
 {

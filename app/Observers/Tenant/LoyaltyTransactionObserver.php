@@ -115,10 +115,10 @@ class LoyaltyTransactionObserver
 
         if ($transaction->points > 0) {
             // Points earned
-            return "{$user} awarded {$points} loyalty points to {$customerName} - {$type} (Balance: " . number_format($transaction->balance_after, 2) . " points)";
+            return "{$user} awarded {$points} loyalty points to {$customerName} - {$type} (Balance: ".number_format($transaction->balance_after, 2).' points)';
         } else {
             // Points redeemed
-            return "{$user} redeemed {$points} loyalty points for {$customerName} - {$type} (Balance: " . number_format($transaction->balance_after, 2) . " points)";
+            return "{$user} redeemed {$points} loyalty points for {$customerName} - {$type} (Balance: ".number_format($transaction->balance_after, 2).' points)';
         }
     }
 
@@ -133,6 +133,7 @@ class LoyaltyTransactionObserver
         if (isset($changes['points'])) {
             $oldPoints = number_format(abs($transaction->getOriginal('points')), 2);
             $newPoints = number_format(abs($changes['points']), 2);
+
             return "{$user} adjusted loyalty points from {$oldPoints} to {$newPoints}";
         }
 
@@ -140,6 +141,7 @@ class LoyaltyTransactionObserver
         if (isset($changes['balance_after'])) {
             $oldBalance = number_format($transaction->getOriginal('balance_after'), 2);
             $newBalance = number_format($changes['balance_after'], 2);
+
             return "{$user} adjusted loyalty balance from {$oldBalance} to {$newBalance}";
         }
 
@@ -147,11 +149,13 @@ class LoyaltyTransactionObserver
         if (isset($changes['transaction_type'])) {
             $oldType = $transaction->getOriginal('transaction_type');
             $newType = $changes['transaction_type'];
+
             return "{$user} changed loyalty transaction type from {$oldType} to {$newType}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated loyalty transaction ({$changedFields})";
     }
 

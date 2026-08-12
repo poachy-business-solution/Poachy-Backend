@@ -19,7 +19,7 @@ class AnalyticsTrackingService
         } catch (\Exception $e) {
             // Analytics tracking failures should not break business operations
             Log::warning('Failed to track customer journey event', [
-                'data'  => $data,
+                'data' => $data,
                 'error' => $e->getMessage(),
             ]);
 
@@ -41,7 +41,7 @@ class AnalyticsTrackingService
             return ProductPageView::create($data);
         } catch (\Exception $e) {
             Log::warning('Failed to track product page view', [
-                'data'  => $data,
+                'data' => $data,
                 'error' => $e->getMessage(),
             ]);
 
@@ -68,7 +68,7 @@ class AnalyticsTrackingService
             return SearchQuery::create($data);
         } catch (\Exception $e) {
             Log::warning('Failed to track search query', [
-                'data'  => $data,
+                'data' => $data,
                 'error' => $e->getMessage(),
             ]);
 

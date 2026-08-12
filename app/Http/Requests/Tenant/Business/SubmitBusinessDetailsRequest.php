@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Tenant\Business;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class SubmitBusinessDetailsRequest extends FormRequest
 {

@@ -66,7 +66,7 @@ class ShiftSalesSummary extends Model
     {
         $assignment = $this->shiftAssignment;
 
-        if (!$assignment || $assignment->opening_cash === null) {
+        if (! $assignment || $assignment->opening_cash === null) {
             return $this->total_cash_sales;
         }
 
@@ -81,7 +81,7 @@ class ShiftSalesSummary extends Model
     {
         $assignment = $this->shiftAssignment;
 
-        if (!$assignment || $assignment->closing_cash === null) {
+        if (! $assignment || $assignment->closing_cash === null) {
             return null;
         }
 
@@ -132,7 +132,7 @@ class ShiftSalesSummary extends Model
     {
         $assignment = $this->shiftAssignment;
 
-        if (!$assignment || !$assignment->actual_duration_minutes) {
+        if (! $assignment || ! $assignment->actual_duration_minutes) {
             return null;
         }
 

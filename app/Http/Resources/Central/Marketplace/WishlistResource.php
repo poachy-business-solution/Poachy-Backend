@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Central\Marketplace;
 
+use App\Helpers\BusinessHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,7 +26,7 @@ class WishlistResource extends JsonResource
             'price_at_addition' => $this->price_at_addition ? (float) $this->price_at_addition : null,
             'product' => $this->when(
                 $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,
-                fn() => [
+                fn () => [
                     'id' => $this->marketplaceProduct->id,
                     'name' => $this->marketplaceProduct->name,
                     'slug' => $this->marketplaceProduct->slug,
@@ -39,7 +40,7 @@ class WishlistResource extends JsonResource
             ),
             'seller' => $this->when(
                 $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,
-                fn() => \App\Helpers\BusinessHelper::getBusinessSummary($this->marketplaceProduct->tenant_id)
+                fn () => BusinessHelper::getBusinessSummary($this->marketplaceProduct->tenant_id)
             ),
             'is_available' => $this->isProductAvailable(),
             'price_changed' => $this->hasPriceChanged(),

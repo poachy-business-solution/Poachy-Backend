@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[ObservedBy([SaleRefundObserver::class])]
 class SaleRefund extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'sale_refunds';
 
@@ -92,11 +92,11 @@ class SaleRefund extends Model
         parent::boot();
 
         static::creating(function ($refund) {
-            if (!$refund->refund_number) {
+            if (! $refund->refund_number) {
                 $refund->refund_number = self::generateRefundNumber($refund->store_id);
             }
 
-            if (!$refund->refund_date) {
+            if (! $refund->refund_date) {
                 $refund->refund_date = now()->toDateString();
             }
         });
@@ -147,7 +147,7 @@ class SaleRefund extends Model
 
     public function getFormattedAmountAttribute(): string
     {
-        return 'KES ' . number_format($this->refund_amount, 2);
+        return 'KES '.number_format($this->refund_amount, 2);
     }
 
     public function getRefundMethodLabelAttribute(): string

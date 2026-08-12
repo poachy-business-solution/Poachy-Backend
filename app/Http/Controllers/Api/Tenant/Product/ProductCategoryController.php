@@ -10,7 +10,6 @@ use App\Http\Resources\Tenant\Product\ProductCategoryResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Product\ProductCategoryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ProductCategoryController extends Controller
 {
@@ -25,81 +24,102 @@ class ProductCategoryController extends Controller
      *     description="Retrieves a list of categories with optional filtering and relationship loading. Can return paginated or non-paginated results.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="parent_id",
      *         in="query",
      *         description="Filter by parent category ID. Use 'null' for root categories",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example=1
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search categories by name",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Electronics"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_children",
      *         in="query",
      *         description="Include child categories",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_parent",
      *         in="query",
      *         description="Include parent category",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="with_products",
      *         in="query",
      *         description="Include products in each category",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="paginate",
      *         in="query",
      *         description="Enable pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100),
      *         example=15
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Categories retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Categories retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Electronics"),
      *                     @OA\Property(property="slug", type="string", example="electronics"),
@@ -182,6 +202,7 @@ class ProductCategoryController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -214,7 +235,7 @@ class ProductCategoryController extends Controller
                             'total' => $categories->total(),
                             'from' => $categories->firstItem(),
                             'to' => $categories->lastItem(),
-                        ]
+                        ],
                     ]
                 );
             }
@@ -225,7 +246,7 @@ class ProductCategoryController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve categories: ' . $e->getMessage()
+                'Failed to retrieve categories: '.$e->getMessage()
             );
         }
     }
@@ -237,10 +258,13 @@ class ProductCategoryController extends Controller
      *     description="Creates a new product category. Can be a root category or a subcategory by providing parent_id. Slug is auto-generated if not provided.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name"},
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, description="Category name", example="Fashion"),
      *             @OA\Property(property="slug", type="string", maxLength=255, description="Optional category slug. Auto-generated if not provided", example="fashion"),
      *             @OA\Property(property="description", type="string", description="Optional category description", example="Clothing, footwear, and wearable accessories.."),
@@ -249,10 +273,13 @@ class ProductCategoryController extends Controller
      *             @OA\Property(property="is_active", type="boolean", description="Optional active status (default: true)", example=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Category created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category created successfully"),
      *             @OA\Property(
@@ -301,6 +328,7 @@ class ProductCategoryController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -324,7 +352,7 @@ class ProductCategoryController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to create category: ' . $e->getMessage()
+                'Failed to create category: '.$e->getMessage()
             );
         }
     }
@@ -336,18 +364,23 @@ class ProductCategoryController extends Controller
      *     description="Retrieves detailed information about a specific category including its parent, children, and associated products.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category retrieved successfully"),
      *             @OA\Property(
@@ -369,8 +402,10 @@ class ProductCategoryController extends Controller
      *                 @OA\Property(
      *                     property="children",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=4),
      *                         @OA\Property(property="name", type="string", example="Mobile Phones"),
      *                         @OA\Property(property="slug", type="string", example="mobile-phones"),
@@ -386,8 +421,10 @@ class ProductCategoryController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="object")
      *                 ),
+     *
      *                 @OA\Property(property="product_count", type="integer", example=0),
      *                 @OA\Property(property="has_children", type="boolean", example=true),
      *                 @OA\Property(property="is_root", type="boolean", example=true),
@@ -404,6 +441,7 @@ class ProductCategoryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -411,7 +449,9 @@ class ProductCategoryController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Category not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Category not found")
      *         )
@@ -423,7 +463,7 @@ class ProductCategoryController extends Controller
         try {
             $category = $this->categoryService->getCategoryById($id, true);
 
-            if (!$category) {
+            if (! $category) {
                 return ApiResponse::notFound('Category not found');
             }
 
@@ -433,7 +473,7 @@ class ProductCategoryController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve category: ' . $e->getMessage()
+                'Failed to retrieve category: '.$e->getMessage()
             );
         }
     }
@@ -445,18 +485,23 @@ class ProductCategoryController extends Controller
      *     description="Updates category details. Only provided fields will be updated, other fields remain unchanged.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Category details to update (all fields are optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, description="Category name", example="updated electronics"),
      *             @OA\Property(property="slug", type="string", maxLength=255, description="Category slug", example="updated-electronics"),
      *             @OA\Property(property="description", type="string", description="Category description", example="Updated description"),
@@ -465,10 +510,13 @@ class ProductCategoryController extends Controller
      *             @OA\Property(property="is_active", type="boolean", description="Active status", example=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category updated successfully"),
      *             @OA\Property(
@@ -495,6 +543,7 @@ class ProductCategoryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -522,7 +571,7 @@ class ProductCategoryController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to update category: ' . $e->getMessage()
+                'Failed to update category: '.$e->getMessage()
             );
         }
     }
@@ -534,18 +583,23 @@ class ProductCategoryController extends Controller
      *     description="Activates a category, making it visible and available for use.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category activated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category activated successfully"),
      *             @OA\Property(
@@ -572,6 +626,7 @@ class ProductCategoryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -595,7 +650,7 @@ class ProductCategoryController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to activate category: ' . $e->getMessage()
+                'Failed to activate category: '.$e->getMessage()
             );
         }
     }
@@ -607,18 +662,23 @@ class ProductCategoryController extends Controller
      *     description="Deactivates a category, making it hidden and unavailable for use.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category deactivated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category deactivated successfully"),
      *             @OA\Property(
@@ -645,6 +705,7 @@ class ProductCategoryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -668,7 +729,7 @@ class ProductCategoryController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to deactivate category: ' . $e->getMessage()
+                'Failed to deactivate category: '.$e->getMessage()
             );
         }
     }
@@ -680,18 +741,23 @@ class ProductCategoryController extends Controller
      *     description="Permanently deletes a category. The category must not have any child categories or associated products.",
      *     tags={"Tenant Product Categories"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=6
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category deleted successfully"),
      *             @OA\Property(
@@ -704,6 +770,7 @@ class ProductCategoryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -728,7 +795,7 @@ class ProductCategoryController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to delete category: ' . $e->getMessage()
+                'Failed to delete category: '.$e->getMessage()
             );
         }
     }

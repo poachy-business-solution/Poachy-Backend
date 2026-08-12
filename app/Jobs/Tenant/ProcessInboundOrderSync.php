@@ -35,8 +35,8 @@ class ProcessInboundOrderSync implements ShouldQueue
 
     public function handle(StockReservationService $reservationService): void
     {
-        $orderId        = $this->orderPayload['order_id'];
-        $items          = $this->orderPayload['items'] ?? [];
+        $orderId = $this->orderPayload['order_id'];
+        $items = $this->orderPayload['items'] ?? [];
         $outboundSyncId = $this->orderPayload['_outbound_sync_id'] ?? null;
 
         try {
@@ -48,7 +48,7 @@ class ProcessInboundOrderSync implements ShouldQueue
 
             if ($existingReservations) {
                 Log::info('Reservations already exist for order — skipping (idempotent)', [
-                    'order_id'  => $orderId,
+                    'order_id' => $orderId,
                     'tenant_id' => tenant()->id ?? 'unknown',
                 ]);
                 $this->respondToCentral($orderId, 'confirmed', null, $outboundSyncId);
@@ -70,7 +70,7 @@ class ProcessInboundOrderSync implements ShouldQueue
 
                     foreach ($bundle->items as $bundleItem) {
                         $componentQuantity = $bundleItem->quantity_in_base_uom * (float) $item['quantity'];
-                        $variantId         = $bundleItem->product_variant_id;
+                        $variantId = $bundleItem->product_variant_id;
 
                         $inventory = Inventory::where('product_id', $bundleItem->product_id)
                             ->where('product_variant_id', $variantId)
@@ -93,9 +93,9 @@ class ProcessInboundOrderSync implements ShouldQueue
                         $reservationItems[] = [
                             'product_id' => $bundleItem->product_id,
                             'variant_id' => $variantId,
-                            'quantity'   => $componentQuantity,
-                            'uom_id'     => $bundleItem->product->base_uom_id,
-                            'store_id'   => $inventory->store_id,
+                            'quantity' => $componentQuantity,
+                            'uom_id' => $bundleItem->product->base_uom_id,
+                            'store_id' => $inventory->store_id,
                         ];
                     }
                 } else {
@@ -121,9 +121,9 @@ class ProcessInboundOrderSync implements ShouldQueue
                     $reservationItems[] = [
                         'product_id' => $product->id,
                         'variant_id' => $variantId,
-                        'quantity'   => $item['quantity'],
-                        'uom_id'     => $product->base_uom_id,
-                        'store_id'   => $inventory->store_id,
+                        'quantity' => $item['quantity'],
+                        'uom_id' => $product->base_uom_id,
+                        'store_id' => $inventory->store_id,
                     ];
                 }
             }
@@ -138,9 +138,9 @@ class ProcessInboundOrderSync implements ShouldQueue
             $this->respondToCentral($orderId, 'confirmed', null, $outboundSyncId);
 
             Log::info('Inbound order reservation successful', [
-                'order_id'  => $orderId,
+                'order_id' => $orderId,
                 'tenant_id' => tenant()->id ?? 'unknown',
-                'items'     => count($items),
+                'items' => count($items),
             ]);
         } catch (\Exception $e) {
             // Respond to central with failure — this is normal business flow
@@ -148,7 +148,7 @@ class ProcessInboundOrderSync implements ShouldQueue
 
             Log::info('Inbound order reservation failed — normal business flow', [
                 'order_id' => $orderId,
-                'reason'   => $e->getMessage(),
+                'reason' => $e->getMessage(),
             ]);
         }
     }
@@ -159,24 +159,24 @@ class ProcessInboundOrderSync implements ShouldQueue
         ?string $reason = null,
         ?int $outboundSyncId = null,
     ): void {
-        $centralUrl = config('services.central_api.url') . '/api/v1/central/sync/inbound/order-confirmation';
-        $token      = config('services.central_api.token');
+        $centralUrl = config('services.central_api.url').'/api/v1/central/sync/inbound/order-confirmation';
+        $token = config('services.central_api.token');
 
         try {
             Http::withToken($token)
                 ->timeout(30)
                 ->post($centralUrl, [
-                    'tenant_id'        => tenant()->id ?? null,
-                    'order_id'         => $orderId,
-                    'status'           => $status,
-                    'reason'           => $reason,
+                    'tenant_id' => tenant()->id ?? null,
+                    'order_id' => $orderId,
+                    'status' => $status,
+                    'reason' => $reason,
                     'outbound_sync_id' => $outboundSyncId,
                 ]);
         } catch (\Exception $e) {
             Log::error('Failed to respond to central for order confirmation', [
-                'order_id'         => $orderId,
+                'order_id' => $orderId,
                 'outbound_sync_id' => $outboundSyncId,
-                'error'            => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -185,7 +185,7 @@ class ProcessInboundOrderSync implements ShouldQueue
     {
         Log::error('ProcessInboundOrderSync job failed', [
             'order_id' => $this->orderPayload['order_id'] ?? null,
-            'error'    => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

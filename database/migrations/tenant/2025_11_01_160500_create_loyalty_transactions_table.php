@@ -23,7 +23,7 @@ return new class extends Migration
             $table->date('expires_at')->nullable(); // Points expiry date
             $table->softDeletes();
             $table->timestamps();
-            
+
             $table->index(['customer_id', 'created_at']);
             $table->index(['reference_type', 'reference_id']);
         });

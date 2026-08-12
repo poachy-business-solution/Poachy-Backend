@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Expenses;
 
 use App\Models\Tenant\ExpenseCategory;
 use App\Repositories\Tenant\ExpenseCategoryRepository;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 class ExpenseCategoryService
@@ -15,7 +16,7 @@ class ExpenseCategoryService
     /**
      * Get all categories
      */
-    public function getAllCategories(bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function getAllCategories(bool $activeOnly = false): Collection
     {
         return $this->repository->all($activeOnly);
     }
@@ -23,7 +24,7 @@ class ExpenseCategoryService
     /**
      * Get hierarchical tree
      */
-    public function getCategoryTree(bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function getCategoryTree(bool $activeOnly = false): Collection
     {
         return $this->repository->tree($activeOnly);
     }
@@ -39,7 +40,7 @@ class ExpenseCategoryService
     /**
      * Get children of a category
      */
-    public function getCategoryChildren(int $parentId, bool $activeOnly = false): \Illuminate\Database\Eloquent\Collection
+    public function getCategoryChildren(int $parentId, bool $activeOnly = false): Collection
     {
         return $this->repository->getChildren($parentId, $activeOnly);
     }
@@ -57,7 +58,7 @@ class ExpenseCategoryService
         }
 
         // Validate circular reference
-        if (!empty($data['parent_id'])) {
+        if (! empty($data['parent_id'])) {
             $this->validateParentId($data['parent_id']);
         }
 
@@ -71,12 +72,12 @@ class ExpenseCategoryService
     {
         $category = $this->repository->findById($id);
 
-        if (!$category) {
+        if (! $category) {
             throw new \Exception('Expense category not found.');
         }
 
         // Uppercase code if provided
-        if (!empty($data['code'])) {
+        if (! empty($data['code'])) {
             $data['code'] = strtoupper($data['code']);
         }
 
@@ -97,7 +98,7 @@ class ExpenseCategoryService
     {
         $category = $this->repository->findById($id);
 
-        if (!$category) {
+        if (! $category) {
             throw new \Exception('Expense category not found.');
         }
 
@@ -111,19 +112,19 @@ class ExpenseCategoryService
     {
         $category = $this->repository->findById($id);
 
-        if (!$category) {
+        if (! $category) {
             throw new \Exception('Expense category not found.');
         }
 
         return $this->repository->update($category, [
-            'is_active' => !$category->is_active
+            'is_active' => ! $category->is_active,
         ]);
     }
 
     /**
      * Get recurring-eligible categories
      */
-    public function getRecurringEligibleCategories(bool $activeOnly = true): \Illuminate\Database\Eloquent\Collection
+    public function getRecurringEligibleCategories(bool $activeOnly = true): Collection
     {
         return $this->repository->getRecurringEligible($activeOnly);
     }
@@ -151,8 +152,8 @@ class ExpenseCategoryService
         $code = $baseCode;
         $counter = 1;
 
-        while (!$this->repository->isCodeUnique($code)) {
-            $code = $baseCode . '_' . $counter;
+        while (! $this->repository->isCodeUnique($code)) {
+            $code = $baseCode.'_'.$counter;
             $counter++;
         }
 
@@ -166,11 +167,11 @@ class ExpenseCategoryService
     {
         $parent = $this->repository->findById($parentId);
 
-        if (!$parent) {
+        if (! $parent) {
             throw new \Exception('Parent category not found.');
         }
 
-        if (!$parent->is_active) {
+        if (! $parent->is_active) {
             throw new \Exception('Cannot assign inactive category as parent.');
         }
     }

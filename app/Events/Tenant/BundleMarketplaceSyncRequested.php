@@ -13,7 +13,9 @@ class BundleMarketplaceSyncRequested
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public readonly BundleSyncDTO $bundleDTO;
+
     public readonly string $action;
+
     public readonly int $priority;
 
     /**

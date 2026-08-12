@@ -10,6 +10,7 @@ use App\Events\Tenant\CreditSaleCreated;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\TenantConfiguration;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -45,14 +46,14 @@ class CreditService
      */
     public function validateCreditSale(Customer $customer, float $saleAmount): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return [
                 'valid' => false,
                 'message' => 'Credit sales are not enabled',
             ];
         }
 
-        if (!$customer->is_active) {
+        if (! $customer->is_active) {
             return [
                 'valid' => false,
                 'message' => 'Customer account is inactive',
@@ -81,13 +82,6 @@ class CreditService
 
     /**
      * Create credit sale transaction
-     *
-     * @param Customer $customer
-     * @param float $amount
-     * @param string $referenceType
-     * @param int $referenceId
-     * @param string|null $notes
-     * @return CustomerCreditTransaction
      */
     public function recordCreditSale(
         Customer $customer,
@@ -96,13 +90,13 @@ class CreditService
         int $referenceId,
         ?string $notes = null
     ): CustomerCreditTransaction {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             throw new \RuntimeException('Credit sales are not enabled');
         }
 
         // Validate credit sale
         $validation = $this->validateCreditSale($customer, $amount);
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             event(new CreditLimitExceeded($customer, $amount));
             throw new \RuntimeException($validation['message']);
         }
@@ -139,15 +133,6 @@ class CreditService
 
     /**
      * Record credit payment
-     *
-     * @param Customer $customer
-     * @param float $amount
-     * @param PaymentMethod $paymentMethod
-     * @param string|null $paymentReference
-     * @param string|null $referenceType
-     * @param int|null $referenceId
-     * @param string|null $notes
-     * @return CustomerCreditTransaction
      */
     public function recordPayment(
         Customer $customer,
@@ -158,7 +143,7 @@ class CreditService
         ?int $referenceId = null,
         ?string $notes = null
     ): CustomerCreditTransaction {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             throw new \RuntimeException('Credit sales are not enabled');
         }
 
@@ -221,7 +206,7 @@ class CreditService
         float $amount,
         string $reason
     ): CustomerCreditTransaction {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             throw new \RuntimeException('Credit sales are not enabled');
         }
 
@@ -262,7 +247,7 @@ class CreditService
         float $amount,
         string $reason
     ): CustomerCreditTransaction {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             throw new \RuntimeException('Credit sales are not enabled');
         }
 
@@ -300,9 +285,9 @@ class CreditService
     /**
      * Get overdue customers
      */
-    public function getOverdueCustomers(): \Illuminate\Support\Collection
+    public function getOverdueCustomers(): Collection
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return collect();
         }
 
@@ -325,7 +310,7 @@ class CreditService
      */
     public function getCreditSummary(Customer $customer): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return [
                 'enabled' => false,
             ];
@@ -358,15 +343,15 @@ class CreditService
         $query = CustomerCreditTransaction::query();
 
         // Apply same filters as main query
-        if (!empty($filters['customer_id'])) {
+        if (! empty($filters['customer_id'])) {
             $query->where('customer_id', $filters['customer_id']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 

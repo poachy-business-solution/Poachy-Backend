@@ -61,7 +61,7 @@ class TenantOtpService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             throw ValidationException::withMessages([
                 'otp_code' => ['Invalid or expired OTP. Please request a new one.'],
             ]);
@@ -86,7 +86,7 @@ class TenantOtpService
             $otpRecord->incrementAttempts();
 
             throw ValidationException::withMessages([
-                'otp_code' => ['Invalid OTP code. ' . (3 - $otpRecord->attempts) . ' attempts remaining.'],
+                'otp_code' => ['Invalid OTP code. '.(3 - $otpRecord->attempts).' attempts remaining.'],
             ]);
         }
 
@@ -97,7 +97,6 @@ class TenantOtpService
 
         return $user;
     }
-
 
     /**
      * Generate a random 7-digit OTP code.

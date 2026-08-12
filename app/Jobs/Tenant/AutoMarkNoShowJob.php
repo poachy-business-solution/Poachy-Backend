@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Tenant;
 
+use App\Models\Tenant;
 use App\Services\Tenant\Shift\ShiftAssignmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,10 +16,13 @@ class AutoMarkNoShowJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $timeout = 300;
+
     public $backoff = [60, 120, 300];
 
     protected string $tenantId;
+
     protected int $gracePeriodMinutes;
 
     /**
@@ -39,12 +43,13 @@ class AutoMarkNoShowJob implements ShouldQueue
     public function handle(ShiftAssignmentService $assignmentService): void
     {
         // Initialize tenancy
-        $tenant = \App\Models\Tenant::find($this->tenantId);
+        $tenant = Tenant::find($this->tenantId);
 
-        if (!$tenant) {
+        if (! $tenant) {
             Log::error('Tenant not found for AutoMarkNoShowJob', [
                 'tenant_id' => $this->tenantId,
             ]);
+
             return;
         }
 

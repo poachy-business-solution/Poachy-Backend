@@ -36,103 +36,128 @@ class PromotionController extends Controller
      *     description="Retrieves a paginated list of promotions for the tenant with filtering and sorting capabilities. Returns promotion summary information including status, usage counts, and applicability details.",
      *     operationId="listPromotions",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search term to filter promotions by name, code, or description",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="black")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="promotion_type",
      *         in="query",
      *         description="Filter by promotion type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"percentage_discount", "fixed_discount", "buy_x_get_y"},
      *             example="percentage_discount"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="applicable_to",
      *         in="query",
      *         description="Filter by applicability scope",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"all_products", "specific_products", "specific_categories", "specific_brands"},
      *             example="specific_products"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter promotions applicable to specific store",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="show_in_pos",
      *         in="query",
      *         description="Filter promotions that should be shown in POS",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="show_on_website",
      *         in="query",
      *         description="Filter promotions that should be shown on website",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"name", "code", "start_date", "end_date", "display_priority", "created_at"},
      *             example="display_priority"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"asc", "desc"},
      *             example="desc"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=15, example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1, example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotions retrieved successfully"),
      *             @OA\Property(
@@ -141,8 +166,10 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=6),
      *                         @OA\Property(property="name", type="string", example="VIP Exclusive - 25% Off"),
      *                         @OA\Property(property="code", type="string", example="VIP25"),
@@ -190,10 +217,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -206,10 +236,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -222,10 +255,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -272,11 +308,14 @@ class PromotionController extends Controller
      *     description="Creates a new promotion for the tenant. Supports multiple promotion types: percentage discount, fixed discount, buy X get Y, and can be scoped to specific products, categories, brands, stores, or customer groups.",
      *     operationId="createPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Promotion creation data",
+     *
      *         @OA\JsonContent(
      *             required={"name", "code", "promotion_type", "start_date", "end_date", "applicable_to"},
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -404,12 +443,14 @@ class PromotionController extends Controller
      *                 type="array",
      *                 nullable=true,
      *                 description="Days of week when promotion is active",
+     *
      *                 @OA\Items(
      *                     type="string",
      *                     enum={"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
      *                 ),
      *                 example={"friday", "saturday", "sunday"}
      *             ),
+     *
      *             @OA\Property(
      *                 property="active_time_start",
      *                 type="string",
@@ -433,17 +474,21 @@ class PromotionController extends Controller
      *                 type="array",
      *                 nullable=true,
      *                 description="Store IDs where promotion is applicable. Null means all stores",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 3, 5}
      *             ),
+     *
      *             @OA\Property(
      *                 property="applicable_customer_group_ids",
      *                 type="array",
      *                 nullable=true,
      *                 description="Customer group IDs eligible for promotion. Null means all customers",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={2, 4}
      *             ),
+     *
      *             @OA\Property(
      *                 property="applicable_to",
      *                 type="string",
@@ -499,9 +544,11 @@ class PromotionController extends Controller
      *                     property="products",
      *                     type="array",
      *                     description="Product-specific applicability. Required when applicable_to is 'specific_products'",
+     *
      *                     @OA\Items(
      *                         type="object",
      *                         required={"product_id"},
+     *
      *                         @OA\Property(
      *                             property="product_id",
      *                             type="integer",
@@ -521,23 +568,29 @@ class PromotionController extends Controller
      *                     property="categories",
      *                     type="array",
      *                     description="Category IDs. Required when applicable_to is 'specific_categories'",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={5, 8, 12}
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="brands",
      *                     type="array",
      *                     description="Brand IDs. Required when applicable_to is 'specific_brands'",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={3, 7}
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Promotion created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion created successfully"),
      *             @OA\Property(
@@ -566,9 +619,11 @@ class PromotionController extends Controller
      *                     property="active_days",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="string"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(property="active_days_formatted", type="string", nullable=true, example=null),
      *                 @OA\Property(property="active_time_start", type="string", nullable=true, example=null),
      *                 @OA\Property(property="active_time_end", type="string", nullable=true, example=null),
@@ -577,16 +632,20 @@ class PromotionController extends Controller
      *                     property="applicable_store_ids",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="integer"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_customer_group_ids",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="integer"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
      *                 @OA\Property(property="show_on_website", type="boolean", example=true),
@@ -608,28 +667,36 @@ class PromotionController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(type="object"),
      *                         example={}
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(type="object"),
      *                         example={}
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(type="object"),
      *                         example={}
      *                     )
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="counts",
      *                     type="array",
+     *
      *                     @OA\Items(type="object"),
      *                     example={}
      *                 ),
+     *
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-04T12:02:07.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-01-04T12:02:07.000000Z")
      *             ),
@@ -643,10 +710,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation failed"),
      *             @OA\Property(
@@ -655,14 +725,18 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The code has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="end_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The end date field must be a date after start date.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -673,10 +747,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -689,10 +766,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -705,10 +785,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -741,17 +824,22 @@ class PromotionController extends Controller
      *     description="Retrieves detailed information about a specific promotion including all configuration, applicability rules, usage statistics, and status indicators. Returns comprehensive data about products, categories, and brands associated with the promotion.",
      *     operationId="showPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion retrieved successfully"),
      *             @OA\Property(
@@ -781,9 +869,11 @@ class PromotionController extends Controller
      *                     type="array",
      *                     nullable=true,
      *                     description="Days of week when promotion is active",
+     *
      *                     @OA\Items(type="string"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(property="active_days_formatted", type="string", nullable=true, example=null, description="Human-readable active days (e.g., 'Friday, Saturday, Sunday')"),
      *                 @OA\Property(property="active_time_start", type="string", nullable=true, example=null),
      *                 @OA\Property(property="active_time_end", type="string", nullable=true, example=null),
@@ -792,16 +882,20 @@ class PromotionController extends Controller
      *                     property="applicable_store_ids",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="integer"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_customer_group_ids",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="integer"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
      *                 @OA\Property(property="show_on_website", type="boolean", example=true),
@@ -825,8 +919,10 @@ class PromotionController extends Controller
      *                         property="products",
      *                         type="array",
      *                         description="Products this promotion applies to (empty for all_products)",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="product_id", type="integer", example=15),
      *                             @OA\Property(property="product_name", type="string", example="Samsung Galaxy S24"),
      *                             @OA\Property(property="product_sku", type="string", example="SAMS24-128GB"),
@@ -839,8 +935,10 @@ class PromotionController extends Controller
      *                         property="categories",
      *                         type="array",
      *                         description="Categories this promotion applies to",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="category_id", type="integer", example=5),
      *                             @OA\Property(property="category_name", type="string", example="Electronics"),
      *                             @OA\Property(property="category_slug", type="string", example="electronics")
@@ -851,8 +949,10 @@ class PromotionController extends Controller
      *                         property="brands",
      *                         type="array",
      *                         description="Brands this promotion applies to",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="brand_id", type="integer", example=3),
      *                             @OA\Property(property="brand_name", type="string", example="Samsung"),
      *                             @OA\Property(property="brand_slug", type="string", example="samsung")
@@ -881,10 +981,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -897,10 +1000,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -913,10 +1019,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -929,10 +1038,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -951,7 +1063,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -969,17 +1081,22 @@ class PromotionController extends Controller
      *     description="Updates an existing promotion. All fields are optional - only provided fields will be updated. Cannot update promotions that have already been used unless changing non-critical fields like display settings. Supports partial updates for all promotion types and applicability configurations.",
      *     operationId="updatePromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Promotion update data (all fields optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -1107,12 +1224,14 @@ class PromotionController extends Controller
      *                 type="array",
      *                 nullable=true,
      *                 description="Days of week when promotion is active",
+     *
      *                 @OA\Items(
      *                     type="string",
      *                     enum={"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
      *                 ),
      *                 example={"friday", "saturday"}
      *             ),
+     *
      *             @OA\Property(
      *                 property="active_time_start",
      *                 type="string",
@@ -1136,17 +1255,21 @@ class PromotionController extends Controller
      *                 type="array",
      *                 nullable=true,
      *                 description="Store IDs where promotion applies",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 2, 3}
      *             ),
+     *
      *             @OA\Property(
      *                 property="applicable_customer_group_ids",
      *                 type="array",
      *                 nullable=true,
      *                 description="Customer group IDs eligible for promotion",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 3}
      *             ),
+     *
      *             @OA\Property(
      *                 property="applicable_to",
      *                 type="string",
@@ -1202,9 +1325,11 @@ class PromotionController extends Controller
      *                     property="products",
      *                     type="array",
      *                     description="Product-specific applicability",
+     *
      *                     @OA\Items(
      *                         type="object",
      *                         required={"product_id"},
+     *
      *                         @OA\Property(property="product_id", type="integer", example=15),
      *                         @OA\Property(property="product_variant_id", type="integer", nullable=true, example=23)
      *                     )
@@ -1213,23 +1338,29 @@ class PromotionController extends Controller
      *                     property="categories",
      *                     type="array",
      *                     description="Category IDs",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={5, 8}
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="brands",
      *                     type="array",
      *                     description="Brand IDs",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={3}
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion updated successfully"),
      *             @OA\Property(
@@ -1258,9 +1389,11 @@ class PromotionController extends Controller
      *                     property="active_days",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="string"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(property="active_days_formatted", type="string", nullable=true, example=null),
      *                 @OA\Property(property="active_time_start", type="string", nullable=true, example=null),
      *                 @OA\Property(property="active_time_end", type="string", nullable=true, example=null),
@@ -1269,16 +1402,20 @@ class PromotionController extends Controller
      *                     property="applicable_store_ids",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="integer"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_customer_group_ids",
      *                     type="array",
      *                     nullable=true,
+     *
      *                     @OA\Items(type="integer"),
      *                     example=null
      *                 ),
+     *
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
      *                 @OA\Property(property="show_on_website", type="boolean", example=true),
@@ -1315,10 +1452,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1331,10 +1471,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation failed"),
      *             @OA\Property(
@@ -1343,14 +1486,18 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The code has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="end_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The end date field must be a date after start date.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1361,10 +1508,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1377,10 +1527,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1393,10 +1546,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1415,7 +1571,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -1435,17 +1591,22 @@ class PromotionController extends Controller
      *     description="Soft deletes a promotion. The promotion will be marked as deleted but retained in the database for audit purposes. Deletion is only allowed for promotions that have not been used or have zero usage count. Once deleted, the promotion cannot be recovered and will not appear in any listings.",
      *     operationId="deletePromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID to delete",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=6)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion deleted successfully"),
      *             @OA\Property(
@@ -1458,10 +1619,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1474,10 +1638,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1490,10 +1657,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1506,10 +1676,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=409,
      *         description="Conflict - Cannot delete promotion that has been used",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot delete promotion that has already been used"),
      *             @OA\Property(
@@ -1528,10 +1701,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1550,7 +1726,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -1567,17 +1743,22 @@ class PromotionController extends Controller
      *     description="Activates a previously deactivated promotion by setting is_active to true. Once activated, the promotion becomes available for use in POS and/or eCommerce systems (depending on show_in_pos and show_on_website settings) and will be included in active promotion queries. The promotion must be within its validity period (start_date to end_date) to be effectively usable after activation. Returns the complete updated promotion data with all status flags.",
      *     operationId="activatePromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID to activate",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion activated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion activated successfully"),
      *             @OA\Property(
@@ -1626,10 +1807,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1642,10 +1826,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1658,10 +1845,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1674,10 +1864,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=409,
      *         description="Conflict - Cannot activate expired or exhausted promotion",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot activate promotion that has expired or reached usage limit"),
      *             @OA\Property(
@@ -1698,10 +1891,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1720,7 +1916,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -1740,17 +1936,22 @@ class PromotionController extends Controller
      *     description="Deactivates an active promotion by setting is_active to false. Once deactivated, the promotion will no longer be available for use in POS or eCommerce systems and will not appear in active promotion queries. The promotion can be reactivated later using the activate endpoint. Deactivation is preferred over deletion for promotions that may be needed again or have usage history. Returns the complete updated promotion data with all status flags.",
      *     operationId="deactivatePromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID to deactivate",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion deactivated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion deactivated successfully"),
      *             @OA\Property(
@@ -1799,10 +2000,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1815,10 +2019,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1831,10 +2038,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -1847,10 +2057,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1869,7 +2082,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -1889,26 +2102,33 @@ class PromotionController extends Controller
      *     description="Attaches one or more products to a promotion. Supports attaching base products (variant_id=null) or specific product variants. Each product can be attached with or without a specific variant. If product_variant_id is null, the promotion applies to the base product. If specified, the promotion applies only to that specific variant. Multiple products can be attached in a single request.",
      *     operationId="attachProductsToPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Products to attach to the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"products"},
+     *
      *             @OA\Property(
      *                 property="products",
      *                 type="array",
      *                 description="Array of products to attach (minimum 1 product required)",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"product_id"},
+     *
      *                     @OA\Property(
      *                         property="product_id",
      *                         type="integer",
@@ -1930,10 +2150,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Products attached to promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products attached to promotion successfully"),
      *             @OA\Property(
@@ -1988,8 +2211,10 @@ class PromotionController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung Galaxy A54 5G 128GB"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-SAMS-VTFM"),
@@ -2013,10 +2238,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -2029,10 +2257,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2041,19 +2272,25 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one product is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="products.0.product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected product does not exist.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="products.0.product_variant_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected product variant does not exist.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2064,10 +2301,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2080,10 +2320,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -2096,10 +2339,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2118,7 +2364,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -2138,24 +2384,31 @@ class PromotionController extends Controller
      *     description="Removes a specific product from a promotion's applicability. This detaches ALL variants of the specified product. If you need to remove specific variants only, they must be detached individually through variant-specific operations. After detachment, the promotion will no longer apply to this product. Returns the updated promotion with modified applicability.",
      *     operationId="detachProductFromPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="productId",
      *         in="path",
      *         description="Product ID to detach from promotion",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product detached from promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product detached from promotion successfully"),
      *             @OA\Property(
@@ -2211,8 +2464,10 @@ class PromotionController extends Controller
      *                         property="products",
      *                         type="array",
      *                         description="Remaining attached products",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=4),
      *                             @OA\Property(property="name", type="string", example="TCL 55 4K UHD Smart LED TV"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT"),
@@ -2236,10 +2491,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion or product not found, or product not attached to promotion",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -2252,10 +2510,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2268,10 +2529,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -2284,10 +2548,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2306,7 +2573,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -2326,32 +2593,41 @@ class PromotionController extends Controller
      *     description="Attaches one or more product categories to a promotion. When categories are attached, the promotion applies to all products within those categories. Categories apply to all products and variants within them - there is no variant-level filtering for category-based promotions. Multiple categories can be attached in a single request. Requires at least one category ID.",
      *     operationId="attachCategoriesToPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Categories to attach to the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"category_ids"},
+     *
      *             @OA\Property(
      *                 property="category_ids",
      *                 type="array",
      *                 description="Array of category IDs to attach (minimum 1 category required)",
      *                 minItems=1,
+     *
      *                 @OA\Items(type="integer"),
      *                 example={5, 8, 12, 20}
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Categories attached to promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Categories attached to promotion successfully"),
      *             @OA\Property(
@@ -2407,8 +2683,10 @@ class PromotionController extends Controller
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=5),
      *                             @OA\Property(property="name", type="string", example="Home & Living"),
      *                             @OA\Property(property="slug", type="string", example="home-living")
@@ -2430,10 +2708,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -2446,10 +2727,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2458,14 +2742,18 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="category_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one category is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="category_ids.0",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected category does not exist.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2476,10 +2764,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2492,10 +2783,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -2508,10 +2802,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2530,7 +2827,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -2550,24 +2847,31 @@ class PromotionController extends Controller
      *     description="Removes a specific product category from a promotion's applicability. After detachment, the promotion will no longer apply to products within this category. Returns the updated promotion with modified category applicability. If this was the only category attached, the categories array will be empty.",
      *     operationId="detachCategoryFromPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="categoryId",
      *         in="path",
      *         description="Category ID to detach from promotion",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=5)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category detached from promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category detached from promotion successfully"),
      *             @OA\Property(
@@ -2624,8 +2928,10 @@ class PromotionController extends Controller
      *                         property="categories",
      *                         type="array",
      *                         description="Remaining attached categories",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=8),
      *                             @OA\Property(property="name", type="string", example="Hospitality & Food Service"),
      *                             @OA\Property(property="slug", type="string", example="hospitality-food-service")
@@ -2647,10 +2953,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion or category not found, or category not attached to promotion",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -2663,10 +2972,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2679,10 +2991,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -2695,10 +3010,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2717,7 +3035,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -2737,32 +3055,41 @@ class PromotionController extends Controller
      *     description="Attaches one or more product brands to a promotion. When brands are attached, the promotion applies to all products of those brands. Brand-based promotions apply to all products and variants of the specified brands - there is no product or variant-level filtering. Multiple brands can be attached in a single request. Requires at least one brand ID.",
      *     operationId="attachBrandsToPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Brands to attach to the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"brand_ids"},
+     *
      *             @OA\Property(
      *                 property="brand_ids",
      *                 type="array",
      *                 description="Array of brand IDs to attach (minimum 1 brand required)",
      *                 minItems=1,
+     *
      *                 @OA\Items(type="integer"),
      *                 example={2, 6, 9}
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brands attached to promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brands attached to promotion successfully"),
      *             @OA\Property(
@@ -2819,8 +3146,10 @@ class PromotionController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=2),
      *                             @OA\Property(property="name", type="string", example="Apple"),
      *                             @OA\Property(property="slug", type="string", example="apple")
@@ -2841,10 +3170,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -2857,10 +3189,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2869,14 +3204,18 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="brand_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one brand is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="brand_ids.0",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected brand does not exist.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2887,10 +3226,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2903,10 +3245,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -2919,10 +3264,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2941,7 +3289,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -2961,24 +3309,31 @@ class PromotionController extends Controller
      *     description="Removes a specific product brand from a promotion's applicability. After detachment, the promotion will no longer apply to products of this brand. Returns the updated promotion with modified brand applicability. If this was the only brand attached, the brands array will be empty.",
      *     operationId="detachBrandFromPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="brandId",
      *         in="path",
      *         description="Brand ID to detach from promotion",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=9)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand detached from promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand detached from promotion successfully"),
      *             @OA\Property(
@@ -3036,8 +3391,10 @@ class PromotionController extends Controller
      *                         property="brands",
      *                         type="array",
      *                         description="Remaining attached brands",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=2),
      *                             @OA\Property(property="name", type="string", example="Apple"),
      *                             @OA\Property(property="slug", type="string", example="apple")
@@ -3058,10 +3415,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion or brand not found, or brand not attached to promotion",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -3074,10 +3434,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -3090,10 +3453,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -3106,10 +3472,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -3128,7 +3497,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -3148,26 +3517,33 @@ class PromotionController extends Controller
      *     description="Attaches multiple products to a promotion in a single operation. This is the recommended approach for attaching large numbers of products efficiently. Supports attaching base products and specific product variants. Multiple instances of the same product with different variants can be attached. This operation is idempotent - products already attached will not cause errors.",
      *     operationId="bulkAttachProductsToPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Products to bulk attach to the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"products"},
+     *
      *             @OA\Property(
      *                 property="products",
      *                 type="array",
      *                 description="Array of products to attach. Can include same product with different variants",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"product_id"},
+     *
      *                     @OA\Property(
      *                         property="product_id",
      *                         type="integer",
@@ -3193,10 +3569,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Products bulk attached to promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products bulk attached to promotion successfully"),
      *             @OA\Property(
@@ -3252,8 +3631,10 @@ class PromotionController extends Controller
      *                         property="products",
      *                         type="array",
      *                         description="Complete list of attached products with base products and variants",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer"),
      *                             @OA\Property(property="name", type="string"),
      *                             @OA\Property(property="sku", type="string"),
@@ -3277,10 +3658,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -3293,10 +3677,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -3305,19 +3692,25 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one product is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="products.0.product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected product does not exist.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="products.0.product_variant_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected product variant does not exist.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -3328,10 +3721,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -3344,10 +3740,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -3360,10 +3759,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -3382,7 +3784,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -3402,32 +3804,41 @@ class PromotionController extends Controller
      *     description="Removes multiple products from a promotion in a single operation. This is the recommended approach for detaching large numbers of products efficiently. When a product ID is provided, ALL variants and the base product entry for that product are removed from the promotion. This is a complete removal operation for specified product IDs. This operation is idempotent - products not currently attached will be silently ignored without causing errors.",
      *     operationId="bulkDetachProductsFromPromotion",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Product IDs to bulk detach from the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"product_ids"},
+     *
      *             @OA\Property(
      *                 property="product_ids",
      *                 type="array",
      *                 description="Array of product IDs to detach. All variants of these products will also be removed",
      *                 minItems=1,
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 2, 3, 4}
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Products bulk detached from promotion successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products bulk detached from promotion successfully"),
      *             @OA\Property(
@@ -3483,15 +3894,19 @@ class PromotionController extends Controller
      *                         property="products",
      *                         type="array",
      *                         description="Empty array if all products were removed, or remaining products if partial detachment",
+     *
      *                         @OA\Items(type="object"),
      *                         example={}
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
      *                         description="Attached categories remain unchanged",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=8),
      *                             @OA\Property(property="name", type="string", example="Hospitality & Food Service"),
      *                             @OA\Property(property="slug", type="string", example="hospitality-food-service")
@@ -3501,8 +3916,10 @@ class PromotionController extends Controller
      *                         property="brands",
      *                         type="array",
      *                         description="Attached brands remain unchanged",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=2),
      *                             @OA\Property(property="name", type="string", example="Apple"),
      *                             @OA\Property(property="slug", type="string", example="apple")
@@ -3523,10 +3940,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Promotion not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -3539,10 +3959,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -3551,14 +3974,18 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="product_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one product is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="product_ids.0",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Selected product does not exist.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -3569,10 +3996,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -3585,10 +4015,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -3601,10 +4034,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -3623,7 +4059,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -3642,31 +4078,40 @@ class PromotionController extends Controller
      *     description="Updates the list of stores where a specific promotion is applicable",
      *     operationId="updatePromotionStores",
      *     tags={"Tenant - Promotions"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=5)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Store IDs to associate with the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"store_ids"},
+     *
      *             @OA\Property(
      *                 property="store_ids",
      *                 type="array",
      *                 description="Array of store IDs where the promotion should be applicable",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 2}
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion applicable stores updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion applicable stores updated successfully"),
      *             @OA\Property(
@@ -3699,9 +4144,11 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="applicable_store_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(property="applicable_customer_group_ids", type="array", nullable=true, @OA\Items(type="integer"), example=null),
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
@@ -3739,7 +4186,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -3758,31 +4205,40 @@ class PromotionController extends Controller
      *     description="Updates the list of customer groups that a specific promotion is applicable to",
      *     operationId="updatePromotionCustomerGroups",
      *     tags={"Tenant - Promotions"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=5)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Customer group IDs to associate with the promotion",
+     *
      *         @OA\JsonContent(
      *             required={"customer_group_ids"},
+     *
      *             @OA\Property(
      *                 property="customer_group_ids",
      *                 type="array",
      *                 description="Array of customer group IDs that the promotion should be applicable to",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 2}
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion applicable customer groups updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion applicable customer groups updated successfully"),
      *             @OA\Property(
@@ -3815,15 +4271,19 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="applicable_store_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_customer_group_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
      *                 @OA\Property(property="show_on_website", type="boolean", example=true),
@@ -3860,7 +4320,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -3879,20 +4339,26 @@ class PromotionController extends Controller
      *     description="Uploads a new banner image for a specific promotion",
      *     operationId="uploadPromotionBanner",
      *     tags={"Tenant - Promotions"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Banner image file",
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"banner_image"},
+     *
      *                 @OA\Property(
      *                     property="banner_image",
      *                     type="string",
@@ -3902,10 +4368,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion banner updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion banner updated successfully"),
      *             @OA\Property(
@@ -3938,15 +4407,19 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="applicable_store_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_customer_group_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
      *                 @OA\Property(property="show_on_website", type="boolean", example=true),
@@ -3983,7 +4456,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -4003,17 +4476,22 @@ class PromotionController extends Controller
      *     description="Deletes the banner image associated with a specific promotion",
      *     operationId="deletePromotionBanner",
      *     tags={"Tenant - Promotions"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Promotion ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Promotion banner removed successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Promotion banner removed successfully"),
      *             @OA\Property(
@@ -4046,15 +4524,19 @@ class PromotionController extends Controller
      *                 @OA\Property(
      *                     property="applicable_store_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_customer_group_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 2}
      *                 ),
+     *
      *                 @OA\Property(property="applicable_to", type="string", example="all_products"),
      *                 @OA\Property(property="applicable_to_label", type="string", example="All Products"),
      *                 @OA\Property(property="show_on_website", type="boolean", example=true),
@@ -4091,7 +4573,7 @@ class PromotionController extends Controller
     {
         $promotion = $this->promotionService->getPromotionById($id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             return ApiResponse::notFound('Promotion not found');
         }
 
@@ -4111,25 +4593,32 @@ class PromotionController extends Controller
      *     description="Retrieves all promotions that are currently active and can be used right now. Filters promotions based on current date/time, active status, and validity period. Optionally filters by store if store_id is provided. Returns a simplified promotion data structure optimized for real-time application in POS and checkout systems.",
      *     operationId="getActivePromotions",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter promotions applicable to specific store. If not provided, returns promotions for all stores or store-agnostic promotions",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Active promotions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Active promotions retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="List of currently active promotions sorted by display priority (descending)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=4),
      *                     @OA\Property(property="name", type="string", example="Weekend Brand Sale"),
      *                     @OA\Property(property="code", type="string", example="WEEKEND20"),
@@ -4159,10 +4648,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -4175,10 +4667,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -4191,10 +4686,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -4229,25 +4727,32 @@ class PromotionController extends Controller
      *     description="Retrieves promotions that are marked as featured and currently active. Featured promotions are typically highlighted in storefronts, marketing materials, and promotional banners. Returns promotions sorted by display priority with complete status and usage information. Optionally filters by store.",
      *     operationId="getFeaturedPromotions",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter promotions applicable to specific store. If not provided, returns featured promotions for all stores",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Featured promotions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Featured promotions retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="List of featured promotions sorted by display priority (descending)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=4),
      *                     @OA\Property(property="name", type="string", example="Weekend Brand Sale"),
      *                     @OA\Property(property="code", type="string", example="WEEKEND20"),
@@ -4292,10 +4797,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -4308,10 +4816,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -4324,10 +4835,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -4362,25 +4876,32 @@ class PromotionController extends Controller
      *     description="Retrieves all promotions that are enabled for display and usage in Point of Sale (POS) systems. Returns currently active promotions with show_in_pos flag set to true. Includes complete promotion details, status flags, and usage information needed for POS checkout operations. Optionally filters by specific store.",
      *     operationId="getPOSPromotions",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter promotions applicable to specific store. If not provided, returns POS promotions for all stores",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="POS promotions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="POS promotions retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="List of POS-enabled promotions sorted by display priority (descending)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=4),
      *                     @OA\Property(property="name", type="string", example="Weekend Brand Sale"),
      *                     @OA\Property(property="code", type="string", example="WEEKEND20"),
@@ -4425,10 +4946,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -4441,10 +4965,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -4457,10 +4984,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -4495,25 +5025,32 @@ class PromotionController extends Controller
      *     description="Retrieves all promotions that are enabled for display and usage on the tenant's eCommerce website. Returns currently active promotions with show_on_website flag set to true. Includes complete promotion details, status flags, and usage information needed for online checkout and promotional displays. Optionally filters by specific store for multi-location businesses.",
      *     operationId="getWebsitePromotions",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter promotions applicable to specific store. If not provided, returns website promotions for all stores",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Website promotions retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Website promotions retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="List of website-enabled promotions sorted by display priority (descending)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=4),
      *                     @OA\Property(property="name", type="string", example="Weekend Brand Sale"),
      *                     @OA\Property(property="code", type="string", example="WEEKEND20"),
@@ -4558,10 +5095,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -4574,10 +5114,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -4590,10 +5133,13 @@ class PromotionController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(

@@ -33,11 +33,11 @@ class ShoppingCartItem extends Model
         return [
             'tenant_product_id' => 'integer',
             'tenant_variant_id' => 'integer',
-            'quantity'          => 'decimal:4',
-            'unit_price'        => 'decimal:2',
-            'current_price'     => 'decimal:2',
-            'added_at'          => 'datetime',
-            'updated_at'        => 'datetime',
+            'quantity' => 'decimal:4',
+            'unit_price' => 'decimal:2',
+            'current_price' => 'decimal:2',
+            'added_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
 

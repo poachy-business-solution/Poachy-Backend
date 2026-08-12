@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index('slug');
             $table->index(['business_type_id', 'is_active']);
         });

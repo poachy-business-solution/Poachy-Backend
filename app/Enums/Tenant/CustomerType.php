@@ -27,7 +27,7 @@ enum CustomerType: string
      */
     public static function toArray(): array
     {
-        return array_map(fn($case) => $case->value, self::cases());
+        return array_map(fn ($case) => $case->value, self::cases());
     }
 
     /**
@@ -36,7 +36,7 @@ enum CustomerType: string
     public static function options(): array
     {
         return array_map(
-            fn($case) => ['value' => $case->value, 'label' => $case->label()],
+            fn ($case) => ['value' => $case->value, 'label' => $case->label()],
             self::cases()
         );
     }

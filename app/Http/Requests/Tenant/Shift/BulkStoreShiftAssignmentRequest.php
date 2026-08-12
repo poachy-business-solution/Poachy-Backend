@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tenant\Shift;
 
 use App\Models\Tenant\ShiftAssignment;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -112,12 +113,12 @@ class BulkStoreShiftAssignmentRequest extends FormRequest
      */
     protected function validateDateRange($validator): void
     {
-        if (!$this->start_date || !$this->end_date) {
+        if (! $this->start_date || ! $this->end_date) {
             return;
         }
 
-        $start = \Carbon\Carbon::parse($this->start_date);
-        $end = \Carbon\Carbon::parse($this->end_date);
+        $start = Carbon::parse($this->start_date);
+        $end = Carbon::parse($this->end_date);
 
         $daysDifference = $start->diffInDays($end);
 
@@ -136,7 +137,7 @@ class BulkStoreShiftAssignmentRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Set default recurrence pattern if not provided
-        if (!$this->has('recurrence_pattern')) {
+        if (! $this->has('recurrence_pattern')) {
             $this->merge(['recurrence_pattern' => 'weekly']);
         }
     }
@@ -149,7 +150,7 @@ class BulkStoreShiftAssignmentRequest extends FormRequest
         $validated = parent::validated($key, $default);
 
         // Ensure recurrence_pattern has default
-        if (!isset($validated['recurrence_pattern'])) {
+        if (! isset($validated['recurrence_pattern'])) {
             $validated['recurrence_pattern'] = 'weekly';
         }
 

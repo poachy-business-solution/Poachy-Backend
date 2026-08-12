@@ -28,7 +28,7 @@ class CustomerCreditTransactionResource extends JsonResource
             'reference_id' => $this->reference_id,
             'reference' => $this->when(
                 $this->relationLoaded('reference'),
-                fn() => $this->formatReference()
+                fn () => $this->formatReference()
             ),
             'payment_method' => $this->payment_method?->value,
             'payment_reference' => $this->payment_reference,
@@ -39,7 +39,7 @@ class CustomerCreditTransactionResource extends JsonResource
             'is_credit' => $this->is_credit,
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
-            'deleted_at' => $this->when($this->deleted_at, fn() => $this->deleted_at->toIso8601String()),
+            'deleted_at' => $this->when($this->deleted_at, fn () => $this->deleted_at->toIso8601String()),
         ];
     }
 
@@ -48,7 +48,7 @@ class CustomerCreditTransactionResource extends JsonResource
      */
     private function formatReference(): ?array
     {
-        if (!$this->reference) {
+        if (! $this->reference) {
             return null;
         }
 

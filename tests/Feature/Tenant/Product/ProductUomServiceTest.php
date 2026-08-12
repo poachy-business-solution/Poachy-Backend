@@ -3,7 +3,6 @@
 namespace Tests\Feature\Tenant\Product;
 
 use App\Models\Tenant\Product;
-use App\Models\Tenant\ProductUom;
 use App\Services\Tenant\Product\ProductUomService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Schema\Blueprint;
@@ -40,7 +39,7 @@ class ProductUomServiceTest extends TestCase
 
     private function makeService(): ProductUomService
     {
-        return new ProductUomService();
+        return new ProductUomService;
     }
 
     private function createProduct(array $overrides = []): Product

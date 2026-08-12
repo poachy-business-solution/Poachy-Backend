@@ -6,6 +6,8 @@ use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
@@ -16,8 +18,11 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
+
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public $backoff = [60, 300, 900]; // 1min, 5min, 15min
 
     public function __construct(
@@ -28,7 +33,7 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
     {
         $syncQueue = SyncQueueOutbound::find($this->syncQueueId);
 
-        if (!$syncQueue) {
+        if (! $syncQueue) {
             Log::error('SyncQueueOutbound record not found', [
                 'sync_queue_id' => $this->syncQueueId,
             ]);
@@ -55,7 +60,7 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
         }
 
         $workerId = getmypid();
-        if (!$syncQueue->acquireLock($workerId)) {
+        if (! $syncQueue->acquireLock($workerId)) {
             Log::info('Could not acquire lock, another worker processing', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
@@ -131,7 +136,7 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
 
     protected function sendToCentralAPI(SyncQueueOutbound $syncQueue): array
     {
-        $centralApiUrl = config('services.central_api.url') . '/api/v1/central/sync/inbound/inventory-count';
+        $centralApiUrl = config('services.central_api.url').'/api/v1/central/sync/inbound/inventory-count';
         $apiToken = config('services.central_api.token');
 
         Log::debug('Sending inventory count sync to central API', [
@@ -156,7 +161,7 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
                 'idempotency_key' => $syncQueue->idempotency_key,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new \RuntimeException(
                 "Central API request failed: {$response->status()} - {$response->body()}"
             );
@@ -164,9 +169,9 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
 
         $responseData = $response->json();
 
-        if (!isset($responseData['success']) || !$responseData['success']) {
+        if (! isset($responseData['success']) || ! $responseData['success']) {
             throw new \RuntimeException(
-                'Central API returned error: ' . ($responseData['message'] ?? 'Unknown error')
+                'Central API returned error: '.($responseData['message'] ?? 'Unknown error')
             );
         }
 
@@ -175,11 +180,11 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
 
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+        if ($e instanceof ConnectionException) {
             return 'NETWORK_ERROR';
         }
 
-        if ($e instanceof \Illuminate\Http\Client\RequestException) {
+        if ($e instanceof RequestException) {
             return 'API_ERROR';
         }
 
@@ -200,7 +205,7 @@ class ProcessOutboundInventoryCountSync implements ShouldQueue
         $syncQueue = SyncQueueOutbound::find($this->syncQueueId);
         if ($syncQueue) {
             $syncQueue->markAsFailed(
-                errorMessage: 'Job failed permanently: ' . $exception->getMessage(),
+                errorMessage: 'Job failed permanently: '.$exception->getMessage(),
                 errorCode: 'JOB_FAILED',
                 errorDetails: [
                     'exception' => get_class($exception),

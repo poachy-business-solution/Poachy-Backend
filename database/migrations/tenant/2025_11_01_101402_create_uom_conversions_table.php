@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('to_uom_id')->constrained('units_of_measure')->onDelete('cascade');
             $table->decimal('conversion_factor', 15, 6); // e.g., 1 kg = 1000 g (factor: 1000)
             $table->timestamps();
-            
+
             $table->unique(['from_uom_id', 'to_uom_id']);
             $table->index(['from_uom_id', 'to_uom_id']);
         });

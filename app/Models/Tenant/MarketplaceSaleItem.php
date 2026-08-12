@@ -29,12 +29,12 @@ class MarketplaceSaleItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity'             => 'decimal:4',
+            'quantity' => 'decimal:4',
             'quantity_in_base_uom' => 'decimal:4',
-            'unit_price'           => 'decimal:2',
-            'tax_amount'           => 'decimal:2',
-            'discount_amount'      => 'decimal:2',
-            'subtotal'             => 'decimal:2',
+            'unit_price' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'subtotal' => 'decimal:2',
         ];
     }
 
