@@ -52,6 +52,33 @@ trait InteractsWithTenantAuthorization
             $table->timestamps();
         });
 
+        Schema::connection($conn)->create('personal_access_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('tokenable');
+            $table->text('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('tenant_refresh_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('personal_access_token_id')->nullable()->constrained('personal_access_tokens')->nullOnDelete();
+            $table->string('token_hash', 64)->unique();
+            $table->string('device_name')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->index();
+            $table->timestamp('revoked_at')->nullable()->index();
+            $table->foreignId('replaced_by_id')->nullable()->constrained('tenant_refresh_tokens')->nullOnDelete();
+            $table->timestamps();
+            $table->index(['user_id', 'revoked_at']);
+        });
+
         Schema::connection($conn)->create('permissions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');
@@ -99,7 +126,7 @@ trait InteractsWithTenantAuthorization
     {
         foreach ([
             'role_has_permissions', 'model_has_roles', 'model_has_permissions',
-            'roles', 'permissions', 'users',
+            'roles', 'permissions', 'tenant_refresh_tokens', 'personal_access_tokens', 'users',
         ] as $table) {
             Schema::connection('tenant')->dropIfExists($table);
         }

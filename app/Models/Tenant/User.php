@@ -3,15 +3,15 @@
 namespace App\Models\Tenant;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, HasApiTokens;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
         'name',
@@ -72,6 +72,11 @@ class User extends Authenticatable
         return $this->hasMany(StockTransfer::class, 'received_by');
     }
 
+    public function refreshTokens(): HasMany
+    {
+        return $this->hasMany(TenantRefreshToken::class);
+    }
+
     public function createdPurchaseOrders()
     {
         return $this->hasMany(PurchaseOrder::class, 'created_by');
@@ -81,7 +86,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(PurchaseOrder::class, 'approved_by');
     }
-
 
     // Helper methods
 
