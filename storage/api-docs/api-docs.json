@@ -69407,6 +69407,307 @@
                 ]
             }
         },
+        "/api/v1/tenant/device-tokens": {
+            "get": {
+                "tags": [
+                    "Tenant Notifications"
+                ],
+                "summary": "List registered device tokens",
+                "description": "Returns active push notification device registrations for the authenticated tenant user. Raw provider tokens are never returned.",
+                "operationId": "listTenantDeviceTokens",
+                "responses": {
+                    "200": {
+                        "description": "Device tokens retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device tokens retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "device_tokens": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "platform": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "ios",
+                                                                    "android",
+                                                                    "web"
+                                                                ],
+                                                                "example": "ios"
+                                                            },
+                                                            "device_id": {
+                                                                "type": "string",
+                                                                "example": "ios-device-123",
+                                                                "nullable": true
+                                                            },
+                                                            "device_name": {
+                                                                "type": "string",
+                                                                "example": "iPhone 15 POS",
+                                                                "nullable": true
+                                                            },
+                                                            "app_version": {
+                                                                "type": "string",
+                                                                "example": "1.4.0",
+                                                                "nullable": true
+                                                            },
+                                                            "last_seen_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-08-12T10:20:30.000000Z",
+                                                                "nullable": true
+                                                            },
+                                                            "revoked_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-08-12T10:20:30.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-08-12T10:20:30.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Notifications"
+                ],
+                "summary": "Register a device token",
+                "description": "Registers or refreshes a push notification provider token for the authenticated tenant user. Re-registering the same raw token updates the device metadata, marks it active, and moves it to the current user if the app was reinstalled or the device changed users.",
+                "operationId": "registerTenantDeviceToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "platform"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "maxLength": 4096,
+                                        "example": "fcm-or-apns-token"
+                                    },
+                                    "platform": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ios",
+                                            "android",
+                                            "web"
+                                        ],
+                                        "example": "ios"
+                                    },
+                                    "device_id": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "ios-device-123",
+                                        "nullable": true
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "iPhone 15 POS",
+                                        "nullable": true
+                                    },
+                                    "app_version": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "1.4.0",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Device token registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device token registered successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "device_token": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "platform": {
+                                                            "type": "string",
+                                                            "example": "ios"
+                                                        },
+                                                        "device_id": {
+                                                            "type": "string",
+                                                            "example": "ios-device-123",
+                                                            "nullable": true
+                                                        },
+                                                        "device_name": {
+                                                            "type": "string",
+                                                            "example": "iPhone 15 POS",
+                                                            "nullable": true
+                                                        },
+                                                        "app_version": {
+                                                            "type": "string",
+                                                            "example": "1.4.0",
+                                                            "nullable": true
+                                                        },
+                                                        "last_seen_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-12T10:20:30.000000Z",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Notifications"
+                ],
+                "summary": "Revoke a device token",
+                "description": "Revokes the submitted raw device token for the authenticated tenant user. Use this on logout, app uninstall callbacks where available, or when push permission is disabled.",
+                "operationId": "revokeTenantDeviceToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "maxLength": 4096,
+                                        "example": "fcm-or-apns-token"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Device token revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device token revoked successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "revoked": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/coupons": {
             "get": {
                 "tags": [
@@ -130556,6 +130857,10 @@
         {
             "name": "Tenant - Stock Transfers",
             "description": "Tenant - Stock Transfers"
+        },
+        {
+            "name": "Tenant Notifications",
+            "description": "Tenant Notifications"
         },
         {
             "name": "Coupons",

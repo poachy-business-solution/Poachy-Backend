@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Tenant;
 
+use App\Services\Tenant\Notifications\PushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -36,25 +37,25 @@ class SendNotificationJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(PushNotificationService $pushNotificationService): void
     {
         try {
             match ($this->channel) {
                 'sms' => $this->sendSms(),
                 'email' => $this->sendEmail(),
-                'push' => $this->sendPush(),
+                'push' => $this->sendPush($pushNotificationService),
                 default => throw new \InvalidArgumentException("Unsupported channel: {$this->channel}"),
             };
 
             Log::info('Notification sent', [
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
                 'channel' => $this->channel,
                 'recipient' => $this->recipient,
                 'metadata' => $this->metadata,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send notification', [
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
                 'channel' => $this->channel,
                 'recipient' => $this->recipient,
                 'error' => $e->getMessage(),
@@ -72,7 +73,7 @@ class SendNotificationJob implements ShouldQueue
         // Implement SMS provider integration (e.g., Africa's Talking, Twilio)
         // For now, log the SMS
         Log::info('SMS sent', [
-            'tenant_id' => tenant()->id,
+            'tenant_id' => tenant()?->id,
             'to' => $this->recipient,
             'message' => $this->message,
         ]);
@@ -92,7 +93,7 @@ class SendNotificationJob implements ShouldQueue
         $body = is_array($this->message) ? $this->message['body'] : $this->message;
 
         Log::info('Email sent', [
-            'tenant_id' => tenant()->id,
+            'tenant_id' => tenant()?->id,
             'to' => $this->recipient,
             'subject' => $subject,
         ]);
@@ -105,15 +106,14 @@ class SendNotificationJob implements ShouldQueue
     /**
      * Send push notification
      */
-    protected function sendPush(): void
+    protected function sendPush(PushNotificationService $pushNotificationService): void
     {
-        // Implement push notification
-        Log::info('Push notification sent', [
-            'tenant_id' => tenant()->id,
-            'to' => $this->recipient,
-            'message' => $this->message,
-        ]);
+        $sentCount = $pushNotificationService->send($this->recipient, $this->message, $this->metadata);
 
-        // TODO: Integrate with push provider (e.g., FCM, OneSignal)
+        Log::info('Push notification dispatched', [
+            'tenant_id' => tenant()?->id,
+            'to' => $this->recipient,
+            'device_count' => $sentCount,
+        ]);
     }
 }

@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\ProductSerialController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
+use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
@@ -741,6 +742,10 @@ Route::prefix('v1/tenant')
             Route::post('/logout', [TenantAuthController::class, 'logout']);
             Route::post('/update-password', [TenantAuthController::class, 'updatePassword']);
         });
+
+        Route::get('/device-tokens', [DeviceTokenController::class, 'index']);
+        Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+        Route::delete('/device-tokens', [DeviceTokenController::class, 'destroy']);
 
         // Tenant Access Status (Check eligibility)
         Route::prefix('access')->group(function () {
