@@ -4,8 +4,10 @@ namespace Tests\Feature\Tenant\Catalog;
 
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBarcode;
 use App\Models\Tenant\ProductBrand;
 use App\Models\Tenant\ProductCategory;
+use App\Models\Tenant\ProductScaleBarcodeFormat;
 use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\StoreProduct;
@@ -51,6 +53,8 @@ class CatalogDeltaSyncServiceTest extends TestCase
         $this->assertArrayHasKey('next_cursor', $result);
         $this->assertCount(1, $result['entities']['products']);
         $this->assertCount(1, $result['entities']['variants']);
+        $this->assertCount(1, $result['entities']['barcodes']);
+        $this->assertCount(1, $result['entities']['scale_barcode_formats']);
         $this->assertCount(1, $result['entities']['prices']);
         $this->assertCount(1, $result['entities']['product_uoms']);
         $this->assertCount(1, $result['entities']['uoms']);
@@ -58,8 +62,69 @@ class CatalogDeltaSyncServiceTest extends TestCase
         $this->assertCount(1, $result['entities']['customers']);
 
         $this->assertSame('SKU-001', $result['entities']['products'][0]['sku']);
+        $this->assertSame('6161234567890', $result['entities']['barcodes'][0]['barcode']);
+        $this->assertSame('21', $result['entities']['scale_barcode_formats'][0]['prefix']);
+        $this->assertSame('weight', $result['entities']['scale_barcode_formats'][0]['value_type']);
+        $this->assertSame('product', $result['entities']['barcodes'][0]['sale_line']['target_type']);
+        $this->assertSame([
+            'product_id' => 1,
+            'variant_id' => null,
+            'bundle_id' => null,
+            'uom_id' => 1,
+            'quantity' => 1.0,
+        ], $result['entities']['barcodes'][0]['sale_line']['sale_item_payload']);
         $this->assertSame(1, $result['entities']['prices'][0]['store_id']);
         $this->assertSame('regular', $result['entities']['customers'][0]['customer_type']);
+    }
+
+    public function test_barcode_sync_includes_offline_sale_line_for_product_uom(): void
+    {
+        $this->seedBaseCatalog();
+
+        Model::withoutEvents(function () {
+            $carton = UnitOfMeasure::create([
+                'code' => 'ctn',
+                'name' => 'Carton',
+                'type' => 'count',
+                'source_type' => 'system',
+            ]);
+
+            $productUom = ProductUom::create([
+                'product_id' => 1,
+                'uom_id' => $carton->id,
+                'is_base_uom' => false,
+                'is_purchase_uom' => true,
+                'is_sales_uom' => true,
+                'is_inventory_uom' => true,
+                'conversion_to_base' => 12,
+            ]);
+
+            ProductBarcode::create([
+                'barcodeable_type' => $productUom->getMorphClass(),
+                'barcodeable_id' => $productUom->id,
+                'barcode' => 'CTN-001',
+                'barcode_type' => 'INTERNAL',
+                'is_primary' => true,
+                'is_active' => true,
+                'source' => 'manual',
+            ]);
+        });
+
+        $barcodes = collect((new CatalogDeltaSyncService)->sync()['entities']['barcodes'])
+            ->keyBy('barcode');
+
+        $this->assertSame('product_uom', $barcodes['CTN-001']['sale_line']['target_type']);
+        $this->assertSame(1, $barcodes['CTN-001']['sale_line']['product_id']);
+        $this->assertSame(2, $barcodes['CTN-001']['sale_line']['uom_id']);
+        $this->assertSame('ctn', $barcodes['CTN-001']['sale_line']['uom_code']);
+        $this->assertSame(12.0, $barcodes['CTN-001']['sale_line']['quantity_in_base_uom']);
+        $this->assertSame([
+            'product_id' => 1,
+            'variant_id' => null,
+            'bundle_id' => null,
+            'uom_id' => 2,
+            'quantity' => 1.0,
+        ], $barcodes['CTN-001']['sale_line']['sale_item_payload']);
     }
 
     public function test_updated_since_returns_only_changed_rows(): void
@@ -146,6 +211,28 @@ class CatalogDeltaSyncServiceTest extends TestCase
                 'uom_quantity' => 1,
                 'quantity_in_base_uom' => 1,
             ]);
+            ProductBarcode::create([
+                'barcodeable_type' => $product->getMorphClass(),
+                'barcodeable_id' => $product->id,
+                'barcode' => '6161234567890',
+                'barcode_type' => 'EAN-13',
+                'is_primary' => true,
+                'is_active' => true,
+                'source' => 'manufacturer',
+            ]);
+            ProductScaleBarcodeFormat::create([
+                'name' => 'EAN13 weight scale',
+                'prefix' => '21',
+                'length' => 13,
+                'product_code_start' => 2,
+                'product_code_length' => 5,
+                'value_start' => 7,
+                'value_length' => 5,
+                'value_type' => 'weight',
+                'decimal_places' => 3,
+                'checksum' => 'ean13',
+                'priority' => 10,
+            ]);
             ProductUom::create(['product_id' => $product->id, 'uom_id' => 1, 'is_base_uom' => true]);
             StoreProduct::create(['store_id' => 1, 'product_id' => $product->id, 'is_available' => true, 'store_selling_price' => 95]);
             Customer::create(['customer_number' => 'CUS-001', 'name' => 'Jane Buyer', 'customer_type' => 'regular']);
@@ -159,6 +246,8 @@ class CatalogDeltaSyncServiceTest extends TestCase
             'promotions',
             'customers',
             'store_products',
+            'product_scale_barcode_formats',
+            'product_barcodes',
             'product_uoms',
             'product_variants',
             'products',
@@ -281,6 +370,46 @@ class CatalogDeltaSyncServiceTest extends TestCase
             $table->boolean('is_sales_uom')->default(true);
             $table->boolean('is_inventory_uom')->default(true);
             $table->decimal('conversion_to_base', 12, 6)->default(1);
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('product_barcodes', function (Blueprint $table) {
+            $table->id();
+            $table->string('barcodeable_type');
+            $table->unsignedBigInteger('barcodeable_id');
+            $table->string('barcode', 50);
+            $table->string('barcode_type')->default('INTERNAL');
+            $table->boolean('is_primary')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->string('region', 10)->nullable();
+            $table->unsignedBigInteger('store_id')->nullable();
+            $table->date('valid_from')->nullable();
+            $table->date('valid_until')->nullable();
+            $table->string('source')->default('manual');
+            $table->json('metadata')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_scale_barcode_formats', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('prefix', 20);
+            $table->unsignedSmallInteger('length')->default(13);
+            $table->unsignedSmallInteger('product_code_start');
+            $table->unsignedSmallInteger('product_code_length');
+            $table->unsignedSmallInteger('value_start');
+            $table->unsignedSmallInteger('value_length');
+            $table->string('value_type')->default('weight');
+            $table->unsignedSmallInteger('decimal_places')->default(3);
+            $table->string('checksum')->nullable();
+            $table->unsignedBigInteger('store_id')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->unsignedSmallInteger('priority')->default(0);
+            $table->json('metadata')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
 

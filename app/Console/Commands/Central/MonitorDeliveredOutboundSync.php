@@ -17,9 +17,9 @@ class MonitorDeliveredOutboundSync extends Command
     public function handle(): int
     {
         $timeoutMinutes = (int) $this->option('timeout');
-        $limit          = (int) $this->option('limit');
-        $retried        = 0;
-        $failed         = 0;
+        $limit = (int) $this->option('limit');
+        $retried = 0;
+        $failed = 0;
 
         $stuckEntries = SyncQueueOutbound::on('central')
             ->stuckDelivered($timeoutMinutes)
@@ -32,10 +32,10 @@ class MonitorDeliveredOutboundSync extends Command
                 $retried++;
 
                 Log::info('MonitorDeliveredOutboundSync: resetting stuck entry to pending', [
-                    'sync_id'      => $entry->id,
-                    'tenant_id'    => $entry->tenant_id,
-                    'action'       => $entry->action,
-                    'retry_count'  => $entry->retry_count,
+                    'sync_id' => $entry->id,
+                    'tenant_id' => $entry->tenant_id,
+                    'action' => $entry->action,
+                    'retry_count' => $entry->retry_count,
                     'delivered_at' => $entry->delivered_at,
                 ]);
             } else {
@@ -43,10 +43,10 @@ class MonitorDeliveredOutboundSync extends Command
                 $failed++;
 
                 Log::warning('MonitorDeliveredOutboundSync: marking stuck entry as failed (max retries exhausted)', [
-                    'sync_id'      => $entry->id,
-                    'tenant_id'    => $entry->tenant_id,
-                    'action'       => $entry->action,
-                    'retry_count'  => $entry->retry_count,
+                    'sync_id' => $entry->id,
+                    'tenant_id' => $entry->tenant_id,
+                    'action' => $entry->action,
+                    'retry_count' => $entry->retry_count,
                     'delivered_at' => $entry->delivered_at,
                 ]);
             }
@@ -56,9 +56,9 @@ class MonitorDeliveredOutboundSync extends Command
 
         Log::info('MonitorDeliveredOutboundSync: run complete', [
             'timeout_minutes' => $timeoutMinutes,
-            'limit'           => $limit,
-            'retried'         => $retried,
-            'failed'          => $failed,
+            'limit' => $limit,
+            'retried' => $retried,
+            'failed' => $failed,
         ]);
 
         return self::SUCCESS;

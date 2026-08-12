@@ -3,11 +3,15 @@
 namespace App\Services\Tenant\Inventory;
 
 use App\Enums\Tenant\PaymentStatus;
+use App\Enums\Tenant\PurchaseOrderItemStatus;
 use App\Enums\Tenant\PurchaseOrderStatus;
+use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\Supplier;
+use App\Models\Tenant\TaxRate;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +21,6 @@ class PurchaseOrderService
 {
     /**
      * Create new purchase order
-     *
-     * @param array $data
-     * @return PurchaseOrder
      */
     public function createPurchaseOrder(array $data): PurchaseOrder
     {
@@ -30,11 +31,11 @@ class PurchaseOrderService
                     ->where('product_id', $itemData['product_id'])
                     ->first();
 
-                if (!$storeProduct) {
-                    $productName = \App\Models\Tenant\Product::find($itemData['product_id'])->name;
+                if (! $storeProduct) {
+                    $productName = Product::find($itemData['product_id'])->name;
                     throw new \RuntimeException(
-                        "Product '{$productName}' is not allocated to this store. " .
-                            "Only store products can be ordered."
+                        "Product '{$productName}' is not allocated to this store. ".
+                            'Only store products can be ordered.'
                     );
                 }
             }
@@ -52,7 +53,7 @@ class PurchaseOrderService
                 // Get tax rate from tax_rate_id if provided
                 $taxRate = 0;
                 if (isset($itemData['tax_rate_id'])) {
-                    $taxRateModel = \App\Models\Tenant\TaxRate::find($itemData['tax_rate_id']);
+                    $taxRateModel = TaxRate::find($itemData['tax_rate_id']);
                     $taxRate = $taxRateModel ? $taxRateModel->rate : 0;
                 } elseif (isset($itemData['tax_rate'])) {
                     $taxRate = $itemData['tax_rate'];
@@ -107,10 +108,6 @@ class PurchaseOrderService
 
     /**
      * Add item to purchase order
-     *
-     * @param PurchaseOrder $po
-     * @param array $itemData
-     * @return PurchaseOrderItem
      */
     private function addPurchaseOrderItem(PurchaseOrder $po, array $itemData): PurchaseOrderItem
     {
@@ -130,7 +127,7 @@ class PurchaseOrderService
         // Get tax rate from tax_rate_id if provided
         $taxRate = 0;
         if (isset($itemData['tax_rate_id'])) {
-            $taxRateModel = \App\Models\Tenant\TaxRate::find($itemData['tax_rate_id']);
+            $taxRateModel = TaxRate::find($itemData['tax_rate_id']);
             $taxRate = $taxRateModel ? $taxRateModel->rate : 0;
         } elseif (isset($itemData['tax_rate'])) {
             $taxRate = $itemData['tax_rate'];
@@ -152,24 +149,20 @@ class PurchaseOrderService
             'tax_rate_id' => $itemData['tax_rate_id'] ?? null,
             'tax_amount' => $taxAmount,
             'subtotal' => $subtotal,
-            'status' => \App\Enums\Tenant\PurchaseOrderItemStatus::PENDING,
+            'status' => PurchaseOrderItemStatus::PENDING,
             'notes' => $itemData['notes'] ?? null,
         ]);
     }
 
     /**
      * Update purchase order (draft only)
-     *
-     * @param int $poId
-     * @param array $data
-     * @return PurchaseOrder
      */
     public function updatePurchaseOrder(int $poId, array $data): PurchaseOrder
     {
         return DB::transaction(function () use ($poId, $data) {
             $po = PurchaseOrder::lockForUpdate()->findOrFail($poId);
 
-            if (!$po->status->canBeEdited()) {
+            if (! $po->status->canBeEdited()) {
                 throw new \RuntimeException("Only draft purchase orders can be edited. Current status: {$po->status->label()}");
             }
 
@@ -218,16 +211,13 @@ class PurchaseOrderService
 
     /**
      * Send purchase order to supplier
-     *
-     * @param int $poId
-     * @return PurchaseOrder
      */
     public function sendPurchaseOrder(int $poId): PurchaseOrder
     {
         return DB::transaction(function () use ($poId) {
             $po = PurchaseOrder::lockForUpdate()->findOrFail($poId);
 
-            if (!$po->status->canBeSent()) {
+            if (! $po->status->canBeSent()) {
                 throw new \RuntimeException("PO cannot be sent. Current status: {$po->status->label()}");
             }
 
@@ -246,16 +236,13 @@ class PurchaseOrderService
 
     /**
      * Cancel purchase order
-     *
-     * @param int $poId
-     * @return PurchaseOrder
      */
     public function cancelPurchaseOrder(int $poId): PurchaseOrder
     {
         return DB::transaction(function () use ($poId) {
             $po = PurchaseOrder::lockForUpdate()->findOrFail($poId);
 
-            if (!$po->status->canBeCancelled()) {
+            if (! $po->status->canBeCancelled()) {
                 throw new \RuntimeException("PO cannot be cancelled. Current status: {$po->status->label()}");
             }
 
@@ -277,11 +264,6 @@ class PurchaseOrderService
 
     /**
      * Get purchase orders for store
-     *
-     * @param int $storeId
-     * @param PurchaseOrderStatus|null $status
-     * @param PaymentStatus|null $paymentStatus
-     * @return Collection
      */
     public function getStorePurchaseOrders(
         int $storeId,
@@ -306,9 +288,7 @@ class PurchaseOrderService
     /**
      * Update supplier outstanding balance when PO is created or cancelled
      *
-     * @param PurchaseOrder $po
-     * @param string $operation 'add' or 'subtract'
-     * @return void
+     * @param  string  $operation  'add' or 'subtract'
      */
     private function updateSupplierOutstandingBalance(PurchaseOrder $po, string $operation): void
     {
@@ -334,11 +314,6 @@ class PurchaseOrderService
 
     /**
      * Adjust supplier balance when PO is updated (draft only)
-     *
-     * @param PurchaseOrder $po
-     * @param float $oldTotal
-     * @param float $newTotal
-     * @return void
      */
     private function adjustSupplierBalanceForPOUpdate(PurchaseOrder $po, float $oldTotal, float $newTotal): void
     {
@@ -366,9 +341,6 @@ class PurchaseOrderService
 
     /**
      * Recalculate PO totals
-     *
-     * @param PurchaseOrder $po
-     * @return void
      */
     private function recalculateTotals(PurchaseOrder $po): void
     {
@@ -387,8 +359,6 @@ class PurchaseOrderService
 
     /**
      * Generate unique PO number
-     *
-     * @return string
      */
     private function generatePoNumber(): string
     {
@@ -409,13 +379,13 @@ class PurchaseOrderService
      */
     private function convertToBaseUom(float $quantity, int $uomId, int $productId): float
     {
-        $product = \App\Models\Tenant\Product::findOrFail($productId);
+        $product = Product::findOrFail($productId);
 
         if ($uomId === $product->base_uom_id) {
             return $quantity;
         }
 
-        $productUom = \App\Models\Tenant\ProductUom::where('product_id', $productId)
+        $productUom = ProductUom::where('product_id', $productId)
             ->where('uom_id', $uomId)
             ->firstOrFail();
 

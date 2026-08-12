@@ -2,10 +2,10 @@
 
 namespace App\Models\Tenant;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class SaleRefundItem extends Model
 {
@@ -67,7 +67,7 @@ class SaleRefundItem extends Model
      */
     public function getFormattedAmountAttribute(): string
     {
-        return 'KES ' . number_format($this->refund_amount, 2);
+        return 'KES '.number_format($this->refund_amount, 2);
     }
 
     /**
@@ -111,7 +111,7 @@ class SaleRefundItem extends Model
      */
     public function getIsFullRefundAttribute(): bool
     {
-        if (!$this->saleItem) {
+        if (! $this->saleItem) {
             return false;
         }
 
@@ -123,7 +123,7 @@ class SaleRefundItem extends Model
      */
     public function getRemainingQuantityAttribute(): ?float
     {
-        if (!$this->saleItem) {
+        if (! $this->saleItem) {
             return null;
         }
 
@@ -207,7 +207,7 @@ class SaleRefundItem extends Model
     {
         $saleItem = SaleItem::find($saleItemId);
 
-        if (!$saleItem) {
+        if (! $saleItem) {
             return false;
         }
 
@@ -223,7 +223,7 @@ class SaleRefundItem extends Model
     {
         $saleItem = SaleItem::find($saleItemId);
 
-        if (!$saleItem) {
+        if (! $saleItem) {
             return 0;
         }
 

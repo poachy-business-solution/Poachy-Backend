@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticateHorizon;
 use Illuminate\Support\Str;
 
 return [
@@ -69,7 +70,7 @@ return [
 
     'prefix' => env(
         'HORIZON_PREFIX',
-        Str::slug(env('APP_NAME', 'poachy'), '_') . '_horizon:'
+        Str::slug(env('APP_NAME', 'poachy'), '_').'_horizon:'
     ),
 
     /*
@@ -83,7 +84,7 @@ return [
     |
     */
 
-    'middleware' => ['web', \App\Http\Middleware\AuthenticateHorizon::class],
+    'middleware' => ['web', AuthenticateHorizon::class],
 
     /*
     |--------------------------------------------------------------------------
@@ -298,7 +299,6 @@ return [
             'nice' => 0,
         ],
     ],
-
 
     'environments' => [
         'production' => [

@@ -6,15 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\ProductReview;
-use App\Models\MerchantReview;
-use App\Models\ReviewVote;
 
 class MarketplaceCustomer extends Model
 {
     use SoftDeletes;
 
     protected $connection = 'central';
+
     protected $table = 'marketplace_customers';
 
     protected $fillable = [
@@ -36,13 +34,13 @@ class MarketplaceCustomer extends Model
     protected function casts(): array
     {
         return [
-            'date_of_birth'     => 'date',
-            'is_active'         => 'boolean',
-            'phone_verified'    => 'boolean',
+            'date_of_birth' => 'date',
+            'is_active' => 'boolean',
+            'phone_verified' => 'boolean',
             'phone_verified_at' => 'datetime',
             'accepts_marketing' => 'boolean',
-            'accepts_sms'       => 'boolean',
-            'last_login_at'     => 'datetime',
+            'accepts_sms' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -97,6 +95,7 @@ class MarketplaceCustomer extends Model
     public static function generateCustomerNumber(): string
     {
         $nextId = (static::on('central')->max('id') ?? 0) + 1;
-        return 'MKT-CUST-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
+
+        return 'MKT-CUST-'.str_pad($nextId, 6, '0', STR_PAD_LEFT);
     }
 }

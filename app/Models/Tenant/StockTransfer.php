@@ -2,18 +2,18 @@
 
 namespace App\Models\Tenant;
 
+use App\Observers\Tenant\StockTransferObserver;
+use App\Traits\Tenant\HasAuditLogging;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Observers\Tenant\StockTransferObserver;
-use App\Traits\Tenant\HasAuditLogging;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
 #[ObservedBy([StockTransferObserver::class])]
 class StockTransfer extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $fillable = [
         'transfer_number',
@@ -46,7 +46,6 @@ class StockTransfer extends Model
     /**
      * RELATIONSHIPS
      */
-
     public function fromStore(): BelongsTo
     {
         return $this->belongsTo(Store::class, 'from_store_id');
@@ -85,7 +84,6 @@ class StockTransfer extends Model
     /**
      * SCOPES
      */
-
     public function scopeByStore($query, int $storeId, string $direction = 'all')
     {
         if ($direction === 'outbound') {
@@ -123,7 +121,6 @@ class StockTransfer extends Model
     /**
      * ACCESSORS
      */
-
     public function getIsPendingAttribute(): bool
     {
         return $this->status === 'pending';

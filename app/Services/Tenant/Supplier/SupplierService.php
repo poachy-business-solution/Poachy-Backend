@@ -77,7 +77,7 @@ class SupplierService
         return DB::transaction(function () use ($id, $data) {
             $supplier = $this->repository->findById($id);
 
-            if (!$supplier) {
+            if (! $supplier) {
                 throw new \InvalidArgumentException('Supplier not found');
             }
 
@@ -97,7 +97,7 @@ class SupplierService
         return DB::transaction(function () use ($id, $data) {
             $supplier = $this->repository->findById($id);
 
-            if (!$supplier) {
+            if (! $supplier) {
                 throw new \InvalidArgumentException('Supplier not found');
             }
 
@@ -117,27 +117,24 @@ class SupplierService
         return DB::transaction(function () use ($id) {
             $supplier = $this->repository->findById($id);
 
-            if (!$supplier) {
+            if (! $supplier) {
                 throw new \InvalidArgumentException('Supplier not found');
             }
 
-            $newStatus = !$supplier->is_active;
+            $newStatus = ! $supplier->is_active;
             $this->repository->update($supplier, ['is_active' => $newStatus]);
 
             $this->clearCache();
 
             return [
                 'is_active' => $newStatus,
-                'message' => $newStatus ? 'Supplier activated successfully' : 'Supplier deactivated successfully'
+                'message' => $newStatus ? 'Supplier activated successfully' : 'Supplier deactivated successfully',
             ];
         });
     }
 
     /**
      * Get comprehensive financial summary for a supplier
-     * 
-     * @param int $supplierId
-     * @return array
      */
     public function getSupplierFinancialSummary(int $supplierId): array
     {
@@ -225,7 +222,6 @@ class SupplierService
 
     /**
      * Validate that supplier name and email combination is unique
-     * 
      */
     protected function validateUniqueness(array $data, ?int $excludeId = null): void
     {
@@ -240,7 +236,7 @@ class SupplierService
         }
 
         // Check if email is provided and validate uniqueness
-        if (isset($data['email']) && !empty($data['email'])) {
+        if (isset($data['email']) && ! empty($data['email'])) {
             $emailExists = $this->repository->existsByEmail($data['email'], $excludeId);
             if ($emailExists) {
                 $errors['email'] = ['A supplier with this email already exists.'];
@@ -248,7 +244,7 @@ class SupplierService
         }
 
         // Check if both name and email combination exists
-        if (isset($data['name']) && isset($data['email']) && !empty($data['email'])) {
+        if (isset($data['name']) && isset($data['email']) && ! empty($data['email'])) {
             $combinationExists = $this->repository->existsByNameAndEmail(
                 $data['name'],
                 $data['email'],
@@ -260,7 +256,7 @@ class SupplierService
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
     }

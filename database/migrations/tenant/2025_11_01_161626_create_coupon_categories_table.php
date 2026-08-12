@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('coupon_id')->constrained('coupons')->onDelete('cascade');
             $table->foreignId('category_id')->constrained('product_categories')->onDelete('cascade');
             $table->timestamps();
-            
+
             $table->unique(['coupon_id', 'category_id']);
             $table->index(['category_id']);
         });

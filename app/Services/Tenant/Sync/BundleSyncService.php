@@ -14,38 +14,38 @@ class BundleSyncService
     public function syncToMarketplace(ProductBundle $bundle, string $action = 'create', int $priority = 3): void
     {
         // Skip validation for delete/deactivate actions
-        if (!in_array($action, ['delete', 'deactivate'])) {
-            if (!$bundle->is_available_online) {
+        if (! in_array($action, ['delete', 'deactivate'])) {
+            if (! $bundle->is_available_online) {
                 throw new \InvalidArgumentException(
                     "Bundle '{$bundle->bundle_name}' is not available online and cannot be synced to marketplace."
                 );
             }
 
-            if (!$bundle->online_price || $bundle->online_price <= 0) {
+            if (! $bundle->online_price || $bundle->online_price <= 0) {
                 throw new \InvalidArgumentException(
                     "Bundle '{$bundle->bundle_name}' must have a valid online_price set before syncing."
                 );
             }
 
-            if (!$bundle->base_uom_id) {
+            if (! $bundle->base_uom_id) {
                 throw new \InvalidArgumentException(
                     "Bundle '{$bundle->bundle_name}' must have a base UOM assigned before syncing."
                 );
             }
 
-            if (!$bundle->tax_rate_id) {
+            if (! $bundle->tax_rate_id) {
                 throw new \InvalidArgumentException(
                     "Bundle '{$bundle->bundle_name}' must have a tax rate assigned before syncing."
                 );
             }
 
-            if (!$bundle->hasMinimumItems()) {
+            if (! $bundle->hasMinimumItems()) {
                 throw new \InvalidArgumentException(
                     "Bundle '{$bundle->bundle_name}' must have at least 2 items before syncing."
                 );
             }
 
-            if (!$bundle->allItemsActive()) {
+            if (! $bundle->allItemsActive()) {
                 throw new \InvalidArgumentException(
                     "Bundle '{$bundle->bundle_name}' must have all component products active before syncing."
                 );
@@ -95,31 +95,31 @@ class BundleSyncService
     {
         $errors = [];
 
-        if (!$bundle->is_available_online) {
+        if (! $bundle->is_available_online) {
             $errors[] = 'Bundle must be marked as available online';
         }
 
-        if (!$bundle->online_price || $bundle->online_price <= 0) {
+        if (! $bundle->online_price || $bundle->online_price <= 0) {
             $errors[] = 'Bundle must have a valid online price';
         }
 
-        if (!$bundle->is_active) {
+        if (! $bundle->is_active) {
             $errors[] = 'Bundle must be active';
         }
 
-        if (!$bundle->base_uom_id) {
+        if (! $bundle->base_uom_id) {
             $errors[] = 'Bundle must have a base unit of measure';
         }
 
-        if (!$bundle->tax_rate_id) {
+        if (! $bundle->tax_rate_id) {
             $errors[] = 'Bundle must have a tax rate assigned';
         }
 
-        if (!$bundle->hasMinimumItems()) {
+        if (! $bundle->hasMinimumItems()) {
             $errors[] = 'Bundle must have at least 2 items';
         }
 
-        if (!$bundle->allItemsActive()) {
+        if (! $bundle->allItemsActive()) {
             $errors[] = 'All component products must be active';
         }
 

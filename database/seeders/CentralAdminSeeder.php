@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -31,7 +30,7 @@ class CentralAdminSeeder extends Seeder
             // Assign admin role
             $admin->assignRole('admin');
 
-            $this->command->info('✓ Created Super Admin: ' . $admin->email);
+            $this->command->info('✓ Created Super Admin: '.$admin->email);
         });
     }
 }

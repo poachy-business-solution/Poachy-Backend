@@ -2,12 +2,12 @@
 
 namespace App\Models\Tenant;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
 
 class SalesDailyAggregate extends Model
 {
@@ -87,6 +87,7 @@ class SalesDailyAggregate extends Model
     public function scopeForDate(Builder $query, Carbon|string $date): Builder
     {
         $dateString = $date instanceof Carbon ? $date->toDateString() : $date;
+
         return $query->where('aggregate_date', $dateString);
     }
 
@@ -206,7 +207,7 @@ class SalesDailyAggregate extends Model
     {
         return match ($this->sellable_type) {
             'ProductBundle' => $this->bundle?->bundle_name ?? 'Unknown Bundle',
-            'ProductVariant' => ($this->product?->name ?? 'Unknown') . ' - ' . ($this->productVariant?->variant_name ?? 'Unknown Variant'),
+            'ProductVariant' => ($this->product?->name ?? 'Unknown').' - '.($this->productVariant?->variant_name ?? 'Unknown Variant'),
             default => $this->product?->name ?? 'Unknown Product',
         };
     }
@@ -252,7 +253,7 @@ class SalesDailyAggregate extends Model
             ->where('bundle_id', $this->bundle_id)
             ->first();
 
-        if (!$previousAggregate || $previousAggregate->total_revenue == 0) {
+        if (! $previousAggregate || $previousAggregate->total_revenue == 0) {
             return null;
         }
 

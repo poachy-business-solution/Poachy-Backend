@@ -17,25 +17,25 @@ class VariantSyncService
         $variant->loadMissing('product');
 
         if ($action !== 'delete' && $action !== 'deactivate') {
-            if (!$variant->online_price || $variant->online_price <= 0) {
+            if (! $variant->online_price || $variant->online_price <= 0) {
                 throw new \InvalidArgumentException(
                     "Variant '{$variant->variant_name}' must have a valid online_price set before syncing."
                 );
             }
 
-            if (!$variant->product?->is_available_online) {
+            if (! $variant->product?->is_available_online) {
                 throw new \InvalidArgumentException(
                     "Parent product must be available online before syncing variant '{$variant->variant_name}'."
                 );
             }
 
-            if (!$variant->product?->category_id) {
+            if (! $variant->product?->category_id) {
                 throw new \InvalidArgumentException(
                     "Parent product must have a category assigned before syncing variant '{$variant->variant_name}'."
                 );
             }
 
-            if (!$variant->product?->tax_rate_id) {
+            if (! $variant->product?->tax_rate_id) {
                 throw new \InvalidArgumentException(
                     "Parent product must have a tax rate assigned before syncing variant '{$variant->variant_name}'."
                 );
@@ -88,7 +88,7 @@ class VariantSyncService
         $variant->loadMissing('product');
         $errors = [];
 
-        if (!$variant->is_active) {
+        if (! $variant->is_active) {
             $errors[] = 'Variant must be active';
         }
 
@@ -96,19 +96,19 @@ class VariantSyncService
             $errors[] = 'Variant must have a valid online price';
         }
 
-        if (!$variant->product?->is_available_online) {
+        if (! $variant->product?->is_available_online) {
             $errors[] = 'Parent product must be available online';
         }
 
-        if (!$variant->product?->category_id) {
+        if (! $variant->product?->category_id) {
             $errors[] = 'Parent product must be assigned to a category';
         }
 
-        if (!$variant->product?->tax_rate_id) {
+        if (! $variant->product?->tax_rate_id) {
             $errors[] = 'Parent product must have a tax rate assigned';
         }
 
-        if (!$variant->product?->base_uom_id) {
+        if (! $variant->product?->base_uom_id) {
             $errors[] = 'Parent product must have a base unit of measure';
         }
 
@@ -135,9 +135,10 @@ class VariantSyncService
 
         foreach ($variants as $variant) {
             try {
-                if ($action !== 'deactivate' && !$this->isEligibleForSync($variant)) {
+                if ($action !== 'deactivate' && ! $this->isEligibleForSync($variant)) {
                     $results['skipped']++;
                     $results['errors'][$variant->id] = $this->getSyncValidationErrors($variant);
+
                     continue;
                 }
 

@@ -139,8 +139,8 @@ class CreateAuditLogJob implements ShouldQueue
     {
         return [
             'audit',
-            'tenant:' . $this->tenantId,
-            'action:' . $this->action,
+            'tenant:'.$this->tenantId,
+            'action:'.$this->action,
             class_basename($this->modelType),
         ];
     }

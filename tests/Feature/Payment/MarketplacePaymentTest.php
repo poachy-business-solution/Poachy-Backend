@@ -88,8 +88,8 @@ class MarketplacePaymentTest extends TestCase
         Config::set('mpesa.sandbox.consumer_key', 'sandbox-key');
         Config::set('mpesa.sandbox.shortcode', '174379');
 
-        $service = new MpesaService();
-        $creds   = $service->getActiveCredentials();
+        $service = new MpesaService;
+        $creds = $service->getActiveCredentials();
 
         $this->assertSame('sandbox-key', $creds['consumer_key']);
         $this->assertSame('174379', $creds['shortcode']);
@@ -101,8 +101,8 @@ class MarketplacePaymentTest extends TestCase
         Config::set('mpesa.production.consumer_key', 'prod-key');
         Config::set('mpesa.production.shortcode', '888888');
 
-        $service = new MpesaService();
-        $creds   = $service->getActiveCredentials();
+        $service = new MpesaService;
+        $creds = $service->getActiveCredentials();
 
         $this->assertSame('prod-key', $creds['consumer_key']);
         $this->assertSame('888888', $creds['shortcode']);

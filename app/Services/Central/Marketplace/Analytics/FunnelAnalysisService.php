@@ -57,17 +57,17 @@ class FunnelAnalysisService
             ->count();
 
         return [
-            'product_views'             => $productViews,
-            'carts_created'             => $cartsCreated,
-            'checkouts_initiated'       => $checkoutsInitiated,
-            'payments_initiated'        => $paymentsInitiated,
-            'payments_completed'        => $paymentsCompleted,
-            'orders_confirmed'          => $ordersConfirmed,
-            'view_to_cart_rate'         => $this->calculateRate($cartsCreated, $productViews),
-            'cart_to_checkout_rate'     => $this->calculateRate($checkoutsInitiated, $cartsCreated),
-            'checkout_to_payment_rate'  => $this->calculateRate($paymentsInitiated, $checkoutsInitiated),
-            'payment_success_rate'      => $this->calculateRate($paymentsCompleted, $paymentsInitiated),
-            'overall_conversion_rate'   => $this->calculateRate($ordersConfirmed, $productViews),
+            'product_views' => $productViews,
+            'carts_created' => $cartsCreated,
+            'checkouts_initiated' => $checkoutsInitiated,
+            'payments_initiated' => $paymentsInitiated,
+            'payments_completed' => $paymentsCompleted,
+            'orders_confirmed' => $ordersConfirmed,
+            'view_to_cart_rate' => $this->calculateRate($cartsCreated, $productViews),
+            'cart_to_checkout_rate' => $this->calculateRate($checkoutsInitiated, $cartsCreated),
+            'checkout_to_payment_rate' => $this->calculateRate($paymentsInitiated, $checkoutsInitiated),
+            'payment_success_rate' => $this->calculateRate($paymentsCompleted, $paymentsInitiated),
+            'overall_conversion_rate' => $this->calculateRate($ordersConfirmed, $productViews),
         ];
     }
 
@@ -89,13 +89,13 @@ class FunnelAnalysisService
             ->first();
 
         return [
-            'total_sessions'         => $sessions->total ?? 0,
-            'abandoned_sessions'     => $sessions->abandoned ?? 0,
-            'abandonment_rate'       => $this->calculateRate($sessions->abandoned ?? 0, $sessions->total ?? 0),
-            'abandoned_at_cart'      => $sessions->abandoned_at_cart ?? 0,
-            'abandoned_at_shipping'  => $sessions->abandoned_at_shipping ?? 0,
-            'abandoned_at_payment'   => $sessions->abandoned_at_payment ?? 0,
-            'abandoned_at_review'    => $sessions->abandoned_at_review ?? 0,
+            'total_sessions' => $sessions->total ?? 0,
+            'abandoned_sessions' => $sessions->abandoned ?? 0,
+            'abandonment_rate' => $this->calculateRate($sessions->abandoned ?? 0, $sessions->total ?? 0),
+            'abandoned_at_cart' => $sessions->abandoned_at_cart ?? 0,
+            'abandoned_at_shipping' => $sessions->abandoned_at_shipping ?? 0,
+            'abandoned_at_payment' => $sessions->abandoned_at_payment ?? 0,
+            'abandoned_at_review' => $sessions->abandoned_at_review ?? 0,
         ];
     }
 
@@ -116,8 +116,8 @@ class FunnelAnalysisService
 
         return $devices->map(function ($device) {
             return [
-                'device_type'     => $device->device_type ?? 'unknown',
-                'total_carts'     => $device->total_carts,
+                'device_type' => $device->device_type ?? 'unknown',
+                'total_carts' => $device->total_carts,
                 'converted_carts' => $device->converted_carts,
                 'conversion_rate' => $this->calculateRate($device->converted_carts, $device->total_carts),
             ];
@@ -144,8 +144,8 @@ class FunnelAnalysisService
         return [
             'average_seconds' => round($result->avg_seconds ?? 0),
             'average_minutes' => round(($result->avg_seconds ?? 0) / 60, 2),
-            'min_seconds'     => $result->min_seconds ?? 0,
-            'max_seconds'     => $result->max_seconds ?? 0,
+            'min_seconds' => $result->min_seconds ?? 0,
+            'max_seconds' => $result->max_seconds ?? 0,
         ];
     }
 

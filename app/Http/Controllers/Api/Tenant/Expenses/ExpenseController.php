@@ -31,91 +31,112 @@ class ExpenseController extends Controller
      *     operationId="getExpenses",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, example=15)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="category_id",
      *         in="query",
      *         description="Filter by expense category ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=6)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="supplier_id",
      *         in="query",
      *         description="Filter by supplier ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_method",
      *         in="query",
      *         description="Filter by payment method",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"cash", "bank_transfer", "mpesa", "cheque", "card", "other"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="payment_status",
      *         in="query",
      *         description="Filter by payment status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"pending", "paid", "overdue"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="approval_status",
      *         in="query",
      *         description="Filter by approval status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"pending", "approved", "rejected"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Filter expenses from this date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="Filter expenses to this date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expenses retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expenses retrieved successfully."),
      *             @OA\Property(
@@ -124,8 +145,10 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="expense_number", type="string", example="EXP-2025-000002"),
      *                         @OA\Property(property="store_id", type="integer", nullable=true, example=1),
@@ -237,29 +260,35 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -308,12 +337,14 @@ class ExpenseController extends Controller
      *     operationId="createExpense",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Expense data",
+     *
      *         @OA\JsonContent(
      *             required={"category_id", "amount", "description", "expense_date", "payment_method"},
+     *
      *             @OA\Property(
      *                 property="store_id",
      *                 type="integer",
@@ -374,11 +405,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Expense created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense created successfully."),
      *             @OA\Property(
@@ -482,11 +515,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -495,29 +530,39 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="category_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The category id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The amount field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="description",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The description field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="expense_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The expense date must be a date before or equal to today.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="payment_method",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected payment method is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -528,29 +573,35 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -583,19 +634,22 @@ class ExpenseController extends Controller
      *     operationId="getExpenseById",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense retrieved successfully."),
      *             @OA\Property(
@@ -765,38 +819,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -808,7 +870,7 @@ class ExpenseController extends Controller
         try {
             $expense = $this->service->getExpenseById($id);
 
-            if (!$expense) {
+            if (! $expense) {
                 return ApiResponse::notFound('Expense not found.');
             }
 
@@ -833,19 +895,22 @@ class ExpenseController extends Controller
      *     operationId="updateExpense",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Expense update data. All fields are optional.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="amount",
      *                 type="number",
@@ -909,11 +974,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense updated successfully."),
      *             @OA\Property(
@@ -1018,11 +1085,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1031,14 +1100,18 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="amount",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The amount must be at least 0.01.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="expense_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The expense date must be a date before or equal to today.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1049,38 +1122,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions or expense cannot be edited",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1113,19 +1194,22 @@ class ExpenseController extends Controller
      *     operationId="deleteExpense",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense deleted successfully."),
      *             @OA\Property(
@@ -1138,38 +1222,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions or expense cannot be deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to delete expense."),
      *             @OA\Property(
@@ -1212,22 +1304,26 @@ class ExpenseController extends Controller
      *     operationId="uploadExpenseReceipt",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Receipt file upload",
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"file"},
+     *
      *                 @OA\Property(
      *                     property="file",
      *                     type="string",
@@ -1237,11 +1333,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Receipt uploaded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Receipt uploaded successfully."),
      *             @OA\Property(
@@ -1254,11 +1352,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1267,9 +1367,11 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="file",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The file field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1280,38 +1382,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1347,19 +1457,22 @@ class ExpenseController extends Controller
      *     operationId="deleteExpenseReceipt",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Receipt deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Receipt deleted successfully."),
      *             @OA\Property(
@@ -1372,38 +1485,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found or no receipt exists",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1436,19 +1557,22 @@ class ExpenseController extends Controller
      *     operationId="approveExpense",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense approved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense approved successfully."),
      *             @OA\Property(
@@ -1461,13 +1585,16 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Business logic error - Expense cannot be approved",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Failed to approve expense."),
      *                     @OA\Property(
@@ -1484,7 +1611,9 @@ class ExpenseController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Failed to approve expense."),
      *                     @OA\Property(
@@ -1504,29 +1633,35 @@ class ExpenseController extends Controller
      *             }
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions to approve expenses",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
@@ -1561,20 +1696,23 @@ class ExpenseController extends Controller
      *     operationId="rejectExpense",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Rejection details",
+     *
      *         @OA\JsonContent(
      *             required={"reason"},
+     *
      *             @OA\Property(
      *                 property="reason",
      *                 type="string",
@@ -1584,11 +1722,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense rejected successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense rejected successfully."),
      *             @OA\Property(
@@ -1601,11 +1741,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1614,9 +1756,11 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="reason",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Rejection reason is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1627,38 +1771,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions to reject expenses",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to reject expense."),
      *             @OA\Property(
@@ -1707,18 +1859,22 @@ class ExpenseController extends Controller
      *     operationId="getPendingApprovalExpenses",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Pending approval expenses retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Pending approval expenses retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="expense_number", type="string", example="EXP-2025-000002"),
      *                     @OA\Property(property="store_id", type="integer", nullable=true, example=1),
@@ -1817,29 +1973,35 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -1872,33 +2034,40 @@ class ExpenseController extends Controller
      *     operationId="getExpenseAnalytics",
      *     tags={"Tenant - Expenses"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Filter expenses from this date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="Filter expenses to this date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense analytics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense analytics retrieved successfully."),
      *             @OA\Property(
@@ -1908,8 +2077,10 @@ class ExpenseController extends Controller
      *                     property="by_category",
      *                     type="array",
      *                     description="Expenses grouped by category",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="category_id", type="integer", example=3),
      *                         @OA\Property(property="category_name", type="string", example="Electricity"),
      *                         @OA\Property(property="category_code", type="string", example="ELECTRICITY"),
@@ -1922,8 +2093,10 @@ class ExpenseController extends Controller
      *                     property="by_payment_method",
      *                     type="array",
      *                     description="Expenses grouped by payment method",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="payment_method", type="string", example="cash"),
      *                         @OA\Property(property="payment_method_label", type="string", example="Cash"),
      *                         @OA\Property(property="expense_count", type="integer", description="Number of expenses with this payment method", example=1),
@@ -1952,29 +2125,35 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -2008,20 +2187,23 @@ class ExpenseController extends Controller
      *     operationId="setExpenseRecurrence",
      *     tags={"Tenant - Expenses - Recurring"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Recurrence configuration",
+     *
      *         @OA\JsonContent(
      *             required={"recurrence_frequency", "recurrence_interval", "recurrence_start_date"},
+     *
      *             @OA\Property(
      *                 property="recurrence_frequency",
      *                 type="string",
@@ -2054,11 +2236,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense set as recurring successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense set as recurring successfully. Future instances will be auto-generated."),
      *             @OA\Property(
@@ -2170,11 +2354,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2183,24 +2369,32 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="recurrence_frequency",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The recurrence frequency field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="recurrence_interval",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The recurrence interval must be at least 1.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="recurrence_start_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The recurrence start date must be a date after or equal to today.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="recurrence_end_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The recurrence end date must be a date after recurrence start date.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2211,38 +2405,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions or category not eligible for recurring",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred.")
      *         )
@@ -2275,19 +2477,22 @@ class ExpenseController extends Controller
      *     operationId="updateExpenseRecurrence",
      *     tags={"Tenant - Expenses - Recurring"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID (must be a recurring expense)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Recurrence settings to update. All fields are optional.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="recurrence_frequency",
      *                 type="string",
@@ -2313,11 +2518,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Recurrence settings updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Recurrence settings updated successfully. Changes apply to future instances only."),
      *             @OA\Property(
@@ -2429,11 +2636,13 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2442,19 +2651,25 @@ class ExpenseController extends Controller
      *                 @OA\Property(
      *                     property="recurrence_frequency",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected recurrence frequency is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="recurrence_interval",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The recurrence interval must be at least 1.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="recurrence_end_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The recurrence end date must be a date after recurrence start date.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2465,38 +2680,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to update recurrence settings."),
      *             @OA\Property(
@@ -2542,19 +2765,22 @@ class ExpenseController extends Controller
      *     operationId="cancelExpenseRecurrence",
      *     tags={"Tenant - Expenses - Recurring"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Recurring expense cancelled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Recurring expense cancelled successfully. No more instances will be generated."),
      *             @OA\Property(
@@ -2666,38 +2892,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to cancel recurrence."),
      *             @OA\Property(
@@ -2743,19 +2977,22 @@ class ExpenseController extends Controller
      *     operationId="generateExpenseRecurrence",
      *     tags={"Tenant - Expenses - Recurring"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Parent expense ID (must be a recurring expense)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Recurrence instance generated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Recurrence instance generated successfully."),
      *             @OA\Property(
@@ -2861,38 +3098,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to generate recurrence instance."),
      *             @OA\Property(
@@ -2912,14 +3157,12 @@ class ExpenseController extends Controller
      *     )
      * )
      */
-
-
     public function generateRecurrence(int $id): JsonResponse
     {
         try {
             $parentExpense = $this->service->getExpenseById($id);
 
-            if (!$parentExpense) {
+            if (! $parentExpense) {
                 return ApiResponse::notFound('Expense not found.');
             }
 
@@ -2946,27 +3189,32 @@ class ExpenseController extends Controller
      *     operationId="getExpenseRecurrences",
      *     tags={"Tenant - Expenses - Recurring"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Parent expense ID (must be a recurring expense)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Recurrence instances retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Recurrence instances retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="List of all generated expense instances",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=3),
      *                     @OA\Property(property="expense_number", type="string", example="EXP-2025-000003"),
      *                     @OA\Property(property="store_id", type="integer", nullable=true, example=1),
@@ -3066,38 +3314,46 @@ class ExpenseController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Expense not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Insufficient permissions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error or business logic error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve recurrence instances."),
      *             @OA\Property(

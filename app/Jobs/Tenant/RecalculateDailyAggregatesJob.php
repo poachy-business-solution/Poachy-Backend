@@ -16,11 +16,15 @@ class RecalculateDailyAggregatesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
+
     public $timeout = 300; // 5 minutes
+
     public $backoff = [60, 120];
 
     protected string $tenantId;
+
     protected string $aggregateDate;
+
     protected int $storeId;
 
     /**

@@ -79,14 +79,14 @@ class AuditLog extends Model
 
     public function scopeWithTag($query, string $tag)
     {
-        return $query->whereRaw("FIND_IN_SET(?, tags) > 0", [$tag]);
+        return $query->whereRaw('FIND_IN_SET(?, tags) > 0', [$tag]);
     }
 
     public function scopeWithAnyTag($query, array $tags)
     {
         return $query->where(function ($q) use ($tags) {
             foreach ($tags as $tag) {
-                $q->orWhereRaw("FIND_IN_SET(?, tags) > 0", [$tag]);
+                $q->orWhereRaw('FIND_IN_SET(?, tags) > 0', [$tag]);
             }
         });
     }
@@ -94,8 +94,9 @@ class AuditLog extends Model
     public function scopeWithAllTags($query, array $tags)
     {
         foreach ($tags as $tag) {
-            $query->whereRaw("FIND_IN_SET(?, tags) > 0", [$tag]);
+            $query->whereRaw('FIND_IN_SET(?, tags) > 0', [$tag]);
         }
+
         return $query;
     }
 

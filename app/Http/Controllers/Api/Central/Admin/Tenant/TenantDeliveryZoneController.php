@@ -21,38 +21,49 @@ class TenantDeliveryZoneController extends Controller
      *     operationId="listTenantDeliveryZones",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="query",
      *         required=false,
      *         description="Filter zones belonging to a specific tenant",
+     *
      *         @OA\Schema(type="string", example="bbab2597-e1ae-466b-a071-83033841d2ed")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sync_status",
      *         in="query",
      *         required=false,
      *         description="Filter by sync status",
+     *
      *         @OA\Schema(type="string", enum={"synced", "pending", "failed"}, example="synced")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         required=false,
      *         description="Filter by active state",
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         required=false,
      *         description="Number of results per page (1–100, default 15)",
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery zones retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zones retrieved successfully"),
      *             @OA\Property(
@@ -61,8 +72,10 @@ class TenantDeliveryZoneController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/TenantDeliveryZoneResource")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="pagination",
      *                     type="object",
@@ -84,6 +97,7 @@ class TenantDeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -101,10 +115,10 @@ class TenantDeliveryZoneController extends Controller
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'tenant_id'   => ['sometimes', 'string'],
+            'tenant_id' => ['sometimes', 'string'],
             'sync_status' => ['sometimes', 'string'],
-            'is_active'   => ['sometimes', 'boolean'],
-            'per_page'    => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'is_active' => ['sometimes', 'boolean'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
         $perPage = (int) ($validated['per_page'] ?? 15);
@@ -121,7 +135,6 @@ class TenantDeliveryZoneController extends Controller
     }
 
     /**
-     *
      * @OA\Get(
      *     path="/api/v1/central/tenant-delivery-zones/{id}",
      *     summary="Get Tenant Delivery Zone",
@@ -129,17 +142,22 @@ class TenantDeliveryZoneController extends Controller
      *     operationId="getTenantDeliveryZone",
      *     tags={"Central - Admin - Tenant Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Central delivery zone ID",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery zone retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery zone retrieved successfully"),
      *             @OA\Property(property="data", ref="#/components/schemas/TenantDeliveryZoneResource"),
@@ -153,6 +171,7 @@ class TenantDeliveryZoneController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"

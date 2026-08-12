@@ -64,7 +64,7 @@ class StoreProductResource extends JsonResource
             // Variant Information (if this is a variant assignment)
             'variant' => $this->when(
                 $this->isVariant() && $this->productVariant,
-                fn() => [
+                fn () => [
                     'id' => $this->productVariant?->id,
                     'variant_name' => $this->productVariant?->variant_name,
                     'sku' => $this->productVariant?->sku,

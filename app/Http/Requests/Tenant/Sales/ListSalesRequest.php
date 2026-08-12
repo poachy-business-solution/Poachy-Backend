@@ -75,7 +75,7 @@ class ListSalesRequest extends FormRequest
         return [
             'store_id.exists' => 'Selected store does not exist',
             'customer_id.exists' => 'Selected customer does not exist',
-            'payment_status.in' => 'Invalid payment status. Must be one of: ' . implode(', ', array_column(PaymentStatus::cases(), 'value')),
+            'payment_status.in' => 'Invalid payment status. Must be one of: '.implode(', ', array_column(PaymentStatus::cases(), 'value')),
             'from_date.date_format' => 'From date must be in format Y-m-d (e.g., 2025-01-08)',
             'to_date.date_format' => 'To date must be in format Y-m-d (e.g., 2025-01-08)',
             'to_date.after_or_equal' => 'To date must be after or equal to from date',

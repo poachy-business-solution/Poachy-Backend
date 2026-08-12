@@ -14,7 +14,7 @@ class CustomerHelper
     {
         $customer = self::getAuthenticatedCustomer();
 
-        if (!$customer) {
+        if (! $customer) {
             abort(404, 'Customer profile not found');
         }
 
@@ -28,7 +28,7 @@ class CustomerHelper
     {
         $userId = Auth::guard('central')->id();
 
-        if (!$userId) {
+        if (! $userId) {
             return null;
         }
 

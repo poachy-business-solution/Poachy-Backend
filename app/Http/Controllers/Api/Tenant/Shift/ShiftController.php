@@ -9,6 +9,7 @@ use App\Http\Resources\Tenant\Shift\ShiftResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Shift;
 use App\Services\Tenant\Shift\ShiftService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,52 +29,67 @@ class ShiftController extends Controller
      *     description="Get paginated list of shifts with optional filters",
      *     operationId="listShifts",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="day",
      *         in="query",
      *         description="Filter by day of week",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="monday")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by shift name",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="Morning")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="company_wide",
      *         in="query",
      *         description="Filter company-wide shifts",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shifts retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shifts retrieved successfully"),
      *             @OA\Property(
@@ -82,8 +98,10 @@ class ShiftController extends Controller
      *                 @OA\Property(
      *                     property="shifts",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="shift_name", type="string", example="Morning Shift"),
      *                         @OA\Property(property="store_id", type="integer", example=1),
@@ -114,8 +132,10 @@ class ShiftController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:39:08.000000Z"),
@@ -213,10 +233,13 @@ class ShiftController extends Controller
      *     description="Create a new shift with schedule and applicable days",
      *     operationId="createShift",
      *     tags={"Shifts"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"shift_name", "scheduled_start_time", "scheduled_end_time"},
+     *
      *             @OA\Property(property="shift_name", type="string", example="Morning Shift", description="The shift name"),
      *             @OA\Property(property="store_id", type="integer", nullable=true, example=1, description="Store ID (null for company-wide)"),
      *             @OA\Property(property="scheduled_start_time", type="string", example="06:00", description="Start time in HH:MM format"),
@@ -225,15 +248,20 @@ class ShiftController extends Controller
      *                 property="applicable_days",
      *                 type="array",
      *                 description="Days of week this shift applies to",
+     *
      *                 @OA\Items(type="string", example="monday")
      *             ),
+     *
      *             @OA\Property(property="is_active", type="boolean", example=true, description="Whether shift is active")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift created successfully"),
      *             @OA\Property(
@@ -272,8 +300,10 @@ class ShiftController extends Controller
      *                     @OA\Property(
      *                         property="applicable_days",
      *                         type="array",
+     *
      *                         @OA\Items(type="string", example="monday")
      *                     ),
+     *
      *                     @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                     @OA\Property(property="is_active", type="boolean", example=true),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:39:08.000000Z"),
@@ -310,17 +340,22 @@ class ShiftController extends Controller
      *     description="Retrieve detailed information about a specific shift including assignments",
      *     operationId="getShift",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift retrieved successfully"),
      *             @OA\Property(
@@ -359,15 +394,19 @@ class ShiftController extends Controller
      *                     @OA\Property(
      *                         property="applicable_days",
      *                         type="array",
+     *
      *                         @OA\Items(type="string", example="monday")
      *                     ),
+     *
      *                     @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                     @OA\Property(property="is_active", type="boolean", example=true),
      *                     @OA\Property(
      *                         property="assignments",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="shift_id", type="integer", example=2),
      *                             @OA\Property(property="store_id", type="integer", example=1),
@@ -438,16 +477,21 @@ class ShiftController extends Controller
      *     description="Update shift details with partial data",
      *     operationId="updateShift",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="shift_name", type="string", example="Evening Shift", description="The shift name"),
      *             @OA\Property(property="scheduled_start_time", type="string", example="16:00", description="Start time in HH:MM format"),
      *             @OA\Property(property="scheduled_end_time", type="string", example="00:00", description="End time in HH:MM format"),
@@ -455,15 +499,20 @@ class ShiftController extends Controller
      *                 property="applicable_days",
      *                 type="array",
      *                 description="Days of week",
+     *
      *                 @OA\Items(type="string", example="monday")
      *             ),
+     *
      *             @OA\Property(property="is_active", type="boolean", example=false, description="Active status")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift updated successfully"),
      *             @OA\Property(
@@ -502,8 +551,10 @@ class ShiftController extends Controller
      *                     @OA\Property(
      *                         property="applicable_days",
      *                         type="array",
+     *
      *                         @OA\Items(type="string", example="monday")
      *                     ),
+     *
      *                     @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                     @OA\Property(property="is_active", type="boolean", example=true),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:39:08.000000Z"),
@@ -540,17 +591,22 @@ class ShiftController extends Controller
      *     description="Soft delete a shift by ID",
      *     operationId="deleteShift",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift deleted successfully"),
      *             @OA\Property(
@@ -581,17 +637,22 @@ class ShiftController extends Controller
      *     description="Toggle the active status of a shift between active and inactive",
      *     operationId="toggleShiftActive",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift status toggled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift status toggled successfully"),
      *             @OA\Property(
@@ -611,8 +672,10 @@ class ShiftController extends Controller
      *                     @OA\Property(
      *                         property="applicable_days",
      *                         type="array",
+     *
      *                         @OA\Items(type="string", example="monday")
      *                     ),
+     *
      *                     @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                     @OA\Property(property="is_active", type="boolean", example=false),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -651,24 +714,32 @@ class ShiftController extends Controller
      *     description="Create a copy of an existing shift with a new name",
      *     operationId="duplicateShift",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"shift_name"},
+     *
      *             @OA\Property(property="shift_name", type="string", example="Morning Shift (Copy)", description="Name for the new shift")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift duplicated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift duplicated successfully"),
      *             @OA\Property(
@@ -707,8 +778,10 @@ class ShiftController extends Controller
      *                     @OA\Property(
      *                         property="applicable_days",
      *                         type="array",
+     *
      *                         @OA\Items(type="string", example="monday")
      *                     ),
+     *
      *                     @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                     @OA\Property(property="is_active", type="boolean", example=false),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:57:37.000000Z"),
@@ -753,17 +826,22 @@ class ShiftController extends Controller
      *     description="Retrieve statistical information about shifts",
      *     operationId="getShiftStatistics",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift statistics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift statistics retrieved successfully"),
      *             @OA\Property(
@@ -811,24 +889,31 @@ class ShiftController extends Controller
      *     description="Retrieve all shifts applicable for a given date based on their applicable_days configuration",
      *     operationId="getShiftsForDate",
      *     tags={"Shifts"},
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         description="Date in Y-m-d format",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-05")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shifts for date retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shifts for date retrieved successfully"),
      *             @OA\Property(
@@ -837,8 +922,10 @@ class ShiftController extends Controller
      *                 @OA\Property(
      *                     property="shifts",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="shift_name", type="string", example="Morning Shift"),
      *                         @OA\Property(property="store_id", type="integer", example=1),
@@ -869,8 +956,10 @@ class ShiftController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -900,7 +989,7 @@ class ShiftController extends Controller
             'store_id' => 'nullable|integer|exists:stores,id',
         ]);
 
-        $date = \Carbon\Carbon::parse($request->input('date'));
+        $date = Carbon::parse($request->input('date'));
         $storeId = $request->input('store_id');
 
         $shifts = $this->shiftService->getShiftsForDate($date, $storeId);

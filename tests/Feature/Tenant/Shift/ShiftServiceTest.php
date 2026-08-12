@@ -5,6 +5,7 @@ namespace Tests\Feature\Tenant\Shift;
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
 use App\Services\Tenant\Shift\ShiftService;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -46,7 +47,7 @@ class ShiftServiceTest extends TestCase
 
     private function makeService(): ShiftService
     {
-        return new ShiftService();
+        return new ShiftService;
     }
 
     private function createShift(array $overrides = []): Shift
@@ -252,7 +253,7 @@ class ShiftServiceTest extends TestCase
         $this->createShift(['applicable_days' => ['monday']]);
         $this->createShift(['applicable_days' => ['tuesday']]);
 
-        $monday = \Carbon\Carbon::parse('next monday');
+        $monday = Carbon::parse('next monday');
         $result = $this->makeService()->getShiftsForDate($monday);
 
         $this->assertCount(1, $result);

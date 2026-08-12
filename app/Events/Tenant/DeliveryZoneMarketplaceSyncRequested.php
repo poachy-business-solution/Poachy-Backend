@@ -13,7 +13,9 @@ class DeliveryZoneMarketplaceSyncRequested
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public readonly DeliveryZoneSyncDTO $zoneDTO;
+
     public readonly string $action;
+
     public readonly int $priority;
 
     public function __construct(

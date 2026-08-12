@@ -43,7 +43,7 @@ class UpdateSocialMediaRequest extends FormRequest
             $socialMedia = $this->social_media;
 
             // Validate Instagram handle format (optional)
-            if (isset($socialMedia['instagram']) && !empty($socialMedia['instagram'])) {
+            if (isset($socialMedia['instagram']) && ! empty($socialMedia['instagram'])) {
                 $instagram = $socialMedia['instagram'];
                 // Remove @ if present at start
                 if (str_starts_with($instagram, '@')) {
@@ -51,7 +51,7 @@ class UpdateSocialMediaRequest extends FormRequest
                 }
 
                 // Validate format (alphanumeric, underscores, dots)
-                if (!preg_match('/^[a-zA-Z0-9._]+$/', $instagram)) {
+                if (! preg_match('/^[a-zA-Z0-9._]+$/', $instagram)) {
                     $validator->errors()->add(
                         'social_media.instagram',
                         'Instagram handle can only contain letters, numbers, dots, and underscores.'
@@ -60,7 +60,7 @@ class UpdateSocialMediaRequest extends FormRequest
             }
 
             // Validate Twitter handle format (optional)
-            if (isset($socialMedia['twitter']) && !empty($socialMedia['twitter'])) {
+            if (isset($socialMedia['twitter']) && ! empty($socialMedia['twitter'])) {
                 $twitter = $socialMedia['twitter'];
                 // Remove @ if present at start
                 if (str_starts_with($twitter, '@')) {
@@ -68,7 +68,7 @@ class UpdateSocialMediaRequest extends FormRequest
                 }
 
                 // Validate format (alphanumeric, underscores)
-                if (!preg_match('/^[a-zA-Z0-9_]+$/', $twitter)) {
+                if (! preg_match('/^[a-zA-Z0-9_]+$/', $twitter)) {
                     $validator->errors()->add(
                         'social_media.twitter',
                         'Twitter handle can only contain letters, numbers, and underscores.'
@@ -77,10 +77,10 @@ class UpdateSocialMediaRequest extends FormRequest
             }
 
             // Validate WhatsApp number format
-            if (isset($socialMedia['whatsapp']) && !empty($socialMedia['whatsapp'])) {
+            if (isset($socialMedia['whatsapp']) && ! empty($socialMedia['whatsapp'])) {
                 $whatsapp = $socialMedia['whatsapp'];
                 // Should start with + and contain only digits and spaces
-                if (!preg_match('/^\+?[0-9\s]+$/', $whatsapp)) {
+                if (! preg_match('/^\+?[0-9\s]+$/', $whatsapp)) {
                     $validator->errors()->add(
                         'social_media.whatsapp',
                         'WhatsApp number must be a valid phone number (e.g., +254712345678).'

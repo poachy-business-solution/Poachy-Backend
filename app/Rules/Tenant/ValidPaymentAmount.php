@@ -19,14 +19,15 @@ class ValidPaymentAmount implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$this->supplierId || !$value) {
+        if (! $this->supplierId || ! $value) {
             return;
         }
 
         $supplier = Supplier::find($this->supplierId);
 
-        if (!$supplier) {
+        if (! $supplier) {
             $fail('The selected supplier does not exist.');
+
             return;
         }
 
@@ -37,6 +38,7 @@ class ValidPaymentAmount implements ValidationRule
                 $value,
                 $supplier->outstanding_balance
             ));
+
             return;
         }
 
@@ -44,8 +46,9 @@ class ValidPaymentAmount implements ValidationRule
         if ($this->purchaseOrderId) {
             $po = PurchaseOrder::find($this->purchaseOrderId);
 
-            if (!$po) {
+            if (! $po) {
                 $fail('The selected purchase order does not exist.');
+
                 return;
             }
 

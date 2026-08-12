@@ -29,14 +29,14 @@ class AuthService
             ->first();
 
         // Verify password
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         // Verify user is admin
-        if (!$user->hasRole(['admin', 'support'])) {
+        if (! $user->hasRole(['admin', 'support'])) {
             throw ValidationException::withMessages([
                 'email' => ['Unauthorized.'],
             ]);
@@ -113,7 +113,7 @@ class AuthService
             $admin = User::on('central')->findOrFail($adminId);
 
             // Verify target user is admin or support
-            if (!$admin->hasRole(['admin', 'support'])) {
+            if (! $admin->hasRole(['admin', 'support'])) {
                 throw new \Exception('Cannot reset password for non-admin users.');
             }
 

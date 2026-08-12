@@ -26,17 +26,22 @@ class ShoppingCartController extends Controller
      *     description="Retrieves the current shopping cart for the session. Items are grouped by tenant. Supports both guest (session-based) and authenticated customers. The X-Cart-Session-Id header is required to identify the cart.",
      *     operationId="getCart",
      *     tags={"Central - Customer - Marketplace - Cart"},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Cart retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Cart retrieved successfully"),
      *             @OA\Property(
@@ -50,14 +55,18 @@ class ShoppingCartController extends Controller
      *                     property="tenant_groups",
      *                     type="array",
      *                     description="Cart items grouped by merchant/tenant",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
      *                         @OA\Property(
      *                             property="items",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(property="id", type="integer", example=1),
      *                                 @OA\Property(property="marketplace_product_id", type="integer", example=2),
      *                                 @OA\Property(property="product_name", type="string", example="TCL 55 4K UHD Smart LED TV"),
@@ -127,18 +136,23 @@ class ShoppingCartController extends Controller
      *     description="Adds a marketplace product to the cart. If the product is already in the cart, its quantity is incremented by the specified amount. Returns the updated cart item.",
      *     operationId="addCartItem",
      *     tags={"Central - Customer - Marketplace - Cart"},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Product and quantity to add",
+     *
      *         @OA\JsonContent(
      *             required={"marketplace_product_id", "quantity"},
+     *
      *             @OA\Property(
      *                 property="marketplace_product_id",
      *                 type="integer",
@@ -154,10 +168,13 @@ class ShoppingCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item added to cart successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item added to cart"),
      *             @OA\Property(
@@ -205,10 +222,13 @@ class ShoppingCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or product unavailable",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -256,25 +276,32 @@ class ShoppingCartController extends Controller
      *     description="Updates the quantity of an existing item in the cart. Returns the updated cart item with the new line total.",
      *     operationId="updateCartItem",
      *     tags={"Central - Customer - Marketplace - Cart"},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Cart item ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="New quantity for the cart item",
+     *
      *         @OA\JsonContent(
      *             required={"quantity"},
+     *
      *             @OA\Property(
      *                 property="quantity",
      *                 type="integer",
@@ -284,10 +311,13 @@ class ShoppingCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Cart item updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Cart item updated"),
      *             @OA\Property(
@@ -335,10 +365,13 @@ class ShoppingCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Cart item not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cart item not found."),
      *             @OA\Property(
@@ -351,10 +384,13 @@ class ShoppingCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -406,24 +442,31 @@ class ShoppingCartController extends Controller
      *     description="Removes a single item from the cart by its ID. The cart itself remains active after removal.",
      *     operationId="removeCartItem",
      *     tags={"Central - Customer - Marketplace - Cart"},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Cart item ID to remove",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item removed from cart successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item removed from cart"),
      *             @OA\Property(
@@ -436,10 +479,13 @@ class ShoppingCartController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Cart item not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cart item not found."),
      *             @OA\Property(
@@ -471,17 +517,22 @@ class ShoppingCartController extends Controller
      *     description="Removes all items from the cart, leaving the cart empty. The cart session itself is retained.",
      *     operationId="clearCart",
      *     tags={"Central - Customer - Marketplace - Cart"},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Cart cleared successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Cart cleared"),
      *             @OA\Property(
@@ -513,17 +564,22 @@ class ShoppingCartController extends Controller
      *     description="Re-checks the current market prices for all items in the cart against their stored prices. Returns a summary of items whose prices have changed versus those that remain unchanged. Useful to call before checkout to ensure price accuracy.",
      *     operationId="refreshCartPrices",
      *     tags={"Central - Customer - Marketplace - Cart"},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Prices refreshed successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Prices refreshed"),
      *             @OA\Property(
@@ -533,9 +589,11 @@ class ShoppingCartController extends Controller
      *                     property="changed",
      *                     type="array",
      *                     description="List of cart item IDs whose price has changed",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={}
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="unchanged",
      *                     type="integer",

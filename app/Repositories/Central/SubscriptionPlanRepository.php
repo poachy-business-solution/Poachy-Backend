@@ -9,9 +9,6 @@ class SubscriptionPlanRepository
 {
     /**
      * Get subscription plans with filtering and sorting.
-     *
-     * @param array $filters
-     * @return Collection
      */
     public function getPlans(array $filters = []): Collection
     {
@@ -51,9 +48,6 @@ class SubscriptionPlanRepository
 
     /**
      * Find a subscription plan by ID.
-     *
-     * @param int $planId
-     * @return SubscriptionPlan|null
      */
     public function findById(int $planId): ?SubscriptionPlan
     {
@@ -62,9 +56,6 @@ class SubscriptionPlanRepository
 
     /**
      * Find a subscription plan by slug.
-     *
-     * @param string $slug
-     * @return SubscriptionPlan|null
      */
     public function findBySlug(string $slug): ?SubscriptionPlan
     {
@@ -73,8 +64,6 @@ class SubscriptionPlanRepository
 
     /**
      * Get only active subscription plans.
-     *
-     * @return Collection
      */
     public function getActivePlans(): Collection
     {
@@ -85,8 +74,6 @@ class SubscriptionPlanRepository
 
     /**
      * Get featured subscription plans.
-     *
-     * @return Collection
      */
     public function getFeaturedPlans(): Collection
     {
@@ -98,8 +85,6 @@ class SubscriptionPlanRepository
 
     /**
      * Get free plans.
-     *
-     * @return Collection
      */
     public function getFreePlans(): Collection
     {
@@ -110,8 +95,6 @@ class SubscriptionPlanRepository
 
     /**
      * Get paid plans.
-     *
-     * @return Collection
      */
     public function getPaidPlans(): Collection
     {
@@ -123,9 +106,6 @@ class SubscriptionPlanRepository
 
     /**
      * Count active subscriptions for a plan.
-     *
-     * @param int $planId
-     * @return int
      */
     public function countActiveSubscriptions(int $planId): int
     {

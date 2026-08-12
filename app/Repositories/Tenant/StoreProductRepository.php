@@ -197,6 +197,7 @@ class StoreProductRepository
     {
         $query = StoreProduct::query()->forStore($storeId);
         $this->applyFilters($query, $filters);
+
         return $query->count();
     }
 
@@ -222,7 +223,7 @@ class StoreProductRepository
             ->withDetails()
             // ->withInventory()
             ->get()
-            ->filter(fn($sp) => $sp->is_low_stock)
+            ->filter(fn ($sp) => $sp->is_low_stock)
             ->take($limit);
     }
 

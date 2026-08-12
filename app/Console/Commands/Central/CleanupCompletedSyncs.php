@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class CleanupCompletedSyncs extends Command
 {
     protected $signature = 'sync:cleanup-completed {--days=30 : Days to retain completed syncs}';
+
     protected $description = 'Delete old completed sync records';
 
     public function handle(): int

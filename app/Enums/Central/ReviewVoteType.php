@@ -4,13 +4,13 @@ namespace App\Enums\Central;
 
 enum ReviewVoteType: string
 {
-    case Helpful    = 'helpful';
+    case Helpful = 'helpful';
     case NotHelpful = 'not_helpful';
 
     public function label(): string
     {
         return match ($this) {
-            self::Helpful    => 'Helpful',
+            self::Helpful => 'Helpful',
             self::NotHelpful => 'Not Helpful',
         };
     }

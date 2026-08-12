@@ -13,14 +13,18 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ProcessInboundDeliveryZoneSync implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 180;
+
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public array $backoff = [60, 300, 900];
 
     public function __construct(
@@ -51,7 +55,7 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
             $syncQueue->update(['status' => 'stale']);
             Log::warning('Delivery zone sync is stale, marking as expired', [
                 'sync_queue_id' => $syncQueue->id,
-                'expires_at'    => $syncQueue->expires_at,
+                'expires_at' => $syncQueue->expires_at,
             ]);
 
             return;
@@ -74,10 +78,10 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
             $syncQueue->markAsProcessing();
 
             Log::info('Processing inbound delivery zone sync', [
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
-                'zone_id'       => $syncQueue->tenant_syncable_id,
-                'action'        => $syncQueue->action,
+                'zone_id' => $syncQueue->tenant_syncable_id,
+                'action' => $syncQueue->action,
             ]);
 
             $syncQueue->markAsValidating();
@@ -90,27 +94,27 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
                 'create' => $this->handleCreate($syncService, $dto, $syncQueue),
                 'update' => $this->handleUpdate($syncService, $dto, $syncQueue),
                 'delete' => $this->handleDelete($syncService, $dto, $syncQueue),
-                default  => throw new \InvalidArgumentException("Unknown action: {$syncQueue->action}"),
+                default => throw new \InvalidArgumentException("Unknown action: {$syncQueue->action}"),
             };
 
             $centralZoneId = $result;
             $ackStatus = 'completed';
 
             Log::info('Inbound delivery zone sync completed', [
-                'tenant_id'       => $syncQueue->tenant_id,
-                'sync_queue_id'   => $syncQueue->id,
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
                 'central_zone_id' => $centralZoneId,
-                'action'          => $syncQueue->action,
+                'action' => $syncQueue->action,
             ]);
         } catch (\Exception $e) {
             $ackStatus = 'failed';
             $ackReason = $e->getMessage();
 
             Log::error('Inbound delivery zone sync failed', [
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
-                'error'         => $e->getMessage(),
-                'trace'         => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $syncQueue->markAsFailed(
@@ -118,8 +122,8 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
                 errorCode: $this->getErrorCode($e),
                 errorDetails: [
                     'exception' => get_class($e),
-                    'file'      => $e->getFile(),
-                    'line'      => $e->getLine(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                 ]
             );
 
@@ -128,7 +132,7 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
 
                 Log::info('Delivery zone sync will be retried', [
                     'sync_queue_id' => $syncQueue->id,
-                    'retry_count'   => $syncQueue->retry_count,
+                    'retry_count' => $syncQueue->retry_count,
                     'next_retry_at' => $syncQueue->next_retry_at,
                 ]);
 
@@ -140,7 +144,7 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
             } else {
                 Log::error('Max retries reached for delivery zone inbound sync, failed permanently', [
                     'sync_queue_id' => $syncQueue->id,
-                    'retry_count'   => $syncQueue->retry_count,
+                    'retry_count' => $syncQueue->retry_count,
                 ]);
             }
 
@@ -220,7 +224,7 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
 
             if (! $tenant) {
                 Log::warning('Tenant not found for delivery zone ACK', [
-                    'tenant_id'     => $syncQueue->tenant_id,
+                    'tenant_id' => $syncQueue->tenant_id,
                     'sync_queue_id' => $syncQueue->id,
                 ]);
 
@@ -231,7 +235,7 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
 
             if (! $domain) {
                 Log::warning('No domain found for tenant delivery zone ACK', [
-                    'tenant_id'     => $syncQueue->tenant_id,
+                    'tenant_id' => $syncQueue->tenant_id,
                     'sync_queue_id' => $syncQueue->id,
                 ]);
 
@@ -239,30 +243,30 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
             }
 
             $scheme = app()->environment('local') ? 'http://' : 'https://';
-            $tenantUrl = $scheme . $domain->domain;
+            $tenantUrl = $scheme.$domain->domain;
 
             Http::withToken(config('services.tenant_api.token'))
                 ->timeout(30)
                 ->retry(2, 100)
-                ->post($tenantUrl . '/api/v1/tenant/sync/inbound/delivery-zone-ack', [
+                ->post($tenantUrl.'/api/v1/tenant/sync/inbound/delivery-zone-ack', [
                     'outbound_sync_queue_id' => (int) $tenantOutboundSyncId,
-                    'status'                 => $status,
-                    'central_zone_id'        => $centralZoneId,
-                    'reason'                 => $reason,
+                    'status' => $status,
+                    'central_zone_id' => $centralZoneId,
+                    'reason' => $reason,
                 ]);
 
             Log::info('Delivery zone ACK sent to tenant', [
-                'tenant_id'               => $syncQueue->tenant_id,
-                'sync_queue_id'           => $syncQueue->id,
-                'outbound_sync_queue_id'  => $tenantOutboundSyncId,
-                'status'                  => $status,
-                'central_zone_id'         => $centralZoneId,
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
+                'outbound_sync_queue_id' => $tenantOutboundSyncId,
+                'status' => $status,
+                'central_zone_id' => $centralZoneId,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send delivery zone ACK to tenant', [
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
-                'error'         => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             // Don't rethrow — ACK failure should not fail the sync job
         }
@@ -270,7 +274,7 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
 
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Validation\ValidationException) {
+        if ($e instanceof ValidationException) {
             return 'VALIDATION_ERROR';
         }
 
@@ -285,17 +289,17 @@ class ProcessInboundDeliveryZoneSync implements ShouldQueue
     {
         Log::error('ProcessInboundDeliveryZoneSync job failed permanently', [
             'sync_queue_id' => $this->syncQueueId,
-            'error'         => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
 
         $syncQueue = SyncQueueInbound::find($this->syncQueueId);
         if ($syncQueue) {
             $syncQueue->markAsFailed(
-                errorMessage: 'Job failed permanently: ' . $exception->getMessage(),
+                errorMessage: 'Job failed permanently: '.$exception->getMessage(),
                 errorCode: 'JOB_FAILED',
                 errorDetails: [
                     'exception' => get_class($exception),
-                    'trace'     => $exception->getTraceAsString(),
+                    'trace' => $exception->getTraceAsString(),
                 ]
             );
         }

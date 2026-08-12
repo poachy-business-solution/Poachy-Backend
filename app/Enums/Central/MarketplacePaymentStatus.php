@@ -4,11 +4,11 @@ namespace App\Enums\Central;
 
 enum MarketplacePaymentStatus: string
 {
-    case Pending    = 'pending';
+    case Pending = 'pending';
     case Processing = 'processing';
-    case Completed  = 'completed';
-    case Failed     = 'failed';
-    case Refunded   = 'refunded';
+    case Completed = 'completed';
+    case Failed = 'failed';
+    case Refunded = 'refunded';
 
     /**
      * Human-readable label for display.
@@ -16,11 +16,11 @@ enum MarketplacePaymentStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending    => 'Pending',
+            self::Pending => 'Pending',
             self::Processing => 'Processing',
-            self::Completed  => 'Completed',
-            self::Failed     => 'Failed',
-            self::Refunded   => 'Refunded',
+            self::Completed => 'Completed',
+            self::Failed => 'Failed',
+            self::Refunded => 'Refunded',
         };
     }
 

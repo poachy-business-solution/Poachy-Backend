@@ -4,6 +4,7 @@ namespace App\Services\Central\Marketplace;
 
 use App\Models\MarketplaceProduct;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +28,8 @@ class MarketplaceProductService
      */
     public function listActiveProducts(array $filters): LengthAwarePaginator
     {
-        $perPage  = (int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE);
-        $page     = (int) ($filters['page'] ?? 1);
+        $perPage = (int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE);
+        $page = (int) ($filters['page'] ?? 1);
         $cacheKey = $this->buildCacheKey($filters);
 
         return Cache::tags([self::CACHE_TAG])
@@ -43,7 +44,7 @@ class MarketplaceProductService
      */
     public function findBySlug(string $slug): ?MarketplaceProduct
     {
-        $cacheKey = self::CACHE_TAG . ':slug:' . $slug;
+        $cacheKey = self::CACHE_TAG.':slug:'.$slug;
 
         return Cache::tags([self::CACHE_TAG])
             ->remember($cacheKey, self::CACHE_TTL, function () use ($slug) {
@@ -77,7 +78,7 @@ class MarketplaceProductService
             // Non-critical — log and swallow so the main response is unaffected
             Log::warning('Failed to increment marketplace product view count', [
                 'product_id' => $productId,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -99,7 +100,7 @@ class MarketplaceProductService
         } catch (\Throwable $e) {
             Log::warning('Failed to increment marketplace product order count', [
                 'product_id' => $productId,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -111,7 +112,7 @@ class MarketplaceProductService
     /**
      * Build the Eloquent query applying all requested filters and sorting.
      */
-    private function buildQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    private function buildQuery(array $filters): Builder
     {
         $query = MarketplaceProduct::on('central')
             ->with([
@@ -121,31 +122,31 @@ class MarketplaceProductService
             ->active();
 
         // ── Full-text search ────────────────────────────────────────────────
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = $filters['search'];
             $query->where(function ($q) use ($term) {
-                $q->whereRaw('MATCH(name, description) AGAINST(? IN BOOLEAN MODE)', [$term . '*'])
-                  ->orWhere('name', 'LIKE', '%' . $term . '%');
+                $q->whereRaw('MATCH(name, description) AGAINST(? IN BOOLEAN MODE)', [$term.'*'])
+                    ->orWhere('name', 'LIKE', '%'.$term.'%');
             });
         }
 
         // ── Category filter ───────────────────────────────────────────────────
-        if (!empty($filters['marketplace_category_id'])) {
+        if (! empty($filters['marketplace_category_id'])) {
             $query->where('marketplace_category_id', $filters['marketplace_category_id']);
         }
 
         // ── Brand filter ──────────────────────────────────────────────────────
-        if (!empty($filters['marketplace_brand_id'])) {
+        if (! empty($filters['marketplace_brand_id'])) {
             $query->where('marketplace_brand_id', $filters['marketplace_brand_id']);
         }
 
         // ── Tenant filter (browse one merchant's online store) ────────────────
-        if (!empty($filters['tenant_id'])) {
+        if (! empty($filters['tenant_id'])) {
             $query->where('tenant_id', $filters['tenant_id']);
         }
 
         // ── Stock status filter ───────────────────────────────────────────────
-        if (!empty($filters['stock_status'])) {
+        if (! empty($filters['stock_status'])) {
             $query->where('stock_status', $filters['stock_status']);
         }
 
@@ -164,12 +165,12 @@ class MarketplaceProductService
         }
 
         // ── Sorting ───────────────────────────────────────────────────────────
-        $sortBy        = $filters['sort_by'] ?? 'display_priority';
+        $sortBy = $filters['sort_by'] ?? 'display_priority';
         $sortDirection = $filters['sort_direction'] ?? 'desc';
 
         // Always apply a secondary stable sort by id so pagination is consistent
         $query->orderBy($sortBy, $sortDirection)
-              ->orderBy('id', 'asc');
+            ->orderBy('id', 'asc');
 
         return $query;
     }
@@ -183,6 +184,6 @@ class MarketplaceProductService
         $normalized = $filters;
         ksort($normalized);
 
-        return self::CACHE_TAG . ':list:' . md5(json_encode($normalized));
+        return self::CACHE_TAG.':list:'.md5(json_encode($normalized));
     }
 }

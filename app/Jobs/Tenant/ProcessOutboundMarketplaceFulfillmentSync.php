@@ -6,6 +6,8 @@ use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
@@ -179,11 +181,11 @@ class ProcessOutboundMarketplaceFulfillmentSync implements ShouldQueue
 
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+        if ($e instanceof ConnectionException) {
             return 'NETWORK_ERROR';
         }
 
-        if ($e instanceof \Illuminate\Http\Client\RequestException) {
+        if ($e instanceof RequestException) {
             return 'API_ERROR';
         }
 

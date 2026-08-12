@@ -21,23 +21,30 @@ class CustomerJourneyController extends Controller
      *     operationId="getCustomerSessionJourney",
      *     tags={"Central - Analytics - Customer Journey"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="sessionUuid",
      *         in="path",
      *         description="Session UUID to reconstruct the journey for",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Session journey retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="event_type", type="string", example="product_view"),
      *                     @OA\Property(property="event_timestamp", type="string", format="date-time", example="2026-06-15T10:20:00Z"),
      *                     @OA\Property(
@@ -60,9 +67,11 @@ class CustomerJourneyController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Unauthenticated."))
      *     )
      * )
@@ -73,7 +82,7 @@ class CustomerJourneyController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $journey,
+            'data' => $journey,
         ]);
     }
 
@@ -85,46 +94,59 @@ class CustomerJourneyController extends Controller
      *     operationId="getCommonConversionPaths",
      *     tags={"Central - Analytics - Customer Journey"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="start_date",
      *         in="query",
      *         description="Start date for the analysis window",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-06-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="end_date",
      *         in="query",
      *         description="End date for the analysis window",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-06-30")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Maximum number of paths to return (default 10)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversion paths retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="path", type="string", example="product_view → add_to_cart → purchase"),
      *                     @OA\Property(property="count", type="integer", example=18)
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Unauthenticated."))
      *     )
      * )
@@ -133,8 +155,8 @@ class CustomerJourneyController extends Controller
     {
         $request->validate([
             'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
-            'limit'      => ['nullable', 'integer', 'min:1', 'max:100'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         $paths = $this->journeyService->getCommonConversionPaths(
@@ -145,7 +167,7 @@ class CustomerJourneyController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $paths,
+            'data' => $paths,
         ]);
     }
 }

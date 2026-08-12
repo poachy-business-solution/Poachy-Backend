@@ -2,27 +2,27 @@
 
 namespace App\Services\Tenant;
 
+use App\Jobs\Tenant\CreateAuditLogJob;
 use App\Models\Tenant\AuditLog;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 
 class AuditService
 {
     /**
      * Create an audit log entry
      *
-     * @param Model $model The model being audited
-     * @param string $action The action performed (created, updated, deleted, etc.)
-     * @param array|null $oldValues Values before the change
-     * @param array|null $newValues Values after the change
-     * @param string|null $description Custom description (auto-generated if null)
-     * @param array|null $tags Custom tags (auto-generated if null)
-     * @return AuditLog|null
+     * @param  Model  $model  The model being audited
+     * @param  string  $action  The action performed (created, updated, deleted, etc.)
+     * @param  array|null  $oldValues  Values before the change
+     * @param  array|null  $newValues  Values after the change
+     * @param  string|null  $description  Custom description (auto-generated if null)
+     * @param  array|null  $tags  Custom tags (auto-generated if null)
      */
     public function createAudit(
         Model $model,
@@ -33,12 +33,12 @@ class AuditService
         ?array $tags = null
     ): ?AuditLog {
         // Check if auditing is globally enabled
-        if (!config('audit.enabled', true)) {
+        if (! config('audit.enabled', true)) {
             return null;
         }
 
         // Check if this model/action should be audited
-        if (!$this->shouldAudit($model, $action)) {
+        if (! $this->shouldAudit($model, $action)) {
             return null;
         }
 
@@ -64,12 +64,11 @@ class AuditService
     /**
      * Create audit log with aggregated children
      *
-     * @param Model $model Parent model
-     * @param string $action Action performed
-     * @param array $aggregatedData Data including children relations
-     * @param string|null $description Custom description
-     * @param array|null $tags Custom tags
-     * @return AuditLog|null
+     * @param  Model  $model  Parent model
+     * @param  string  $action  Action performed
+     * @param  array  $aggregatedData  Data including children relations
+     * @param  string|null  $description  Custom description
+     * @param  array|null  $tags  Custom tags
      */
     public function createAggregatedAudit(
         Model $model,
@@ -78,7 +77,7 @@ class AuditService
         ?string $description = null,
         ?array $tags = null
     ): ?AuditLog {
-        if (!config('audit.enabled', true) || !$this->shouldAudit($model, $action)) {
+        if (! config('audit.enabled', true) || ! $this->shouldAudit($model, $action)) {
             return null;
         }
 
@@ -92,13 +91,12 @@ class AuditService
     /**
      * Create bulk operation audit summary
      *
-     * @param string $modelClass Model class being affected
-     * @param string $action Action performed
-     * @param int $affectedCount Number of records affected
-     * @param array $criteria Bulk operation criteria
-     * @param array $fieldsChanged Fields that were changed
-     * @param string|null $description Custom description
-     * @return AuditLog|null
+     * @param  string  $modelClass  Model class being affected
+     * @param  string  $action  Action performed
+     * @param  int  $affectedCount  Number of records affected
+     * @param  array  $criteria  Bulk operation criteria
+     * @param  array  $fieldsChanged  Fields that were changed
+     * @param  string|null  $description  Custom description
      */
     public function createBulkAudit(
         string $modelClass,
@@ -108,12 +106,12 @@ class AuditService
         array $fieldsChanged,
         ?string $description = null
     ): ?AuditLog {
-        if (!config('audit.enabled', true)) {
+        if (! config('audit.enabled', true)) {
             return null;
         }
 
         // Use first model instance for reference
-        $referenceModel = new $modelClass();
+        $referenceModel = new $modelClass;
 
         $bulkData = [
             'affected_count' => $affectedCount,
@@ -146,10 +144,6 @@ class AuditService
 
     /**
      * Determine if model/action should be audited
-     *
-     * @param Model $model
-     * @param string $action
-     * @return bool
      */
     public function shouldAudit(Model $model, string $action): bool
     {
@@ -157,7 +151,7 @@ class AuditService
         $config = config("audit.models.{$modelClass}");
 
         // No config or audit_mode is 'none'
-        if (!$config || ($config['audit_mode'] ?? 'none') === 'none') {
+        if (! $config || ($config['audit_mode'] ?? 'none') === 'none') {
             return false;
         }
 
@@ -184,13 +178,10 @@ class AuditService
 
     /**
      * Check if model has critical field changes
-     *
-     * @param Model $model
-     * @return bool
      */
     public function hasCriticalChanges(Model $model): bool
     {
-        if (!$model->wasChanged()) {
+        if (! $model->wasChanged()) {
             return false;
         }
 
@@ -202,15 +193,12 @@ class AuditService
         }
 
         $changes = array_keys($model->getChanges());
-        return !empty(array_intersect($changes, $criticalFields));
+
+        return ! empty(array_intersect($changes, $criticalFields));
     }
 
     /**
      * Format auto-generated description
-     *
-     * @param Model $model
-     * @param string $action
-     * @return string
      */
     private function formatDescription(Model $model, string $action): string
     {
@@ -244,12 +232,6 @@ class AuditService
 
     /**
      * Format bulk operation description
-     *
-     * @param Model $model
-     * @param string $action
-     * @param int $count
-     * @param array $fields
-     * @return string
      */
     private function formatBulkDescription(
         Model $model,
@@ -266,22 +248,17 @@ class AuditService
 
     /**
      * Get human-readable model name
-     *
-     * @param Model $model
-     * @return string
      */
     private function getReadableModelName(Model $model): string
     {
         $className = class_basename($model);
+
         // Convert PascalCase to readable format
         return strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $className));
     }
 
     /**
      * Get human-readable model identifier
-     *
-     * @param Model $model
-     * @return string
      */
     private function getModelIdentifier(Model $model): string
     {
@@ -302,7 +279,7 @@ class AuditService
         ];
 
         foreach ($identifierFields as $field) {
-            if (isset($model->$field) && !empty($model->$field)) {
+            if (isset($model->$field) && ! empty($model->$field)) {
                 return $model->$field;
             }
         }
@@ -313,9 +290,6 @@ class AuditService
 
     /**
      * Generate audit tags
-     *
-     * @param Model $model
-     * @return array
      */
     private function generateTags(Model $model): array
     {
@@ -333,9 +307,6 @@ class AuditService
 
     /**
      * Remove sensitive/excluded fields from audit values
-     *
-     * @param array $values
-     * @return array
      */
     private function sanitizeValues(array $values): array
     {
@@ -360,14 +331,6 @@ class AuditService
 
     /**
      * Actually create the audit log record
-     *
-     * @param Model $model
-     * @param string $action
-     * @param array|null $oldValues
-     * @param array|null $newValues
-     * @param string $description
-     * @param array $tags
-     * @return AuditLog
      */
     private function createAuditLog(
         Model $model,
@@ -416,14 +379,6 @@ class AuditService
 
     /**
      * Queue audit log creation (async)
-     *
-     * @param Model $model
-     * @param string $action
-     * @param array|null $oldValues
-     * @param array|null $newValues
-     * @param string $description
-     * @param array $tags
-     * @return null
      */
     private function queueAudit(
         Model $model,
@@ -434,7 +389,7 @@ class AuditService
         array $tags
     ): null {
         try {
-            \App\Jobs\Tenant\CreateAuditLogJob::dispatch(
+            CreateAuditLogJob::dispatch(
                 tenantId: tenant()->id,
                 userId: Auth::id(),
                 userName: Auth::user()?->name,
@@ -470,9 +425,6 @@ class AuditService
 
     /**
      * Get aggregate data for parent model with children
-     *
-     * @param Model $model
-     * @return array
      */
     public function getAggregatedData(Model $model): array
     {
@@ -495,16 +447,13 @@ class AuditService
 
     /**
      * Check if bulk operation threshold is reached
-     *
-     * @param int $affectedCount
-     * @return bool
      */
     public function shouldUseBulkAudit(int $affectedCount): bool
     {
         $threshold = config('audit.bulk_operations.summary_threshold', 10);
+
         return $affectedCount >= $threshold;
     }
-
 
     // Log Queries
 
@@ -630,11 +579,11 @@ class AuditService
      */
     private function applyDateRangeFilter(Builder $query, array $dateRange): void
     {
-        if (!empty($dateRange['from'])) {
+        if (! empty($dateRange['from'])) {
             $query->whereDate('created_at', '>=', $dateRange['from']);
         }
 
-        if (!empty($dateRange['to'])) {
+        if (! empty($dateRange['to'])) {
             $query->whereDate('created_at', '<=', $dateRange['to']);
         }
     }
@@ -644,11 +593,11 @@ class AuditService
      */
     private function applyModelFilter(Builder $query, array $model): void
     {
-        if (!empty($model['type'])) {
+        if (! empty($model['type'])) {
             $query->forModel($model['type']);
         }
 
-        if (!empty($model['id'])) {
+        if (! empty($model['id'])) {
             $query->where('model_id', $model['id']);
         }
     }
@@ -658,7 +607,7 @@ class AuditService
      */
     private function applyActionFilter(Builder $query, array $actions): void
     {
-        if (!empty($actions)) {
+        if (! empty($actions)) {
             $query->actions($actions);
         }
     }
@@ -694,7 +643,7 @@ class AuditService
      */
     private function applyCategoryFilter(Builder $query, ?string $category): void
     {
-        if (!$category) {
+        if (! $category) {
             return;
         }
 
@@ -764,8 +713,8 @@ class AuditService
             ->groupBy('date')
             ->orderBy('date', 'desc')
             ->get()
-            ->map(fn($item) => [
-                'date' => \Carbon\Carbon::parse($item->date)->format('M d, Y'),
+            ->map(fn ($item) => [
+                'date' => Carbon::parse($item->date)->format('M d, Y'),
                 'count' => $item->count,
             ])
             ->toArray();
@@ -781,7 +730,7 @@ class AuditService
             ->groupBy('model_type')
             ->orderBy('count', 'desc')
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'model' => class_basename($item->model_type),
                 'full_model' => $item->model_type,
                 'count' => $item->count,
@@ -799,7 +748,7 @@ class AuditService
             ->groupBy('user_id', 'user_name')
             ->orderBy('count', 'desc')
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'user_id' => $item->user_id,
                 'user_name' => $item->user_name,
                 'count' => $item->count,
@@ -817,7 +766,7 @@ class AuditService
             ->groupBy('action')
             ->orderBy('count', 'desc')
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'action' => $item->action,
                 'count' => $item->count,
             ])
@@ -844,7 +793,7 @@ class AuditService
         arsort($tagCounts);
 
         return collect($tagCounts)
-            ->map(fn($count, $tag) => [
+            ->map(fn ($count, $tag) => [
                 'tag' => $tag,
                 'count' => $count,
             ])
@@ -877,8 +826,8 @@ class AuditService
             ->orderBy('count', 'desc')
             ->limit(10)
             ->get()
-            ->mapWithKeys(fn($item) => [
-                class_basename($item->model_type) => $item->count
+            ->mapWithKeys(fn ($item) => [
+                class_basename($item->model_type) => $item->count,
             ])
             ->toArray();
     }
@@ -912,8 +861,8 @@ class AuditService
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get()
-            ->mapWithKeys(fn($item) => [
-                \Carbon\Carbon::parse($item->date)->format('M d') => $item->count
+            ->mapWithKeys(fn ($item) => [
+                Carbon::parse($item->date)->format('M d') => $item->count,
             ])
             ->toArray();
     }
@@ -923,6 +872,6 @@ class AuditService
      */
     public function getStatisticsCacheKey(array $filters): string
     {
-        return 'audit_stats_' . md5(json_encode($filters));
+        return 'audit_stats_'.md5(json_encode($filters));
     }
 }

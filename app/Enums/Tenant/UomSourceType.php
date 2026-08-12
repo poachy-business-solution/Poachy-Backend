@@ -9,8 +9,6 @@ enum UomSourceType: string
 
     /**
      * Get all enum values.
-     *
-     * @return array
      */
     public static function values(): array
     {
@@ -19,8 +17,6 @@ enum UomSourceType: string
 
     /**
      * Get label for display.
-     *
-     * @return string
      */
     public function label(): string
     {
@@ -32,8 +28,6 @@ enum UomSourceType: string
 
     /**
      * Check if this is a system unit.
-     *
-     * @return bool
      */
     public function isSystem(): bool
     {
@@ -42,8 +36,6 @@ enum UomSourceType: string
 
     /**
      * Check if this is a custom unit.
-     *
-     * @return bool
      */
     public function isCustom(): bool
     {

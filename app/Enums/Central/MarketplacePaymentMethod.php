@@ -4,11 +4,11 @@ namespace App\Enums\Central;
 
 enum MarketplacePaymentMethod: string
 {
-    case Mpesa          = 'mpesa';
-    case MpesaPaybill   = 'mpesa_paybill';
-    case Card           = 'card';
+    case Mpesa = 'mpesa';
+    case MpesaPaybill = 'mpesa_paybill';
+    case Card = 'card';
     case CashOnDelivery = 'cash_on_delivery';
-    case BankTransfer   = 'bank_transfer';
+    case BankTransfer = 'bank_transfer';
 
     /**
      * Human-readable label for display.
@@ -16,11 +16,11 @@ enum MarketplacePaymentMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::Mpesa          => 'M-Pesa STK Push',
-            self::MpesaPaybill   => 'M-Pesa Paybill',
-            self::Card           => 'Card',
+            self::Mpesa => 'M-Pesa STK Push',
+            self::MpesaPaybill => 'M-Pesa Paybill',
+            self::Card => 'Card',
             self::CashOnDelivery => 'Cash on Delivery',
-            self::BankTransfer   => 'Bank Transfer',
+            self::BankTransfer => 'Bank Transfer',
         };
     }
 

@@ -21,13 +21,13 @@ class InventoryCountSyncDTO
      */
     public static function fromInventory(Inventory $inventory): self
     {
-        if (!tenant()) {
+        if (! tenant()) {
             throw new \RuntimeException('Cannot create InventoryCountSyncDTO outside tenant context');
         }
 
         $inventory->loadMissing('product');
 
-        if (!$inventory->product) {
+        if (! $inventory->product) {
             throw new \InvalidArgumentException(
                 "Inventory record #{$inventory->id} has no associated product and cannot be synced."
             );
@@ -97,11 +97,11 @@ class InventoryCountSyncDTO
         $payloadHash = hash('sha256', json_encode($this->toArray()));
 
         return md5(
-            $this->tenantId .
-                'InventoryCount' .
-                $this->productId .
-                ($this->variantId ?? '') .
-                $action .
+            $this->tenantId.
+                'InventoryCount'.
+                $this->productId.
+                ($this->variantId ?? '').
+                $action.
                 $payloadHash
         );
     }

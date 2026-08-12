@@ -11,9 +11,10 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, HasApiTokens;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $connection = 'central';
+
     protected $table = 'users';
 
     public const USER_TYPES = ['customer', 'admin', 'vendor'];

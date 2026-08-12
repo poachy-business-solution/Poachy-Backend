@@ -42,23 +42,23 @@ class CheckoutSession extends Model
     protected function casts(): array
     {
         return [
-            'step_cart_viewed'           => 'boolean',
-            'step_cart_viewed_at'        => 'datetime',
-            'step_shipping_viewed'       => 'boolean',
-            'step_shipping_viewed_at'    => 'datetime',
-            'step_shipping_completed'    => 'boolean',
+            'step_cart_viewed' => 'boolean',
+            'step_cart_viewed_at' => 'datetime',
+            'step_shipping_viewed' => 'boolean',
+            'step_shipping_viewed_at' => 'datetime',
+            'step_shipping_completed' => 'boolean',
             'step_shipping_completed_at' => 'datetime',
-            'step_payment_viewed'        => 'boolean',
-            'step_payment_viewed_at'     => 'datetime',
-            'step_payment_attempted'     => 'boolean',
-            'step_payment_attempted_at'  => 'datetime',
-            'step_review_viewed'         => 'boolean',
-            'step_review_viewed_at'      => 'datetime',
-            'is_completed'               => 'boolean',
-            'completed_at'               => 'datetime',
-            'is_abandoned'               => 'boolean',
-            'abandoned_at'               => 'datetime',
-            'abandonment_reasons'        => 'array',
+            'step_payment_viewed' => 'boolean',
+            'step_payment_viewed_at' => 'datetime',
+            'step_payment_attempted' => 'boolean',
+            'step_payment_attempted_at' => 'datetime',
+            'step_review_viewed' => 'boolean',
+            'step_review_viewed_at' => 'datetime',
+            'is_completed' => 'boolean',
+            'completed_at' => 'datetime',
+            'is_abandoned' => 'boolean',
+            'abandoned_at' => 'datetime',
+            'abandonment_reasons' => 'array',
         ];
     }
 
@@ -112,16 +112,16 @@ class CheckoutSession extends Model
     public function markStepViewed(string $step): void
     {
         $this->update([
-            "step_{$step}_viewed"    => true,
+            "step_{$step}_viewed" => true,
             "step_{$step}_viewed_at" => now(),
-            'current_step'           => $step,
+            'current_step' => $step,
         ]);
     }
 
     public function markStepCompleted(string $step): void
     {
         $this->update([
-            "step_{$step}_completed"    => true,
+            "step_{$step}_completed" => true,
             "step_{$step}_completed_at" => now(),
         ]);
     }
@@ -129,19 +129,19 @@ class CheckoutSession extends Model
     public function markAsCompleted(int $orderId): void
     {
         $this->update([
-            'is_completed'       => true,
-            'completed_at'       => now(),
+            'is_completed' => true,
+            'completed_at' => now(),
             'completed_order_id' => $orderId,
-            'current_step'       => 'completed',
+            'current_step' => 'completed',
         ]);
     }
 
     public function markAsAbandoned(string $step, ?array $reasons = null): void
     {
         $this->update([
-            'is_abandoned'        => true,
-            'abandoned_at'        => now(),
-            'abandoned_at_step'   => $step,
+            'is_abandoned' => true,
+            'abandoned_at' => now(),
+            'abandoned_at_step' => $step,
             'abandonment_reasons' => $reasons,
         ]);
     }

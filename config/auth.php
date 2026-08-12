@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
     'defaults' => [
         'guard' => 'central',
@@ -13,13 +15,13 @@ return [
             'provider' => 'central_users',
         ],
 
-        // CENTRAL AUTH (API) 
+        // CENTRAL AUTH (API)
         'central' => [
             'driver' => 'sanctum',
             'provider' => 'central_users',
         ],
 
-        // TENANT AUTH (API) 
+        // TENANT AUTH (API)
         'tenant' => [
             'driver' => 'sanctum',
             'provider' => 'tenant_users',
@@ -30,7 +32,7 @@ return [
 
         'central_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+            'model' => User::class,
         ],
 
         'tenant_users' => [
@@ -65,7 +67,6 @@ return [
             'expire' => 60,
         ],
     ],
-
 
     /*
     |--------------------------------------------------------------------------

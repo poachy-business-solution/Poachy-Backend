@@ -47,23 +47,23 @@ class SyncQueueOutbound extends Model
     ];
 
     protected $casts = [
-        'payload'               => 'array',
-        'metadata'              => 'array',
-        'error_details'         => 'array',
-        'tenant_response'       => 'array',
-        'priority'              => 'integer',
-        'retry_count'           => 'integer',
-        'max_retries'           => 'integer',
-        'locked_by_worker_id'   => 'integer',
-        'scheduled_at'          => 'datetime',
-        'expires_at'            => 'datetime',
-        'locked_at'             => 'datetime',
-        'next_retry_at'         => 'datetime',
+        'payload' => 'array',
+        'metadata' => 'array',
+        'error_details' => 'array',
+        'tenant_response' => 'array',
+        'priority' => 'integer',
+        'retry_count' => 'integer',
+        'max_retries' => 'integer',
+        'locked_by_worker_id' => 'integer',
+        'scheduled_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'locked_at' => 'datetime',
+        'next_retry_at' => 'datetime',
         'processing_started_at' => 'datetime',
-        'delivered_at'          => 'datetime',
-        'acknowledged_at'       => 'datetime',
-        'completed_at'          => 'datetime',
-        'failed_at'             => 'datetime',
+        'delivered_at' => 'datetime',
+        'acknowledged_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'failed_at' => 'datetime',
     ];
 
     // =========================================================================
@@ -139,7 +139,7 @@ class SyncQueueOutbound extends Model
     public function markAsProcessing(): void
     {
         $this->update([
-            'status'                => 'processing',
+            'status' => 'processing',
             'processing_started_at' => now(),
         ]);
     }
@@ -147,7 +147,7 @@ class SyncQueueOutbound extends Model
     public function markAsDelivered(): void
     {
         $this->update([
-            'status'       => 'delivered',
+            'status' => 'delivered',
             'delivered_at' => now(),
         ]);
     }
@@ -155,20 +155,20 @@ class SyncQueueOutbound extends Model
     public function markAsCompleted(?int $tenantRecordId = null, ?string $tenantTable = null): void
     {
         $this->update([
-            'status'           => 'completed',
-            'completed_at'     => now(),
+            'status' => 'completed',
+            'completed_at' => now(),
             'tenant_record_id' => $tenantRecordId,
-            'tenant_table'     => $tenantTable,
+            'tenant_table' => $tenantTable,
         ]);
     }
 
     public function markAsFailed(string $errorMessage, ?string $errorCode = null, array $errorDetails = []): void
     {
         $this->update([
-            'status'        => 'failed',
-            'failed_at'     => now(),
+            'status' => 'failed',
+            'failed_at' => now(),
             'error_message' => $errorMessage,
-            'error_code'    => $errorCode,
+            'error_code' => $errorCode,
             'error_details' => $errorDetails,
         ]);
     }
@@ -179,14 +179,14 @@ class SyncQueueOutbound extends Model
 
         $nextRetryAt = match ($this->backoff_strategy) {
             'exponential' => now()->addSeconds(pow(2, $this->retry_count) * 60),
-            'linear'      => now()->addMinutes($this->retry_count * 5),
-            'fixed'       => now()->addMinutes(5),
-            default       => now()->addMinutes(5),
+            'linear' => now()->addMinutes($this->retry_count * 5),
+            'fixed' => now()->addMinutes(5),
+            default => now()->addMinutes(5),
         };
 
         $this->update([
             'next_retry_at' => $nextRetryAt,
-            'status'        => 'pending',
+            'status' => 'pending',
         ]);
     }
 
@@ -207,8 +207,8 @@ class SyncQueueOutbound extends Model
         return $this->whereNull('lock_token')
             ->where('id', $this->id)
             ->update([
-                'lock_token'          => $lockToken,
-                'locked_at'           => now(),
+                'lock_token' => $lockToken,
+                'locked_at' => now(),
                 'locked_by_worker_id' => $workerId,
             ]) > 0;
     }
@@ -216,8 +216,8 @@ class SyncQueueOutbound extends Model
     public function releaseLock(): void
     {
         $this->update([
-            'lock_token'          => null,
-            'locked_at'           => null,
+            'lock_token' => null,
+            'locked_at' => null,
             'locked_by_worker_id' => null,
         ]);
     }

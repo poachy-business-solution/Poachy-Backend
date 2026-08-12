@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Tenant\Expense;
 
 use App\Enums\Tenant\PaymentMethod;
-use App\Enums\Tenant\PaymentStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

@@ -19,8 +19,11 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 180;
+
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public $backoff = [60, 300, 900]; // 1min, 5min, 15min
 
     public function __construct(
@@ -31,7 +34,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
     {
         $syncQueue = SyncQueueInbound::find($this->syncQueueId);
 
-        if (!$syncQueue) {
+        if (! $syncQueue) {
             Log::error('SyncQueueInbound record not found', [
                 'sync_queue_id' => $this->syncQueueId,
             ]);
@@ -58,7 +61,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
         }
 
         $workerId = getmypid();
-        if (!$syncQueue->acquireLock($workerId)) {
+        if (! $syncQueue->acquireLock($workerId)) {
             Log::info('Could not acquire lock, another worker processing', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
@@ -143,7 +146,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
 
             // Always ACK the tenant on final success or permanent failure — not on a
             // transient failure that's about to be retried.
-            if ($ackStatus === 'completed' || !$syncQueue->canRetry()) {
+            if ($ackStatus === 'completed' || ! $syncQueue->canRetry()) {
                 $this->ackTenant($syncQueue, $ackStatus, $centralProductId, $ackReason);
             }
         }
@@ -160,7 +163,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
     ): void {
         $tenantOutboundSyncId = $syncQueue->metadata['sync_queue_id_from_tenant'] ?? null;
 
-        if (!$tenantOutboundSyncId) {
+        if (! $tenantOutboundSyncId) {
             Log::warning('No tenant outbound sync queue ID in metadata, skipping ACK', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
@@ -171,7 +174,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
         try {
             $tenant = Tenant::on('central')->find($syncQueue->tenant_id);
 
-            if (!$tenant) {
+            if (! $tenant) {
                 Log::warning('Tenant not found for inventory count ACK', [
                     'tenant_id' => $syncQueue->tenant_id,
                     'sync_queue_id' => $syncQueue->id,
@@ -182,7 +185,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
 
             $domain = $tenant->domains()->first();
 
-            if (!$domain) {
+            if (! $domain) {
                 Log::warning('No domain found for tenant inventory count ACK', [
                     'tenant_id' => $syncQueue->tenant_id,
                     'sync_queue_id' => $syncQueue->id,
@@ -192,12 +195,12 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
             }
 
             $scheme = app()->environment('local') ? 'http://' : 'https://';
-            $tenantUrl = $scheme . $domain->domain;
+            $tenantUrl = $scheme.$domain->domain;
 
             Http::withToken(config('services.tenant_api.token'))
                 ->timeout(30)
                 ->retry(2, 100)
-                ->post($tenantUrl . '/api/v1/tenant/sync/inbound/inventory-count-ack', [
+                ->post($tenantUrl.'/api/v1/tenant/sync/inbound/inventory-count-ack', [
                     'outbound_sync_queue_id' => (int) $tenantOutboundSyncId,
                     'status' => $status,
                     'central_product_id' => $centralProductId,
@@ -231,7 +234,7 @@ class ProcessInboundInventoryCountSync implements ShouldQueue
         $syncQueue = SyncQueueInbound::find($this->syncQueueId);
         if ($syncQueue) {
             $syncQueue->markAsFailed(
-                errorMessage: 'Job failed permanently: ' . $exception->getMessage(),
+                errorMessage: 'Job failed permanently: '.$exception->getMessage(),
                 errorCode: 'JOB_FAILED',
                 errorDetails: [
                     'exception' => get_class($exception),

@@ -43,11 +43,11 @@ class ProductVariantSyncDTO
      */
     public static function fromVariant(ProductVariant $variant, bool $skipValidation = false): self
     {
-        if (!tenant()) {
+        if (! tenant()) {
             throw new \RuntimeException('Cannot create ProductVariantSyncDTO outside tenant context');
         }
 
-        if (!$skipValidation && ($variant->online_price === null || $variant->online_price <= 0)) {
+        if (! $skipValidation && ($variant->online_price === null || $variant->online_price <= 0)) {
             throw new \InvalidArgumentException('Variant must have a valid online_price set');
         }
 
@@ -63,11 +63,11 @@ class ProductVariantSyncDTO
 
         $product = $variant->product;
 
-        if (!$product) {
+        if (! $product) {
             throw new \InvalidArgumentException('Variant must belong to a product');
         }
 
-        if (!$skipValidation && !$product->category) {
+        if (! $skipValidation && ! $product->category) {
             throw new \InvalidArgumentException('Parent product must have a category assigned');
         }
 
@@ -202,10 +202,10 @@ class ProductVariantSyncDTO
         $payloadHash = hash('sha256', $payload);
 
         return md5(
-            $this->tenantId .
-                $this->productType .
-                $this->variantId .
-                $action .
+            $this->tenantId.
+                $this->productType.
+                $this->variantId.
+                $action.
                 $payloadHash
         );
     }

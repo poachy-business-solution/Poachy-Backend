@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Marketplace\InitiateCheckoutRequest;
 use App\Http\Resources\Central\Marketplace\MarketplaceOrderResource;
 use App\Http\Responses\ApiResponse;
+use App\Models\MarketplaceCustomer;
 use App\Services\Central\Marketplace\CheckoutService;
 use App\Services\Central\Marketplace\ShoppingCartService;
 use Illuminate\Http\JsonResponse;
@@ -27,20 +28,26 @@ class CheckoutController extends Controller
      *     operationId="validateCheckout",
      *     tags={"Central - Customer - Marketplace - Cart"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Checkout validation result",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
      *                     description="Checkout not eligible — has blocking issues",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Checkout not eligible"),
      *                     @OA\Property(
@@ -51,9 +58,11 @@ class CheckoutController extends Controller
      *                             property="issues",
      *                             type="array",
      *                             description="List of issues blocking checkout",
+     *
      *                             @OA\Items(type="string", example="Delivery address is required for delivery orders.")
      *                         )
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="meta",
      *                         type="object",
@@ -63,8 +72,10 @@ class CheckoutController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="Checkout eligible — no blocking issues",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Checkout eligible"),
      *                     @OA\Property(
@@ -75,10 +86,12 @@ class CheckoutController extends Controller
      *                             property="issues",
      *                             type="array",
      *                             description="Empty array when eligible",
+     *
      *                             @OA\Items(type="string"),
      *                             example={}
      *                         )
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="meta",
      *                         type="object",
@@ -91,10 +104,13 @@ class CheckoutController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Authentication required to proceed to checkout",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -149,25 +165,32 @@ class CheckoutController extends Controller
      *     operationId="submitCheckout",
      *     tags={"Central - Customer - Marketplace - Checkout"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="X-Cart-Session-Id",
      *         in="header",
      *         description="Unique cart session identifier (UUID)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bb52b13c-7cdc-49e7-9a34-dc8f7363be00")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="Idempotency-Key",
      *         in="header",
      *         description="Unique key (UUID) to prevent duplicate checkout submissions",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid", example="7be84310-4339-4af3-bed4-418ca6d5cf44")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Checkout details",
+     *
      *         @OA\JsonContent(
      *             required={"fulfillment_type", "payment_method"},
+     *
      *             @OA\Property(
      *                 property="delivery_address_id",
      *                 type="integer",
@@ -206,18 +229,23 @@ class CheckoutController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Checkout completed. One or more orders created.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Checkout completed — orders created"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of created orders, one per merchant/tenant",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=14),
      *                     @OA\Property(property="order_number", type="string", example="MKT-ORD-2026-000014"),
      *                     @OA\Property(property="tenant_id", type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed"),
@@ -244,8 +272,10 @@ class CheckoutController extends Controller
      *                     @OA\Property(
      *                         property="items",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=15),
      *                             @OA\Property(property="marketplace_product_id", type="integer", example=6),
      *                             @OA\Property(property="product_name", type="string", example="Fresh Pasteurised Milk 1L"),
@@ -288,9 +318,11 @@ class CheckoutController extends Controller
      *                         nullable=true,
      *                         description="Delivery details — present for delivery orders, null for pickup orders",
      *                         oneOf={
+     *
      *                             @OA\Schema(
      *                                 type="object",
      *                                 description="Present when fulfillment_type is 'delivery'",
+     *
      *                                 @OA\Property(property="id", type="integer", example=8),
      *                                 @OA\Property(
      *                                     property="delivery_method",
@@ -327,6 +359,7 @@ class CheckoutController extends Controller
      *                                 @OA\Property(property="delivery_issues", type="string", nullable=true, example=null),
      *                                 @OA\Property(property="delivery_attempts", type="integer", example=0)
      *                             ),
+     *
      *                             @OA\Schema(
      *                                 type="object",
      *                                 nullable=true,
@@ -335,6 +368,7 @@ class CheckoutController extends Controller
      *                             )
      *                         }
      *                     ),
+     *
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-02-17T10:30:18+03:00"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2026-02-17T10:30:18+03:00")
      *                 )
@@ -349,10 +383,13 @@ class CheckoutController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Missing required Idempotency-Key header",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(
      *                 property="message",
@@ -374,17 +411,23 @@ class CheckoutController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or cart ineligible for checkout",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -431,7 +474,7 @@ class CheckoutController extends Controller
         $sessionId = $request->header('X-Cart-Session-Id');
 
         // Find the marketplace customer by user_id
-        $customer = \App\Models\MarketplaceCustomer::on('central')
+        $customer = MarketplaceCustomer::on('central')
             ->where('user_id', $userId)
             ->first();
 

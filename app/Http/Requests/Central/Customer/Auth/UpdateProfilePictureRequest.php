@@ -27,9 +27,9 @@ class UpdateProfilePictureRequest extends FormRequest
     {
         return [
             'profile_picture.required' => 'Please select an image to upload.',
-            'profile_picture.image'    => 'The file must be an image.',
-            'profile_picture.mimes'    => 'Accepted formats: JPG, JPEG, PNG, WEBP.',
-            'profile_picture.max'      => 'The image must not exceed 2 MB.',
+            'profile_picture.image' => 'The file must be an image.',
+            'profile_picture.mimes' => 'Accepted formats: JPG, JPEG, PNG, WEBP.',
+            'profile_picture.max' => 'The image must not exceed 2 MB.',
         ];
     }
 }

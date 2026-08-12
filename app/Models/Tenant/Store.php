@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 #[ObservedBy([StoreObserver::class])]
 class Store extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'stores';
 
@@ -90,7 +90,6 @@ class Store extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
-
     // ============================================
     // SCOPES
     // ============================================
@@ -126,7 +125,7 @@ class Store extends Model
 
     public function isBranch(): bool
     {
-        return !$this->is_main_store;
+        return ! $this->is_main_store;
     }
 
     public function isActive(): bool
@@ -136,7 +135,7 @@ class Store extends Model
 
     public function hasManager(): bool
     {
-        return !is_null($this->manager_id);
+        return ! is_null($this->manager_id);
     }
 
     public function activate(): bool
@@ -227,7 +226,7 @@ class Store extends Model
         return [
             'total_products' => $inventories->count(),
             'in_stock_count' => $inventories->where('quantity_available', '>', 0)->count(),
-            'low_stock_count' => $inventories->filter(fn($inv) => $inv->is_low_stock)->count(),
+            'low_stock_count' => $inventories->filter(fn ($inv) => $inv->is_low_stock)->count(),
             'out_of_stock_count' => $inventories->where('quantity_available', '<=', 0)->count(),
             'total_quantity' => $inventories->sum('quantity_on_hand'),
             'total_reserved' => $inventories->sum('quantity_reserved'),
@@ -246,7 +245,6 @@ class Store extends Model
         return $this->inboundTransfers()
             ->where('status', 'in_transit');
     }
-
 
     // ============================================
     // ACCESSORS & MUTATORS

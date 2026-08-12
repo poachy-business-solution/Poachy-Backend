@@ -18,7 +18,7 @@ class ProductBundleItemResource extends JsonResource
             'product_id' => $this->product_id,
             'product' => $this->when(
                 $this->relationLoaded('product'),
-                fn() => [
+                fn () => [
                     'id' => $this->product->id,
                     'name' => $this->product->name,
                     'sku' => $this->product->sku,
@@ -27,7 +27,7 @@ class ProductBundleItemResource extends JsonResource
             'product_variant_id' => $this->product_variant_id,
             'variant' => $this->when(
                 $this->relationLoaded('variant') && $this->variant,
-                fn() => [
+                fn () => [
                     'id' => $this->variant->id,
                     'variant_name' => $this->variant->variant_name,
                     'sku' => $this->variant->sku,
@@ -48,8 +48,8 @@ class ProductBundleItemResource extends JsonResource
             // Pricing
             'item_price' => $this->item_price,
             'total_price' => $this->total_price,
-            'formatted_item_price' => 'KES ' . number_format($this->item_price, 2),
-            'formatted_total_price' => 'KES ' . number_format($this->total_price, 2),
+            'formatted_item_price' => 'KES '.number_format($this->item_price, 2),
+            'formatted_total_price' => 'KES '.number_format($this->total_price, 2),
 
             // Timestamps
             'created_at' => $this->created_at?->toISOString(),

@@ -38,11 +38,11 @@ class SendAbandonedCartSMSJob implements ShouldQueue
 
         if (! $cart->customer->accepts_sms || ! $cart->customer->phone_verified || ! $cart->customer->is_active) {
             Log::info('Skipping cart recovery SMS - customer does not accept SMS, phone not verified, or inactive', [
-                'cart_id'        => $cart->id,
-                'customer_id'    => $cart->customer->id,
-                'accepts_sms'    => $cart->customer->accepts_sms,
+                'cart_id' => $cart->id,
+                'customer_id' => $cart->customer->id,
+                'accepts_sms' => $cart->customer->accepts_sms,
                 'phone_verified' => $cart->customer->phone_verified,
-                'is_active'      => $cart->customer->is_active,
+                'is_active' => $cart->customer->is_active,
             ]);
 
             return;
@@ -64,32 +64,32 @@ class SendAbandonedCartSMSJob implements ShouldQueue
                 $cart->getItemCount(),
                 $cart->getItemCount() === 1 ? 'item' : 'items',
                 number_format($cart->getSubtotal(), 2),
-                config('app.frontend_url') . '/cart'
+                config('app.frontend_url').'/cart'
             );
 
             // Placeholder: Log SMS content (replace with actual SMS service call)
             Log::info('Cart recovery SMS would be sent', [
-                'cart_id'     => $cart->id,
+                'cart_id' => $cart->id,
                 'customer_id' => $cart->customer->id,
-                'phone'       => $cart->customer->phone,
-                'message'     => $smsContent,
+                'phone' => $cart->customer->phone,
+                'message' => $smsContent,
             ]);
 
             // Mark as sent
             $cart->update([
-                'recovery_sms_sent'    => true,
+                'recovery_sms_sent' => true,
                 'recovery_sms_sent_at' => now(),
             ]);
 
             Log::info('Cart recovery SMS sent successfully', [
-                'cart_id'     => $cart->id,
+                'cart_id' => $cart->id,
                 'customer_id' => $cart->customer->id,
-                'phone'       => $cart->customer->phone,
+                'phone' => $cart->customer->phone,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send cart recovery SMS', [
                 'cart_id' => $cart->id,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

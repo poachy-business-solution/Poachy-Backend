@@ -7,16 +7,16 @@ use App\Enums\Tenant\DiscountType;
 use App\Observers\Tenant\CouponObserver;
 use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 #[ObservedBy(CouponObserver::class)]
 class Coupon extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'coupons';
 
@@ -56,7 +56,6 @@ class Coupon extends Model
     /**
      * Relationships
      */
-
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'coupon_products')
@@ -79,7 +78,6 @@ class Coupon extends Model
     /**
      * Scopes
      */
-
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
@@ -88,6 +86,7 @@ class Coupon extends Model
     public function scopeValid(Builder $query): Builder
     {
         $now = now();
+
         return $query->where('valid_from', '<=', $now)
             ->where('valid_until', '>=', $now);
     }
@@ -154,7 +153,6 @@ class Coupon extends Model
     /**
      * Accessors & Mutators
      */
-
     public function getIsExpiredAttribute(): bool
     {
         return $this->valid_until < now();
@@ -163,6 +161,7 @@ class Coupon extends Model
     public function getIsValidAttribute(): bool
     {
         $now = now();
+
         return $this->valid_from <= $now && $this->valid_until >= $now;
     }
 
@@ -186,7 +185,7 @@ class Coupon extends Model
 
     public function getStatusTextAttribute(): string
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return 'Inactive';
         }
 
@@ -208,12 +207,11 @@ class Coupon extends Model
     /**
      * Business Logic Methods
      */
-
     public function canBeUsed(): bool
     {
         return $this->is_active
             && $this->is_valid
-            && !$this->is_exhausted;
+            && ! $this->is_exhausted;
     }
 
     public function canBeEdited(): bool

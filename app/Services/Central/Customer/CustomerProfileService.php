@@ -15,9 +15,10 @@ use Illuminate\Validation\ValidationException;
 class CustomerProfileService
 {
     // Disk used for all central (non-tenant) customer assets
-    private const DISK           = 'public';
-    private const AVATAR_DIR     = 'marketplace/customers/avatars';
-    
+    private const DISK = 'public';
+
+    private const AVATAR_DIR = 'marketplace/customers/avatars';
+
     // =========================================================================
     // Profile
     // =========================================================================
@@ -38,11 +39,11 @@ class CustomerProfileService
 
             // ── User-level fields ────────────────────────────────────────────
             $userFields = array_filter([
-                'name'  => $data['name'] ?? null,
+                'name' => $data['name'] ?? null,
                 'email' => $data['email'] ?? null,
-            ], fn($v) => $v !== null);
+            ], fn ($v) => $v !== null);
 
-            if (!empty($userFields)) {
+            if (! empty($userFields)) {
                 // If email changed, require re-verification
                 if (isset($userFields['email']) && $userFields['email'] !== $user->email) {
                     $userFields['email_verified_at'] = null;
@@ -52,20 +53,20 @@ class CustomerProfileService
 
             // ── Customer-level fields ────────────────────────────────────────
             $customerFields = array_filter([
-                'phone'             => isset($data['phone'])
+                'phone' => isset($data['phone'])
                                         ? PhoneNumberNormalizer::normalize($data['phone'])
                                         : null,
-                'date_of_birth'     => $data['date_of_birth'] ?? null,
-                'gender'            => $data['gender'] ?? null,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'gender' => $data['gender'] ?? null,
                 'accepts_marketing' => $data['accepts_marketing'] ?? null,
-                'accepts_sms'       => $data['accepts_sms'] ?? null,
-            ], fn($v) => $v !== null);
+                'accepts_sms' => $data['accepts_sms'] ?? null,
+            ], fn ($v) => $v !== null);
 
-            if (!empty($customerFields)) {
+            if (! empty($customerFields)) {
                 // If phone changed, require re-verification
                 if (isset($customerFields['phone']) &&
                     $customerFields['phone'] !== $customer->phone) {
-                    $customerFields['phone_verified']    = false;
+                    $customerFields['phone_verified'] = false;
                     $customerFields['phone_verified_at'] = null;
                 }
                 $customer->update($customerFields);
@@ -134,7 +135,7 @@ class CustomerProfileService
     public function createAddress(MarketplaceCustomer $customer, array $data): CustomerAddress
     {
         return DB::connection('central')->transaction(function () use ($customer, $data) {
-            if (!empty($data['is_default'])) {
+            if (! empty($data['is_default'])) {
                 $this->clearDefaultFlag($customer->id);
             }
 
@@ -157,7 +158,7 @@ class CustomerProfileService
         $address = $this->findOwnedAddress($customer, $addressId);
 
         return DB::connection('central')->transaction(function () use ($customer, $address, $data) {
-            if (!empty($data['is_default'])) {
+            if (! empty($data['is_default'])) {
                 $this->clearDefaultFlag($customer->id);
             }
 
@@ -224,7 +225,7 @@ class CustomerProfileService
     {
         $address = $customer->addresses()->where('is_active', true)->find($addressId);
 
-        if (!$address) {
+        if (! $address) {
             throw ValidationException::withMessages([
                 'address' => ['Address not found.'],
             ]);
@@ -246,7 +247,7 @@ class CustomerProfileService
         // Handles both absolute URLs and relative /storage/... paths
         $parsed = parse_url($url, PHP_URL_PATH);
 
-        if (!$parsed) {
+        if (! $parsed) {
             return null;
         }
 

@@ -3,6 +3,7 @@
 namespace App\Observers\Tenant;
 
 use App\Models\Tenant\Store;
+use App\Models\Tenant\User;
 use App\Services\Tenant\AuditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +26,7 @@ class StoreObserver
             $store->created_by = Auth::id();
         }
 
-        if (!Store::withTrashed()->exists()) {
+        if (! Store::withTrashed()->exists()) {
             $store->is_main_store = true;
         }
 
@@ -67,7 +68,7 @@ class StoreObserver
         }
 
         // Prevent removing main store flag if it's the only store
-        if ($store->isDirty('is_main_store') && !$store->is_main_store) {
+        if ($store->isDirty('is_main_store') && ! $store->is_main_store) {
             $mainStoreCount = Store::where('is_main_store', true)
                 ->where('id', '!=', $store->id)
                 ->count();
@@ -102,7 +103,7 @@ class StoreObserver
             $criticalFields = $store->getCriticalFields();
             $criticalChanges = array_intersect_key($changes, array_flip($criticalFields));
 
-            if (!empty($criticalChanges)) {
+            if (! empty($criticalChanges)) {
                 $oldValues = $store->getOriginal();
 
                 // Generate context-aware description
@@ -188,12 +189,14 @@ class StoreObserver
         if (isset($changes['name'])) {
             $oldName = $store->getOriginal('name');
             $newName = $changes['name'];
+
             return "{$user} changed store name from {$oldName} to {$newName} ({$store->code})";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} store {$store->name} ({$store->code})";
         }
 
@@ -212,8 +215,9 @@ class StoreObserver
             $newManagerId = $changes['manager_id'];
 
             if ($newManagerId) {
-                $newManager = \App\Models\Tenant\User::find($newManagerId);
+                $newManager = User::find($newManagerId);
                 $managerName = $newManager?->name ?? "User #{$newManagerId}";
+
                 return "{$user} assigned {$managerName} as manager of {$store->name} ({$store->code})";
             } else {
                 return "{$user} removed manager from {$store->name} ({$store->code})";
@@ -222,6 +226,7 @@ class StoreObserver
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated store {$store->name} ({$store->code}) - {$changedFields}";
     }
 }

@@ -23,10 +23,10 @@ class MarketplaceDeliveryService
         }
 
         return MarketplaceOrderDelivery::create([
-            'order_id'        => $order->id,
+            'order_id' => $order->id,
             'delivery_method' => $data['delivery_method'] ?? DeliveryMethod::Standard,
             'delivery_status' => DeliveryStatus::Pending,
-            'delivery_notes'  => $data['delivery_notes'] ?? null,
+            'delivery_notes' => $data['delivery_notes'] ?? null,
         ]);
     }
 
@@ -55,9 +55,9 @@ class MarketplaceDeliveryService
 
         Log::info('Delivery status updated', [
             'delivery_id' => $delivery->id,
-            'order_id'    => $delivery->order_id,
-            'old_status'  => $delivery->getOriginal('delivery_status'),
-            'new_status'  => $status->value,
+            'order_id' => $delivery->order_id,
+            'old_status' => $delivery->getOriginal('delivery_status'),
+            'new_status' => $status->value,
         ]);
 
         return $delivery->fresh();
@@ -69,19 +69,19 @@ class MarketplaceDeliveryService
     public function assignCourier(MarketplaceOrderDelivery $delivery, array $courierData): MarketplaceOrderDelivery
     {
         $delivery->update([
-            'delivery_status'         => DeliveryStatus::Assigned,
-            'courier_company'         => $courierData['courier_company'] ?? null,
-            'courier_name'            => $courierData['courier_name'] ?? null,
-            'courier_phone'           => $courierData['courier_phone'] ?? null,
-            'tracking_number'         => $courierData['tracking_number'] ?? null,
-            'tracking_url'            => $courierData['tracking_url'] ?? null,
-            'estimated_pickup_time'   => $courierData['estimated_pickup_time'] ?? null,
+            'delivery_status' => DeliveryStatus::Assigned,
+            'courier_company' => $courierData['courier_company'] ?? null,
+            'courier_name' => $courierData['courier_name'] ?? null,
+            'courier_phone' => $courierData['courier_phone'] ?? null,
+            'tracking_number' => $courierData['tracking_number'] ?? null,
+            'tracking_url' => $courierData['tracking_url'] ?? null,
+            'estimated_pickup_time' => $courierData['estimated_pickup_time'] ?? null,
             'estimated_delivery_time' => $courierData['estimated_delivery_time'] ?? null,
         ]);
 
         Log::info('Courier assigned to delivery', [
-            'delivery_id'     => $delivery->id,
-            'order_id'        => $delivery->order_id,
+            'delivery_id' => $delivery->id,
+            'order_id' => $delivery->order_id,
             'courier_company' => $courierData['courier_company'] ?? null,
         ]);
 
@@ -104,12 +104,12 @@ class MarketplaceDeliveryService
     public function confirmDelivery(MarketplaceOrderDelivery $delivery, array $proofData = []): MarketplaceOrderDelivery
     {
         $delivery->update([
-            'delivery_status'      => DeliveryStatus::Delivered,
+            'delivery_status' => DeliveryStatus::Delivered,
             'actual_delivery_time' => now(),
-            'delivery_proof_type'  => $proofData['proof_type'] ?? null,
-            'delivery_proof_data'  => $proofData['proof_data'] ?? null,
-            'received_by_name'     => $proofData['received_by_name'] ?? null,
-            'received_by_phone'    => $proofData['received_by_phone'] ?? null,
+            'delivery_proof_type' => $proofData['proof_type'] ?? null,
+            'delivery_proof_data' => $proofData['proof_data'] ?? null,
+            'received_by_name' => $proofData['received_by_name'] ?? null,
+            'received_by_phone' => $proofData['received_by_phone'] ?? null,
         ]);
 
         // Complete the order
@@ -121,7 +121,7 @@ class MarketplaceDeliveryService
 
         Log::info('Delivery confirmed', [
             'delivery_id' => $delivery->id,
-            'order_id'    => $delivery->order_id,
+            'order_id' => $delivery->order_id,
         ]);
 
         return $delivery->fresh();

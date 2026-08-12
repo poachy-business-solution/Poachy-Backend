@@ -24,11 +24,11 @@ class MpesaC2BRouterService
     public function handleValidation(array $parsedPayload): array
     {
         $billRefNumber = $parsedPayload['bill_ref_number'] ?? '';
-        $amount        = $parsedPayload['amount'] ?? 0.0;
+        $amount = $parsedPayload['amount'] ?? 0.0;
 
         Log::channel('mpesa')->info('C2B validation request', [
             'bill_ref_number' => $billRefNumber,
-            'amount'          => $amount,
+            'amount' => $amount,
         ]);
 
         return $this->isSubscriptionPayment($billRefNumber)
@@ -45,13 +45,13 @@ class MpesaC2BRouterService
     public function handleConfirmation(array $parsedPayload): void
     {
         $billRefNumber = $parsedPayload['bill_ref_number'] ?? '';
-        $paymentType   = $this->isSubscriptionPayment($billRefNumber) ? 'subscription' : 'marketplace';
+        $paymentType = $this->isSubscriptionPayment($billRefNumber) ? 'subscription' : 'marketplace';
 
         Log::channel('mpesa')->info('C2B confirmation received — dispatching job', [
             'bill_ref_number' => $billRefNumber,
-            'payment_type'    => $paymentType,
-            'transaction_id'  => $parsedPayload['transaction_id'],
-            'amount'          => $parsedPayload['amount'],
+            'payment_type' => $paymentType,
+            'transaction_id' => $parsedPayload['transaction_id'],
+            'amount' => $parsedPayload['amount'],
         ]);
 
         ProcessMpesaC2BConfirmationJob::dispatch($parsedPayload, $paymentType);
@@ -97,8 +97,8 @@ class MpesaC2BRouterService
         if (! $planExists) {
             Log::channel('mpesa')->warning('C2B validation rejected — no plan matches amount', [
                 'bill_ref_number' => $billRefNumber,
-                'tenant_id'       => $tenant->id,
-                'amount'          => $amount,
+                'tenant_id' => $tenant->id,
+                'amount' => $amount,
             ]);
 
             return ['ResultCode' => 'C2B00012', 'ResultDesc' => 'Invalid Amount — no matching subscription plan'];
@@ -106,8 +106,8 @@ class MpesaC2BRouterService
 
         Log::channel('mpesa')->info('C2B validation accepted — subscription', [
             'bill_ref_number' => $billRefNumber,
-            'tenant_id'       => $tenant->id,
-            'amount'          => $amount,
+            'tenant_id' => $tenant->id,
+            'amount' => $amount,
         ]);
 
         return ['ResultCode' => '0', 'ResultDesc' => 'Accepted'];
@@ -146,9 +146,9 @@ class MpesaC2BRouterService
 
         if (abs($expectedAmount - $amount) > self::AMOUNT_TOLERANCE) {
             Log::channel('mpesa')->warning('C2B validation rejected — amount mismatch', [
-                'order_number'    => $billRefNumber,
+                'order_number' => $billRefNumber,
                 'expected_amount' => $expectedAmount,
-                'paid_amount'     => $amount,
+                'paid_amount' => $amount,
             ]);
 
             return ['ResultCode' => 'C2B00012', 'ResultDesc' => 'Incorrect Amount'];
@@ -156,7 +156,7 @@ class MpesaC2BRouterService
 
         Log::channel('mpesa')->info('C2B validation accepted — marketplace', [
             'order_number' => $billRefNumber,
-            'amount'       => $amount,
+            'amount' => $amount,
         ]);
 
         return ['ResultCode' => '0', 'ResultDesc' => 'Accepted'];

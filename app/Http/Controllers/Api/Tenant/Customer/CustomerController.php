@@ -27,87 +27,106 @@ class CustomerController extends Controller
      *     operationId="listCustomers",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by customer name, email, phone, or customer number",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="Jane")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="customer_type",
      *         in="query",
      *         description="Filter by customer type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"walk_in", "regular", "vip", "wholesale"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="group_id",
      *         in="query",
      *         description="Filter by customer group ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="has_debt",
      *         in="query",
      *         description="Filter customers with outstanding debt",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"created_at", "name", "total_lifetime_purchases", "loyalty_points", "current_debt"},
      *             default="created_at"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"asc", "desc"},
      *             default="desc"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, minimum=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, minimum=1, maximum=100)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customers retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customers retrieved successfully"),
      *             @OA\Property(
@@ -116,8 +135,10 @@ class CustomerController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="customer_number", type="string", example="CUST-2025-000001"),
      *                         @OA\Property(property="name", type="string", example="Jane Smith"),
@@ -181,12 +202,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -199,12 +222,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -213,9 +238,11 @@ class CustomerController extends Controller
      *                 @OA\Property(
      *                     property="customer_type",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected customer type is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -226,12 +253,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -275,13 +304,15 @@ class CustomerController extends Controller
      *     operationId="createCustomer",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Customer details",
+     *
      *         @OA\JsonContent(
      *             required={"name", "phone"},
      *             type="object",
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, example="Jane Smith", description="Customer full name"),
      *             @OA\Property(property="email", type="string", format="email", maxLength=255, example="jane@example.com", nullable=true, description="Customer email address (must be unique)"),
      *             @OA\Property(property="phone", type="string", maxLength=20, example="+254712345679", description="Customer phone number (must be unique)"),
@@ -299,12 +330,14 @@ class CustomerController extends Controller
      *             @OA\Property(property="credit_limit", type="number", format="float", minimum=0, maximum=999999999.99, example=3000.00, nullable=true, description="Credit limit for the customer")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Customer created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer created successfully"),
      *             @OA\Property(
@@ -358,12 +391,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -376,12 +411,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -390,39 +427,53 @@ class CustomerController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The name field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The email has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="phone",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The phone field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="date_of_birth",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The date of birth must be a date before today.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="customer_type",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected customer type is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="preferred_store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected preferred store id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="credit_limit",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The credit limit must be at least 0.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -433,12 +484,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -471,20 +524,23 @@ class CustomerController extends Controller
      *     operationId="getCustomer",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer retrieved successfully"),
      *             @OA\Property(
@@ -541,12 +597,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -559,12 +617,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -577,12 +637,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -601,7 +663,7 @@ class CustomerController extends Controller
     {
         $customer = $this->customerService->getCustomerById($id);
 
-        if (!$customer) {
+        if (! $customer) {
             return ApiResponse::notFound('Customer not found');
         }
 
@@ -619,20 +681,23 @@ class CustomerController extends Controller
      *     operationId="updateCustomer",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Customer fields to update (all optional)",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, example="Jane Smith Updated", description="Customer full name"),
      *             @OA\Property(property="email", type="string", format="email", maxLength=255, example="john.updated@example.com", nullable=true, description="Customer email address (must be unique)"),
      *             @OA\Property(property="phone", type="string", maxLength=20, example="+254712345679", description="Customer phone number (must be unique)"),
@@ -650,12 +715,14 @@ class CustomerController extends Controller
      *             @OA\Property(property="credit_limit", type="number", format="float", minimum=0, maximum=999999999.99, example=5000.00, nullable=true, description="Credit limit for the customer")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer updated successfully"),
      *             @OA\Property(
@@ -712,12 +779,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -730,12 +799,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -748,12 +819,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -762,19 +835,25 @@ class CustomerController extends Controller
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The email has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="phone",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The phone has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="preferred_store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected preferred store id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -785,12 +864,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -809,7 +890,7 @@ class CustomerController extends Controller
     {
         $customer = $this->customerService->getCustomerById($id);
 
-        if (!$customer) {
+        if (! $customer) {
             return ApiResponse::notFound('Customer not found');
         }
 
@@ -829,20 +910,23 @@ class CustomerController extends Controller
      *     operationId="deleteCustomer",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer deleted successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer deleted successfully"),
      *             @OA\Property(
@@ -855,12 +939,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -873,12 +959,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -891,12 +979,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -915,7 +1005,7 @@ class CustomerController extends Controller
     {
         $customer = $this->customerService->getCustomerById($id);
 
-        if (!$customer) {
+        if (! $customer) {
             return ApiResponse::notFound('Customer not found');
         }
 
@@ -932,20 +1022,23 @@ class CustomerController extends Controller
      *     operationId="restoreCustomer",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer restored successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer restored successfully"),
      *             @OA\Property(
@@ -1002,12 +1095,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1020,12 +1115,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found or not deleted",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1038,12 +1135,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1062,7 +1161,7 @@ class CustomerController extends Controller
     {
         $customer = $this->customerService->restoreCustomer($id);
 
-        if (!$customer) {
+        if (! $customer) {
             return ApiResponse::notFound('Customer not found or not deleted');
         }
 
@@ -1080,27 +1179,32 @@ class CustomerController extends Controller
      *     operationId="searchCustomers",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="q",
      *         in="query",
      *         description="Search query - searches across name, email, phone, and customer number",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="jane", minLength=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Search results retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Search results retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="customer_number", type="string", example="CUST-2025-000001"),
      *                     @OA\Property(property="name", type="string", example="Jane Smith"),
@@ -1145,12 +1249,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1163,12 +1269,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1177,9 +1285,11 @@ class CustomerController extends Controller
      *                 @OA\Property(
      *                     property="q",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The q field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1190,12 +1300,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1216,7 +1328,7 @@ class CustomerController extends Controller
 
         if (empty($query)) {
             return ApiResponse::validationError([
-                'q' => ['Search query is required']
+                'q' => ['Search query is required'],
             ]);
         }
 
@@ -1236,21 +1348,24 @@ class CustomerController extends Controller
      *     operationId="upgradeCustomerType",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="New customer type to upgrade to",
+     *
      *         @OA\JsonContent(
      *             required={"customer_type"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="customer_type",
      *                 type="string",
@@ -1260,12 +1375,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer type upgraded successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer upgraded to vip"),
      *             @OA\Property(
@@ -1289,12 +1406,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1307,12 +1426,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1325,15 +1446,18 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or invalid upgrade path",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
      *                     type="object",
      *                     description="Validation error - missing or invalid customer_type",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="The given data was invalid."),
      *                     @OA\Property(
@@ -1342,9 +1466,11 @@ class CustomerController extends Controller
      *                         @OA\Property(
      *                             property="customer_type",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="The customer type field is required.")
      *                         )
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="meta",
      *                         type="object",
@@ -1354,9 +1480,11 @@ class CustomerController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     type="object",
      *                     description="Business logic error - invalid upgrade path",
+     *
      *                     @OA\Property(property="success", type="boolean", example=false),
      *                     @OA\Property(property="message", type="string", example="Cannot upgrade walk_in to wholesale"),
      *                     @OA\Property(
@@ -1371,12 +1499,14 @@ class CustomerController extends Controller
      *             }
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1390,34 +1520,42 @@ class CustomerController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @OA\Schema(
      *     schema="CustomerTypeUpgradeRules",
      *     type="object",
      *     title="Customer Type Upgrade Rules",
      *     description="Business rules for customer type upgrades",
+     *
      *     @OA\Property(
      *         property="walk_in",
      *         type="array",
      *         description="walk_in customers can upgrade to:",
+     *
      *         @OA\Items(type="string", enum={"regular", "vip"})
      *     ),
+     *
      *     @OA\Property(
      *         property="regular",
      *         type="array",
      *         description="regular customers can upgrade to:",
+     *
      *         @OA\Items(type="string", enum={"vip"})
      *     ),
+     *
      *     @OA\Property(
      *         property="vip",
      *         type="array",
      *         description="vip customers can upgrade to:",
+     *
      *         @OA\Items(type="string", enum={"wholesale"})
      *     ),
+     *
      *     @OA\Property(
      *         property="wholesale",
      *         type="array",
      *         description="wholesale customers cannot upgrade further (highest tier)",
+     *
      *         @OA\Items(type="string")
      *     ),
      *     example={
@@ -1431,7 +1569,7 @@ class CustomerController extends Controller
     public function upgradeType(UpgradeCustomerTypeRequest $request, int $id): JsonResponse
     {
         $customer = $this->customerService->getCustomerById($id);
-        if (!$customer) {
+        if (! $customer) {
             return ApiResponse::notFound('Customer not found');
         }
         $targetType = CustomerType::from($request->input('customer_type'));
@@ -1455,20 +1593,23 @@ class CustomerController extends Controller
      *     operationId="toggleCustomerStatus",
      *     tags={"Customers"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer status updated successfully - Active to Inactive",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer status updated successfully"),
      *             @OA\Property(
@@ -1492,12 +1633,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response="200-active",
      *         description="Customer status updated successfully - Inactive to Active",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Customer status updated successfully"),
      *             @OA\Property(
@@ -1521,12 +1664,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1539,12 +1684,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1557,12 +1704,14 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1580,7 +1729,7 @@ class CustomerController extends Controller
     public function toggleStatus(int $id): JsonResponse
     {
         $customer = $this->customerService->getCustomerById($id);
-        if (!$customer) {
+        if (! $customer) {
             return ApiResponse::notFound('Customer not found');
         }
         $updatedCustomer = $this->customerService->toggleCustomerStatus($customer);
@@ -1601,17 +1750,22 @@ class CustomerController extends Controller
      *     operationId="getMarketingEligibleCustomers",
      *     tags={"Customers"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=50, example=50)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marketing-eligible customers retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Marketing-eligible customers retrieved successfully"),
      *             @OA\Property(
@@ -1620,7 +1774,9 @@ class CustomerController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=14),
      *                         @OA\Property(property="customer_number", type="string", example="CUST-2026-000002", description="Unique customer number"),
      *                         @OA\Property(property="name", type="string", example="Jane Smith"),
@@ -1676,6 +1832,7 @@ class CustomerController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"
@@ -1701,20 +1858,26 @@ class CustomerController extends Controller
      *     operationId="toggleCustomerMarketing",
      *     tags={"Customers"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Customer ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=14)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marketing preference toggled successfully",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
      *                     description="Customer opted out of marketing",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Customer has opted out of marketing communications"),
      *                     @OA\Property(
@@ -1731,8 +1894,10 @@ class CustomerController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
      *                     description="Customer opted in to marketing",
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Customer has opted in to marketing communications"),
      *                     @OA\Property(
@@ -1752,6 +1917,7 @@ class CustomerController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have the right permissions"

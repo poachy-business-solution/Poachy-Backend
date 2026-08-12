@@ -7,6 +7,7 @@ use App\Rules\Tenant\PurchaseOrderBelongsToSupplier;
 use App\Rules\Tenant\RequiredForPaymentMethod;
 use App\Rules\Tenant\SupplierIsActive;
 use App\Rules\Tenant\ValidPaymentAmount;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSupplierPaymentRequest extends FormRequest
@@ -22,7 +23,7 @@ class StoreSupplierPaymentRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -31,7 +32,7 @@ class StoreSupplierPaymentRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:suppliers,id',
-                new SupplierIsActive(),
+                new SupplierIsActive,
             ],
             'purchase_order_id' => [
                 'nullable',
@@ -56,7 +57,7 @@ class StoreSupplierPaymentRequest extends FormRequest
             'payment_method' => [
                 'required',
                 'string',
-                'in:' . implode(',', PaymentMethod::values()),
+                'in:'.implode(',', PaymentMethod::values()),
             ],
             'reference_number' => [
                 'nullable',

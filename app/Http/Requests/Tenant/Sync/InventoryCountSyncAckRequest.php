@@ -15,9 +15,9 @@ class InventoryCountSyncAckRequest extends FormRequest
     {
         return [
             'outbound_sync_queue_id' => ['required', 'integer'],
-            'status'                 => ['required', 'string', 'in:completed,failed'],
-            'central_product_id'     => ['nullable', 'integer'],
-            'reason'                 => ['nullable', 'string', 'max:500'],
+            'status' => ['required', 'string', 'in:completed,failed'],
+            'central_product_id' => ['nullable', 'integer'],
+            'reason' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

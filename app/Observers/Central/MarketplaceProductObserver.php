@@ -14,8 +14,8 @@ class MarketplaceProductObserver
 
         Log::info('MarketplaceProduct created', [
             'product_id' => $product->id,
-            'tenant_id'  => $product->tenant_id,
-            'is_active'  => $product->is_active,
+            'tenant_id' => $product->tenant_id,
+            'is_active' => $product->is_active,
         ]);
     }
 
@@ -28,8 +28,8 @@ class MarketplaceProductObserver
 
         Log::info('MarketplaceProduct updated', [
             'product_id' => $product->id,
-            'tenant_id'  => $product->tenant_id,
-            'changes'    => $product->getChanges(),
+            'tenant_id' => $product->tenant_id,
+            'changes' => $product->getChanges(),
         ]);
     }
 
@@ -39,7 +39,7 @@ class MarketplaceProductObserver
 
         Log::info('MarketplaceProduct soft-deleted', [
             'product_id' => $product->id,
-            'tenant_id'  => $product->tenant_id,
+            'tenant_id' => $product->tenant_id,
         ]);
     }
 
@@ -49,7 +49,7 @@ class MarketplaceProductObserver
 
         Log::info('MarketplaceProduct restored', [
             'product_id' => $product->id,
-            'tenant_id'  => $product->tenant_id,
+            'tenant_id' => $product->tenant_id,
         ]);
     }
 

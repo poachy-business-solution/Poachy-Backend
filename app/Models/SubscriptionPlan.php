@@ -10,6 +10,7 @@ class SubscriptionPlan extends Model
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'subscription_plans';
 
     protected $fillable = [
@@ -58,7 +59,7 @@ class SubscriptionPlan extends Model
         //   "max_locations": 1,
         //   "enable_ecommerce": true,
         //   "enable_marketplace": false,
-        //   "enable_analytics": false,            
+        //   "enable_analytics": false,
         // }
     }
 
@@ -117,7 +118,7 @@ class SubscriptionPlan extends Model
                 'value' => $features['max_locations'],
                 'display' => $features['max_locations'] === 'unlimited'
                     ? 'Unlimited Locations'
-                    : "{$features['max_locations']} Store Location" . ($features['max_locations'] > 1 ? 's' : ''),
+                    : "{$features['max_locations']} Store Location".($features['max_locations'] > 1 ? 's' : ''),
             ];
         }
 
@@ -128,7 +129,7 @@ class SubscriptionPlan extends Model
                 'value' => $features['max_transactions_per_month'],
                 'display' => $features['max_transactions_per_month'] === 'unlimited'
                     ? 'Unlimited Transactions'
-                    : number_format($features['max_transactions_per_month']) . ' Transactions/Month',
+                    : number_format($features['max_transactions_per_month']).' Transactions/Month',
             ];
         }
 

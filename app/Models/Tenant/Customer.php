@@ -6,6 +6,7 @@ use App\Enums\Tenant\CustomerType;
 use App\Observers\Tenant\CustomerObserver;
 use App\Traits\Tenant\HasAuditLogging;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,12 +14,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 #[ObservedBy([CustomerObserver::class])]
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLogging;
+    use HasAuditLogging, HasFactory, SoftDeletes;
 
     protected $table = 'customers';
 
@@ -218,7 +218,7 @@ class Customer extends Model
 
     public function toggleMarketingConsent(): bool
     {
-        $this->accepts_marketing = !$this->accepts_marketing;
+        $this->accepts_marketing = ! $this->accepts_marketing;
         $this->save();
 
         return $this->accepts_marketing;

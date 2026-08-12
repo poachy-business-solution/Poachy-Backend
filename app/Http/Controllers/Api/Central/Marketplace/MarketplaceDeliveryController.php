@@ -8,6 +8,7 @@ use App\Http\Resources\Central\Marketplace\MarketplaceOrderDeliveryResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Marketplace\MarketplaceDeliveryService;
 use App\Services\Central\Marketplace\MarketplaceOrderService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
 class MarketplaceDeliveryController extends Controller
@@ -25,17 +26,22 @@ class MarketplaceDeliveryController extends Controller
      *     operationId="getOrderDeliveryStatus",
      *     tags={"Central - Customer - Marketplace - Orders"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Order ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery status retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery status retrieved"),
      *             @OA\Property(
@@ -95,15 +101,20 @@ class MarketplaceDeliveryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(@OA\Property(property="message", type="string", example="Unauthenticated."))
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Order not found, or no delivery record exists for this order",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="No delivery record found for this order")
      *         )
@@ -126,7 +137,7 @@ class MarketplaceDeliveryController extends Controller
                 'Delivery status retrieved',
                 new MarketplaceOrderDeliveryResource($delivery),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Order not found');
         }
     }

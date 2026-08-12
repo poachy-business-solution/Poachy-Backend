@@ -41,7 +41,6 @@ class ExpenseCategory extends Model
      * RELATIONSHIPS
      * ============================================
      */
-
     public function parent(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class, 'parent_id');
@@ -68,7 +67,6 @@ class ExpenseCategory extends Model
      * SCOPES
      * ============================================
      */
-
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -148,9 +146,9 @@ class ExpenseCategory extends Model
      */
     public function getIsDeletableAttribute(): bool
     {
-        return !$this->has_expenses
-            && !$this->budgets()->where('is_active', true)->exists()
-            && !$this->has_children;
+        return ! $this->has_expenses
+            && ! $this->budgets()->where('is_active', true)->exists()
+            && ! $this->has_children;
     }
 
     /**
@@ -220,13 +218,13 @@ class ExpenseCategory extends Model
      */
     public function wouldCreateCircularReference(?int $parentId): bool
     {
-        if (!$parentId || $parentId === $this->id) {
+        if (! $parentId || $parentId === $this->id) {
             return false;
         }
 
         $parent = self::find($parentId);
 
-        if (!$parent) {
+        if (! $parent) {
             return false;
         }
 

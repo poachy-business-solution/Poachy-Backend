@@ -21,12 +21,12 @@ class SaleObserver
     public function creating(Sale $sale): void
     {
         // Set created_by if not set
-        if (!$sale->served_by) {
+        if (! $sale->served_by) {
             $sale->served_by = Auth::id();
         }
 
         // Set sale_date if not set
-        if (!$sale->sale_date) {
+        if (! $sale->sale_date) {
             $sale->sale_date = now();
         }
     }
@@ -228,6 +228,7 @@ class SaleObserver
             $newStatus = $changes['payment_status'];
             $oldStatusStr = $oldStatus instanceof \BackedEnum ? $oldStatus->value : $oldStatus;
             $newStatusStr = $newStatus instanceof \BackedEnum ? $newStatus->value : $newStatus;
+
             return "{$user} changed sale {$sale->sale_number} payment status from {$oldStatusStr} to {$newStatusStr}";
         }
 
@@ -235,6 +236,7 @@ class SaleObserver
         if (isset($changes['total_amount'])) {
             $oldAmount = number_format($sale->getOriginal('total_amount'), 2);
             $newAmount = number_format($changes['total_amount'], 2);
+
             return "{$user} changed sale {$sale->sale_number} total amount from KES {$oldAmount} to KES {$newAmount}";
         }
 
@@ -244,6 +246,7 @@ class SaleObserver
             $newMethod = $changes['payment_method'];
             $oldMethodStr = $oldMethod instanceof \BackedEnum ? $oldMethod->value : $oldMethod;
             $newMethodStr = $newMethod instanceof \BackedEnum ? $newMethod->value : $newMethod;
+
             return "{$user} changed sale {$sale->sale_number} payment method from {$oldMethodStr} to {$newMethodStr}";
         }
 
@@ -251,11 +254,13 @@ class SaleObserver
         if (isset($changes['amount_paid'])) {
             $oldPaid = number_format($sale->getOriginal('amount_paid'), 2);
             $newPaid = number_format($changes['amount_paid'], 2);
+
             return "{$user} updated payment for sale {$sale->sale_number} from KES {$oldPaid} to KES {$newPaid}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated sale {$sale->sale_number} ({$changedFields})";
     }
 

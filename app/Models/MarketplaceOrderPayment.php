@@ -39,16 +39,16 @@ class MarketplaceOrderPayment extends Model
     protected function casts(): array
     {
         return [
-            'amount'            => 'decimal:2',
-            'payment_method'    => MarketplacePaymentMethod::class,
-            'payment_status'    => MarketplacePaymentStatus::class,
-            'initiated_at'      => 'datetime',
-            'completed_at'      => 'datetime',
-            'failed_at'         => 'datetime',
-            'is_refunded'       => 'boolean',
-            'refunded_amount'   => 'decimal:2',
-            'refunded_at'       => 'datetime',
-            'payment_metadata'  => 'array',
+            'amount' => 'decimal:2',
+            'payment_method' => MarketplacePaymentMethod::class,
+            'payment_status' => MarketplacePaymentStatus::class,
+            'initiated_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'failed_at' => 'datetime',
+            'is_refunded' => 'boolean',
+            'refunded_amount' => 'decimal:2',
+            'refunded_at' => 'datetime',
+            'payment_metadata' => 'array',
         ];
     }
 
@@ -79,7 +79,7 @@ class MarketplaceOrderPayment extends Model
     {
         $data = [
             'payment_status' => MarketplacePaymentStatus::Completed,
-            'completed_at'   => now(),
+            'completed_at' => now(),
         ];
 
         if ($transactionReference) {
@@ -97,19 +97,19 @@ class MarketplaceOrderPayment extends Model
     {
         return $this->update([
             'payment_status' => MarketplacePaymentStatus::Failed,
-            'failed_at'      => now(),
-            'failure_reason'  => $reason,
-            'failure_code'    => $code,
+            'failed_at' => now(),
+            'failure_reason' => $reason,
+            'failure_code' => $code,
         ]);
     }
 
     public function markAsRefunded(float $amount, ?string $refundReference = null): bool
     {
         return $this->update([
-            'payment_status'  => MarketplacePaymentStatus::Refunded,
-            'is_refunded'     => true,
+            'payment_status' => MarketplacePaymentStatus::Refunded,
+            'is_refunded' => true,
             'refunded_amount' => $amount,
-            'refunded_at'     => now(),
+            'refunded_at' => now(),
             'refund_reference' => $refundReference,
         ]);
     }

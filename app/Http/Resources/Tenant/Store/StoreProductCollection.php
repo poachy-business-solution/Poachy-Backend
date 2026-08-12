@@ -27,8 +27,8 @@ class StoreProductCollection extends ResourceCollection
                 'total_products' => $this->collection->count(),
                 'available_products' => $this->collection->where('is_available', true)->count(),
                 'unavailable_products' => $this->collection->where('is_available', false)->count(),
-                'low_stock_products' => $this->collection->filter(fn($item) => $item->is_low_stock)->count(),
-                'out_of_stock_products' => $this->collection->filter(fn($item) => $item->is_out_of_stock)->count(),
+                'low_stock_products' => $this->collection->filter(fn ($item) => $item->is_low_stock)->count(),
+                'out_of_stock_products' => $this->collection->filter(fn ($item) => $item->is_out_of_stock)->count(),
                 'price_overrides' => $this->collection->where('is_price_overridden', true)->count(),
             ],
         ];

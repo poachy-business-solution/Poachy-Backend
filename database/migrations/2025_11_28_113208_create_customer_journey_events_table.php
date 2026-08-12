@@ -21,9 +21,9 @@ return new class extends Migration
 
             // What
             $table->string('event_type');
-            // page_view, product_view, product_list_view, search, filter_used, 
-            // add_to_cart, remove_from_cart, add_to_wishlist, 
-            // checkout_started, checkout_step_completed, purchase, 
+            // page_view, product_view, product_list_view, search, filter_used,
+            // add_to_cart, remove_from_cart, add_to_wishlist,
+            // checkout_started, checkout_step_completed, purchase,
             // review_written, merchant_followed
 
             $table->string('event_category')->nullable(); // browsing, search, cart, checkout, post_purchase

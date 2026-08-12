@@ -54,7 +54,7 @@ class SupplierRepository
                         'stock_status',
                         'primary_image',
                     ]);
-            }
+            },
         ])->find($id);
     }
 
@@ -83,15 +83,15 @@ class SupplierRepository
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (!empty($filters['supplier_type'])) {
+        if (! empty($filters['supplier_type'])) {
             $query->where('supplier_type', $filters['supplier_type']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('name', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('email', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('phone', 'like', '%' . $filters['search'] . '%');
+                $q->where('name', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('email', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('phone', 'like', '%'.$filters['search'].'%');
             });
         }
 
@@ -100,10 +100,8 @@ class SupplierRepository
 
     /**
      * Check if a supplier with the given name exists
-     * 
-     * @param string $name
-     * @param int|null $excludeId ID to exclude from the check (for updates)
-     * @return bool
+     *
+     * @param  int|null  $excludeId  ID to exclude from the check (for updates)
      */
     public function existsByName(string $name, ?int $excludeId = null): bool
     {
@@ -118,10 +116,8 @@ class SupplierRepository
 
     /**
      * Check if a supplier with the given email exists
-     * 
-     * @param string $email
-     * @param int|null $excludeId ID to exclude from the check (for updates)
-     * @return bool
+     *
+     * @param  int|null  $excludeId  ID to exclude from the check (for updates)
      */
     public function existsByEmail(string $email, ?int $excludeId = null): bool
     {
@@ -136,11 +132,8 @@ class SupplierRepository
 
     /**
      * Check if a supplier with the given name and email combination exists
-     * 
-     * @param string $name
-     * @param string $email
-     * @param int|null $excludeId ID to exclude from the check (for updates)
-     * @return bool
+     *
+     * @param  int|null  $excludeId  ID to exclude from the check (for updates)
      */
     public function existsByNameAndEmail(string $name, string $email, ?int $excludeId = null): bool
     {

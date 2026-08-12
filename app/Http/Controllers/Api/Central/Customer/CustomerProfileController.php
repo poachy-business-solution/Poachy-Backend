@@ -28,10 +28,13 @@ class CustomerProfileController extends Controller
      *     operationId="getCustomerProfile",
      *     tags={"Central - Customer - Profile"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Profile retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Profile retrieved successfully."),
      *             @OA\Property(
@@ -63,10 +66,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -90,10 +96,13 @@ class CustomerProfileController extends Controller
      *     operationId="updateCustomerProfile",
      *     tags={"Central - Customer - Profile"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Profile fields to update (all fields are optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -146,10 +155,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Profile updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Profile updated successfully."),
      *             @OA\Property(
@@ -181,17 +193,23 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -236,12 +254,16 @@ class CustomerProfileController extends Controller
      *     operationId="uploadProfilePicture",
      *     tags={"Central - Customer - Profile"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"profile_picture"},
+     *
      *                 @OA\Property(
      *                     property="profile_picture",
      *                     type="string",
@@ -251,10 +273,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Profile picture updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Profile picture updated successfully."),
      *             @OA\Property(
@@ -291,17 +316,23 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - invalid file type or size",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -346,17 +377,22 @@ class CustomerProfileController extends Controller
      *     operationId="listDeliveryAddresses",
      *     tags={"Central - Customer - Delivery Addresses"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery addresses retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery addresses retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(
      *                         property="address_type",
@@ -397,10 +433,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -408,8 +447,8 @@ class CustomerProfileController extends Controller
      */
     public function addresses(): JsonResponse
     {
-        $customer   = auth('central')->user()->marketplaceCustomer;
-        $addresses  = $this->profileService->getAddresses($customer);
+        $customer = auth('central')->user()->marketplaceCustomer;
+        $addresses = $this->profileService->getAddresses($customer);
 
         return ApiResponse::success(
             'Delivery addresses retrieved successfully.',
@@ -425,11 +464,14 @@ class CustomerProfileController extends Controller
      *     operationId="createDeliveryAddress",
      *     tags={"Central - Customer - Delivery Addresses"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Delivery address data",
+     *
      *         @OA\JsonContent(
      *             required={"recipient_name", "recipient_phone", "address_line", "city", "county"},
+     *
      *             @OA\Property(
      *                 property="address_type",
      *                 type="string",
@@ -534,10 +576,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Delivery address added successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery address added successfully."),
      *             @OA\Property(
@@ -577,17 +622,23 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -614,7 +665,7 @@ class CustomerProfileController extends Controller
     public function storeAddress(StoreAddressRequest $request): JsonResponse
     {
         $customer = auth('central')->user()->marketplaceCustomer;
-        $address  = $this->profileService->createAddress($customer, $request->validated());
+        $address = $this->profileService->createAddress($customer, $request->validated());
 
         return ApiResponse::created(
             'Delivery address added successfully.',
@@ -630,17 +681,22 @@ class CustomerProfileController extends Controller
      *     operationId="updateDeliveryAddress",
      *     tags={"Central - Customer - Delivery Addresses"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Delivery address ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Fields to update (all optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="address_type",
      *                 type="string",
@@ -745,10 +801,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery address updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery address updated successfully."),
      *             @OA\Property(
@@ -788,17 +847,23 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Delivery address not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Delivery address not found."),
      *             @OA\Property(
@@ -811,10 +876,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -841,7 +909,7 @@ class CustomerProfileController extends Controller
     public function updateAddress(UpdateAddressRequest $request, int $id): JsonResponse
     {
         $customer = auth('central')->user()->marketplaceCustomer;
-        $address  = $this->profileService->updateAddress($customer, $id, $request->validated());
+        $address = $this->profileService->updateAddress($customer, $id, $request->validated());
 
         return ApiResponse::success(
             'Delivery address updated successfully.',
@@ -857,17 +925,22 @@ class CustomerProfileController extends Controller
      *     operationId="deleteDeliveryAddress",
      *     tags={"Central - Customer - Delivery Addresses"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Delivery address ID to delete",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery address deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Delivery address deleted successfully."),
      *             @OA\Property(
@@ -880,17 +953,23 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Delivery address not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Delivery address not found."),
      *             @OA\Property(
@@ -903,10 +982,13 @@ class CustomerProfileController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - cannot delete only address",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -915,9 +997,11 @@ class CustomerProfileController extends Controller
      *                 @OA\Property(
      *                     property="address",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="You cannot delete your only delivery address.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",

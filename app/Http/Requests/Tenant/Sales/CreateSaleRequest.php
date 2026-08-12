@@ -59,6 +59,11 @@ class CreateSaleRequest extends FormRequest
                 'integer',
                 'exists:product_bundles,id',
             ],
+            'items.*.uom_id' => [
+                'nullable',
+                'integer',
+                'exists:units_of_measure,id',
+            ],
             'items.*.quantity' => [
                 'required',
                 'numeric',

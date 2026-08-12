@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Review\StoreReviewVoteRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Marketplace\ReviewVoteService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
 class ReviewVoteController extends Controller
@@ -24,29 +25,36 @@ class ReviewVoteController extends Controller
      *     operationId="voteOnReview",
      *     tags={"Central - Reviews - Votes"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="reviewType",
      *         in="path",
      *         description="Type of review (product or merchant)",
      *         required=true,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"product", "merchant"},
      *             example="product"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Vote type",
+     *
      *         @OA\JsonContent(
      *             required={"vote_type"},
+     *
      *             @OA\Property(
      *                 property="vote_type",
      *                 type="string",
@@ -56,10 +64,13 @@ class ReviewVoteController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Vote recorded successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Vote recorded successfully."),
      *             @OA\Property(
@@ -77,17 +88,23 @@ class ReviewVoteController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Cannot vote on own review or validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You cannot vote on your own review."),
      *             @OA\Property(
@@ -115,10 +132,10 @@ class ReviewVoteController extends Controller
             ]);
         } catch (\InvalidArgumentException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to record vote: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to record vote: '.$e->getMessage());
         }
     }
 
@@ -130,28 +147,35 @@ class ReviewVoteController extends Controller
      *     operationId="deleteVoteOnReview",
      *     tags={"Central - Reviews - Votes"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="reviewType",
      *         in="path",
      *         description="Type of review (product or merchant)",
      *         required=true,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"product", "merchant"},
      *             example="merchant"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Review ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Vote deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Vote deleted successfully"),
      *             @OA\Property(
@@ -164,17 +188,23 @@ class ReviewVoteController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Vote not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Vote not found."),
      *             @OA\Property(
@@ -188,7 +218,7 @@ class ReviewVoteController extends Controller
      *         )
      *     )
      * )
-    */
+     */
     public function destroy(string $reviewType, int $id): JsonResponse
     {
         try {
@@ -197,10 +227,10 @@ class ReviewVoteController extends Controller
             $this->voteService->removeVote($customer, $reviewType, $id);
 
             return ApiResponse::success('Vote deleted successfully');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Review not found.');
         } catch (\Exception $e) {
-            return ApiResponse::serverError('Failed to remove vote: ' . $e->getMessage());
+            return ApiResponse::serverError('Failed to remove vote: '.$e->getMessage());
         }
     }
 }

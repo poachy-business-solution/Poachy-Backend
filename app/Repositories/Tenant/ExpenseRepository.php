@@ -3,7 +3,6 @@
 namespace App\Repositories\Tenant;
 
 use App\Enums\Tenant\ExpenseStatus;
-use App\Enums\Tenant\PaymentStatus;
 use App\Models\Tenant\Expense;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class ExpenseRepository
 {
     protected string $cachePrefix = 'expenses';
+
     protected int $cacheTtl = 3600;
 
     /**
@@ -32,7 +32,7 @@ class ExpenseRepository
         Cache::tags([
             'tenant',
             tenant()->id,
-            $this->cachePrefix
+            $this->cachePrefix,
         ])->flush();
     }
 
@@ -46,7 +46,7 @@ class ExpenseRepository
             'store',
             'supplier',
             'creator',
-            'approver'
+            'approver',
         ]);
 
         // Apply filters
@@ -62,11 +62,11 @@ class ExpenseRepository
      */
     protected function applyFilters($query, array $filters): void
     {
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->where('store_id', $filters['store_id']);
         }
 
@@ -74,27 +74,27 @@ class ExpenseRepository
             $query->whereNull('store_id');
         }
 
-        if (!empty($filters['supplier_id'])) {
+        if (! empty($filters['supplier_id'])) {
             $query->where('supplier_id', $filters['supplier_id']);
         }
 
-        if (!empty($filters['approval_status'])) {
+        if (! empty($filters['approval_status'])) {
             $query->where('approval_status', $filters['approval_status']);
         }
 
-        if (!empty($filters['payment_status'])) {
+        if (! empty($filters['payment_status'])) {
             $query->where('payment_status', $filters['payment_status']);
         }
 
-        if (!empty($filters['payment_method'])) {
+        if (! empty($filters['payment_method'])) {
             $query->where('payment_method', $filters['payment_method']);
         }
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('expense_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('expense_date', '<=', $filters['end_date']);
         }
 
@@ -110,7 +110,7 @@ class ExpenseRepository
             }
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('expense_number', 'like', "%{$search}%")
@@ -131,7 +131,7 @@ class ExpenseRepository
             'supplier',
             'creator',
             'approver',
-            'parentExpense'
+            'parentExpense',
         ])->find($id);
     }
 
@@ -166,7 +166,7 @@ class ExpenseRepository
                 'category',
                 'store',
                 'supplier',
-                'creator'
+                'creator',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -192,7 +192,7 @@ class ExpenseRepository
                 'store',
                 'supplier',
                 'creator',
-                'approver'
+                'approver',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -205,7 +205,7 @@ class ExpenseRepository
      */
     public function delete(Expense $expense): bool
     {
-        if (!$expense->is_deletable) {
+        if (! $expense->is_deletable) {
             throw new \Exception('Cannot delete expense: only pending or rejected expenses can be deleted.');
         }
 
@@ -302,15 +302,15 @@ class ExpenseRepository
         $query = Expense::where('category_id', $categoryId)
             ->approved();
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('expense_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('expense_date', '<=', $filters['end_date']);
         }
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->where('store_id', $filters['store_id']);
         }
 
@@ -325,15 +325,15 @@ class ExpenseRepository
         $query = Expense::where('store_id', $storeId)
             ->approved();
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('expense_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('expense_date', '<=', $filters['end_date']);
         }
 
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
@@ -354,11 +354,11 @@ class ExpenseRepository
             ->approved()
             ->groupBy('category_id');
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('expense_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('expense_date', '<=', $filters['end_date']);
         }
 
@@ -378,11 +378,11 @@ class ExpenseRepository
             ->approved()
             ->groupBy('payment_method');
 
-        if (!empty($filters['start_date'])) {
+        if (! empty($filters['start_date'])) {
             $query->whereDate('expense_date', '>=', $filters['start_date']);
         }
 
-        if (!empty($filters['end_date'])) {
+        if (! empty($filters['end_date'])) {
             $query->whereDate('expense_date', '<=', $filters['end_date']);
         }
 

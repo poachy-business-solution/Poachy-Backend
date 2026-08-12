@@ -25,17 +25,23 @@ class DeliverySettingsController extends Controller
      *     operationId="toggleDeliveryZones",
      *     tags={"Tenant - Delivery Zones"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"zones_enabled"},
+     *
      *             @OA\Property(property="zones_enabled", type="boolean", example=true, description="Set to true to enable zone-based delivery, false to disable")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Toggle successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Zone-based delivery enabled successfully"),
      *             @OA\Property(
@@ -53,18 +59,24 @@ class DeliverySettingsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Business details not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Business details not found. Please submit your business details first.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or no active zones when enabling",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="You must create at least one active delivery zone before enabling zone-based delivery.")
      *         )
@@ -94,13 +106,13 @@ class DeliverySettingsController extends Controller
             );
         }
 
-        $deliveryInfo                  = $businessDetail->delivery_info ?? [];
+        $deliveryInfo = $businessDetail->delivery_info ?? [];
         $deliveryInfo['zones_enabled'] = $request->zones_enabled;
 
         $businessDetail->update(['delivery_info' => $deliveryInfo]);
 
         return ApiResponse::success(
-            'Zone-based delivery ' . ($request->zones_enabled ? 'enabled' : 'disabled') . ' successfully',
+            'Zone-based delivery '.($request->zones_enabled ? 'enabled' : 'disabled').' successfully',
             ['zones_enabled' => $request->zones_enabled],
         );
     }

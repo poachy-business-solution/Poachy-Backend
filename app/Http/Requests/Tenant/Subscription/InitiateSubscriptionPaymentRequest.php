@@ -22,7 +22,7 @@ class InitiateSubscriptionPaymentRequest extends FormRequest
     {
         return [
             'plan_id.required' => 'A subscription plan is required.',
-            'plan_id.exists'   => 'The selected subscription plan does not exist.',
+            'plan_id.exists' => 'The selected subscription plan does not exist.',
         ];
     }
 }

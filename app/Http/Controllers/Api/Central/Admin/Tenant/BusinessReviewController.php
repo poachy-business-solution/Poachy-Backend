@@ -24,20 +24,26 @@ class BusinessReviewController extends Controller
      *     description="Admin retrieves all business details awaiting approval",
      *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=15, maximum=100)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Pending business details retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Pending business details retrieved successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=403, description="Forbidden - Admin only")
      * )
@@ -64,36 +70,47 @@ class BusinessReviewController extends Controller
      *     description="Admin retrieves all business details with optional filters",
      *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by status",
+     *
      *         @OA\Schema(type="string", enum={"pending", "active", "inactive", "suspended"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="business_type_id",
      *         in="query",
      *         description="Filter by business type",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_verified",
      *         in="query",
      *         description="Filter by verification status",
+     *
      *         @OA\Schema(type="boolean")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="city",
      *         in="query",
      *         description="Filter by city",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=15, maximum=100)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business details retrieved successfully"
@@ -130,22 +147,28 @@ class BusinessReviewController extends Controller
      *     description="Admin approves a business details submission",
      *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Business detail ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business details approved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Business details approved successfully"),
      *             @OA\Property(property="data", ref="#/components/schemas/BusinessDetailResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=403, description="Forbidden - Admin only"),
      *     @OA\Response(response=404, description="Business details not found")
@@ -168,26 +191,35 @@ class BusinessReviewController extends Controller
      *     description="Admin rejects a business details submission",
      *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Business detail ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="notes", type="string", example="Missing required documents")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business details rejected successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Business details rejected successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=403, description="Forbidden - Admin only"),
      *     @OA\Response(response=404, description="Business details not found")
@@ -210,30 +242,39 @@ class BusinessReviewController extends Controller
      *     description="Admin adds or removes verification badge from business",
      *     tags={"Central - Admin - Business Review"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Business detail ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"is_verified"},
+     *
      *             @OA\Property(property="is_verified", type="boolean", example=true, description="true to verify, false to unverify"),
      *             @OA\Property(property="notes", type="string", example="Verified after documentation review")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business verification updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Business verification updated successfully"),
      *             @OA\Property(property="data", ref="#/components/schemas/BusinessDetailResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=403, description="Forbidden - Admin only"),
      *     @OA\Response(response=404, description="Business details not found")

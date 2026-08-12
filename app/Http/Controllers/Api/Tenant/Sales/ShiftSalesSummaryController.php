@@ -23,22 +23,27 @@ class ShiftSalesSummaryController extends Controller
      *     description="Retrieves comprehensive sales summary for a specific shift, including transaction counts, sales amounts by payment method, cash tracking, customer metrics, and payment method breakdown percentages. The closing_cash, cash_variance, and sales_per_hour fields will be null if the shift is still active and only populated after clock-out.",
      *     operationId="getShiftSalesSummary",
      *     tags={"Shift Sales Summary"},
+     *
      *     @OA\Parameter(
      *         name="shiftId",
      *         in="path",
      *         description="The unique identifier of the shift",
      *         required=true,
+     *
      *         @OA\Schema(
      *             type="integer",
      *             example=4
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift sales summary retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -232,11 +237,14 @@ class ShiftSalesSummaryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Shift not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -249,11 +257,14 @@ class ShiftSalesSummaryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -266,11 +277,14 @@ class ShiftSalesSummaryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have permission to access this shift",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -283,11 +297,14 @@ class ShiftSalesSummaryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",

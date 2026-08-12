@@ -10,7 +10,6 @@ class UnitOfMeasureDetailResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -31,8 +30,8 @@ class UnitOfMeasureDetailResource extends JsonResource
 
             // Include base unit information
             'base_unit' => $this->when(
-                !$this->is_base_unit,
-                fn() => new UnitOfMeasureResource($this->getBaseUnit())
+                ! $this->is_base_unit,
+                fn () => new UnitOfMeasureResource($this->getBaseUnit())
             ),
 
             // Conversions from this UOM to others

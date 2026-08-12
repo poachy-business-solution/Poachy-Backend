@@ -10,7 +10,6 @@ use App\Http\Resources\Tenant\Tax\TaxRateResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Tax\TaxRateService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class TaxRateController extends Controller
 {
@@ -25,41 +24,52 @@ class TaxRateController extends Controller
      *     description="Retrieves a list of tax rates with optional filtering and pagination capabilities.",
      *     tags={"Tenant Tax Rates"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="paginate",
      *         in="query",
      *         description="Enable pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=false
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100),
      *         example=15
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tax rates retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tax rates retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="tax_name", type="string", example="VAT"),
      *                     @OA\Property(property="rate", type="string", example="16.00"),
@@ -81,6 +91,7 @@ class TaxRateController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -108,7 +119,7 @@ class TaxRateController extends Controller
                             'total' => $taxRates->total(),
                             'from' => $taxRates->firstItem(),
                             'to' => $taxRates->lastItem(),
-                        ]
+                        ],
                     ]
                 );
             }
@@ -119,7 +130,7 @@ class TaxRateController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to retrieve tax rates: ' . $e->getMessage()
+                'Failed to retrieve tax rates: '.$e->getMessage()
             );
         }
     }
@@ -131,10 +142,13 @@ class TaxRateController extends Controller
      *     description="Creates a new tax rate. Cannot create a duplicate tax rate for the same name and effective date. If is_default is true, any existing default tax rate will be unset.",
      *     tags={"Tenant Tax Rates"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"tax_name", "rate", "effective_from"},
+     *
      *             @OA\Property(property="tax_name", type="string", maxLength=100, description="Tax name (e.g., VAT, GST, Sales Tax)", example="VAT"),
      *             @OA\Property(property="rate", type="number", format="float", minimum=0, maximum=100, description="Tax rate percentage (0-100)", example=16.00),
      *             @OA\Property(property="effective_from", type="string", format="date", description="Date when this tax rate becomes effective (YYYY-MM-DD)", example="2025-12-17"),
@@ -143,10 +157,13 @@ class TaxRateController extends Controller
      *             @OA\Property(property="is_default", type="boolean", description="Whether this is the default tax rate (default: false)", example=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Tax rate created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Tax rate created successfully"),
      *             @OA\Property(
@@ -172,6 +189,7 @@ class TaxRateController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -183,7 +201,9 @@ class TaxRateController extends Controller
      *     @OA\Response(
      *         response=500,
      *         description="Failed to create - Duplicate tax rate",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to create tax rate: A tax rate VAT already exists for the date 2025-12-17."),
      *             @OA\Property(
@@ -209,7 +229,7 @@ class TaxRateController extends Controller
             );
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to create tax rate: ' . $e->getMessage()
+                'Failed to create tax rate: '.$e->getMessage()
             );
         }
     }
@@ -221,20 +241,26 @@ class TaxRateController extends Controller
      *     description="Toggles the active status of a tax rate. If currently active, it will be deactivated and vice versa.",
      *     tags={"Tenant Tax Rates"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Tax Rate ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tax rate status toggled successfully",
+     *
      *         @OA\JsonContent(
      *             oneOf={
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Tax rate deactivated successfully"),
      *                     @OA\Property(
@@ -246,7 +272,9 @@ class TaxRateController extends Controller
      *                         @OA\Property(property="tenant_name", type="string", nullable=true, example=null)
      *                     )
      *                 ),
+     *
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="message", type="string", example="Tax rate activated successfully"),
      *                     @OA\Property(
@@ -261,6 +289,7 @@ class TaxRateController extends Controller
      *             }
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -281,7 +310,7 @@ class TaxRateController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to toggle tax rate status: ' . $e->getMessage()
+                'Failed to toggle tax rate status: '.$e->getMessage()
             );
         }
     }
@@ -293,14 +322,17 @@ class TaxRateController extends Controller
      *     description="Toggles the default status of a tax rate. Cannot remove default status if this is the only default tax rate. When setting a new default, any existing default will be automatically unset.",
      *     tags={"Tenant Tax Rates"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Tax Rate ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Tax rate default status toggled successfully"
@@ -308,7 +340,9 @@ class TaxRateController extends Controller
      *     @OA\Response(
      *         response=400,
      *         description="Cannot remove default status",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Cannot remove default status. At least one tax rate must be default"),
      *             @OA\Property(
@@ -321,6 +355,7 @@ class TaxRateController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -341,7 +376,7 @@ class TaxRateController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to toggle default status: ' . $e->getMessage()
+                'Failed to toggle default status: '.$e->getMessage()
             );
         }
     }
@@ -353,18 +388,23 @@ class TaxRateController extends Controller
      *     description="Updates the effective_until date for a tax rate. This defines when the tax rate expires.",
      *     tags={"Tenant Tax Rates"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Tax Rate ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"effective_until"},
+     *
      *             @OA\Property(
      *                 property="effective_until",
      *                 type="string",
@@ -374,10 +414,13 @@ class TaxRateController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Effective until date updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Effective until date updated successfully"),
      *             @OA\Property(
@@ -403,6 +446,7 @@ class TaxRateController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -433,7 +477,7 @@ class TaxRateController extends Controller
             return ApiResponse::error($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return ApiResponse::serverError(
-                'Failed to update effective until date: ' . $e->getMessage()
+                'Failed to update effective until date: '.$e->getMessage()
             );
         }
     }

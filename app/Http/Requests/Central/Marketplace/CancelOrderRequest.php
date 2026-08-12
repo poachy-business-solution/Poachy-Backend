@@ -22,7 +22,7 @@ class CancelOrderRequest extends FormRequest
     {
         return [
             'cancellation_reason.required' => 'A reason is required when cancelling an order.',
-            'cancellation_reason.max'      => 'Cancellation reason must not exceed 500 characters.',
+            'cancellation_reason.max' => 'Cancellation reason must not exceed 500 characters.',
         ];
     }
 }

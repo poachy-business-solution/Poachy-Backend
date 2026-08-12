@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name'); // e.g., "Retail & Consumer Goods", "Food & Beverage"
             $table->string('slug')->unique(); // e.g., "retail-consumer-goods"
-            $table->text('description')->nullable();            
-            $table->boolean('is_active')->default(true);            
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index('slug');
             $table->index('is_active');
         });

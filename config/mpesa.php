@@ -24,11 +24,11 @@ return [
     |
     */
     'sandbox' => [
-        'base_url'        => 'https://sandbox.safaricom.co.ke',
-        'consumer_key'    => env('MPESA_SANDBOX_CONSUMER_KEY', ''),
+        'base_url' => 'https://sandbox.safaricom.co.ke',
+        'consumer_key' => env('MPESA_SANDBOX_CONSUMER_KEY', ''),
         'consumer_secret' => env('MPESA_SANDBOX_CONSUMER_SECRET', ''),
-        'shortcode'       => env('MPESA_SANDBOX_SHORTCODE', '174379'),
-        'passkey'         => env('MPESA_SANDBOX_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
+        'shortcode' => env('MPESA_SANDBOX_SHORTCODE', '174379'),
+        'passkey' => env('MPESA_SANDBOX_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
     ],
 
     /*
@@ -41,11 +41,11 @@ return [
     |
     */
     'production' => [
-        'base_url'        => 'https://api.safaricom.co.ke',
-        'consumer_key'    => env('MPESA_PRODUCTION_CONSUMER_KEY', ''),
+        'base_url' => 'https://api.safaricom.co.ke',
+        'consumer_key' => env('MPESA_PRODUCTION_CONSUMER_KEY', ''),
         'consumer_secret' => env('MPESA_PRODUCTION_CONSUMER_SECRET', ''),
-        'shortcode'       => env('MPESA_PRODUCTION_SHORTCODE', ''),
-        'passkey'         => env('MPESA_PRODUCTION_PASSKEY', ''),
+        'shortcode' => env('MPESA_PRODUCTION_SHORTCODE', ''),
+        'passkey' => env('MPESA_PRODUCTION_PASSKEY', ''),
     ],
 
     /*

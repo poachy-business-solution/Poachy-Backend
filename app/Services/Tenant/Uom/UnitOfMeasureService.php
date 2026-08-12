@@ -7,6 +7,7 @@ use App\Models\Tenant\UnitOfMeasure;
 use App\Models\Tenant\UomConversion;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -14,9 +15,6 @@ class UnitOfMeasureService
 {
     /**
      * Get paginated list of units of measure with optional filters.
-     *
-     * @param array $filters
-     * @return LengthAwarePaginator
      */
     public function getList(array $filters = []): LengthAwarePaginator
     {
@@ -40,7 +38,7 @@ class UnitOfMeasureService
         }
 
         // Search by code or name
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
@@ -60,8 +58,6 @@ class UnitOfMeasureService
 
     /**
      * Get all UOMs grouped by type.
-     *
-     * @return array
      */
     public function getGroupedByType(): array
     {
@@ -76,9 +72,7 @@ class UnitOfMeasureService
     /**
      * Get a specific unit of measure with conversions.
      *
-     * @param int $id
-     * @return UnitOfMeasure
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function getById(int $id): UnitOfMeasure
     {
@@ -91,8 +85,6 @@ class UnitOfMeasureService
     /**
      * Create a new custom unit of measure.
      *
-     * @param array $data
-     * @return UnitOfMeasure
      * @throws \Exception
      */
     public function create(array $data): UnitOfMeasure
@@ -143,9 +135,6 @@ class UnitOfMeasureService
      * Update a custom unit of measure.
      * Note: System UOMs cannot be updated.
      *
-     * @param int $id
-     * @param array $data
-     * @return UnitOfMeasure
      * @throws \Exception
      */
     public function update(int $id, array $data): UnitOfMeasure
@@ -203,9 +192,6 @@ class UnitOfMeasureService
 
     /**
      * Get conversion options for a specific UOM.
-     *
-     * @param int $uomId
-     * @return Collection
      */
     public function getConversionOptions(int $uomId): Collection
     {
@@ -222,9 +208,6 @@ class UnitOfMeasureService
     /**
      * Check if a UOM can be safely deleted.
      * (Not implemented  but useful for future)
-     *
-     * @param int $id
-     * @return array
      */
     public function canDelete(int $id): array
     {
@@ -283,8 +266,6 @@ class UnitOfMeasureService
      * Set a UOM as base unit for its type.
      * Ensures only one base unit exists per type by removing base flag from others.
      *
-     * @param int $id
-     * @return UnitOfMeasure
      * @throws \Exception
      */
     public function setBaseUnit(int $id): UnitOfMeasure
@@ -332,8 +313,6 @@ class UnitOfMeasureService
     /**
      * Remove base unit flag from a UOM.
      *
-     * @param int $id
-     * @return UnitOfMeasure
      * @throws \Exception
      */
     public function removeBaseUnit(int $id): UnitOfMeasure
@@ -344,7 +323,7 @@ class UnitOfMeasureService
             $uom = UnitOfMeasure::findOrFail($id);
 
             // Check if it's a base unit
-            if (!$uom->is_base_unit) {
+            if (! $uom->is_base_unit) {
                 throw new \Exception('This unit is not a base unit.');
             }
 
@@ -373,12 +352,9 @@ class UnitOfMeasureService
         }
     }
 
-
     /**
      * Create a new UOM conversion.
      *
-     * @param array $data
-     * @return UomConversion
      * @throws \Exception
      */
     public function createUomConversion(array $data): UomConversion
@@ -427,9 +403,6 @@ class UnitOfMeasureService
     /**
      * Update an existing UOM conversion.
      *
-     * @param int $id
-     * @param array $data
-     * @return UomConversion
      * @throws \Exception
      */
     public function updateUomConversion(int $id, array $data): UomConversion
@@ -472,8 +445,6 @@ class UnitOfMeasureService
     /**
      * Delete a UOM conversion.
      *
-     * @param int $id
-     * @return bool
      * @throws \Exception
      */
     public function deleteUomConversion(int $id): bool
@@ -510,10 +481,6 @@ class UnitOfMeasureService
 
     /**
      * Get conversion between two UOMs.
-     *
-     * @param int $fromUomId
-     * @param int $toUomId
-     * @return UomConversion|null
      */
     public function getConversion(int $fromUomId, int $toUomId): ?UomConversion
     {
@@ -532,10 +499,6 @@ class UnitOfMeasureService
     /**
      * Convert a quantity between two UOMs.
      *
-     * @param float $quantity
-     * @param int $fromUomId
-     * @param int $toUomId
-     * @return array
      * @throws \Exception
      */
     public function convert(float $quantity, int $fromUomId, int $toUomId): array

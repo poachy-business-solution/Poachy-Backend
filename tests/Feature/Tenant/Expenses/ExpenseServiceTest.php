@@ -2,13 +2,14 @@
 
 namespace Tests\Feature\Tenant\Expenses;
 
-use App\Models\Tenant\Expense;
+use App\Models\Tenant\Budget;
 use App\Models\Tenant\ExpenseCategory;
 use App\Repositories\Tenant\BudgetRepository;
 use App\Repositories\Tenant\ExpenseCategoryRepository;
 use App\Repositories\Tenant\ExpenseRepository;
 use App\Services\Tenant\Expenses\BudgetService;
 use App\Services\Tenant\Expenses\ExpenseService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
@@ -55,13 +56,37 @@ class ExpenseServiceTest extends TestCase
     {
         return new class implements Authenticatable
         {
-            public function getAuthIdentifierName() { return 'id'; }
-            public function getAuthIdentifier() { return 1; }
-            public function getAuthPasswordName() { return 'password'; }
-            public function getAuthPassword() { return ''; }
-            public function getRememberToken() { return null; }
+            public function getAuthIdentifierName()
+            {
+                return 'id';
+            }
+
+            public function getAuthIdentifier()
+            {
+                return 1;
+            }
+
+            public function getAuthPasswordName()
+            {
+                return 'password';
+            }
+
+            public function getAuthPassword()
+            {
+                return '';
+            }
+
+            public function getRememberToken()
+            {
+                return null;
+            }
+
             public function setRememberToken($value) {}
-            public function getRememberTokenName() { return 'remember_token'; }
+
+            public function getRememberTokenName()
+            {
+                return 'remember_token';
+            }
         };
     }
 
@@ -160,7 +185,7 @@ class ExpenseServiceTest extends TestCase
     public function test_create_expense_updates_budget_when_auto_approved(): void
     {
         $category = $this->createCategory(['requires_approval' => false]);
-        \App\Models\Tenant\Budget::create([
+        Budget::create([
             'budget_name' => 'Test Budget', 'category_id' => $category->id, 'store_id' => 1,
             'period_type' => 'monthly',
             'period_start' => now()->startOfMonth()->toDateString(),
@@ -170,7 +195,7 @@ class ExpenseServiceTest extends TestCase
 
         $this->makeService()->createExpense($this->baseExpenseData(['category_id' => $category->id, 'amount' => 400]));
 
-        $budget = \App\Models\Tenant\Budget::first();
+        $budget = Budget::first();
         $this->assertEquals(400, $budget->spent_amount);
     }
 
@@ -259,7 +284,7 @@ class ExpenseServiceTest extends TestCase
     public function test_approve_expense_succeeds_and_updates_budget(): void
     {
         $category = $this->createCategory(['requires_approval' => true]);
-        \App\Models\Tenant\Budget::create([
+        Budget::create([
             'budget_name' => 'Test Budget', 'category_id' => $category->id, 'store_id' => 1,
             'period_type' => 'monthly',
             'period_start' => now()->startOfMonth()->toDateString(),
@@ -271,7 +296,7 @@ class ExpenseServiceTest extends TestCase
         $approved = $this->makeService()->approveExpense($expense->id);
 
         $this->assertSame('approved', $approved->approval_status->value);
-        $this->assertEquals(300, \App\Models\Tenant\Budget::first()->spent_amount);
+        $this->assertEquals(300, Budget::first()->spent_amount);
     }
 
     public function test_reject_expense_throws_when_reason_empty(): void
@@ -489,9 +514,9 @@ class ExpenseServiceTest extends TestCase
 
         // Stored filename is expense_number + now()->timestamp (second precision) — advance
         // the clock so the second upload doesn't collide with the first's filename.
-        \Carbon\Carbon::setTestNow(now()->addSecond());
+        Carbon::setTestNow(now()->addSecond());
         $updated = $this->makeService()->uploadReceipt($expense->id, UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'));
-        \Carbon\Carbon::setTestNow();
+        Carbon::setTestNow();
 
         $this->assertNotSame($oldPath, $updated->receipt_path);
         Storage::disk('public')->assertMissing($oldPath);

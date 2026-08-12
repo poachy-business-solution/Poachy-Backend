@@ -25,12 +25,15 @@ class TenantUserController extends Controller
      *     description="Get all users in this tenant (owner/manager only)",
      *     tags={"Tenant User Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=15, maximum=100)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Users retrieved successfully"
@@ -61,10 +64,13 @@ class TenantUserController extends Controller
      *     description="Create new user with auto-generated password sent via email (owner/manager only)",
      *     tags={"Tenant User Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name", "email", "role"},
+     *
      *             @OA\Property(property="name", type="string", example="Jane Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="jane@merchant.com"),
      *             @OA\Property(property="phone", type="string", example="+254723456789"),
@@ -72,6 +78,7 @@ class TenantUserController extends Controller
      *             @OA\Property(property="is_active", type="boolean", example=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="User created successfully. Credentials sent to email."
@@ -98,21 +105,27 @@ class TenantUserController extends Controller
      *     description="Update user details (owner/manager only)",
      *     tags={"Tenant User Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="userId",
      *         in="path",
      *         required=true,
      *         description="User ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string", example="Jane Updated"),
      *             @OA\Property(property="email", type="string", example="jane.updated@merchant.com"),
      *             @OA\Property(property="phone", type="string", example="+254723456789"),
      *             @OA\Property(property="is_active", type="boolean", example=false)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="User updated successfully"
@@ -139,20 +152,26 @@ class TenantUserController extends Controller
      *     description="Assign or change user role (owner only)",
      *     tags={"Tenant User Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="userId",
      *         in="path",
      *         required=true,
      *         description="User ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"role"},
+     *
      *             @OA\Property(property="role", type="string", enum={"owner", "manager", "cashier"}, example="manager")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Role assigned successfully"
@@ -179,13 +198,16 @@ class TenantUserController extends Controller
      *     description="Delete user (owner only, cannot delete yourself or last owner)",
      *     tags={"Tenant User Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="userId",
      *         in="path",
      *         required=true,
      *         description="User ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="User deleted successfully"
@@ -210,15 +232,20 @@ class TenantUserController extends Controller
      *     description="Get all roles with their permissions",
      *     tags={"Tenant User Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Roles retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Roles retrieved successfully"),
      *             @OA\Property(property="data", type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="owner"),
      *                     @OA\Property(property="permissions_count", type="integer", example=35),
@@ -227,6 +254,7 @@ class TenantUserController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized")
      * )
      */

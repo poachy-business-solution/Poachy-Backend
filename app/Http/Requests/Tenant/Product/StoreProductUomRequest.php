@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Product;
 
+use App\Models\Tenant\UnitOfMeasure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -70,7 +71,7 @@ class StoreProductUomRequest extends FormRequest
         ];
 
         foreach ($defaults as $key => $value) {
-            if (!$this->has($key)) {
+            if (! $this->has($key)) {
                 $this->merge([$key => $value]);
             }
         }
@@ -91,7 +92,7 @@ class StoreProductUomRequest extends FormRequest
             }
 
             // At least one usage flag must be true
-            if (!$this->is_purchase_uom && !$this->is_sales_uom && !$this->is_inventory_uom) {
+            if (! $this->is_purchase_uom && ! $this->is_sales_uom && ! $this->is_inventory_uom) {
                 $validator->errors()->add(
                     'is_purchase_uom',
                     'UOM must be enabled for at least one purpose (purchase, sales, or inventory)'
@@ -99,8 +100,8 @@ class StoreProductUomRequest extends FormRequest
             }
 
             // Verify UOM is active
-            $uom = \App\Models\Tenant\UnitOfMeasure::find($this->uom_id);
-            if ($uom && !$uom->is_active) {
+            $uom = UnitOfMeasure::find($this->uom_id);
+            if ($uom && ! $uom->is_active) {
                 $validator->errors()->add(
                     'uom_id',
                     'Cannot assign an inactive unit of measure'

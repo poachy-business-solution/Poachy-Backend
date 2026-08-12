@@ -2,7 +2,6 @@
 
 namespace App\Services\Tenant\Sync;
 
-use App\DataTransferObjects\Sync\ProductSyncDTO;
 use App\Events\Tenant\ProductMarketplaceSyncRequested;
 use App\Models\Tenant\Product;
 use Illuminate\Support\Facades\Log;
@@ -15,32 +14,32 @@ class ProductSyncService
     public function syncToMarketplace(Product $product, string $action = 'create', int $priority = 3): void
     {
         // Skip validation for delete/deactivate actions
-        if (!in_array($action, ['delete', 'deactivate'])) {
-            if (!$product->is_available_online) {
+        if (! in_array($action, ['delete', 'deactivate'])) {
+            if (! $product->is_available_online) {
                 throw new \InvalidArgumentException(
                     "Product '{$product->name}' is not available online and cannot be synced to marketplace."
                 );
             }
 
-            if (!$product->online_price || $product->online_price <= 0) {
+            if (! $product->online_price || $product->online_price <= 0) {
                 throw new \InvalidArgumentException(
                     "Product '{$product->name}' must have a valid online_price set before syncing."
                 );
             }
 
-            if (!$product->category_id) {
+            if (! $product->category_id) {
                 throw new \InvalidArgumentException(
                     "Product '{$product->name}' must have a category assigned before syncing."
                 );
             }
 
-            if (!$product->base_uom_id) {
+            if (! $product->base_uom_id) {
                 throw new \InvalidArgumentException(
                     "Product '{$product->name}' must have a base UOM assigned before syncing."
                 );
             }
 
-            if (!$product->tax_rate_id) {
+            if (! $product->tax_rate_id) {
                 throw new \InvalidArgumentException(
                     "Product '{$product->name}' must have a tax rate assigned before syncing."
                 );
@@ -89,27 +88,27 @@ class ProductSyncService
     {
         $errors = [];
 
-        if (!$product->is_available_online) {
+        if (! $product->is_available_online) {
             $errors[] = 'Product must be marked as available online';
         }
 
-        if (!$product->online_price || $product->online_price <= 0) {
+        if (! $product->online_price || $product->online_price <= 0) {
             $errors[] = 'Product must have a valid online price';
         }
 
-        if (!$product->category_id) {
+        if (! $product->category_id) {
             $errors[] = 'Product must be assigned to a category';
         }
 
-        if (!$product->base_uom_id) {
+        if (! $product->base_uom_id) {
             $errors[] = 'Product must have a base unit of measure';
         }
 
-        if (!$product->tax_rate_id) {
+        if (! $product->tax_rate_id) {
             $errors[] = 'Product must have a tax rate assigned';
         }
 
-        if (!$product->is_active) {
+        if (! $product->is_active) {
             $errors[] = 'Product must be active';
         }
 
@@ -154,15 +153,17 @@ class ProductSyncService
             try {
                 $product = Product::find($productId);
 
-                if (!$product) {
+                if (! $product) {
                     $results['skipped']++;
                     $results['errors'][$productId] = 'Product not found';
+
                     continue;
                 }
 
-                if (!$this->isEligibleForSync($product)) {
+                if (! $this->isEligibleForSync($product)) {
                     $results['skipped']++;
                     $results['errors'][$productId] = $this->getSyncValidationErrors($product);
+
                     continue;
                 }
 

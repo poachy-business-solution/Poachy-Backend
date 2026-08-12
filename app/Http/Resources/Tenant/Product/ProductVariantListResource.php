@@ -33,13 +33,13 @@ class ProductVariantListResource extends JsonResource
 
             // Pricing
             'computed_price' => $this->computed_price,
-            'formatted_price' => 'KES ' . number_format($this->computed_price, 2),
+            'formatted_price' => 'KES '.number_format($this->computed_price, 2),
             'online_price' => $this->online_price,
             'formatted_online_price' => $this->online_price
-                ? 'KES ' . number_format($this->online_price, 2)
+                ? 'KES '.number_format($this->online_price, 2)
                 : null,
             'computed_online_price' => $this->computed_online_price,
-            'formatted_computed_online_price' => 'KES ' . number_format($this->computed_online_price, 2),
+            'formatted_computed_online_price' => 'KES '.number_format($this->computed_online_price, 2),
             'is_available_online' => $this->isAvailableOnline(),
 
             // Status

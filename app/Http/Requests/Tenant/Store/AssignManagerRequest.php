@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Store;
 
+use App\Models\Tenant\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,9 +27,9 @@ class AssignManagerRequest extends FormRequest
                 'integer',
                 Rule::exists('users', 'id'),
                 function ($attribute, $value, $fail) {
-                    $user = \App\Models\Tenant\User::find($value);
+                    $user = User::find($value);
 
-                    if (!$user || !$user->hasAnyRole(['owner', 'manager'])) {
+                    if (! $user || ! $user->hasAnyRole(['owner', 'manager'])) {
                         $fail('The selected manager must be a user with manager or owner role.');
                     }
                 },

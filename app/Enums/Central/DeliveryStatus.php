@@ -4,15 +4,15 @@ namespace App\Enums\Central;
 
 enum DeliveryStatus: string
 {
-    case Pending        = 'pending';
-    case Confirmed      = 'confirmed';
-    case Assigned       = 'assigned';
-    case PickedUp       = 'picked_up';
-    case InTransit      = 'in_transit';
+    case Pending = 'pending';
+    case Confirmed = 'confirmed';
+    case Assigned = 'assigned';
+    case PickedUp = 'picked_up';
+    case InTransit = 'in_transit';
     case OutForDelivery = 'out_for_delivery';
-    case Delivered      = 'delivered';
-    case Failed         = 'failed';
-    case Returned       = 'returned';
+    case Delivered = 'delivered';
+    case Failed = 'failed';
+    case Returned = 'returned';
 
     /**
      * Human-readable label for display.
@@ -20,15 +20,15 @@ enum DeliveryStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending        => 'Pending',
-            self::Confirmed      => 'Confirmed',
-            self::Assigned       => 'Assigned',
-            self::PickedUp       => 'Picked Up',
-            self::InTransit      => 'In Transit',
+            self::Pending => 'Pending',
+            self::Confirmed => 'Confirmed',
+            self::Assigned => 'Assigned',
+            self::PickedUp => 'Picked Up',
+            self::InTransit => 'In Transit',
             self::OutForDelivery => 'Out for Delivery',
-            self::Delivered      => 'Delivered',
-            self::Failed         => 'Failed',
-            self::Returned       => 'Returned',
+            self::Delivered => 'Delivered',
+            self::Failed => 'Failed',
+            self::Returned => 'Returned',
         };
     }
 

@@ -8,6 +8,7 @@ use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\ProductSerial;
+use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TenantConfiguration;
@@ -179,7 +180,7 @@ class SaleCalculationService
             return $this->resolveVariantItem($storeId, $productId, $variantId, $quantity, $serialNumbers);
         }
 
-        return $this->resolveProductItem($storeId, $productId, $quantity, $serialNumbers);
+        return $this->resolveProductItem($storeId, $productId, $quantity, $serialNumbers, $item['uom_id'] ?? null);
     }
 
     /**
@@ -187,7 +188,7 @@ class SaleCalculationService
      *
      * @param  array<int, string>  $serialNumbers  Only meaningful when the product requires serial tracking
      */
-    protected function resolveProductItem(int $storeId, int $productId, float $quantity, array $serialNumbers = []): array
+    protected function resolveProductItem(int $storeId, int $productId, float $quantity, array $serialNumbers = [], ?int $requestedUomId = null): array
     {
         $product = Product::with(['baseUom', 'taxRate'])->findOrFail($productId);
 
@@ -196,15 +197,34 @@ class SaleCalculationService
             ->where('product_id', $productId)
             ->first();
 
-        $unitPrice = $storeProduct && $storeProduct->store_selling_price
+        $baseUnitPrice = $storeProduct && $storeProduct->store_selling_price
             ? $storeProduct->store_selling_price
             : $product->base_selling_price;
 
         $uom = $product->baseUom;
+        $conversionToBase = 1.0;
+
+        if ($requestedUomId && $requestedUomId !== $product->base_uom_id) {
+            $productUom = ProductUom::with('uom')
+                ->where('product_id', $productId)
+                ->where('uom_id', $requestedUomId)
+                ->where('is_sales_uom', true)
+                ->first();
+
+            if (! $productUom) {
+                throw new \RuntimeException('Selected UOM is not configured as a sales UOM for this product');
+            }
+
+            $uom = $productUom->uom;
+            $conversionToBase = (float) $productUom->conversion_to_base;
+        }
+
+        $quantityInBaseUom = $quantity * $conversionToBase;
+        $unitPrice = $baseUnitPrice * $conversionToBase;
         $taxRate = $product->taxRate;
 
         // Get unit cost for profit calculation
-        $unitCost = $this->getProductCost($product, $storeId, null);
+        $unitCost = $this->getProductCost($product, $storeId, null) * $conversionToBase;
 
         return [
             'product_id' => $productId,
@@ -215,7 +235,7 @@ class SaleCalculationService
             'uom_id' => $uom->id,
             'uom_code' => $uom->code,
             'quantity' => $quantity,
-            'quantity_in_base_uom' => $quantity,
+            'quantity_in_base_uom' => $quantityInBaseUom,
             'unit_price' => $unitPrice,
             'unit_cost' => $unitCost,
             'tax_rate_id' => $taxRate?->id,

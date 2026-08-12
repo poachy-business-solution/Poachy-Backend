@@ -30,6 +30,6 @@ enum RefundReason: string
     public function restoreToInventory(): bool
     {
         // Some reasons mean product shouldn't go back to sellable stock
-        return !in_array($this, [self::DEFECTIVE, self::EXPIRED]);
+        return ! in_array($this, [self::DEFECTIVE, self::EXPIRED]);
     }
 }

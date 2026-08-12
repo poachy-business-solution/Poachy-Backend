@@ -16,10 +16,13 @@ class UpdateDailyAggregatesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $timeout = 120;
+
     public $backoff = [30, 60, 120];
 
     protected string $tenantId;
+
     protected int $saleId;
 
     /**

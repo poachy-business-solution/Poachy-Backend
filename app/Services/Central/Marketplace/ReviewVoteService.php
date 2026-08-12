@@ -34,9 +34,9 @@ class ReviewVoteService
 
             ReviewVote::updateOrCreate(
                 [
-                    'customer_id'    => $customer->id,
-                    'voteable_type'  => $reviewableType,
-                    'voteable_id'    => $review->id,
+                    'customer_id' => $customer->id,
+                    'voteable_type' => $reviewableType,
+                    'voteable_id' => $review->id,
                 ],
                 ['vote_type' => $voteType->value]
             );
@@ -44,9 +44,9 @@ class ReviewVoteService
             $this->recalculateVoteCounts($review, $reviewableType);
 
             return ReviewVote::where([
-                'customer_id'   => $customer->id,
+                'customer_id' => $customer->id,
                 'voteable_type' => $reviewableType,
-                'voteable_id'   => $review->id,
+                'voteable_id' => $review->id,
             ])->first();
         });
     }
@@ -58,9 +58,9 @@ class ReviewVoteService
 
         DB::connection('central')->transaction(function () use ($customer, $review, $reviewableType) {
             ReviewVote::where([
-                'customer_id'   => $customer->id,
+                'customer_id' => $customer->id,
                 'voteable_type' => $reviewableType,
-                'voteable_id'   => $review->id,
+                'voteable_id' => $review->id,
             ])->delete();
 
             $this->recalculateVoteCounts($review, $reviewableType);
@@ -70,9 +70,9 @@ class ReviewVoteService
     protected function resolveReview(string $reviewType, int $reviewId): Model
     {
         return match ($reviewType) {
-            'product'  => ProductReview::findOrFail($reviewId),
+            'product' => ProductReview::findOrFail($reviewId),
             'merchant' => MerchantReview::findOrFail($reviewId),
-            default    => throw new \InvalidArgumentException("Invalid review type: {$reviewType}"),
+            default => throw new \InvalidArgumentException("Invalid review type: {$reviewType}"),
         };
     }
 
@@ -92,7 +92,7 @@ class ReviewVoteService
             ->first();
 
         $review->update([
-            'helpful_count'     => (int) ($counts->helpful_count ?? 0),
+            'helpful_count' => (int) ($counts->helpful_count ?? 0),
             'not_helpful_count' => (int) ($counts->not_helpful_count ?? 0),
         ]);
     }

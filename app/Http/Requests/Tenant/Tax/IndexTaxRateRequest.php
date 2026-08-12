@@ -24,7 +24,7 @@ class IndexTaxRateRequest extends FormRequest
     {
         return array_filter([
             'is_active' => $this->input('is_active'),
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
     }
 
     public function shouldPaginate(): bool

@@ -20,19 +20,19 @@ class CouponRepository
             ->withCount(['products', 'categories', 'brands']);
 
         // Apply filters
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->filterByStatus($filters['status']);
         }
 
-        if (!empty($filters['applicable_to'])) {
+        if (! empty($filters['applicable_to'])) {
             $query->filterByApplicability($filters['applicable_to']);
         }
 
-        if (!empty($filters['is_active'])) {
+        if (! empty($filters['is_active'])) {
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
@@ -105,7 +105,7 @@ class CouponRepository
                         'is_active',
                         'usage_limit',
                         'usage_count',
-                        'usage_limit_per_customer'
+                        'usage_limit_per_customer',
                     ])
                     ->orderBy('created_at', 'desc')
                     ->get();
@@ -196,10 +196,10 @@ class CouponRepository
                     ->wherePivot('product_variant_id', $variantId)
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     // Attach this specific product-variant combination
                     $coupon->products()->attach($productId, [
-                        'product_variant_id' => $variantId
+                        'product_variant_id' => $variantId,
                     ]);
                 }
             }

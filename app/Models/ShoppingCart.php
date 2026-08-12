@@ -35,13 +35,13 @@ class ShoppingCart extends Model
     protected function casts(): array
     {
         return [
-            'status'                => CartStatus::class,
-            'abandoned_at'          => 'datetime',
-            'converted_at'          => 'datetime',
-            'recovery_email_sent'   => 'boolean',
+            'status' => CartStatus::class,
+            'abandoned_at' => 'datetime',
+            'converted_at' => 'datetime',
+            'recovery_email_sent' => 'boolean',
             'recovery_email_sent_at' => 'datetime',
-            'recovery_sms_sent'     => 'boolean',
-            'recovery_sms_sent_at'  => 'datetime',
+            'recovery_sms_sent' => 'boolean',
+            'recovery_sms_sent_at' => 'datetime',
         ];
     }
 
@@ -110,7 +110,7 @@ class ShoppingCart extends Model
     public function markAsAbandoned(): bool
     {
         return $this->update([
-            'status'       => CartStatus::Abandoned,
+            'status' => CartStatus::Abandoned,
             'abandoned_at' => now(),
         ]);
     }
@@ -118,8 +118,8 @@ class ShoppingCart extends Model
     public function markAsConverted(?int $orderId = null): bool
     {
         return $this->update([
-            'status'             => CartStatus::Converted,
-            'converted_at'       => now(),
+            'status' => CartStatus::Converted,
+            'converted_at' => now(),
             'converted_order_id' => $orderId,
         ]);
     }

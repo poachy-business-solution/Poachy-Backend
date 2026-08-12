@@ -32,9 +32,9 @@ class CustomerAuthService
 
             // 1. Central auth record — name/email/password live on User
             $user = User::create([
-                'name'      => $data['name'],
-                'email'     => $data['email'],
-                'password'  => Hash::make($data['password']),
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
                 'user_type' => 'customer',
             ]);
 
@@ -43,13 +43,13 @@ class CustomerAuthService
 
             // 2. Marketplace profile record
             $customer = MarketplaceCustomer::create([
-                'user_id'           => $user->id,
-                'customer_number'   => MarketplaceCustomer::generateCustomerNumber(),
-                'phone'             => $phone,
-                'date_of_birth'     => $data['date_of_birth'] ?? null,
-                'gender'            => $data['gender'] ?? null,
+                'user_id' => $user->id,
+                'customer_number' => MarketplaceCustomer::generateCustomerNumber(),
+                'phone' => $phone,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'gender' => $data['gender'] ?? null,
                 'accepts_marketing' => $data['accepts_marketing'] ?? true,
-                'accepts_sms'       => $data['accepts_sms'] ?? true,
+                'accepts_sms' => $data['accepts_sms'] ?? true,
             ]);
 
             // 3. Send email verification OTP
@@ -79,13 +79,13 @@ class CustomerAuthService
             ->where('user_type', 'customer')
             ->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        if (! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        if (!$user->marketplaceCustomer?->is_active) {
+        if (! $user->marketplaceCustomer?->is_active) {
             throw ValidationException::withMessages([
                 'email' => ['This account is inactive. Please contact support.'],
             ]);
@@ -129,7 +129,7 @@ class CustomerAuthService
 
         return [
             'customer' => $customer->load('user'),
-            'token'    => $token->plainTextToken,
+            'token' => $token->plainTextToken,
         ];
     }
 
@@ -199,7 +199,7 @@ class CustomerAuthService
      */
     public function initiatePasswordUpdate(User $user, string $currentPassword): bool
     {
-        if (!Hash::check($currentPassword, $user->password)) {
+        if (! Hash::check($currentPassword, $user->password)) {
             throw ValidationException::withMessages([
                 'current_password' => ['The current password is incorrect.'],
             ]);
@@ -294,7 +294,7 @@ class CustomerAuthService
         $this->otpService->verify($user, $otpCode);
 
         $user->marketplaceCustomer->update([
-            'phone_verified'    => true,
+            'phone_verified' => true,
             'phone_verified_at' => now(),
         ]);
     }

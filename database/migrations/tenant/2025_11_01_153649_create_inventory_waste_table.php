@@ -28,7 +28,7 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('restrict');
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['store_id', 'waste_date']);
             $table->index(['approval_status']);
         });

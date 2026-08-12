@@ -38,19 +38,19 @@ class TenantDeliveryZone extends Model
     protected function casts(): array
     {
         return [
-            'cities'                  => 'array',
-            'counties'                => 'array',
-            'postal_codes'            => 'array',
-            'supported_methods'       => 'array',
-            'latitude'                => 'decimal:8',
-            'longitude'               => 'decimal:8',
-            'standard_fee'            => 'decimal:2',
-            'express_fee'             => 'decimal:2',
-            'scheduled_fee'           => 'decimal:2',
+            'cities' => 'array',
+            'counties' => 'array',
+            'postal_codes' => 'array',
+            'supported_methods' => 'array',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+            'standard_fee' => 'decimal:2',
+            'express_fee' => 'decimal:2',
+            'scheduled_fee' => 'decimal:2',
             'free_delivery_threshold' => 'decimal:2',
-            'radius_km'               => 'integer',
-            'priority'                => 'integer',
-            'is_active'               => 'boolean',
+            'radius_km' => 'integer',
+            'priority' => 'integer',
+            'is_active' => 'boolean',
         ];
     }
 

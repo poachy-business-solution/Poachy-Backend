@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tenant\Shift;
 
 use App\Enums\Tenant\DayOfWeek;
+use App\Models\Tenant\Shift;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +14,7 @@ class StoreShiftRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Tenant\Shift::class);
+        return $this->user()->can('create', Shift::class);
     }
 
     /**
@@ -129,7 +130,7 @@ class StoreShiftRequest extends FormRequest
         $validated = parent::validated($key, $default);
 
         // Ensure is_active has a default
-        if (!isset($validated['is_active'])) {
+        if (! isset($validated['is_active'])) {
             $validated['is_active'] = true;
         }
 

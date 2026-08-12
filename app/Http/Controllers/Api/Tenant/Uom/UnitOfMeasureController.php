@@ -10,8 +10,8 @@ use App\Http\Resources\Tenant\Uom\UnitOfMeasureDetailResource;
 use App\Http\Resources\Tenant\Uom\UnitOfMeasureResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Uom\UnitOfMeasureService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class UnitOfMeasureController extends Controller
 {
@@ -27,66 +27,83 @@ class UnitOfMeasureController extends Controller
      *     operationId="listUnitsOfMeasure",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filter by unit type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"count", "weight", "volume", "length", "area", "time"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="source_type",
      *         in="query",
      *         description="Filter by source type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"system", "custom"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_base_unit",
      *         in="query",
      *         description="Filter base units only",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter active units only",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by code or name",
      *         required=false,
+     *
      *         @OA\Schema(type="string", maxLength=255)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=15)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Units of measure retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Units of measure retrieved successfully"),
      *             @OA\Property(
@@ -95,8 +112,10 @@ class UnitOfMeasureController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="code", type="string", example="kg"),
      *                         @OA\Property(property="name", type="string", example="Kilogram"),
@@ -134,11 +153,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -151,11 +173,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve units of measure"),
      *             @OA\Property(
@@ -197,18 +222,23 @@ class UnitOfMeasureController extends Controller
      *     operationId="getUnitOfMeasure",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Unit of measure ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Unit of measure retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Unit of measure retrieved successfully"),
      *             @OA\Property(
@@ -248,8 +278,10 @@ class UnitOfMeasureController extends Controller
      *                 @OA\Property(
      *                     property="conversions_from",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=10),
      *                         @OA\Property(
      *                             property="from_uom",
@@ -297,8 +329,10 @@ class UnitOfMeasureController extends Controller
      *                 @OA\Property(
      *                     property="conversions_to",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer"),
      *                         @OA\Property(property="from_uom", type="object"),
      *                         @OA\Property(property="to_uom", type="object"),
@@ -322,11 +356,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Unit of measure not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unit of measure not found"),
      *             @OA\Property(
@@ -339,11 +376,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -356,11 +396,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve unit of measure"),
      *             @OA\Property(
@@ -384,7 +427,7 @@ class UnitOfMeasureController extends Controller
                 'Unit of measure retrieved successfully',
                 new UnitOfMeasureDetailResource($uom)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Unit of measure not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(
@@ -402,10 +445,13 @@ class UnitOfMeasureController extends Controller
      *     operationId="createUnitOfMeasure",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"code", "name", "type"},
+     *
      *             @OA\Property(property="code", type="string", maxLength=20, example="bundle", description="Unique code (lowercase, alpha-dash)"),
      *             @OA\Property(property="name", type="string", maxLength=255, example="Bundle", description="Display name"),
      *             @OA\Property(property="type", type="string", enum={"count", "weight", "volume", "length", "area", "time"}, example="count", description="Unit type"),
@@ -413,11 +459,14 @@ class UnitOfMeasureController extends Controller
      *             @OA\Property(property="description", type="string", maxLength=1000, example="Custom bundle unit for packaging", nullable=true, description="Optional description")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Custom unit of measure created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Custom unit of measure created successfully"),
      *             @OA\Property(
@@ -448,11 +497,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation failed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -461,14 +513,18 @@ class UnitOfMeasureController extends Controller
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="This unit code already exists in your system.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="type",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Unit type must be one of: count, weight, volume, length, area, time.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -479,11 +535,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -496,11 +555,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to create unit of measure"),
      *             @OA\Property(
@@ -547,16 +609,21 @@ class UnitOfMeasureController extends Controller
      *     operationId="updateUnitOfMeasure",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Unit of measure ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=50)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="code", type="string", maxLength=20, example="bundle-pack", description="Update code (must remain unique)"),
      *             @OA\Property(property="name", type="string", maxLength=255, example="Bundle Pack", description="Update name"),
      *             @OA\Property(property="type", type="string", enum={"count", "weight", "volume", "length", "area", "time"}, example="count", description="Update type"),
@@ -564,11 +631,14 @@ class UnitOfMeasureController extends Controller
      *             @OA\Property(property="description", type="string", maxLength=1000, example="Updated description for bundle", nullable=true, description="Update description")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Custom unit of measure updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Custom unit of measure updated successfully"),
      *             @OA\Property(
@@ -599,11 +669,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Cannot update system units",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="System-defined units of measure cannot be updated."),
      *             @OA\Property(
@@ -616,11 +689,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Unit of measure not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unit of measure not found"),
      *             @OA\Property(
@@ -633,11 +709,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation failed",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -646,9 +725,11 @@ class UnitOfMeasureController extends Controller
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="This unit code already exists in your system.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -659,11 +740,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -676,11 +760,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to update unit of measure"),
      *             @OA\Property(
@@ -711,7 +798,7 @@ class UnitOfMeasureController extends Controller
                 'Custom unit of measure updated successfully',
                 new UnitOfMeasureResource($uom)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Unit of measure not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(
@@ -729,25 +816,32 @@ class UnitOfMeasureController extends Controller
      *     operationId="getConversionOptions",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Unit of measure ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversion options retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Conversion options retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="code", type="string", example="g"),
      *                     @OA\Property(property="name", type="string", example="Gram"),
@@ -774,11 +868,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Unit of measure not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unit of measure not found"),
      *             @OA\Property(
@@ -791,11 +888,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -808,11 +908,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve conversion options"),
      *             @OA\Property(
@@ -836,7 +939,7 @@ class UnitOfMeasureController extends Controller
                 'Conversion options retrieved successfully',
                 UnitOfMeasureResource::collection($options)
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Unit of measure not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(
@@ -854,18 +957,23 @@ class UnitOfMeasureController extends Controller
      *     operationId="setBaseUnit",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Unit of measure ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=50)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Base unit flag set successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Base unit flag set successfully"),
      *             @OA\Property(
@@ -878,11 +986,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Unit is already a base unit",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This unit is already a base unit."),
      *             @OA\Property(
@@ -895,11 +1006,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Unit of measure not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unit of measure not found"),
      *             @OA\Property(
@@ -912,11 +1026,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -929,11 +1046,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to set base unit flag"),
      *             @OA\Property(
@@ -954,7 +1074,7 @@ class UnitOfMeasureController extends Controller
             $this->uomService->setBaseUnit($id);
 
             return ApiResponse::success('Base unit flag set successfully');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Unit of measure not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(
@@ -972,18 +1092,23 @@ class UnitOfMeasureController extends Controller
      *     operationId="removeBaseUnit",
      *     tags={"Tenant UoM & UoM Conversions"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Unit of measure ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=50)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Base unit flag removed successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Base unit flag removed successfully"),
      *             @OA\Property(
@@ -996,11 +1121,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Unit is not a base unit",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This unit is not a base unit."),
      *             @OA\Property(
@@ -1013,11 +1141,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Unit of measure not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unit of measure not found"),
      *             @OA\Property(
@@ -1030,11 +1161,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1047,11 +1181,14 @@ class UnitOfMeasureController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to remove base unit flag"),
      *             @OA\Property(
@@ -1072,7 +1209,7 @@ class UnitOfMeasureController extends Controller
             $this->uomService->removeBaseUnit($id);
 
             return ApiResponse::success('Base unit flag removed successfully');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return ApiResponse::notFound('Unit of measure not found');
         } catch (\Exception $e) {
             return ApiResponse::serverError(

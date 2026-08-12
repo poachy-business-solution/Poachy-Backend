@@ -29,7 +29,7 @@ class MarketplaceInventoryCountSyncService
 
         $marketplaceProduct = $query->first();
 
-        if (!$marketplaceProduct) {
+        if (! $marketplaceProduct) {
             Log::warning('MarketplaceProduct not found for inventory count sync — product not yet synced', [
                 'tenant_id' => $dto->tenantId,
                 'product_id' => $dto->productId,

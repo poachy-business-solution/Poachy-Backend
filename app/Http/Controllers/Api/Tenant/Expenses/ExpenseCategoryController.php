@@ -26,20 +26,23 @@ class ExpenseCategoryController extends Controller
      *     operationId="listExpenseCategories",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="active_only",
      *         in="query",
      *         description="Filter for active categories only",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense categories retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense categories retrieved successfully."),
      *             @OA\Property(
@@ -48,8 +51,10 @@ class ExpenseCategoryController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="name", type="string", example="Rent"),
      *                         @OA\Property(property="code", type="string", example="RENT", description="Auto-generated from name if not provided"),
@@ -90,12 +95,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -108,12 +115,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -155,28 +164,33 @@ class ExpenseCategoryController extends Controller
      *     operationId="getExpenseCategoriesTree",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="active_only",
      *         in="query",
      *         description="Filter for active categories only",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category tree retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category tree retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Root categories with nested children",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(property="name", type="string", example="Utilities"),
      *                     @OA\Property(property="code", type="string", example="UTILITIES"),
@@ -197,8 +211,10 @@ class ExpenseCategoryController extends Controller
      *                         property="children",
      *                         type="array",
      *                         description="Nested child categories",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=3),
      *                             @OA\Property(property="name", type="string", example="Electricity"),
      *                             @OA\Property(property="code", type="string", example="ELECTRICITY"),
@@ -240,12 +256,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -258,12 +276,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -305,13 +325,15 @@ class ExpenseCategoryController extends Controller
      *     operationId="createExpenseCategory",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Expense category details",
+     *
      *         @OA\JsonContent(
      *             required={"name"},
      *             type="object",
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, example="Utilities", description="Category name (required)"),
      *             @OA\Property(property="code", type="string", maxLength=50, nullable=true, example="UTILITIES", description="Unique code (auto-generated from name if not provided, alphanumeric and dash/underscore only)"),
      *             @OA\Property(property="description", type="string", maxLength=1000, nullable=true, example="Electricity, water, internet, etc.", description="Category description"),
@@ -323,12 +345,14 @@ class ExpenseCategoryController extends Controller
      *             @OA\Property(property="display_order", type="integer", minimum=0, example=20, description="Sort order for display")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Expense category created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense category created successfully."),
      *             @OA\Property(
@@ -364,12 +388,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -382,12 +408,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -396,19 +424,25 @@ class ExpenseCategoryController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The name field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The code has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="parent_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected parent id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -419,12 +453,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -465,20 +501,23 @@ class ExpenseCategoryController extends Controller
      *     operationId="getExpenseCategory",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense category retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense category retrieved successfully."),
      *             @OA\Property(
@@ -507,6 +546,7 @@ class ExpenseCategoryController extends Controller
      *             @OA\Property(property="meta", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Category not found"),
      *     @OA\Response(response=500, description="Internal server error")
@@ -517,7 +557,7 @@ class ExpenseCategoryController extends Controller
         try {
             $category = $this->service->getCategoryById($id);
 
-            if (!$category) {
+            if (! $category) {
                 return ApiResponse::notFound('Expense category not found.');
             }
 
@@ -542,19 +582,22 @@ class ExpenseCategoryController extends Controller
      *     operationId="updateExpenseCategory",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="name", type="string", maxLength=255, example="Rent UPDATED"),
      *             @OA\Property(property="code", type="string", maxLength=50, example="RENT_NEW"),
      *             @OA\Property(property="description", type="string", maxLength=1000, nullable=true),
@@ -566,7 +609,7 @@ class ExpenseCategoryController extends Controller
      *             @OA\Property(property="display_order", type="integer", minimum=0)
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(response=200, description="Category updated successfully"),
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Category not found"),
@@ -600,25 +643,29 @@ class ExpenseCategoryController extends Controller
      *     operationId="deleteExpenseCategory",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Expense category deleted successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expense category deleted successfully."),
      *             @OA\Property(property="meta", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Category not found"),
      *     @OA\Response(response=409, description="Cannot delete - has children or expenses"),
@@ -648,35 +695,42 @@ class ExpenseCategoryController extends Controller
      *     operationId="getExpenseCategoryChildren",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Parent category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="active_only",
      *         in="query",
      *         description="Filter for active categories only",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category children retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category children retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of child categories",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=3),
      *                     @OA\Property(property="name", type="string", example="Electricity"),
      *                     @OA\Property(property="code", type="string", example="ELECTRICITY"),
@@ -729,12 +783,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -747,12 +803,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Category not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -765,12 +823,14 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -812,25 +872,29 @@ class ExpenseCategoryController extends Controller
      *     operationId="toggleExpenseCategoryStatus",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Expense category ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category status updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category status updated successfully."),
      *             @OA\Property(property="meta", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Category not found"),
      *     @OA\Response(response=500, description="Internal server error")
@@ -862,20 +926,24 @@ class ExpenseCategoryController extends Controller
      *     operationId="getRecurringEligibleCategories",
      *     tags={"Expense Management"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Recurring-eligible categories retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Recurring-eligible categories retrieved successfully."),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of categories with is_recurring_eligible = true",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=6),
      *                     @OA\Property(property="name", type="string", example="Rent"),
      *                     @OA\Property(property="code", type="string", example="RENT"),
@@ -928,6 +996,7 @@ class ExpenseCategoryController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=500, description="Internal server error")
      * )

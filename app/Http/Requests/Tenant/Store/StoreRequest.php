@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Store;
 
+use App\Models\Tenant\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -37,9 +38,9 @@ class StoreRequest extends FormRequest
                 'integer',
                 Rule::exists('users', 'id'),
                 function ($attribute, $value, $fail) {
-                    $user = \App\Models\Tenant\User::find($value);
+                    $user = User::find($value);
 
-                    if (!$user || !$user->hasAnyRole(['owner', 'manager'])) {
+                    if (! $user || ! $user->hasAnyRole(['owner', 'manager'])) {
                         $fail('The selected manager must be a user with manager or owner role.');
                     }
                 },
@@ -92,13 +93,13 @@ class StoreRequest extends FormRequest
         }
 
         // Clean phone number
-        if ($this->has('phone') && !empty($this->phone)) {
+        if ($this->has('phone') && ! empty($this->phone)) {
             $phone = preg_replace('/[^0-9+]/', '', $this->phone);
             $this->merge(['phone' => $phone]);
         }
 
         // Normalize email
-        if ($this->has('email') && !empty($this->email)) {
+        if ($this->has('email') && ! empty($this->email)) {
             $this->merge(['email' => strtolower(trim($this->email))]);
         }
     }

@@ -30,8 +30,8 @@ return new class extends Migration
             // Audit
             $table->string('change_reason', 255); // e.g., "Supplier increase", "Promotion", "Correction"
             $table->foreignId('changed_by')
-                  ->constrained('users')
-                  ->onDelete('restrict');
+                ->constrained('users')
+                ->onDelete('restrict');
 
             $table->timestamp('effective_from')->useCurrent(); // When new price takes effect
             $table->timestamp('created_at')->useCurrent();

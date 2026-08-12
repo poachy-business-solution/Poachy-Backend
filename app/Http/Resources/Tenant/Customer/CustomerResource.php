@@ -37,7 +37,7 @@ class CustomerResource extends JsonResource
             'registered_at' => $this->registered_at?->toISOString(),
             'preferred_store' => $this->when(
                 $this->relationLoaded('preferredStore'),
-                fn() => [
+                fn () => [
                     'id' => $this->preferredStore?->id,
                     'name' => $this->preferredStore?->name,
                     'code' => $this->preferredStore?->code,
@@ -45,7 +45,7 @@ class CustomerResource extends JsonResource
             ),
             'current_group' => $this->when(
                 $this->relationLoaded('currentGroup'),
-                fn() => $this->currentGroup?->group ? [
+                fn () => $this->currentGroup?->group ? [
                     'id' => $this->currentGroup->group->id,
                     'name' => $this->currentGroup->group->name,
                     'discount_percentage' => (float) $this->currentGroup->group->discount_percentage,

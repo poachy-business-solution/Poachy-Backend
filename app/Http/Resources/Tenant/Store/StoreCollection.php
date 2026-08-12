@@ -4,6 +4,7 @@ namespace App\Http\Resources\Tenant\Store;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class StoreCollection extends ResourceCollection
 {
@@ -19,7 +20,7 @@ class StoreCollection extends ResourceCollection
         return [
             'data' => $this->collection,
             'pagination' => $this->when(
-                $this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator,
+                $this->resource instanceof LengthAwarePaginator,
                 [
                     'total' => $this->total(),
                     'count' => $this->count(),
@@ -31,7 +32,7 @@ class StoreCollection extends ResourceCollection
                 ]
             ),
             'links' => $this->when(
-                $this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator,
+                $this->resource instanceof LengthAwarePaginator,
                 [
                     'first' => $this->url(1),
                     'last' => $this->url($this->lastPage()),

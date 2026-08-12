@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Sales\InitiateExchangeRequest;
 use App\Http\Requests\Tenant\Sales\InitiateRefundRequest;
 use App\Http\Requests\Tenant\Sales\ListRefundsRequest;
-use App\Http\Resources\Tenant\Sales\SaleRefundItemResource;
 use App\Http\Resources\Tenant\Sales\SaleRefundResource;
 use App\Http\Resources\Tenant\Sales\SaleResource;
 use App\Http\Responses\ApiResponse;
@@ -17,6 +16,7 @@ use App\Services\Tenant\Sales\RefundService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class RefundController extends Controller
 {
@@ -32,11 +32,15 @@ class RefundController extends Controller
      *     operationId="getRefundableItems",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="sale", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Refundable items retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Refundable items retrieved successfully"),
      *             @OA\Property(
@@ -49,7 +53,9 @@ class RefundController extends Controller
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="sale_item_id", type="integer", example=5),
      *                         @OA\Property(property="product_id", type="integer", example=12),
      *                         @OA\Property(property="product_name", type="string", example="Panadol Extra 12s"),
@@ -64,6 +70,7 @@ class RefundController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Sale not found")
      * )
      */
@@ -114,11 +121,15 @@ class RefundController extends Controller
      *     operationId="initiateRefund",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="sale", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"store_id","reason","refund_method","items"},
+     *
      *             @OA\Property(property="store_id", type="integer", example=1),
      *             @OA\Property(property="reason", type="string", enum={"defective","wrong_item","not_as_described","expired","customer_changed_mind","duplicate_purchase","price_adjustment","other"}, example="defective"),
      *             @OA\Property(property="refund_method", type="string", enum={"cash","mpesa","card_reversal","bank_transfer","store_credit","credit_reduction","original_method"}, example="cash"),
@@ -126,8 +137,10 @@ class RefundController extends Controller
      *             @OA\Property(
      *                 property="items",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     required={"sale_item_id","quantity_refunded","refund_amount"},
+     *
      *                     @OA\Property(property="sale_item_id", type="integer", example=5),
      *                     @OA\Property(property="quantity_refunded", type="number", format="float", example=2.0),
      *                     @OA\Property(property="refund_amount", type="number", format="float", example=170.00)
@@ -135,10 +148,13 @@ class RefundController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Refund processed successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Refund processed successfully"),
      *             @OA\Property(property="data", type="object",
@@ -146,6 +162,7 @@ class RefundController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=403, description="Insufficient permissions — manager or owner role required"),
      *     @OA\Response(response=422, description="Validation error or business rule violation")
      * )
@@ -153,7 +170,7 @@ class RefundController extends Controller
     public function initiateRefund(InitiateRefundRequest $request, Sale $sale): JsonResponse
     {
         abort_if(
-            !auth()->user()->hasRole(['manager', 'owner']),
+            ! auth()->user()->hasRole(['manager', 'owner']),
             403,
             'Insufficient permissions. Only managers and owners can process refunds.'
         );
@@ -164,7 +181,7 @@ class RefundController extends Controller
             return ApiResponse::created('Refund processed successfully', [
                 'refund' => new SaleRefundResource($refund),
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
             Log::error('Refund processing failed', [
@@ -185,16 +202,22 @@ class RefundController extends Controller
      *     operationId="listSaleRefunds",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="sale", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Refunds retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="refunds", type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/SaleRefundResource")
      *                 ),
+     *
      *                 @OA\Property(property="total_refunded", type="number", format="float", example=170.00),
      *                 @OA\Property(property="can_refund", type="boolean", example=true)
      *             )
@@ -224,23 +247,31 @@ class RefundController extends Controller
      *     operationId="initiateExchange",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="sale", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"store_id","reason","items","exchange_items","exchange_payments"},
+     *
      *             @OA\Property(property="store_id", type="integer", example=1),
      *             @OA\Property(property="reason", type="string", example="wrong_item"),
      *             @OA\Property(property="notes", type="string", nullable=true),
      *             @OA\Property(property="items", type="array", description="Items to return from original sale",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="sale_item_id", type="integer"),
      *                     @OA\Property(property="quantity_refunded", type="number"),
      *                     @OA\Property(property="refund_amount", type="number")
      *                 )
      *             ),
      *             @OA\Property(property="exchange_items", type="array", description="New items for the exchange sale",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="product_id", type="integer", nullable=true),
      *                     @OA\Property(property="variant_id", type="integer", nullable=true),
      *                     @OA\Property(property="bundle_id", type="integer", nullable=true),
@@ -249,7 +280,9 @@ class RefundController extends Controller
      *                 )
      *             ),
      *             @OA\Property(property="exchange_payments", type="array",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="amount", type="number"),
      *                     @OA\Property(property="payment_method", type="string"),
      *                     @OA\Property(property="reference_number", type="string", nullable=true)
@@ -258,10 +291,13 @@ class RefundController extends Controller
      *             @OA\Property(property="coupon_code", type="string", nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Exchange processed successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="refund", ref="#/components/schemas/SaleRefundResource"),
      *                 @OA\Property(property="sale", type="object", description="Newly created exchange sale",
@@ -273,6 +309,7 @@ class RefundController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=403, description="Insufficient permissions"),
      *     @OA\Response(response=422, description="Validation error or business rule violation")
      * )
@@ -280,7 +317,7 @@ class RefundController extends Controller
     public function initiateExchange(InitiateExchangeRequest $request, Sale $sale): JsonResponse
     {
         abort_if(
-            !Auth::user()->hasRole(['manager', 'owner']),
+            ! Auth::user()->hasRole(['manager', 'owner']),
             403,
             'Insufficient permissions. Only managers and owners can process exchanges.'
         );
@@ -292,7 +329,7 @@ class RefundController extends Controller
                 'refund' => new SaleRefundResource($result['refund']),
                 'sale' => new SaleResource($result['sale']->load(['items', 'payments', 'store', 'customer', 'servedBy'])),
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
             Log::error('Exchange processing failed', [
@@ -313,6 +350,7 @@ class RefundController extends Controller
      *     operationId="listRefunds",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="store_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="customer_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="reason", in="query", required=false, @OA\Schema(type="string")),
@@ -322,6 +360,7 @@ class RefundController extends Controller
      *     @OA\Parameter(name="to_date", in="query", required=false, @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(response=200, description="Refunds retrieved successfully")
      * )
      */
@@ -372,7 +411,9 @@ class RefundController extends Controller
      *     operationId="showRefund",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="refund", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\Response(response=200, description="Refund retrieved successfully"),
      *     @OA\Response(response=404, description="Refund not found")
      * )
@@ -403,7 +444,9 @@ class RefundController extends Controller
      *     operationId="generateRefundReceipt",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="refund", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\Response(response=200, description="Receipt data generated successfully")
      * )
      */
@@ -464,7 +507,9 @@ class RefundController extends Controller
      *     operationId="cancelRefund",
      *     tags={"Sales - Refunds"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(name="refund", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *     @OA\Response(response=200, description="Refund cancelled successfully"),
      *     @OA\Response(response=403, description="Insufficient permissions"),
      *     @OA\Response(response=422, description="Cannot cancel a completed refund")
@@ -473,7 +518,7 @@ class RefundController extends Controller
     public function cancel(SaleRefund $refund): JsonResponse
     {
         abort_if(
-            !auth()->user()->hasRole(['manager', 'owner']),
+            ! auth()->user()->hasRole(['manager', 'owner']),
             403,
             'Insufficient permissions. Only managers and owners can cancel refunds.'
         );
@@ -484,7 +529,7 @@ class RefundController extends Controller
             return ApiResponse::success('Refund cancelled successfully', [
                 'refund' => new SaleRefundResource($refund),
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         }
     }

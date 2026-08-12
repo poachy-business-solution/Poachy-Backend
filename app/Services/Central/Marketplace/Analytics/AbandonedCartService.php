@@ -16,9 +16,8 @@ class AbandonedCartService
             ->where('status', CartStatus::Abandoned)
             ->where('recovery_email_sent', false)
             ->whereNotNull('customer_id')
-            ->whereHas('customer', fn($q) =>
-                $q->where('accepts_marketing', true)
-                  ->where('is_active', true)
+            ->whereHas('customer', fn ($q) => $q->where('accepts_marketing', true)
+                ->where('is_active', true)
             )
             ->with('customer.user', 'items.marketplaceProduct');
 
@@ -28,14 +27,14 @@ class AbandonedCartService
 
         return $query->get()->map(function ($cart) {
             return [
-                'cart_id'      => $cart->id,
-                'customer_id'  => $cart->customer_id,
+                'cart_id' => $cart->id,
+                'customer_id' => $cart->customer_id,
                 // email/name live on the related User, not MarketplaceCustomer —
                 // both columns were dropped from marketplace_customers by
                 // 2025_11_29_141837_add_users_table_relations_to_marketplace_customers_table.
-                'email'        => $cart->customer->user->email,
-                'item_count'   => $cart->getItemCount(),
-                'subtotal'     => $cart->getSubtotal(),
+                'email' => $cart->customer->user->email,
+                'item_count' => $cart->getItemCount(),
+                'subtotal' => $cart->getSubtotal(),
                 'abandoned_at' => $cart->abandoned_at,
             ];
         })->toArray();
@@ -50,10 +49,9 @@ class AbandonedCartService
             ->where('status', CartStatus::Abandoned)
             ->where('recovery_sms_sent', false)
             ->whereNotNull('customer_id')
-            ->whereHas('customer', fn($q) =>
-                $q->where('accepts_sms', true)
-                  ->where('phone_verified', true)
-                  ->where('is_active', true)
+            ->whereHas('customer', fn ($q) => $q->where('accepts_sms', true)
+                ->where('phone_verified', true)
+                ->where('is_active', true)
             )
             ->with('customer');
 
@@ -63,11 +61,11 @@ class AbandonedCartService
 
         return $query->get()->map(function ($cart) {
             return [
-                'cart_id'      => $cart->id,
-                'customer_id'  => $cart->customer_id,
-                'phone'        => $cart->customer->phone,
-                'item_count'   => $cart->getItemCount(),
-                'subtotal'     => $cart->getSubtotal(),
+                'cart_id' => $cart->id,
+                'customer_id' => $cart->customer_id,
+                'phone' => $cart->customer->phone,
+                'item_count' => $cart->getItemCount(),
+                'subtotal' => $cart->getSubtotal(),
                 'abandoned_at' => $cart->abandoned_at,
             ];
         })->toArray();
@@ -90,12 +88,12 @@ class AbandonedCartService
             ->first();
 
         return [
-            'total_carts'            => $stats->total_carts ?? 0,
-            'abandoned_carts'        => $stats->abandoned_carts ?? 0,
-            'converted_carts'        => $stats->converted_carts ?? 0,
-            'abandonment_rate'       => $this->calculateRate($stats->abandoned_carts ?? 0, $stats->total_carts ?? 0),
-            'recovery_emails_sent'   => $stats->recovery_emails_sent ?? 0,
-            'recovery_sms_sent'      => $stats->recovery_sms_sent ?? 0,
+            'total_carts' => $stats->total_carts ?? 0,
+            'abandoned_carts' => $stats->abandoned_carts ?? 0,
+            'converted_carts' => $stats->converted_carts ?? 0,
+            'abandonment_rate' => $this->calculateRate($stats->abandoned_carts ?? 0, $stats->total_carts ?? 0),
+            'recovery_emails_sent' => $stats->recovery_emails_sent ?? 0,
+            'recovery_sms_sent' => $stats->recovery_sms_sent ?? 0,
         ];
     }
 

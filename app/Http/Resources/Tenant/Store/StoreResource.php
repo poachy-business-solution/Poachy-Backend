@@ -32,7 +32,7 @@ class StoreResource extends JsonResource
             // Relationships
             'manager' => $this->when(
                 $this->relationLoaded('manager'),
-                fn() => $this->manager ? [
+                fn () => $this->manager ? [
                     'id' => $this->manager->id,
                     'name' => $this->manager->name,
                     'email' => $this->manager->email,
@@ -42,7 +42,7 @@ class StoreResource extends JsonResource
 
             'creator' => $this->when(
                 $this->relationLoaded('creator'),
-                fn() => $this->creator ? [
+                fn () => $this->creator ? [
                     'id' => $this->creator->id,
                     'name' => $this->creator->name,
                 ] : null
@@ -50,7 +50,7 @@ class StoreResource extends JsonResource
 
             'updater' => $this->when(
                 $this->relationLoaded('updater'),
-                fn() => $this->updater ? [
+                fn () => $this->updater ? [
                     'id' => $this->updater->id,
                     'name' => $this->updater->name,
                 ] : null
@@ -60,7 +60,7 @@ class StoreResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'deleted_at' => $this->when(
-                !is_null($this->deleted_at),
+                ! is_null($this->deleted_at),
                 $this->deleted_at?->toISOString()
             ),
         ];

@@ -12,6 +12,7 @@ class MarketplaceCategory extends Model
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'marketplace_categories';
 
     protected $fillable = [

@@ -6,7 +6,6 @@ use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class ShiftAnalyticsService
 {
@@ -20,7 +19,7 @@ class ShiftAnalyticsService
      */
     public function calculateAttendanceRate(int $userId, Carbon $startDate, Carbon $endDate): float
     {
-        $cacheKey = "analytics:attendance:user:{$userId}:" . $startDate->format('Y-m-d') . ':' . $endDate->format('Y-m-d');
+        $cacheKey = "analytics:attendance:user:{$userId}:".$startDate->format('Y-m-d').':'.$endDate->format('Y-m-d');
 
         return Cache::tags(['tenant', tenant()->id, 'shift_analytics'])
             ->remember($cacheKey, $this->cacheTTL, function () use ($userId, $startDate, $endDate) {
@@ -47,7 +46,7 @@ class ShiftAnalyticsService
      */
     public function calculateCashVariances(int $storeId, Carbon $startDate, Carbon $endDate): array
     {
-        $cacheKey = "analytics:cash_variances:store:{$storeId}:" . $startDate->format('Y-m-d') . ':' . $endDate->format('Y-m-d');
+        $cacheKey = "analytics:cash_variances:store:{$storeId}:".$startDate->format('Y-m-d').':'.$endDate->format('Y-m-d');
 
         return Cache::tags(['tenant', tenant()->id, 'shift_analytics'])
             ->remember($cacheKey, $this->cacheTTL, function () use ($storeId, $startDate, $endDate) {
@@ -103,12 +102,12 @@ class ShiftAnalyticsService
      */
     public function getTopPerformingEmployees(
         int $storeId,
-        string $metric = 'attendance',
+        string $metric,
         Carbon $startDate,
         Carbon $endDate,
         int $limit = 10
     ): array {
-        $cacheKey = "analytics:top_performers:store:{$storeId}:metric:{$metric}:" . $startDate->format('Y-m-d') . ':' . $endDate->format('Y-m-d');
+        $cacheKey = "analytics:top_performers:store:{$storeId}:metric:{$metric}:".$startDate->format('Y-m-d').':'.$endDate->format('Y-m-d');
 
         return Cache::tags(['tenant', tenant()->id, 'shift_analytics'])
             ->remember($cacheKey, $this->cacheTTL, function () use ($storeId, $metric, $startDate, $endDate, $limit) {
@@ -123,7 +122,7 @@ class ShiftAnalyticsService
                 foreach ($assignments as $userId => $userAssignments) {
                     $user = $userAssignments->first()->user;
 
-                    if (!$user) {
+                    if (! $user) {
                         continue;
                     }
 
@@ -153,7 +152,7 @@ class ShiftAnalyticsService
      */
     public function getShiftCoverageReport(int $storeId, Carbon $startDate, Carbon $endDate): array
     {
-        $cacheKey = "analytics:coverage:store:{$storeId}:" . $startDate->format('Y-m-d') . ':' . $endDate->format('Y-m-d');
+        $cacheKey = "analytics:coverage:store:{$storeId}:".$startDate->format('Y-m-d').':'.$endDate->format('Y-m-d');
 
         return Cache::tags(['tenant', tenant()->id, 'shift_analytics'])
             ->remember($cacheKey, $this->cacheTTL, function () use ($storeId, $startDate, $endDate) {
@@ -214,7 +213,7 @@ class ShiftAnalyticsService
      */
     public function getOvertimeAnalysis(int $storeId, Carbon $startDate, Carbon $endDate): array
     {
-        $cacheKey = "analytics:overtime:store:{$storeId}:" . $startDate->format('Y-m-d') . ':' . $endDate->format('Y-m-d');
+        $cacheKey = "analytics:overtime:store:{$storeId}:".$startDate->format('Y-m-d').':'.$endDate->format('Y-m-d');
 
         return Cache::tags(['tenant', tenant()->id, 'shift_analytics'])
             ->remember($cacheKey, $this->cacheTTL, function () use ($storeId, $startDate, $endDate) {
@@ -233,7 +232,7 @@ class ShiftAnalyticsService
                         $totalOvertimeMinutes += $assignment->overtime_minutes;
 
                         $userId = $assignment->user_id;
-                        if (!isset($overtimeByUser[$userId])) {
+                        if (! isset($overtimeByUser[$userId])) {
                             $overtimeByUser[$userId] = [
                                 'user_id' => $userId,
                                 'user_name' => $assignment->user->name,
@@ -272,7 +271,7 @@ class ShiftAnalyticsService
      */
     public function getPunctualityAnalysis(int $storeId, Carbon $startDate, Carbon $endDate): array
     {
-        $cacheKey = "analytics:punctuality:store:{$storeId}:" . $startDate->format('Y-m-d') . ':' . $endDate->format('Y-m-d');
+        $cacheKey = "analytics:punctuality:store:{$storeId}:".$startDate->format('Y-m-d').':'.$endDate->format('Y-m-d');
 
         return Cache::tags(['tenant', tenant()->id, 'shift_analytics'])
             ->remember($cacheKey, $this->cacheTTL, function () use ($storeId, $startDate, $endDate) {
@@ -325,12 +324,14 @@ class ShiftAnalyticsService
         switch ($metric) {
             case 'attendance':
                 $attended = $assignments->whereIn('status', ['in_progress', 'completed'])->count();
+
                 return round(($attended / $total) * 100, 2);
 
             case 'punctuality':
                 $punctual = $assignments->filter(function ($assignment) {
-                    return !$assignment->is_late && !$assignment->is_early_departure;
+                    return ! $assignment->is_late && ! $assignment->is_early_departure;
                 })->count();
+
                 return round(($punctual / $total) * 100, 2);
 
             case 'sales':
@@ -338,6 +339,7 @@ class ShiftAnalyticsService
                 $totalSales = $assignments->sum(function ($assignment) {
                     return $assignment->salesSummary->total_sales_amount ?? 0;
                 });
+
                 return round($totalSales, 2);
 
             default:

@@ -10,6 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     schema="SaleRefundResource",
  *     type="object",
  *     title="Sale Refund Resource",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="refund_number", type="string", example="REF-01-202503-000001"),
  *     @OA\Property(property="refund_date", type="string", format="date", example="2025-03-09"),
@@ -30,8 +31,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *         @OA\Property(property="phone", type="string", example="+254712345678")
  *     ),
  *     @OA\Property(property="items", type="array",
+ *
  *         @OA\Items(ref="#/components/schemas/SaleRefundItemResource")
  *     ),
+ *
  *     @OA\Property(property="summary", type="object",
  *         @OA\Property(property="refund_amount", type="number", format="float", example=250.00),
  *         @OA\Property(property="items_count", type="integer", example=1),

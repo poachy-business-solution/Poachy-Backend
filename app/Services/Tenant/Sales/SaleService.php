@@ -386,7 +386,7 @@ class SaleService
             $variantId = $item['variant_id'] ?? null;
 
             $product = Product::findOrFail($productId);
-            $uomId = $product->base_uom_id;
+            $uomId = $item['uom_id'] ?? $product->base_uom_id;
 
             if ($variantId) {
                 $variant = ProductVariant::findOrFail($variantId);

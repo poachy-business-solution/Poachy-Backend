@@ -5,11 +5,11 @@ namespace App\Services\Tenant\Product;
 use App\Models\Tenant\ProductBrand;
 use App\Repositories\Tenant\ProductBrandRepository;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 class ProductBrandService
@@ -92,7 +92,7 @@ class ProductBrandService
         return DB::transaction(function () use ($id) {
             $brand = $this->repository->findById($id);
 
-            if (!$brand) {
+            if (! $brand) {
                 throw new \InvalidArgumentException('Brand not found');
             }
 
@@ -113,7 +113,7 @@ class ProductBrandService
         return DB::transaction(function () use ($id) {
             $brand = $this->repository->findById($id);
 
-            if (!$brand) {
+            if (! $brand) {
                 throw new \InvalidArgumentException('Brand not found');
             }
 
@@ -134,7 +134,7 @@ class ProductBrandService
         return DB::transaction(function () use ($id) {
             $brand = $this->repository->findById($id);
 
-            if (!$brand) {
+            if (! $brand) {
                 throw new \InvalidArgumentException('Brand not found');
             }
 
@@ -155,7 +155,7 @@ class ProductBrandService
         return DB::transaction(function () use ($id) {
             $brand = $this->repository->findById($id);
 
-            if (!$brand) {
+            if (! $brand) {
                 throw new \InvalidArgumentException('Brand not found');
             }
 
@@ -175,7 +175,7 @@ class ProductBrandService
     {
         return DB::transaction(function () use ($id, $logoFile) {
             $brand = $this->repository->findById($id);
-            if (!$brand) {
+            if (! $brand) {
                 throw new \InvalidArgumentException('Brand not found');
             }
 
@@ -205,7 +205,7 @@ class ProductBrandService
         return DB::connection('tenant')->transaction(function () use ($id) {
             $brand = $this->repository->findById($id);
 
-            if (!$brand) {
+            if (! $brand) {
                 throw new \InvalidArgumentException('Brand not found');
             }
 
@@ -235,7 +235,7 @@ class ProductBrandService
         $extension = $file->getClientOriginalExtension();
 
         // Create filename with timestamp
-        $filename = $originalName . '_' . time() . '.' . $extension;
+        $filename = $originalName.'_'.time().'.'.$extension;
 
         // Store in public disk under products/brands/logos
         $path = $file->storeAs('products/brands/logos', $filename, 'public');
@@ -255,7 +255,7 @@ class ProductBrandService
         $slug = Str::slug($name);
 
         if ($attempt > 0) {
-            $slug .= '-' . $attempt;
+            $slug .= '-'.$attempt;
         }
 
         if ($this->repository->slugExists($slug)) {

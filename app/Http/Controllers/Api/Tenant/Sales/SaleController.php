@@ -440,6 +440,13 @@ class SaleController extends Controller
      *                         description="Product variant ID (optional, used with product_id)"
      *                     ),
      *                     @OA\Property(
+     *                         property="uom_id",
+     *                         type="integer",
+     *                         nullable=true,
+     *                         example=2,
+     *                         description="Optional sellable UOM ID for product/package barcode scans. When supplied for product lines, quantity is interpreted in this UOM and converted to base UOM."
+     *                     ),
+     *                     @OA\Property(
      *                         property="bundle_id",
      *                         type="integer",
      *                         nullable=true,
@@ -482,12 +489,14 @@ class SaleController extends Controller
      *                         "product_id": 1,
      *                         "variant_id": null,
      *                         "bundle_id": null,
+     *                         "uom_id": null,
      *                         "quantity": 2
      *                     },
      *                     {
      *                         "product_id": 4,
      *                         "variant_id": 3,
      *                         "bundle_id": null,
+     *                         "uom_id": null,
      *                         "quantity": 1
      *                     }
      *                 },
@@ -869,6 +878,7 @@ class SaleController extends Controller
      *                         @OA\Property(property="product_id", type="integer", nullable=true, example=4),
      *                         @OA\Property(property="variant_id", type="integer", nullable=true, example=2),
      *                         @OA\Property(property="bundle_id", type="integer", nullable=true, example=null),
+     *                         @OA\Property(property="uom_id", type="integer", nullable=true, example=2, description="Optional sellable UOM ID returned by barcode lookup sale_line.sale_item_payload"),
      *                         @OA\Property(property="quantity", type="number", format="float", example=1, description="Quantity in selected UOM")
      *                     )
      *                 ),
@@ -950,6 +960,7 @@ class SaleController extends Controller
      *                             "product_id": 4,
      *                             "variant_id": 2,
      *                             "bundle_id": null,
+     *                             "uom_id": null,
      *                             "quantity": 1
      *                         }
      *                     },
@@ -977,6 +988,7 @@ class SaleController extends Controller
      *                             "product_id": 4,
      *                             "variant_id": 2,
      *                             "bundle_id": null,
+     *                             "uom_id": null,
      *                             "quantity": 1
      *                         }
      *                     },

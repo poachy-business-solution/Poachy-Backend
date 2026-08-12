@@ -3,13 +3,14 @@
 namespace App\Services\Tenant\Inventory;
 
 use App\Models\Tenant\Inventory;
+use App\Models\Tenant\InventoryMovement;
+use App\Models\Tenant\InventoryReservation;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\Store;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class InventoryService
 {
@@ -21,16 +22,14 @@ class InventoryService
     /**
      * Get inventory for a store with optional filters
      *
-     * @param int $storeId
-     * @param array $filters [
-     *   'product_id' => int,
-     *   'category_id' => int,
-     *   'brand_id' => int,
-     *   'stock_status' => string (low_stock|out_of_stock|in_stock),
-     *   'search' => string,
-     *   'per_page' => int
-     * ]
-     * @return LengthAwarePaginator
+     * @param  array  $filters  [
+     *                          'product_id' => int,
+     *                          'category_id' => int,
+     *                          'brand_id' => int,
+     *                          'stock_status' => string (low_stock|out_of_stock|in_stock),
+     *                          'search' => string,
+     *                          'per_page' => int
+     *                          ]
      */
     public function getInventoryForStore(int $storeId, array $filters = []): LengthAwarePaginator
     {
@@ -38,23 +37,23 @@ class InventoryService
             ->where('store_id', $storeId);
 
         // Apply filters
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->where('product_id', $filters['product_id']);
         }
 
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('category_id', $filters['category_id']);
             });
         }
 
-        if (!empty($filters['brand_id'])) {
+        if (! empty($filters['brand_id'])) {
             $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('brand_id', $filters['brand_id']);
             });
         }
 
-        if (!empty($filters['stock_status'])) {
+        if (! empty($filters['stock_status'])) {
             match ($filters['stock_status']) {
                 'low_stock' => $query->lowStock(),
                 'out_of_stock' => $query->outOfStock(),
@@ -63,7 +62,7 @@ class InventoryService
             };
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->whereHas('product', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -79,11 +78,6 @@ class InventoryService
 
     /**
      * Get inventory for a specific product across all stores or specific store
-     *
-     * @param int $productId
-     * @param int|null $storeId
-     * @param int|null $variantId
-     * @return Collection|Inventory|null
      */
     public function getInventoryForProduct(
         int $productId,
@@ -104,19 +98,16 @@ class InventoryService
     /**
      * Check if stock is available for a product in a store
      *
-     * @param int $productId
-     * @param float $quantity Quantity in the specified UOM
-     * @param int $storeId
-     * @param int $uomId UOM of the requested quantity
-     * @param int|null $variantId
+     * @param  float  $quantity  Quantity in the specified UOM
+     * @param  int  $uomId  UOM of the requested quantity
      * @return array [
-     *   'available' => bool,
-     *   'requested_quantity' => float,
-     *   'available_quantity' => float,
-     *   'requested_in_base_uom' => float,
-     *   'available_in_base_uom' => float,
-     *   'base_uom' => string
-     * ]
+     *               'available' => bool,
+     *               'requested_quantity' => float,
+     *               'available_quantity' => float,
+     *               'requested_in_base_uom' => float,
+     *               'available_in_base_uom' => float,
+     *               'base_uom' => string
+     *               ]
      */
     public function checkAvailability(
         int $productId,
@@ -128,7 +119,7 @@ class InventoryService
         // Get inventory record
         $inventory = Inventory::getForProduct($productId, $storeId, $variantId);
 
-        if (!$inventory) {
+        if (! $inventory) {
             return [
                 'available' => false,
                 'requested_quantity' => $quantity,
@@ -165,9 +156,7 @@ class InventoryService
     /**
      * Get low stock products for a store
      *
-     * @param int $storeId
-     * @param float|null $customThreshold Optional custom threshold
-     * @return Collection
+     * @param  float|null  $customThreshold  Optional custom threshold
      */
     public function getLowStockProducts(int $storeId, ?float $customThreshold = null): Collection
     {
@@ -194,9 +183,6 @@ class InventoryService
 
     /**
      * Get out of stock products for a store
-     *
-     * @param int $storeId
-     * @return Collection
      */
     public function getOutOfStockProducts(int $storeId): Collection
     {
@@ -217,14 +203,13 @@ class InventoryService
     /**
      * Calculate total inventory value for a store
      *
-     * @param int $storeId
-     * @param int|null $productId Optional - calculate for specific product
+     * @param  int|null  $productId  Optional - calculate for specific product
      * @return array [
-     *   'total_value' => float,
-     *   'total_quantity' => float,
-     *   'product_count' => int,
-     *   'currency' => string
-     * ]
+     *               'total_value' => float,
+     *               'total_quantity' => float,
+     *               'product_count' => int,
+     *               'currency' => string
+     *               ]
      */
     public function getInventoryValue(int $storeId, ?int $productId = null): array
     {
@@ -252,17 +237,16 @@ class InventoryService
     /**
      * Get inventory summary for a store (dashboard)
      *
-     * @param int $storeId
      * @return array [
-     *   'total_products' => int,
-     *   'in_stock_count' => int,
-     *   'low_stock_count' => int,
-     *   'out_of_stock_count' => int,
-     *   'total_quantity_on_hand' => float,
-     *   'total_quantity_reserved' => float,
-     *   'total_quantity_available' => float,
-     *   'total_value' => float
-     * ]
+     *               'total_products' => int,
+     *               'in_stock_count' => int,
+     *               'low_stock_count' => int,
+     *               'out_of_stock_count' => int,
+     *               'total_quantity_on_hand' => float,
+     *               'total_quantity_reserved' => float,
+     *               'total_quantity_available' => float,
+     *               'total_value' => float
+     *               ]
      */
     public function getInventorySummary(int $storeId): array
     {
@@ -286,23 +270,20 @@ class InventoryService
 
     /**
      * Get inventory movements for a product/store
-     *
-     * @param array $filters
-     * @return LengthAwarePaginator
      */
     public function getInventoryMovements(array $filters = []): LengthAwarePaginator
     {
-        $query = \App\Models\Tenant\InventoryMovement::withDetails();
+        $query = InventoryMovement::withDetails();
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->byStore($filters['store_id']);
         }
 
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->byProduct($filters['product_id']);
         }
 
-        if (!empty($filters['movement_type'])) {
+        if (! empty($filters['movement_type'])) {
             $query->byType($filters['movement_type']);
         }
 
@@ -324,22 +305,22 @@ class InventoryService
     /**
      * Get inventory reservations with optional filters.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     public function getInventoryReservations(array $filters = []): LengthAwarePaginator
     {
-        $query = \App\Models\Tenant\InventoryReservation::withDetails()
+        $query = InventoryReservation::withDetails()
             ->with('cancelledBy:id,name');
 
-        if (!empty($filters['store_id'])) {
+        if (! empty($filters['store_id'])) {
             $query->byStore($filters['store_id']);
         }
 
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->byProduct($filters['product_id']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -366,9 +347,6 @@ class InventoryService
 
     /**
      * Clear inventory cache for a store
-     *
-     * @param int $storeId
-     * @return void
      */
     public function clearCache(int $storeId): void
     {
@@ -377,11 +355,6 @@ class InventoryService
 
     /**
      * Convert quantity from given UOM to product's base UOM
-     *
-     * @param float $quantity
-     * @param int $uomId
-     * @param int $productId
-     * @return float
      */
     private function convertToBaseUom(float $quantity, int $uomId, int $productId): float
     {
@@ -402,11 +375,6 @@ class InventoryService
 
     /**
      * Convert quantity from base UOM to given UOM
-     *
-     * @param float $quantity
-     * @param int $uomId
-     * @param int $productId
-     * @return float
      */
     private function convertFromBaseUom(float $quantity, int $uomId, int $productId): float
     {
@@ -431,37 +399,31 @@ class InventoryService
 
     /**
      * Get base UOM code for a product
-     *
-     * @param int $productId
-     * @return string
      */
     private function getBaseUomCode(int $productId): string
     {
         $product = Product::with('baseUom')->find($productId);
+
         return $product?->baseUom?->code ?? 'units';
     }
 
     /**
      * Get cache key with tenant prefix
-     *
-     * @param string $key
-     * @return string
      */
     private function getCacheKey(string $key): string
     {
         $tenantId = tenant()->id ?? 'global';
+
         return "inventory:{$tenantId}:{$key}";
     }
 
     /**
      * Get cache tags for inventory
-     *
-     * @param int $storeId
-     * @return array
      */
     private function getCacheTags(int $storeId): array
     {
         $tenantId = tenant()->id ?? 'global';
+
         return [
             "tenant:{$tenantId}",
             "inventory:{$tenantId}",

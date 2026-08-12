@@ -10,6 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     schema="SaleRefundItemResource",
  *     type="object",
  *     title="Sale Refund Item Resource",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="sale_item_id", type="integer", example=5),
  *     @OA\Property(property="product_id", type="integer", example=3),

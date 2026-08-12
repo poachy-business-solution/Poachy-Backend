@@ -100,14 +100,14 @@ class AuditLogRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Convert single action to actions array
-        if ($this->has('action') && !$this->has('actions')) {
+        if ($this->has('action') && ! $this->has('actions')) {
             $this->merge([
                 'actions' => [$this->action],
             ]);
         }
 
         // Convert single tag to tags array
-        if ($this->has('tag') && !$this->has('tags')) {
+        if ($this->has('tag') && ! $this->has('tags')) {
             $this->merge([
                 'tags' => [$this->tag],
             ]);

@@ -13,6 +13,7 @@ class MarketplaceSyncService
     public function __construct(
         private MarketplaceMappingService $mappingService
     ) {}
+
     /**
      * Create a new marketplace product
      */
@@ -169,7 +170,7 @@ class MarketplaceSyncService
                 ->first();
 
             // If product doesn't exist, CREATE instead of UPDATE
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::info('Marketplace product not found for update, creating instead', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -235,7 +236,7 @@ class MarketplaceSyncService
                 ->whereNull('tenant_bundle_id')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace product not found for deletion', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -296,7 +297,7 @@ class MarketplaceSyncService
                 ->whereNull('tenant_bundle_id')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace product not found for activation, creating instead', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -319,7 +320,7 @@ class MarketplaceSyncService
                 ]);
             }
 
-            // Mark as active 
+            // Mark as active
             $marketplaceProduct->update([
                 'is_active' => true,
                 'is_featured' => $dto->isFeatured,
@@ -367,7 +368,7 @@ class MarketplaceSyncService
                 ->whereNull('tenant_bundle_id')
                 ->first();
 
-            if (!$marketplaceProduct) {
+            if (! $marketplaceProduct) {
                 Log::warning('Marketplace product not found for deactivation', [
                     'tenant_id' => $dto->tenantId,
                     'tenant_product_id' => $dto->productId,
@@ -434,7 +435,7 @@ class MarketplaceSyncService
      */
     protected function mapBrand(ProductSyncDTO $dto): ?array
     {
-        if (!$dto->brand) {
+        if (! $dto->brand) {
             return null;
         }
 
@@ -499,7 +500,7 @@ class MarketplaceSyncService
         // Track changes for logging
         $changedFields = [];
         foreach ($updateData as $key => $value) {
-            if ($marketplaceProduct->$key != $value) {
+            if ($value != $marketplaceProduct->$key) {
                 $changedFields[$key] = [
                     'old' => $marketplaceProduct->$key,
                     'new' => $value,
@@ -510,7 +511,7 @@ class MarketplaceSyncService
         $marketplaceProduct->update($updateData);
 
         // Log what changed
-        if (!empty($changedFields)) {
+        if (! empty($changedFields)) {
             Log::info('Marketplace product fields updated', [
                 'marketplace_product_id' => $marketplaceProduct->id,
                 'tenant_id' => $dto->tenantId,
@@ -541,7 +542,7 @@ class MarketplaceSyncService
      */
     protected function generateUniqueSlug(string $baseSlug, string $tenantId, ?int $excludeProductId = null): string
     {
-        $slug = $baseSlug . '-' . substr($tenantId, 0, 8);
+        $slug = $baseSlug.'-'.substr($tenantId, 0, 8);
         $originalSlug = $slug;
         $counter = 1;
 
@@ -552,11 +553,11 @@ class MarketplaceSyncService
                 $query->where('id', '!=', $excludeProductId);
             }
 
-            if (!$query->exists()) {
+            if (! $query->exists()) {
                 return $slug;
             }
 
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
     }
@@ -578,7 +579,7 @@ class MarketplaceSyncService
             throw new \InvalidArgumentException('Available quantity cannot be negative');
         }
 
-        if (!in_array($dto->inventory->stockStatus, ['in_stock', 'low_stock', 'out_of_stock'])) {
+        if (! in_array($dto->inventory->stockStatus, ['in_stock', 'low_stock', 'out_of_stock'])) {
             throw new \InvalidArgumentException('Invalid stock status');
         }
     }

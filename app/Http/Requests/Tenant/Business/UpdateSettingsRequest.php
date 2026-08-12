@@ -48,7 +48,7 @@ class UpdateSettingsRequest extends FormRequest
         $validator->after(function ($validator) {
             $settings = $this->settings;
 
-            if (!$settings) {
+            if (! $settings) {
                 return;
             }
 
@@ -56,8 +56,8 @@ class UpdateSettingsRequest extends FormRequest
             if (isset($settings['currency'])) {
                 $this->merge([
                     'settings' => array_merge($settings, [
-                        'currency' => strtoupper($settings['currency'])
-                    ])
+                        'currency' => strtoupper($settings['currency']),
+                    ]),
                 ]);
             }
 

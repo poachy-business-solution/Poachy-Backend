@@ -21,7 +21,7 @@ class ReviewResponseSyncDTO
             responseText: $review->merchant_response,
             metadata: [
                 'local_review_id' => $review->id,
-                'timestamp'       => now()->toISOString(),
+                'timestamp' => now()->toISOString(),
             ],
         );
     }
@@ -29,15 +29,15 @@ class ReviewResponseSyncDTO
     public function toArray(): array
     {
         return [
-            'tenant_id'     => $this->tenantId,
-            'review_id'     => $this->centralReviewId,
+            'tenant_id' => $this->tenantId,
+            'review_id' => $this->centralReviewId,
             'response_text' => $this->responseText,
-            'metadata'      => $this->metadata,
+            'metadata' => $this->metadata,
         ];
     }
 
     public function generateIdempotencyKey(string $action = 'create'): string
     {
-        return md5($this->tenantId . 'review_response' . $this->centralReviewId . $action . hash('sha256', $this->responseText));
+        return md5($this->tenantId.'review_response'.$this->centralReviewId.$action.hash('sha256', $this->responseText));
     }
 }

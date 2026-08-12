@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Central\Marketplace;
 
+use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReviewStatus;
 use App\Events\Central\ProductReviewApproved;
 use App\Models\MarketplaceCustomer;
+use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceProduct;
 use App\Models\MerchantReview;
 use App\Models\ProductReview;
@@ -132,7 +134,7 @@ class ReviewModerationServiceTest extends TestCase
 
     private function createMerchantReview(array $overrides = []): MerchantReview
     {
-        $order = \App\Models\MarketplaceOrder::on('central')->create([
+        $order = MarketplaceOrder::on('central')->create([
             'order_number' => 'ORD-'.uniqid(),
             'customer_id' => $this->customer->id,
             'tenant_id' => $this->tenantId,
@@ -143,7 +145,7 @@ class ReviewModerationServiceTest extends TestCase
             'delivery_fee' => 0,
             'total_amount' => 500.0,
             'fulfillment_type' => 'pickup',
-            'order_status' => \App\Enums\Central\OrderStatus::Completed,
+            'order_status' => OrderStatus::Completed,
         ]);
 
         return MerchantReview::on('central')->create(array_merge([

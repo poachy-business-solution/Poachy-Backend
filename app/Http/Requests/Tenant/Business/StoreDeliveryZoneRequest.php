@@ -16,43 +16,43 @@ class StoreDeliveryZoneRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'zone_name'  => ['required', 'string', 'max:100'],
-            'zone_type'  => ['required', 'string', 'in:city,county,postal_code,radius'],
+            'zone_name' => ['required', 'string', 'max:100'],
+            'zone_type' => ['required', 'string', 'in:city,county,postal_code,radius'],
 
             // City-based
-            'cities'   => ['required_if:zone_type,city', 'nullable', 'array', 'min:1'],
+            'cities' => ['required_if:zone_type,city', 'nullable', 'array', 'min:1'],
             'cities.*' => ['string', 'max:100'],
 
             // County-based
-            'counties'   => ['required_if:zone_type,county', 'nullable', 'array', 'min:1'],
+            'counties' => ['required_if:zone_type,county', 'nullable', 'array', 'min:1'],
             'counties.*' => ['string', 'max:100'],
 
             // Postal-code-based
-            'postal_codes'   => ['required_if:zone_type,postal_code', 'nullable', 'array', 'min:1'],
+            'postal_codes' => ['required_if:zone_type,postal_code', 'nullable', 'array', 'min:1'],
             'postal_codes.*' => ['string', 'max:20'],
 
             // Radius-based
-            'latitude'  => ['required_if:zone_type,radius', 'nullable', 'numeric', 'between:-90,90'],
+            'latitude' => ['required_if:zone_type,radius', 'nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['required_if:zone_type,radius', 'nullable', 'numeric', 'between:-180,180'],
             'radius_km' => ['required_if:zone_type,radius', 'nullable', 'integer', 'min:1', 'max:500'],
 
             // Fees
-            'standard_fee'  => ['required', 'numeric', 'min:0'],
-            'express_fee'   => ['nullable', 'numeric', 'min:0'],
+            'standard_fee' => ['required', 'numeric', 'min:0'],
+            'express_fee' => ['nullable', 'numeric', 'min:0'],
             'scheduled_fee' => ['nullable', 'numeric', 'min:0'],
 
             'free_delivery_threshold' => ['nullable', 'numeric', 'min:0'],
 
             // Estimated delivery times
-            'standard_delivery_time'  => ['nullable', 'string', 'max:100'],
-            'express_delivery_time'   => ['nullable', 'string', 'max:100'],
+            'standard_delivery_time' => ['nullable', 'string', 'max:100'],
+            'express_delivery_time' => ['nullable', 'string', 'max:100'],
             'scheduled_delivery_time' => ['nullable', 'string', 'max:100'],
 
             // Supported methods (must include at least 'standard')
-            'supported_methods'   => ['required', 'array', 'min:1'],
-            'supported_methods.*' => ['string', 'in:' . implode(',', DeliveryMethod::values())],
+            'supported_methods' => ['required', 'array', 'min:1'],
+            'supported_methods.*' => ['string', 'in:'.implode(',', DeliveryMethod::values())],
 
-            'priority'  => ['nullable', 'integer', 'min:1', 'max:999'],
+            'priority' => ['nullable', 'integer', 'min:1', 'max:999'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }
@@ -92,13 +92,13 @@ class StoreDeliveryZoneRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cities.required_if'       => 'At least one city is required for city-based zones.',
-            'counties.required_if'     => 'At least one county is required for county-based zones.',
+            'cities.required_if' => 'At least one city is required for city-based zones.',
+            'counties.required_if' => 'At least one county is required for county-based zones.',
             'postal_codes.required_if' => 'At least one postal code is required for postal code zones.',
-            'latitude.required_if'     => 'Latitude is required for radius-based zones.',
-            'longitude.required_if'    => 'Longitude is required for radius-based zones.',
-            'radius_km.required_if'    => 'Radius (km) is required for radius-based zones.',
-            'supported_methods.*.in'   => 'Invalid delivery method. Must be one of: ' . implode(', ', DeliveryMethod::values()),
+            'latitude.required_if' => 'Latitude is required for radius-based zones.',
+            'longitude.required_if' => 'Longitude is required for radius-based zones.',
+            'radius_km.required_if' => 'Radius (km) is required for radius-based zones.',
+            'supported_methods.*.in' => 'Invalid delivery method. Must be one of: '.implode(', ', DeliveryMethod::values()),
         ];
     }
 }

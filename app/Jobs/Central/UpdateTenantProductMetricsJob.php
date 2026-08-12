@@ -45,22 +45,22 @@ class UpdateTenantProductMetricsJob implements ShouldQueue
 
         // Store old values for logging
         $oldValues = [
-            'total_marketplace_products'  => $profile->total_marketplace_products,
+            'total_marketplace_products' => $profile->total_marketplace_products,
             'active_marketplace_products' => $profile->active_marketplace_products,
         ];
 
         // Update profile with new product metrics
         $profile->update([
-            'total_marketplace_products'     => $totalProducts,
-            'active_marketplace_products'    => $activeProducts,
-            'products_last_calculated_at'    => now(),
+            'total_marketplace_products' => $totalProducts,
+            'active_marketplace_products' => $activeProducts,
+            'products_last_calculated_at' => now(),
         ]);
 
         Log::info('UpdateTenantProductMetricsJob: updated tenant profile product metrics', [
-            'tenant_id'   => $this->tenantId,
-            'old_values'  => $oldValues,
-            'new_values'  => [
-                'total_marketplace_products'  => $profile->total_marketplace_products,
+            'tenant_id' => $this->tenantId,
+            'old_values' => $oldValues,
+            'new_values' => [
+                'total_marketplace_products' => $profile->total_marketplace_products,
                 'active_marketplace_products' => $profile->active_marketplace_products,
             ],
         ]);

@@ -10,6 +10,7 @@ use App\Http\Resources\Central\Marketplace\MarketplaceProductResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Marketplace\MarketplaceProductService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Public-facing marketplace product endpoints.
@@ -30,94 +31,121 @@ class MarketplaceProductController extends Controller
      *     operationId="getMarketplaceProducts",
      *     tags={"Central - Marketplace - Products"},
      *     security={},
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=24, minimum=1, maximum=100, example=24)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, minimum=1, example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="category",
      *         in="query",
      *         description="Filter by category slug",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="electronics")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="brand",
      *         in="query",
      *         description="Filter by brand slug",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="dell")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="tenant_id",
      *         in="query",
      *         description="Filter by tenant ID",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="uuid", example="bbab2597-e1ae-466b-a071-83033841d2ed")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="stock_status",
      *         in="query",
      *         description="Filter by stock availability status",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"in_stock", "out_of_stock", "low_stock"}, example="in_stock")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="featured",
      *         in="query",
      *         description="Filter by featured flag",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="min_price",
      *         in="query",
      *         description="Minimum price filter",
      *         required=false,
+     *
      *         @OA\Schema(type="number", format="float", example=50000)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="max_price",
      *         in="query",
      *         description="Maximum price filter",
      *         required=false,
+     *
      *         @OA\Schema(type="number", format="float", example=150000)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Full-text search query (searches name, description, SKU)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="smart tv")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"name", "online_price", "created_at", "view_count", "order_count", "average_rating"}, default="created_at", example="online_price")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc", example="asc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Marketplace products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Marketplace products retrieved successfully"),
      *             @OA\Property(
@@ -126,8 +154,10 @@ class MarketplaceProductController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="slug", type="string", example="lg-43-4k-uhd-smart-led-tv-43ur7550psc-bbab2597"),
      *                         @OA\Property(property="sku", type="string", example="ELEC-DELL-FK8K"),
@@ -175,10 +205,12 @@ class MarketplaceProductController extends Controller
      *                             @OA\Property(
      *                                 property="secondary",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string"),
      *                                 example={"products/images/secondary_a54-extra_1766233835_0.jpg", "products/images/secondary_a54_1766233835_1.jpg"}
      *                             )
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="stock",
      *                             type="object",
@@ -218,6 +250,7 @@ class MarketplaceProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error"
@@ -226,7 +259,7 @@ class MarketplaceProductController extends Controller
      */
     public function index(ListMarketplaceProductsRequest $request): JsonResponse
     {
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginator */
+        /** @var LengthAwarePaginator $paginator */
         $paginator = $this->productService->listActiveProducts($request->validated());
 
         BusinessHelper::warmCache($paginator->getCollection()->pluck('tenant_id')->all());
@@ -244,17 +277,22 @@ class MarketplaceProductController extends Controller
      *     operationId="getMarketplaceProductBySlug",
      *     tags={"Central - Marketplace - Products"},
      *     security={},
+     *
      *     @OA\Parameter(
      *         name="slug",
      *         in="path",
      *         description="Product slug (unique identifier)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="lg-43-4k-uhd-smart-led-tv-43ur7550psc-bbab2597")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product retrieved successfully"),
      *             @OA\Property(
@@ -307,10 +345,12 @@ class MarketplaceProductController extends Controller
      *                     @OA\Property(
      *                         property="secondary",
      *                         type="array",
+     *
      *                         @OA\Items(type="string"),
      *                         example={"products/images/secondary_a54-extra_1766233835_0.jpg", "products/images/secondary_a54_1766233835_1.jpg"}
      *                     )
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="stock",
      *                     type="object",
@@ -338,10 +378,13 @@ class MarketplaceProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product not found"),
      *             @OA\Property(
@@ -363,7 +406,7 @@ class MarketplaceProductController extends Controller
     {
         $product = $this->productService->findBySlug($slug);
 
-        if (!$product) {
+        if (! $product) {
             return ApiResponse::notFound('Product not found.');
         }
 

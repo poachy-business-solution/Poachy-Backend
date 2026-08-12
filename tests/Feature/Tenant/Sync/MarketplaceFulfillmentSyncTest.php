@@ -10,6 +10,7 @@ use App\Models\Tenant\MarketplaceSale;
 use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -216,7 +217,7 @@ class MarketplaceFulfillmentSyncTest extends TestCase
         try {
             (new ProcessOutboundMarketplaceFulfillmentSync($sync->id))->handle();
             $this->fail('Expected exception was not thrown');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             // Http::retry() defaults to $throw=true — same as delivery zone's job.
         }
 

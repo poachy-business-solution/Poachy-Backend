@@ -12,12 +12,12 @@ class TrackPaymentAnalytics
     public function handlePaymentAttempted(PaymentAttempted $event): void
     {
         TrackAnalyticsEventJob::dispatch([
-            'event_type'       => 'payment_attempted',
-            'customer_id'      => $event->order->customer_id,
+            'event_type' => 'payment_attempted',
+            'customer_id' => $event->order->customer_id,
             'event_properties' => [
-                'order_id'       => $event->order->id,
+                'order_id' => $event->order->id,
                 'payment_method' => $event->paymentMethod,
-                'amount'         => $event->payment->amount,
+                'amount' => $event->payment->amount,
             ],
         ]);
     }
@@ -25,13 +25,13 @@ class TrackPaymentAnalytics
     public function handlePaymentCompleted(PaymentCompleted $event): void
     {
         TrackAnalyticsEventJob::dispatch([
-            'event_type'       => 'payment_completed',
-            'customer_id'      => $event->order->customer_id,
+            'event_type' => 'payment_completed',
+            'customer_id' => $event->order->customer_id,
             'event_properties' => [
-                'order_id'         => $event->order->id,
-                'payment_method'   => $event->payment->payment_method,
-                'transaction_ref'  => $event->payment->transaction_reference,
-                'amount'           => $event->payment->amount,
+                'order_id' => $event->order->id,
+                'payment_method' => $event->payment->payment_method,
+                'transaction_ref' => $event->payment->transaction_reference,
+                'amount' => $event->payment->amount,
             ],
         ]);
     }
@@ -39,10 +39,10 @@ class TrackPaymentAnalytics
     public function handlePaymentFailed(PaymentFailed $event): void
     {
         TrackAnalyticsEventJob::dispatch([
-            'event_type'       => 'payment_failed',
-            'customer_id'      => $event->order->customer_id,
+            'event_type' => 'payment_failed',
+            'customer_id' => $event->order->customer_id,
             'event_properties' => [
-                'order_id'       => $event->order->id,
+                'order_id' => $event->order->id,
                 'payment_method' => $event->payment->payment_method,
                 'failure_reason' => $event->failureReason,
             ],

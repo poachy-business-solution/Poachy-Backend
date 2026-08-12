@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Central\Subscription\SubscriptionPaymentResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -28,7 +29,7 @@ class SubscriptionCallbackController extends Controller
                 'Callback processed.',
                 new SubscriptionPaymentResource($payment),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Subscription payment record not found.');
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), null, 422);

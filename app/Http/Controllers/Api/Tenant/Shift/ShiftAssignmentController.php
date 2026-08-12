@@ -20,7 +20,6 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-
 class ShiftAssignmentController extends Controller
 {
     use AuthorizesRequests;
@@ -37,59 +36,76 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve a paginated list of shift assignments with optional filtering",
      *     operationId="listShiftAssignments",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
      *         description="Filter by user ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="shift_id",
      *         in="query",
      *         description="Filter by shift ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by status",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="scheduled")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date filter",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date filter",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift assignments retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift assignments retrieved successfully"),
      *             @OA\Property(
@@ -98,7 +114,9 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="assignments",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="shift_id", type="integer", example=2),
      *                         @OA\Property(
@@ -115,8 +133,10 @@ class ShiftAssignmentController extends Controller
      *                             @OA\Property(
      *                                 property="applicable_days",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string", example="monday")
      *                             ),
+     *
      *                             @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                             @OA\Property(property="is_active", type="boolean", example=true),
      *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -265,10 +285,13 @@ class ShiftAssignmentController extends Controller
      *     description="Create a new shift assignment for a user",
      *     operationId="createShiftAssignment",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"shift_id", "store_id", "user_id", "shift_date"},
+     *
      *             @OA\Property(property="shift_id", type="integer", example=1, description="Shift ID"),
      *             @OA\Property(property="store_id", type="integer", example=1, description="Store ID"),
      *             @OA\Property(property="user_id", type="integer", example=2, description="User ID to assign"),
@@ -276,10 +299,13 @@ class ShiftAssignmentController extends Controller
      *             @OA\Property(property="notes", type="string", example="First shift for new employee", description="Optional notes")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift assignment created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift assignment created successfully"),
      *             @OA\Property(
@@ -304,8 +330,10 @@ class ShiftAssignmentController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -376,10 +404,13 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -388,14 +419,18 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="shift_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected shift does not exist or is inactive.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="shift_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The shift date cannot be in the past.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -424,18 +459,23 @@ class ShiftAssignmentController extends Controller
      *     description="Create multiple shift assignments with recurrence patterns",
      *     operationId="bulkCreateShiftAssignments",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"shift_id", "store_id", "user_ids", "start_date", "end_date"},
+     *
      *             @OA\Property(property="shift_id", type="integer", example=1, description="Shift ID"),
      *             @OA\Property(property="store_id", type="integer", example=1, description="Store ID"),
      *             @OA\Property(
      *                 property="user_ids",
      *                 type="array",
      *                 description="Array of user IDs (min: 1, max: 100)",
+     *
      *                 @OA\Items(type="integer", example=1)
      *             ),
+     *
      *             @OA\Property(property="start_date", type="string", format="date", example="2025-01-01", description="Start date (must be today or future)"),
      *             @OA\Property(property="end_date", type="string", format="date", example="2025-01-31", description="End date (must be >= start_date)"),
      *             @OA\Property(
@@ -450,6 +490,7 @@ class ShiftAssignmentController extends Controller
      *                 type="array",
      *                 description="Custom recurrence days (required if recurrence_pattern is 'custom')",
      *                 nullable=true,
+     *
      *                 @OA\Items(
      *                     type="string",
      *                     enum={"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"},
@@ -458,10 +499,13 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift assignments created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Successfully created 38 shift assignments"),
      *             @OA\Property(
@@ -470,7 +514,9 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="assignments",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="shift_id", type="integer", example=2),
      *                         @OA\Property(
@@ -487,8 +533,10 @@ class ShiftAssignmentController extends Controller
      *                             @OA\Property(
      *                                 property="applicable_days",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string", example="monday")
      *                             ),
+     *
      *                             @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                             @OA\Property(property="is_active", type="boolean", example=true),
      *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -591,17 +639,22 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve detailed information about a specific shift assignment",
      *     operationId="getShiftAssignment",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift assignment retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift assignment retrieved successfully"),
      *             @OA\Property(
@@ -626,8 +679,10 @@ class ShiftAssignmentController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -720,24 +775,32 @@ class ShiftAssignmentController extends Controller
      *     description="Cancel a scheduled shift assignment with a reason",
      *     operationId="cancelShiftAssignment",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"reason"},
+     *
      *             @OA\Property(property="reason", type="string", example="Employee called in sick", description="Cancellation reason")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift assignment cancelled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift assignment cancelled successfully"),
      *             @OA\Property(
@@ -762,8 +825,10 @@ class ShiftAssignmentController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -855,25 +920,33 @@ class ShiftAssignmentController extends Controller
      *     description="Start a shift by clocking in with opening cash amount",
      *     operationId="clockInShift",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"opening_cash"},
+     *
      *             @OA\Property(property="opening_cash", type="number", format="float", example=5000.00, description="Opening cash amount"),
      *             @OA\Property(property="notes", type="string", example="Register drawer was organized", description="Optional notes")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Clocked in successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Clocked in successfully"),
      *             @OA\Property(
@@ -898,8 +971,10 @@ class ShiftAssignmentController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T09:07:29.000000Z"),
@@ -973,10 +1048,13 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -985,19 +1063,25 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="opening_cash",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Opening cash amount is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="shift_date",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Cannot clock in to future shifts. Shift is scheduled for 2026-01-06")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="clock_in_time",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Clock-in time is too late. Scheduled start was 07:15. Contact your manager for assistance.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1030,27 +1114,35 @@ class ShiftAssignmentController extends Controller
      *     description="End a shift by clocking out with closing cash amount and optional notes",
      *     operationId="clockOutShift",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"closing_cash"},
+     *
      *             @OA\Property(property="closing_cash", type="number", format="float", example=5500.00, description="Closing cash amount"),
      *             @OA\Property(property="notes", type="string", example="Smooth shift", description="Optional notes"),
      *             @OA\Property(property="issues_reported", type="string", example="Register printer jammed twice", description="Any issues during shift"),
      *             @OA\Property(property="cash_variance_reason", type="string", example="Made change for customer's large bill", description="Reason for cash variance if significant")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Clocked out successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Clocked out successfully"),
      *             @OA\Property(
@@ -1075,8 +1167,10 @@ class ShiftAssignmentController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T09:07:29.000000Z"),
@@ -1178,24 +1272,32 @@ class ShiftAssignmentController extends Controller
      *     description="Approve a completed shift assignment",
      *     operationId="approveShift",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="notes", type="string", example="Good work", description="Optional approval notes"),
      *             @OA\Property(property="override_cash_variance", type="boolean", example=true, description="Override significant cash variance")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift approved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift approved successfully"),
      *             @OA\Property(
@@ -1220,8 +1322,10 @@ class ShiftAssignmentController extends Controller
      *                         @OA\Property(
      *                             property="applicable_days",
      *                             type="array",
+     *
      *                             @OA\Items(type="string", example="monday")
      *                         ),
+     *
      *                         @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                         @OA\Property(property="is_active", type="boolean", example=true),
      *                         @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T09:07:29.000000Z"),
@@ -1327,38 +1431,49 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve shift assignments for a specific user within a date range",
      *     operationId="getUserShiftAssignments",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="userId",
      *         in="path",
      *         description="User ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by status",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="completed")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="User assignments retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="User assignments retrieved successfully"),
      *             @OA\Property(
@@ -1367,7 +1482,9 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="assignments",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="shift_id", type="integer", example=2),
      *                         @OA\Property(
@@ -1384,8 +1501,10 @@ class ShiftAssignmentController extends Controller
      *                             @OA\Property(
      *                                 property="applicable_days",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string", example="monday")
      *                             ),
+     *
      *                             @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                             @OA\Property(property="is_active", type="boolean", example=true),
      *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -1455,7 +1574,7 @@ class ShiftAssignmentController extends Controller
     public function userAssignments(Request $request, int $userId): JsonResponse
     {
         // Users can view their own assignments, managers can view all
-        if (!$request->user()->hasAnyRole(['manager', 'admin', 'owner']) && $request->user()->id !== $userId) {
+        if (! $request->user()->hasAnyRole(['manager', 'admin', 'owner']) && $request->user()->id !== $userId) {
             return ApiResponse::forbidden('Cannot view other users\' assignments');
         }
 
@@ -1490,31 +1609,40 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve shift assignments for a specific store with optional status filter",
      *     operationId="getStoreShiftAssignments",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="storeId",
      *         in="path",
      *         description="Store ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date",
      *         in="query",
      *         description="Date",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-15")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by status",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="in_progress")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store assignments retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store assignments retrieved successfully"),
      *             @OA\Property(
@@ -1523,7 +1651,9 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="assignments",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=20),
      *                         @OA\Property(property="shift_id", type="integer", example=2),
      *                         @OA\Property(
@@ -1540,8 +1670,10 @@ class ShiftAssignmentController extends Controller
      *                             @OA\Property(
      *                                 property="applicable_days",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string", example="monday")
      *                             ),
+     *
      *                             @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                             @OA\Property(property="is_active", type="boolean", example=true),
      *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -1629,17 +1761,22 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve upcoming shift assignments for the currently authenticated user",
      *     operationId="getUpcomingAssignments",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="days_ahead",
      *         in="query",
      *         description="Days to look ahead",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=7)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Upcoming assignments retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Upcoming assignments retrieved successfully"),
      *             @OA\Property(
@@ -1648,7 +1785,9 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="assignments",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="shift_id", type="integer", example=2),
      *                         @OA\Property(
@@ -1665,8 +1804,10 @@ class ShiftAssignmentController extends Controller
      *                             @OA\Property(
      *                                 property="applicable_days",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string", example="monday")
      *                             ),
+     *
      *                             @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                             @OA\Property(property="is_active", type="boolean", example=true),
      *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T08:55:10.000000Z"),
@@ -1754,24 +1895,31 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve shift assignments that are completed but not yet approved",
      *     operationId="getAssignmentsNeedingApproval",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Limit results",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Assignments needing approval retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Assignments needing approval retrieved successfully"),
      *             @OA\Property(
@@ -1780,7 +1928,9 @@ class ShiftAssignmentController extends Controller
      *                 @OA\Property(
      *                     property="assignments",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="shift_id", type="integer", example=4),
      *                         @OA\Property(
@@ -1797,8 +1947,10 @@ class ShiftAssignmentController extends Controller
      *                             @OA\Property(
      *                                 property="applicable_days",
      *                                 type="array",
+     *
      *                                 @OA\Items(type="string", example="monday")
      *                             ),
+     *
      *                             @OA\Property(property="is_company_wide", type="boolean", example=false),
      *                             @OA\Property(property="is_active", type="boolean", example=true),
      *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-01-05T09:07:29.000000Z"),
@@ -1904,31 +2056,40 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieve statistical data about shift assignments within a date range",
      *     operationId="getAssignmentStatistics",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="date", example="2025-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Filter by store",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Assignment statistics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Assignment statistics retrieved successfully"),
      *             @OA\Property(
@@ -1989,22 +2150,27 @@ class ShiftAssignmentController extends Controller
      *     description="Retrieves comprehensive information required for clocking out of a shift, including shift details, cash tracking data, sales summary, and instructions for the clock-out process",
      *     operationId="getShiftClockOutInfo",
      *     tags={"Tenant Shift Assignments"},
+     *
      *     @OA\Parameter(
      *         name="shiftAssignmentId",
      *         in="path",
      *         description="The unique identifier of the shift assignment",
      *         required=true,
+     *
      *         @OA\Schema(
      *             type="integer",
      *             example=4
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Clock out information retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
      *             required={"success", "message", "data", "meta"},
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -2190,11 +2356,14 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Shift assignment not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -2207,11 +2376,14 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -2224,11 +2396,14 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User does not have permission to access this shift",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -2241,11 +2416,14 @@ class ShiftAssignmentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -2295,7 +2473,7 @@ class ShiftAssignmentController extends Controller
             ] : null,
 
             'instructions' => [
-                'step_1' => "Expected amount is KES " . number_format($expectedCash, 2),
+                'step_1' => 'Expected amount is KES '.number_format($expectedCash, 2),
                 'step_2' => 'Enter the actual amount you counted',
                 'step_3' => 'If variance >= KES 100, explain the difference',
             ],

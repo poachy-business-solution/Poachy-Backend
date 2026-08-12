@@ -52,7 +52,7 @@ class ProcessCheckoutReservation implements ShouldQueue
         $syncService->queueOrderSync($order, OutboundSyncAction::ReserveInventory);
 
         Log::info('Checkout reservation sync queued', [
-            'order_id'  => $order->id,
+            'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
         ]);
     }
@@ -61,7 +61,7 @@ class ProcessCheckoutReservation implements ShouldQueue
     {
         Log::error('ProcessCheckoutReservation job failed', [
             'order_id' => $this->orderId,
-            'error'    => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

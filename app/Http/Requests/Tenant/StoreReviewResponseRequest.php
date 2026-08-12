@@ -22,8 +22,8 @@ class StoreReviewResponseRequest extends FormRequest
     {
         return [
             'response_text.required' => 'Response text is required.',
-            'response_text.min'      => 'Response must be at least 10 characters.',
-            'response_text.max'      => 'Response may not exceed 1000 characters.',
+            'response_text.min' => 'Response must be at least 10 characters.',
+            'response_text.max' => 'Response may not exceed 1000 characters.',
         ];
     }
 }

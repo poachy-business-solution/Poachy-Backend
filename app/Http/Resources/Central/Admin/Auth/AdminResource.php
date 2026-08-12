@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     type="object",
  *     title="Admin Resource",
  *     description="Admin user resource representation",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="name", type="string", example="Super Admin"),
  *     @OA\Property(property="email", type="string", format="email", example="admin@poachy.com"),
@@ -19,15 +20,19 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(
  *         property="roles",
  *         type="array",
+ *
  *         @OA\Items(type="string", example="admin"),
  *         description="Array of role names assigned to the user"
  *     ),
+ *
  *     @OA\Property(
  *         property="permissions",
  *         type="array",
+ *
  *         @OA\Items(type="string", example="manage-businesses"),
  *         description="Array of permission names assigned to the user"
  *     ),
+ *
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2025-01-15T10:00:00.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2025-01-15T10:00:00.000000Z")
  * )

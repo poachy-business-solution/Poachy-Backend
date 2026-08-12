@@ -73,7 +73,7 @@ class BundleSyncTest extends TestCase
         ];
     }
 
-    public function testBundleSyncDTOFromArrayCreatesValidDTO(): void
+    public function test_bundle_sync_dto_from_array_creates_valid_dto(): void
     {
         $data = $this->getValidBundleDTOData();
 
@@ -107,7 +107,7 @@ class BundleSyncTest extends TestCase
         $this->assertSame(['source' => 'test'], $dto->metadata);
     }
 
-    public function testBundleSyncDTOToArrayAndFromArrayRoundTrip(): void
+    public function test_bundle_sync_dto_to_array_and_from_array_round_trip(): void
     {
         $data = $this->getValidBundleDTOData();
 
@@ -141,7 +141,7 @@ class BundleSyncTest extends TestCase
         $this->assertSame($dto->toArray(), $restoredDto->toArray());
     }
 
-    public function testBundleSyncDTOGenerateIdempotencyKeyIsConsistent(): void
+    public function test_bundle_sync_dto_generate_idempotency_key_is_consistent(): void
     {
         $data = $this->getValidBundleDTOData();
 
@@ -156,7 +156,7 @@ class BundleSyncTest extends TestCase
         $this->assertIsString($key1);
     }
 
-    public function testBundleSyncDTOItemsArePreservedInRoundTrip(): void
+    public function test_bundle_sync_dto_items_are_preserved_in_round_trip(): void
     {
         $data = $this->getValidBundleDTOData();
 
@@ -197,7 +197,7 @@ class BundleSyncTest extends TestCase
         $this->assertSame(300.00, $secondItem->totalPrice);
     }
 
-    public function testBundleSyncServiceIsEligibleForSyncReturnsTrueWhenAllConditionsMet(): void
+    public function test_bundle_sync_service_is_eligible_for_sync_returns_true_when_all_conditions_met(): void
     {
         $bundle = Mockery::mock(ProductBundle::class)->makePartial();
         $bundle->shouldReceive('getAttribute')->with('is_available_online')->andReturn(true);
@@ -208,11 +208,11 @@ class BundleSyncTest extends TestCase
         $bundle->shouldReceive('hasMinimumItems')->andReturn(true);
         $bundle->shouldReceive('allItemsActive')->andReturn(true);
 
-        $service = new BundleSyncService();
+        $service = new BundleSyncService;
         $this->assertTrue($service->isEligibleForSync($bundle));
     }
 
-    public function testBundleSyncServiceIsEligibleForSyncReturnsFalseWhenNotOnline(): void
+    public function test_bundle_sync_service_is_eligible_for_sync_returns_false_when_not_online(): void
     {
         $bundle = Mockery::mock(ProductBundle::class)->makePartial();
         $bundle->shouldReceive('getAttribute')->with('is_available_online')->andReturn(false);
@@ -223,11 +223,11 @@ class BundleSyncTest extends TestCase
         $bundle->shouldReceive('hasMinimumItems')->andReturn(true);
         $bundle->shouldReceive('allItemsActive')->andReturn(true);
 
-        $service = new BundleSyncService();
+        $service = new BundleSyncService;
         $this->assertFalse($service->isEligibleForSync($bundle));
     }
 
-    public function testBundleSyncServiceIsEligibleForSyncReturnsFalseWhenNoOnlinePrice(): void
+    public function test_bundle_sync_service_is_eligible_for_sync_returns_false_when_no_online_price(): void
     {
         $bundle = Mockery::mock(ProductBundle::class)->makePartial();
         $bundle->shouldReceive('getAttribute')->with('is_available_online')->andReturn(true);
@@ -238,11 +238,11 @@ class BundleSyncTest extends TestCase
         $bundle->shouldReceive('hasMinimumItems')->andReturn(true);
         $bundle->shouldReceive('allItemsActive')->andReturn(true);
 
-        $service = new BundleSyncService();
+        $service = new BundleSyncService;
         $this->assertFalse($service->isEligibleForSync($bundle));
     }
 
-    public function testBundleSyncServiceGetSyncValidationErrorsReturnsAllErrors(): void
+    public function test_bundle_sync_service_get_sync_validation_errors_returns_all_errors(): void
     {
         $bundle = Mockery::mock(ProductBundle::class)->makePartial();
         $bundle->shouldReceive('getAttribute')->with('is_available_online')->andReturn(false);
@@ -253,7 +253,7 @@ class BundleSyncTest extends TestCase
         $bundle->shouldReceive('hasMinimumItems')->andReturn(false);
         $bundle->shouldReceive('allItemsActive')->andReturn(false);
 
-        $service = new BundleSyncService();
+        $service = new BundleSyncService;
         $errors = $service->getSyncValidationErrors($bundle);
 
         $this->assertNotEmpty($errors);

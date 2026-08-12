@@ -12,18 +12,17 @@ class UomConversionsSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
     public function run(): void
     {
         // Ensure we're running on tenant connection
-        if (!tenancy()->initialized) {
+        if (! tenancy()->initialized) {
             $this->command->error('Tenancy not initialized. This seeder must run in tenant context.');
+
             return;
         }
 
-        $this->command->info('Seeding UOM Conversions for tenant: ' . tenant()->id);
+        $this->command->info('Seeding UOM Conversions for tenant: '.tenant()->id);
 
         try {
             // Get all UOM codes mapped to IDs
@@ -31,6 +30,7 @@ class UomConversionsSeeder extends Seeder
 
             if (empty($uoms)) {
                 $this->command->error('No Units of Measure found. Please run UnitsOfMeasureSeeder first.');
+
                 return;
             }
 
@@ -45,7 +45,7 @@ class UomConversionsSeeder extends Seeder
 
             $this->command->info('UOM Conversions seeded successfully.');
         } catch (\Exception $e) {
-            $this->command->error('Error seeding UOM Conversions: ' . $e->getMessage());
+            $this->command->error('Error seeding UOM Conversions: '.$e->getMessage());
             Log::error('UomConversionsSeeder failed', [
                 'tenant_id' => tenant()->id,
                 'error' => $e->getMessage(),
@@ -57,9 +57,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Seed weight conversions.
-     *
-     * @param array $uoms
-     * @return void
      */
     protected function seedWeightConversions(array $uoms): void
     {
@@ -77,9 +74,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Seed volume conversions.
-     *
-     * @param array $uoms
-     * @return void
      */
     protected function seedVolumeConversions(array $uoms): void
     {
@@ -97,9 +91,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Seed length conversions.
-     *
-     * @param array $uoms
-     * @return void
      */
     protected function seedLengthConversions(array $uoms): void
     {
@@ -118,9 +109,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Seed area conversions.
-     *
-     * @param array $uoms
-     * @return void
      */
     protected function seedAreaConversions(array $uoms): void
     {
@@ -137,9 +125,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Seed time conversions.
-     *
-     * @param array $uoms
-     * @return void
      */
     protected function seedTimeConversions(array $uoms): void
     {
@@ -157,9 +142,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Seed count conversions.
-     *
-     * @param array $uoms
-     * @return void
      */
     protected function seedCountConversions(array $uoms): void
     {
@@ -176,11 +158,6 @@ class UomConversionsSeeder extends Seeder
 
     /**
      * Create conversions from array data.
-     *
-     * @param array $conversions
-     * @param array $uoms
-     * @param string $type
-     * @return void
      */
     protected function createConversions(array $conversions, array $uoms, string $type): void
     {
@@ -190,15 +167,17 @@ class UomConversionsSeeder extends Seeder
 
         foreach ($conversions as [$fromCode, $toCode, $factor]) {
             // Check if UOMs exist
-            if (!isset($uoms[$fromCode])) {
+            if (! isset($uoms[$fromCode])) {
                 $this->command->warn("  ⚠ Skipping conversion: UOM '{$fromCode}' not found");
                 $skipped++;
+
                 continue;
             }
 
-            if (!isset($uoms[$toCode])) {
+            if (! isset($uoms[$toCode])) {
                 $this->command->warn("  ⚠ Skipping conversion: UOM '{$toCode}' not found");
                 $skipped++;
+
                 continue;
             }
 
@@ -230,8 +209,6 @@ class UomConversionsSeeder extends Seeder
     /**
      * Optional: Create bidirectional conversions automatically.
      * This creates reverse conversions (e.g., if kg→g exists, create g→kg).
-     *
-     * @return void
      */
     protected function createBidirectionalConversions(): void
     {
@@ -246,7 +223,7 @@ class UomConversionsSeeder extends Seeder
                 ->where('to_uom_id', $conversion->from_uom_id)
                 ->exists();
 
-            if (!$reverseExists) {
+            if (! $reverseExists) {
                 try {
                     UomConversion::create([
                         'from_uom_id' => $conversion->to_uom_id,

@@ -22,9 +22,9 @@ return new class extends Migration
 
             // Flag & status
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_featured')->default(false); 
+            $table->boolean('is_featured')->default(false);
             $table->unsignedInteger('display_order')->default(0);
-            
+
             $table->timestamps();
             $table->softDeletes();
 

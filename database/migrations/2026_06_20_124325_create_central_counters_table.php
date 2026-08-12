@@ -16,7 +16,7 @@ return new class extends Migration
 
         // Seed the M-Pesa account number counter
         DB::connection('central')->table('central_counters')->insert([
-            'name'  => 'mpesa_account',
+            'name' => 'mpesa_account',
             'value' => 0,
         ]);
     }

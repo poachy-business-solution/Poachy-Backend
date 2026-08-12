@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Tenant\User;
 
+use App\Mail\Tenant\Auth\TenantUserCredentialsMail;
 use App\Models\Tenant\User as TenantUser;
 use App\Services\Central\Admin\Tenant\TenantUserService;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
@@ -63,7 +63,7 @@ class TenantUserServiceTest extends TestCase
 
     private function makeService(): TenantUserService
     {
-        return new TenantUserService();
+        return new TenantUserService;
     }
 
     private function seedRoles(): void
@@ -151,7 +151,7 @@ class TenantUserServiceTest extends TestCase
 
         // TenantUserCredentialsMail implements ShouldQueue, so Mailer::sendMailable()
         // auto-redirects even a plain ->send() call to the queue — assertQueued, not assertSent.
-        Mail::assertQueued(\App\Mail\Tenant\Auth\TenantUserCredentialsMail::class, function ($mail) {
+        Mail::assertQueued(TenantUserCredentialsMail::class, function ($mail) {
             return $mail->hasTo('new-hire3@example.com');
         });
     }

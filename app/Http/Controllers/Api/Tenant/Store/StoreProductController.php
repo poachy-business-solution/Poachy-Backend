@@ -27,80 +27,103 @@ class StoreProductController extends Controller
      *     operationId="listStoreProducts",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store - auto-detected)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_available",
      *         in="query",
      *         description="Filter by availability status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="has_price_override",
      *         in="query",
      *         description="Filter products with store-specific price overrides",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by product name or SKU (case-insensitive)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="Samsung")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="category_id",
      *         in="query",
      *         description="Filter by product category ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="brand_id",
      *         in="query",
      *         description="Filter by product brand ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=7)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field: product.name, product.sku, is_available, created_at, updated_at",
      *         required=false,
+     *
      *         @OA\Schema(type="string", default="product.name", enum={"product.name", "product.sku", "is_available", "created_at", "updated_at"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(type="string", default="asc", enum={"asc", "desc"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (1-100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, minimum=1, maximum=100)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Current page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, minimum=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store products retrieved successfully"),
      *             @OA\Property(
@@ -109,7 +132,9 @@ class StoreProductController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(
      *                             property="store",
@@ -225,27 +250,36 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad Request - Multiple stores or invalid store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Multiple stores exist. Please specify store_id..."),
      *             @OA\Property(property="errors", type="object", nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal Server Error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve store products")
      *         )
@@ -295,24 +329,31 @@ class StoreProductController extends Controller
      *     operationId="getStoreProduct",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product",
      *         in="path",
      *         description="Store product assignment ID (from store_products table, not products.id)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store product retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store product retrieved successfully"),
      *             @OA\Property(
@@ -330,18 +371,24 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store product not found")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad Request - Invalid store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store not found or inactive.")
      *         )
@@ -357,7 +404,7 @@ class StoreProductController extends Controller
             // Get store product
             $storeProduct = $this->service->getStoreProduct($product, $storeId);
 
-            if (!$storeProduct) {
+            if (! $storeProduct) {
                 return ApiResponse::notFound('Store product not found');
             }
 
@@ -382,25 +429,32 @@ class StoreProductController extends Controller
      *     operationId="assignProductsToStore",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store - auto-detected)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Product assignment configuration",
+     *
      *         @OA\JsonContent(
      *             required={"product_ids"},
+     *
      *             @OA\Property(
      *                 property="product_ids",
      *                 type="array",
      *                 description="Array of product IDs to assign (minimum 1)",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={1, 2, 4}
      *             ),
+     *
      *             @OA\Property(
      *                 property="auto_assign_variants",
      *                 type="boolean",
@@ -439,10 +493,13 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Products assigned successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products assigned to store successfully"),
      *             @OA\Property(
@@ -455,21 +512,27 @@ class StoreProductController extends Controller
      *                         property="assigned",
      *                         type="array",
      *                         description="Product IDs newly assigned",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={1, 2, 4}
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="updated",
      *                         type="array",
      *                         description="Product IDs that were already assigned and got updated",
+     *
      *                         @OA\Items(type="integer"),
      *                         example={}
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="skipped",
      *                         type="array",
      *                         description="Products that failed assignment with reasons",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="product_id", type="integer"),
      *                             @OA\Property(property="reason", type="string")
      *                         ),
@@ -479,7 +542,9 @@ class StoreProductController extends Controller
      *                         property="variants_assigned",
      *                         type="array",
      *                         description="Variants auto-assigned",
+     *
      *                         @OA\Items(
+     *
      *                             @OA\Property(property="variant_id", type="integer", example=2),
      *                             @OA\Property(property="variant_name", type="string", example="55C725-GAL"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT-V14Q")
@@ -489,10 +554,12 @@ class StoreProductController extends Controller
      *                         property="bundles_assigned",
      *                         type="array",
      *                         description="Bundles auto-assigned",
+     *
      *                         @OA\Items(type="object"),
      *                         example={}
      *                     )
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="summary",
      *                     type="object",
@@ -513,19 +580,25 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad Request - Multiple stores or invalid store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Multiple stores exist. Please specify store_id..."),
      *             @OA\Property(property="errors", type="object", nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation Error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -534,15 +607,19 @@ class StoreProductController extends Controller
      *                 @OA\Property(
      *                     property="product_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="At least one product must be selected.")
      *                 )
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal Server Error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to assign products")
      *         )
@@ -600,24 +677,31 @@ class StoreProductController extends Controller
      *     operationId="updateStoreProduct",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product",
      *         in="path",
      *         description="Store product assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Fields to update (all optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="store_selling_price",
      *                 type="number",
@@ -641,10 +725,13 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Store product updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store product updated successfully"),
      *             @OA\Property(
@@ -662,18 +749,24 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store product not found")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation Error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -682,6 +775,7 @@ class StoreProductController extends Controller
      *                 @OA\Property(
      *                     property="store_selling_price",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Store selling price cannot be negative.")
      *                 )
      *             )
@@ -698,7 +792,7 @@ class StoreProductController extends Controller
             // Find store product
             $storeProduct = $this->service->getStoreProduct($product, $storeId);
 
-            if (!$storeProduct) {
+            if (! $storeProduct) {
                 return ApiResponse::notFound('Store product not found');
             }
 
@@ -708,7 +802,7 @@ class StoreProductController extends Controller
                 $request->validated()
             );
 
-            if (!$updated) {
+            if (! $updated) {
                 return ApiResponse::error('Failed to update store product');
             }
 
@@ -736,24 +830,31 @@ class StoreProductController extends Controller
      *     operationId="toggleProductAvailability",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product",
      *         in="path",
      *         description="Store product assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"is_available"},
+     *
      *             @OA\Property(
      *                 property="is_available",
      *                 type="boolean",
@@ -762,10 +863,13 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Availability toggled successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product is now available"),
      *             @OA\Property(
@@ -778,18 +882,24 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store product not found")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation Error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -798,6 +908,7 @@ class StoreProductController extends Controller
      *                 @OA\Property(
      *                     property="is_available",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The is available field must be true or false.")
      *                 )
      *             )
@@ -811,14 +922,14 @@ class StoreProductController extends Controller
             $storeId = $this->service->resolveStoreId($store);
             $storeProduct = $this->service->getStoreProduct($product, $storeId);
 
-            if (!$storeProduct) {
+            if (! $storeProduct) {
                 return ApiResponse::notFound('Store product not found');
             }
 
             $isAvailable = $request->validated()['is_available'];
             $updated = $this->service->toggleAvailability($storeProduct, $isAvailable);
 
-            if (!$updated) {
+            if (! $updated) {
                 return ApiResponse::error('Failed to update availability');
             }
 
@@ -842,24 +953,31 @@ class StoreProductController extends Controller
      *     operationId="removeProductFromStore",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product",
      *         in="path",
      *         description="Store product assignment ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product removed from store successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product removed from store successfully"),
      *             @OA\Property(
@@ -872,18 +990,24 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store product not found")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad Request - Invalid store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store not found or inactive.")
      *         )
@@ -899,14 +1023,14 @@ class StoreProductController extends Controller
             // Find store product
             $storeProduct = $this->service->getStoreProduct($product, $storeId);
 
-            if (!$storeProduct) {
+            if (! $storeProduct) {
                 return ApiResponse::notFound('Store product not found');
             }
 
             // Remove from store
             $deleted = $this->service->removeProductFromStore($storeProduct);
 
-            if (!$deleted) {
+            if (! $deleted) {
                 return ApiResponse::error('Failed to remove product from store');
             }
 
@@ -928,17 +1052,22 @@ class StoreProductController extends Controller
      *     operationId="getStoreProductsStatistics",
      *     tags={"Tenant - Store Products"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="store",
      *         in="path",
      *         description="Store ID (optional if tenant has only one active store)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Statistics retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Store products statistics retrieved successfully"),
      *             @OA\Property(
@@ -961,18 +1090,24 @@ class StoreProductController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Bad Request - Invalid store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store not found or inactive.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal Server Error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to retrieve statistics")
      *         )

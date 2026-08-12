@@ -6,6 +6,7 @@ use App\Enums\Tenant\PaymentStatus;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\Supplier;
 use App\Models\Tenant\SupplierPayment;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -18,8 +19,6 @@ class SupplierPaymentService
     /**
      * Record new supplier payment
      *
-     * @param array $data
-     * @return SupplierPayment
      * @throws \RuntimeException
      */
     public function recordPayment(array $data): SupplierPayment
@@ -28,13 +27,13 @@ class SupplierPaymentService
             // 1. Lock and validate supplier
             $supplier = Supplier::lockForUpdate()->findOrFail($data['supplier_id']);
 
-            if (!$supplier->is_active) {
+            if (! $supplier->is_active) {
                 throw new \RuntimeException('Cannot record payment for inactive supplier');
             }
 
             // 2. If PO linked, validate and lock it
             $purchaseOrder = null;
-            if (!empty($data['purchase_order_id'])) {
+            if (! empty($data['purchase_order_id'])) {
                 $purchaseOrder = PurchaseOrder::lockForUpdate()
                     ->findOrFail($data['purchase_order_id']);
 
@@ -44,7 +43,7 @@ class SupplierPaymentService
                 }
 
                 // Validate PO is in valid status
-                if (!$purchaseOrder->status->canReceivePayment()) {
+                if (! $purchaseOrder->status->canReceivePayment()) {
                     throw new \RuntimeException(
                         "Cannot record payment for PO with status: {$purchaseOrder->status->label()}"
                     );
@@ -57,7 +56,7 @@ class SupplierPaymentService
                 if ($data['amount'] > $poOutstanding) {
                     throw new \RuntimeException(
                         sprintf(
-                            "Payment amount (%.2f) exceeds PO outstanding balance (%.2f)",
+                            'Payment amount (%.2f) exceeds PO outstanding balance (%.2f)',
                             $data['amount'],
                             $poOutstanding
                         )
@@ -69,7 +68,7 @@ class SupplierPaymentService
             if ($data['amount'] > $supplier->outstanding_balance) {
                 throw new \RuntimeException(
                     sprintf(
-                        "Payment amount (%.2f) exceeds supplier outstanding balance (%.2f)",
+                        'Payment amount (%.2f) exceeds supplier outstanding balance (%.2f)',
                         $data['amount'],
                         $supplier->outstanding_balance
                     )
@@ -78,7 +77,7 @@ class SupplierPaymentService
 
             // 4. Handle receipt upload if provided
             $receiptPath = null;
-            if (!empty($data['receipt'])) {
+            if (! empty($data['receipt'])) {
                 $receiptPath = $this->storeReceipt($data['receipt']);
             }
 
@@ -128,10 +127,6 @@ class SupplierPaymentService
 
     /**
      * Get supplier payments with filters
-     *
-     * @param int $supplierId
-     * @param array $filters
-     * @return LengthAwarePaginator
      */
     public function getSupplierPayments(int $supplierId, array $filters = []): LengthAwarePaginator
     {
@@ -139,15 +134,15 @@ class SupplierPaymentService
             ->bySupplier($supplierId);
 
         // Apply filters
-        if (!empty($filters['purchase_order_id'])) {
+        if (! empty($filters['purchase_order_id'])) {
             $query->byPurchaseOrder($filters['purchase_order_id']);
         }
 
-        if (!empty($filters['payment_method'])) {
+        if (! empty($filters['payment_method'])) {
             $query->byPaymentMethod($filters['payment_method']);
         }
 
-        if (!empty($filters['from_date']) || !empty($filters['to_date'])) {
+        if (! empty($filters['from_date']) || ! empty($filters['to_date'])) {
             $query->byDateRange($filters['from_date'] ?? null, $filters['to_date'] ?? null);
         }
 
@@ -161,9 +156,6 @@ class SupplierPaymentService
 
     /**
      * Get purchase order payments
-     *
-     * @param int $poId
-     * @return Collection
      */
     public function getPurchaseOrderPayments(int $poId): Collection
     {
@@ -175,10 +167,6 @@ class SupplierPaymentService
 
     /**
      * Get supplier payment summary
-     *
-     * @param int $supplierId
-     * @param int|null $poId
-     * @return array
      */
     public function getSupplierPaymentSummary(int $supplierId, ?int $poId = null): array
     {
@@ -218,8 +206,7 @@ class SupplierPaymentService
     /**
      * Store payment receipt file
      *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @return string
+     * @param  UploadedFile  $file
      */
     private function storeReceipt($file): string
     {
@@ -249,9 +236,6 @@ class SupplierPaymentService
 
     /**
      * Update purchase order payment status based on amount paid
-     *
-     * @param PurchaseOrder $po
-     * @return void
      */
     private function updatePurchaseOrderPaymentStatus(PurchaseOrder $po): void
     {

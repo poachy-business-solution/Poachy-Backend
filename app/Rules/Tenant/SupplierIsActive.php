@@ -13,18 +13,19 @@ class SupplierIsActive implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$value) {
+        if (! $value) {
             return;
         }
 
         $supplier = Supplier::find($value);
 
-        if (!$supplier) {
+        if (! $supplier) {
             $fail('The selected supplier does not exist.');
+
             return;
         }
 
-        if (!$supplier->is_active) {
+        if (! $supplier->is_active) {
             $fail('The selected supplier is not active. Only active suppliers can receive payments.');
         }
     }

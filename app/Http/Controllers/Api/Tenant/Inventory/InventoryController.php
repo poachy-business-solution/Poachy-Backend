@@ -10,7 +10,6 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Inventory;
 use App\Services\Tenant\Inventory\InventoryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class InventoryController extends Controller
 {
@@ -26,72 +25,89 @@ class InventoryController extends Controller
      *     operationId="listInventory",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="ID of the store (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Filter by specific product ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="category_id",
      *         in="query",
      *         description="Filter by product category ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="brand_id",
      *         in="query",
      *         description="Filter by product brand ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="stock_status",
      *         in="query",
      *         description="Filter by stock status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"low_stock", "out_of_stock", "in_stock"},
      *             example="in_stock"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by product name or SKU",
      *         required=false,
+     *
      *         @OA\Schema(type="string", maxLength=255, example="Samsung")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=20, example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1, example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Inventory retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory retrieved successfully"),
      *             @OA\Property(
@@ -100,8 +116,10 @@ class InventoryController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(
      *                             property="store",
@@ -191,11 +209,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -204,29 +224,39 @@ class InventoryController extends Controller
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected product id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="category_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected category id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="brand_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected brand id is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="stock_status",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected stock status is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -237,11 +267,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -254,11 +286,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -296,19 +330,22 @@ class InventoryController extends Controller
      *     operationId="getInventoryRecord",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the inventory record",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Inventory record retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory record retrieved successfully"),
      *             @OA\Property(
@@ -392,11 +429,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Inventory record not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -409,11 +448,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -426,11 +467,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - User doesn't have permission to view this inventory record",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized."),
      *             @OA\Property(
@@ -443,11 +486,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -486,26 +531,31 @@ class InventoryController extends Controller
      *     operationId="getProductInventory",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="productId",
      *         in="path",
      *         description="ID of the product",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product inventory retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product inventory retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(
      *                         property="store",
@@ -584,11 +634,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -601,11 +653,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -618,11 +672,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -671,12 +727,14 @@ class InventoryController extends Controller
      *     operationId="checkStockAvailability",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Stock availability check details",
+     *
      *         @OA\JsonContent(
      *             required={"product_id", "store_id", "quantity", "uom_id"},
+     *
      *             @OA\Property(
      *                 property="product_id",
      *                 type="integer",
@@ -712,11 +770,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Stock availability check completed - Stock available",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Stock available"),
      *             @OA\Property(
@@ -740,11 +800,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response="200 ",
      *         description="Stock availability check completed - Insufficient stock",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Insufficient stock"),
      *             @OA\Property(
@@ -768,11 +830,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -781,24 +845,32 @@ class InventoryController extends Controller
      *                 @OA\Property(
      *                     property="product_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The product id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="store_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The store id field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="quantity",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The quantity field must be at least 0.0001.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected uom id is invalid.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -809,11 +881,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -826,11 +900,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Resource not found (product, store, or UOM doesn't exist)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -843,11 +919,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -888,34 +966,41 @@ class InventoryController extends Controller
      *     operationId="listLowStockProducts",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="ID of the store to check (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="threshold",
      *         in="query",
      *         description="Optional custom threshold for low stock detection. If not provided, uses product's reorder_level. Products with available quantity <= threshold are considered low stock.",
      *         required=false,
+     *
      *         @OA\Schema(type="number", format="float", example=10)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Low stock products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Low stock products retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of inventory records with low stock. Empty array if no low stock products found.",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=2),
      *                     @OA\Property(
      *                         property="store",
@@ -994,11 +1079,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store ID is required"),
      *             @OA\Property(
@@ -1011,11 +1098,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1028,11 +1117,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1045,11 +1136,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1069,7 +1162,7 @@ class InventoryController extends Controller
         $storeId = request()->query('store_id');
         $threshold = request()->query('threshold');
 
-        if (!$storeId) {
+        if (! $storeId) {
             return ApiResponse::error('Store ID is required', null, 422);
         }
 
@@ -1092,27 +1185,32 @@ class InventoryController extends Controller
      *     operationId="listOutOfStockProducts",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="ID of the store to check (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Out of stock products retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Out of stock products retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of inventory records with zero available stock. Empty array if all products are in stock.",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=5),
      *                     @OA\Property(
      *                         property="store",
@@ -1191,11 +1289,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store ID is required"),
      *             @OA\Property(
@@ -1208,11 +1308,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1225,11 +1327,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1242,11 +1346,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1265,7 +1371,7 @@ class InventoryController extends Controller
     {
         $storeId = request()->query('store_id');
 
-        if (!$storeId) {
+        if (! $storeId) {
             return ApiResponse::error('Store ID is required', null, 422);
         }
 
@@ -1285,26 +1391,31 @@ class InventoryController extends Controller
      *     operationId="calculateInventoryValue",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="ID of the store to calculate inventory value for (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Optional product ID to calculate value for a specific product only",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Inventory value calculated successfully - All products in store",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory value calculated successfully"),
      *             @OA\Property(
@@ -1347,11 +1458,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response="200 ",
      *         description="Inventory value calculated successfully - Single product",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory value calculated successfully"),
      *             @OA\Property(
@@ -1394,11 +1507,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store ID is required"),
      *             @OA\Property(
@@ -1411,11 +1526,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1428,11 +1545,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store or product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1445,11 +1564,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1469,7 +1590,7 @@ class InventoryController extends Controller
         $storeId = request()->query('store_id');
         $productId = request()->query('product_id');
 
-        if (!$storeId) {
+        if (! $storeId) {
             return ApiResponse::error('Store ID is required', null, 422);
         }
 
@@ -1492,19 +1613,22 @@ class InventoryController extends Controller
      *     operationId="getInventorySummary",
      *     tags={"Tenant - Inventory"},
      *     security={{"sanctum":{}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="ID of the store to get summary for (required)",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Inventory summary retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory summary retrieved successfully"),
      *             @OA\Property(
@@ -1579,11 +1703,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Store ID is required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Store ID is required"),
      *             @OA\Property(
@@ -1596,11 +1722,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1613,11 +1741,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Store not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(
@@ -1630,11 +1760,13 @@ class InventoryController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1653,7 +1785,7 @@ class InventoryController extends Controller
     {
         $storeId = request()->query('store_id');
 
-        if (!$storeId) {
+        if (! $storeId) {
             return ApiResponse::error('Store ID is required', null, 422);
         }
 

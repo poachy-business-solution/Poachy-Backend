@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['customer_id', 'created_at']);
             $table->index(['reference_type', 'reference_id']);
         });

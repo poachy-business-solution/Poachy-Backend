@@ -45,7 +45,7 @@ enum PurchaseOrderStatus: string
 
     /**
      * Check if PO can receive payments
-     * 
+     *
      * Payments can be made once PO is sent and goods are being/have been received
      */
     public function canReceivePayment(): bool
@@ -71,6 +71,6 @@ enum PurchaseOrderStatus: string
      */
     public static function labels(): array
     {
-        return array_map(fn($case) => $case->label(), self::cases());
+        return array_map(fn ($case) => $case->label(), self::cases());
     }
 }

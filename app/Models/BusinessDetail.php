@@ -11,6 +11,7 @@ class BusinessDetail extends Model
     use HasFactory, SoftDeletes;
 
     protected $connection = 'central';
+
     protected $table = 'business_details';
 
     public const BUSINESS_STATUS = ['active', 'inactive', 'suspended', 'pending'];
@@ -148,6 +149,7 @@ class BusinessDetail extends Model
         if ($county) {
             $query->where('county', $county);
         }
+
         return $query;
     }
 }

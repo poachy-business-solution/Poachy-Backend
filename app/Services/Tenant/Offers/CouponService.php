@@ -82,7 +82,7 @@ class CouponService
     public function updateCoupon(Coupon $coupon, array $data): Coupon
     {
         // Check if coupon can be edited
-        if (!$coupon->canBeEdited() && $this->hasRestrictedChanges($data, $coupon)) {
+        if (! $coupon->canBeEdited() && $this->hasRestrictedChanges($data, $coupon)) {
             throw ValidationException::withMessages([
                 'coupon' => ['Cannot modify core attributes of a coupon that has already been used.'],
             ]);
@@ -97,7 +97,7 @@ class CouponService
 
         // Check if changing applicability type
         if (isset($data['applicable_to']) && $data['applicable_to'] !== $coupon->applicable_to->value) {
-            if (!$coupon->canChangeApplicabilityType()) {
+            if (! $coupon->canChangeApplicabilityType()) {
                 throw ValidationException::withMessages([
                     'applicable_to' => ['Cannot change applicability type when coupon already has related products, categories, or brands attached.'],
                 ]);
@@ -179,7 +179,7 @@ class CouponService
      */
     public function deactivateCoupon(Coupon $coupon): Coupon
     {
-        if (!$coupon->is_active) {
+        if (! $coupon->is_active) {
             throw ValidationException::withMessages([
                 'coupon' => ['Coupon is already inactive.'],
             ]);
@@ -205,9 +205,9 @@ class CouponService
     public function attachProducts(Coupon $coupon, array $productsData): Coupon
     {
         // Validate applicability type
-        if (!in_array($coupon->applicable_to, [
+        if (! in_array($coupon->applicable_to, [
             CouponApplicabilityType::SPECIFIC_PRODUCTS,
-            CouponApplicabilityType::ALL_PRODUCTS
+            CouponApplicabilityType::ALL_PRODUCTS,
         ])) {
             throw ValidationException::withMessages([
                 'applicable_to' => ['Can only attach products to coupons with applicable_to set to "specific_products" or "all_products".'],

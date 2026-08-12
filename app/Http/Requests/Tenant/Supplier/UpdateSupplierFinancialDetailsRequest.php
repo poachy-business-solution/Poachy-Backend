@@ -31,7 +31,7 @@ class UpdateSupplierFinancialDetailsRequest extends FormRequest
         return [
             'credit_limit.min' => 'Credit limit cannot be negative',
             'credit_limit.max' => 'Credit limit is too large',
-            'payment_terms.enum' => 'Invalid payment terms. Must be one of: ' .
+            'payment_terms.enum' => 'Invalid payment terms. Must be one of: '.
                 implode(', ', PaymentTerms::values()),
             'bank_account_details.bank.required_with' => 'Bank name is required when providing bank details',
             'bank_account_details.account_name.required_with' => 'Account name is required when providing bank details',

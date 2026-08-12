@@ -25,7 +25,7 @@ return new class extends Migration
             // Financial
             $table->decimal('credit_limit', 12, 2)->default(0);
             $table->decimal('outstanding_balance', 12, 2)->default(0);
-            $table->string('payment_terms')->default('cod'); // cod, net_7, net_15, net_30, net_60            
+            $table->string('payment_terms')->default('cod'); // cod, net_7, net_15, net_30, net_60
 
             // Tax
             $table->string('tax_id')->nullable(); // KRA PIN, VAT number
@@ -36,8 +36,8 @@ return new class extends Migration
             // e.g.{"bank":"Equity","account_name":"ABC Supplies","account_number":"123456789","branch":"Nairobi"}
 
             // Ratings & Relationships
-            $table->decimal('rating', 3, 2)->default(0); 
-            $table->integer('total_orders')->default(0); 
+            $table->decimal('rating', 3, 2)->default(0);
+            $table->integer('total_orders')->default(0);
 
             // Status
             $table->boolean('is_active')->default(true);

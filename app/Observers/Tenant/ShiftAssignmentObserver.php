@@ -2,11 +2,13 @@
 
 namespace App\Observers\Tenant;
 
-use App\Events\Tenant\ShiftStarted;
-use App\Events\Tenant\ShiftEnded;
-use App\Events\Tenant\ShiftCancelled;
 use App\Events\Tenant\ShiftApproved;
+use App\Events\Tenant\ShiftCancelled;
+use App\Events\Tenant\ShiftEnded;
+use App\Events\Tenant\ShiftStarted;
+use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -128,9 +130,9 @@ class ShiftAssignmentObserver
         $minRestHours = config('shift.minimum_rest_hours_between_shifts', 0);
 
         // Get the shift details
-        $shift = $assignment->shift ?? \App\Models\Tenant\Shift::find($assignment->shift_id);
+        $shift = $assignment->shift ?? Shift::find($assignment->shift_id);
 
-        if (!$shift) {
+        if (! $shift) {
             return;
         }
 
@@ -144,17 +146,17 @@ class ShiftAssignmentObserver
             ->with('shift')
             ->first();
 
-        if (!$existingAssignment) {
+        if (! $existingAssignment) {
             return;
         }
 
         // If back-to-back is allowed, check if shifts actually overlap
         if ($allowBackToBack) {
-            $newStart = \Carbon\Carbon::parse($shift->scheduled_start_time);
-            $newEnd = \Carbon\Carbon::parse($shift->scheduled_end_time);
+            $newStart = Carbon::parse($shift->scheduled_start_time);
+            $newEnd = Carbon::parse($shift->scheduled_end_time);
 
-            $existingStart = \Carbon\Carbon::parse($existingAssignment->shift->scheduled_start_time);
-            $existingEnd = \Carbon\Carbon::parse($existingAssignment->shift->scheduled_end_time);
+            $existingStart = Carbon::parse($existingAssignment->shift->scheduled_start_time);
+            $existingEnd = Carbon::parse($existingAssignment->shift->scheduled_end_time);
 
             // Handle overnight shifts
             if ($newEnd->lessThan($newStart)) {
@@ -167,7 +169,7 @@ class ShiftAssignmentObserver
             // Check for actual time overlap
             $hasOverlap = $newStart->lessThan($existingEnd) && $newEnd->greaterThan($existingStart);
 
-            if (!$hasOverlap) {
+            if (! $hasOverlap) {
                 // Check minimum rest period if configured
                 if ($minRestHours > 0) {
                     $timeBetween = min(
@@ -254,8 +256,8 @@ class ShiftAssignmentObserver
     {
         $user = Auth::user();
         $userName = $user ? $user->name : 'System';
-        $assignedUser = $assignment->user?->name ?? 'User #' . $assignment->user_id;
-        $shiftName = $assignment->shift?->shift_name ?? 'Shift #' . $assignment->shift_id;
+        $assignedUser = $assignment->user?->name ?? 'User #'.$assignment->user_id;
+        $shiftName = $assignment->shift?->shift_name ?? 'Shift #'.$assignment->shift_id;
 
         return match ($action) {
             'created' => "{$userName} assigned {$assignedUser} to {$shiftName} on {$assignment->shift_date->format('Y-m-d')}",

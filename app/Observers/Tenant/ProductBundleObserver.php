@@ -3,7 +3,6 @@
 namespace App\Observers\Tenant;
 
 use App\Models\Tenant\ProductBundle;
-use App\Models\Tenant\ProductPriceHistory;
 use App\Services\Tenant\AuditService;
 use App\Services\Tenant\Sync\BundleSyncService;
 use Illuminate\Support\Facades\Auth;
@@ -248,12 +247,14 @@ class ProductBundleObserver
                         'errors' => $this->bundleSyncService->getSyncValidationErrors($bundle),
                     ]);
                 }
+
                 return;
             }
 
             // Bundle removed from marketplace
-            if ($bundle->wasChanged('is_available_online') && !$bundle->is_available_online) {
+            if ($bundle->wasChanged('is_available_online') && ! $bundle->is_available_online) {
                 $this->bundleSyncService->syncToMarketplace($bundle, 'deactivate', 3);
+
                 return;
             }
 
@@ -264,6 +265,7 @@ class ProductBundleObserver
                 if ($bundle->wasChanged('is_active')) {
                     $action = $bundle->is_active ? 'activate' : 'deactivate';
                     $this->bundleSyncService->syncToMarketplace($bundle, $action, 3);
+
                     return;
                 }
 
@@ -332,26 +334,31 @@ class ProductBundleObserver
         if (isset($changes['bundle_price'])) {
             $oldPrice = number_format($bundle->getOriginal('bundle_price'), 2);
             $newPrice = number_format($changes['bundle_price'], 2);
+
             return "{$user} changed bundle {$bundle->bundle_name} price from KES {$oldPrice} to KES {$newPrice}";
         }
 
         if (isset($changes['online_price'])) {
             $oldPrice = $bundle->getOriginal('online_price') ? number_format($bundle->getOriginal('online_price'), 2) : 'N/A';
             $newPrice = number_format($changes['online_price'], 2);
+
             return "{$user} changed bundle {$bundle->bundle_name} online price from KES {$oldPrice} to KES {$newPrice}";
         }
 
         if (isset($changes['is_available_online'])) {
             $status = $changes['is_available_online'] ? 'enabled' : 'disabled';
+
             return "{$user} {$status} online availability for bundle {$bundle->bundle_name}";
         }
 
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} bundle {$bundle->bundle_name}";
         }
 
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated bundle {$bundle->bundle_name} ({$changedFields})";
     }
 

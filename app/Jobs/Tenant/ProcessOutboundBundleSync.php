@@ -6,6 +6,8 @@ use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
@@ -16,8 +18,11 @@ class ProcessOutboundBundleSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
+
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public $backoff = [60, 300, 900]; // 1min, 5min, 15min
 
     /**
@@ -34,10 +39,11 @@ class ProcessOutboundBundleSync implements ShouldQueue
     {
         $syncQueue = SyncQueueOutbound::find($this->syncQueueId);
 
-        if (!$syncQueue) {
+        if (! $syncQueue) {
             Log::error('SyncQueueOutbound record not found', [
                 'sync_queue_id' => $this->syncQueueId,
             ]);
+
             return;
         }
 
@@ -46,6 +52,7 @@ class ProcessOutboundBundleSync implements ShouldQueue
             Log::info('Sync already completed, skipping', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
+
             return;
         }
 
@@ -56,15 +63,17 @@ class ProcessOutboundBundleSync implements ShouldQueue
                 'sync_queue_id' => $syncQueue->id,
                 'expires_at' => $syncQueue->expires_at,
             ]);
+
             return;
         }
 
         // Acquire lock
         $workerId = getmypid();
-        if (!$syncQueue->acquireLock($workerId)) {
+        if (! $syncQueue->acquireLock($workerId)) {
             Log::info('Could not acquire lock, another worker processing', [
                 'sync_queue_id' => $syncQueue->id,
             ]);
+
             return;
         }
 
@@ -149,7 +158,7 @@ class ProcessOutboundBundleSync implements ShouldQueue
      */
     protected function sendToCentralAPI(SyncQueueOutbound $syncQueue): array
     {
-        $centralApiUrl = config('services.central_api.url') . '/api/v1/central/sync/inbound/bundle';
+        $centralApiUrl = config('services.central_api.url').'/api/v1/central/sync/inbound/bundle';
         $apiToken = config('services.central_api.token');
 
         Log::debug('Sending sync to central API', [
@@ -175,7 +184,7 @@ class ProcessOutboundBundleSync implements ShouldQueue
                 'idempotency_key' => $syncQueue->idempotency_key,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new \RuntimeException(
                 "Central API request failed: {$response->status()} - {$response->body()}"
             );
@@ -183,9 +192,9 @@ class ProcessOutboundBundleSync implements ShouldQueue
 
         $responseData = $response->json();
 
-        if (!isset($responseData['success']) || !$responseData['success']) {
+        if (! isset($responseData['success']) || ! $responseData['success']) {
             throw new \RuntimeException(
-                "Central API returned error: " . ($responseData['message'] ?? 'Unknown error')
+                'Central API returned error: '.($responseData['message'] ?? 'Unknown error')
             );
         }
 
@@ -197,11 +206,11 @@ class ProcessOutboundBundleSync implements ShouldQueue
      */
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+        if ($e instanceof ConnectionException) {
             return 'NETWORK_ERROR';
         }
 
-        if ($e instanceof \Illuminate\Http\Client\RequestException) {
+        if ($e instanceof RequestException) {
             return 'API_ERROR';
         }
 
@@ -225,7 +234,7 @@ class ProcessOutboundBundleSync implements ShouldQueue
         $syncQueue = SyncQueueOutbound::find($this->syncQueueId);
         if ($syncQueue) {
             $syncQueue->markAsFailed(
-                errorMessage: 'Job failed permanently: ' . $exception->getMessage(),
+                errorMessage: 'Job failed permanently: '.$exception->getMessage(),
                 errorCode: 'JOB_FAILED',
                 errorDetails: [
                     'exception' => get_class($exception),

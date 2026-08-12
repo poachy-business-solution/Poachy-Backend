@@ -26,7 +26,7 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('restrict');
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['supplier_id', 'payment_date']);
             $table->index(['purchase_order_id']);
             $table->index('payment_number');

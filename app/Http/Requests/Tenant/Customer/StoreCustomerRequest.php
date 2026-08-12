@@ -4,9 +4,9 @@ namespace App\Http\Requests\Tenant\Customer;
 
 use App\Enums\Tenant\CustomerType;
 use App\Helpers\PhoneNumberNormalizer;
+use App\Models\Tenant\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 
 class StoreCustomerRequest extends FormRequest
 {
@@ -38,7 +38,7 @@ class StoreCustomerRequest extends FormRequest
                 'max:20',
                 function ($attribute, $value, $fail) {
                     // Validate if it's a valid Kenyan phone number after normalization
-                    if (!PhoneNumberNormalizer::isValidKenyanNumber($value)) {
+                    if (! PhoneNumberNormalizer::isValidKenyanNumber($value)) {
                         $fail('The phone number must be a valid Kenyan phone number.');
                     }
                 },
@@ -46,7 +46,7 @@ class StoreCustomerRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $normalized = PhoneNumberNormalizer::normalize($value);
 
-                    $exists = \App\Models\Tenant\Customer::whereNull('deleted_at')
+                    $exists = Customer::whereNull('deleted_at')
                         ->where('phone', $normalized)
                         ->exists();
 
@@ -88,7 +88,7 @@ class StoreCustomerRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Set default customer type if not provided
-        if (!$this->has('customer_type')) {
+        if (! $this->has('customer_type')) {
             $this->merge([
                 'customer_type' => CustomerType::WALK_IN->value,
             ]);

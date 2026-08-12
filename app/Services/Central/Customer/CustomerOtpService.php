@@ -12,10 +12,14 @@ class CustomerOtpService
 {
     private const EXPIRES_IN = 10; // minutes
 
-    public const TYPE_LOGIN           = 'login';
-    public const TYPE_PASSWORD_RESET  = 'password_reset';
-    public const TYPE_VERIFY_EMAIL    = 'verify_email';
-    public const TYPE_VERIFY_PHONE    = 'verify_phone';
+    public const TYPE_LOGIN = 'login';
+
+    public const TYPE_PASSWORD_RESET = 'password_reset';
+
+    public const TYPE_VERIFY_EMAIL = 'verify_email';
+
+    public const TYPE_VERIFY_PHONE = 'verify_phone';
+
     public const TYPE_UPDATE_PASSWORD = 'update_password';
 
     public static function allTypes(): array
@@ -32,7 +36,6 @@ class CustomerOtpService
     /**
      * Generate a fresh OTP, persist it, and dispatch the notification.
      * Any previous pending OTP of the same type is invalidated first.
-     *
      */
     public function generateAndSend(User $user, string $type): Otp
     {
@@ -45,17 +48,17 @@ class CustomerOtpService
             $code = $this->generateCode();
 
             $otp = Otp::create([
-                'user_id'    => $user->id,
-                'otp_code'   => $code,
-                'type'       => $type,
+                'user_id' => $user->id,
+                'otp_code' => $code,
+                'type' => $type,
                 'expires_at' => now()->addMinutes(self::EXPIRES_IN),
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->userAgent(),
             ]);
 
             $user->notify(new CustomerOtpNotification(
-                otpCode:          $code,
-                type:             $type,
+                otpCode: $code,
+                type: $type,
                 expiresInMinutes: self::EXPIRES_IN,
             ));
 
@@ -76,7 +79,7 @@ class CustomerOtpService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$otp) {
+        if (! $otp) {
             throw ValidationException::withMessages([
                 'otp_code' => ['No valid OTP found. Please request a new code.'],
             ]);
@@ -122,7 +125,7 @@ class CustomerOtpService
         Otp::where('user_id', $userId)
             ->where(function ($q) {
                 $q->where('is_used', true)
-                  ->orWhere('expires_at', '<', now());
+                    ->orWhere('expires_at', '<', now());
             })
             ->delete();
     }

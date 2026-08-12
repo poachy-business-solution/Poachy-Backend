@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Product;
 
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBrand;
+use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\ProductCategory;
 use App\Models\Tenant\ProductVariant;
 use Illuminate\Support\Str;
@@ -81,7 +82,7 @@ class SkuGeneratorService
     {
         $category = ProductCategory::find($categoryId);
 
-        if (!$category) {
+        if (! $category) {
             return 'GENR'; // Generic fallback
         }
 
@@ -98,13 +99,13 @@ class SkuGeneratorService
      */
     private function getBrandCode(?int $brandId): string
     {
-        if (!$brandId) {
+        if (! $brandId) {
             return 'NOBR';
         }
 
         $brand = ProductBrand::find($brandId);
 
-        if (!$brand) {
+        if (! $brand) {
             return 'NOBR';
         }
 
@@ -145,7 +146,6 @@ class SkuGeneratorService
         return $code;
     }
 
-
     /**
      * Format SKU with hyphens: CAT-BRD-CODE
      */
@@ -165,7 +165,7 @@ class SkuGeneratorService
 
         $exists = Product::where('sku', $sku)->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             return $sku;
         }
 
@@ -186,9 +186,9 @@ class SkuGeneratorService
             throw new \RuntimeException('Unable to generate unique bundle SKU after 10 attempts');
         }
 
-        $exists = \App\Models\Tenant\ProductBundle::where('bundle_sku', $sku)->exists();
+        $exists = ProductBundle::where('bundle_sku', $sku)->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             return $sku;
         }
 
@@ -199,7 +199,6 @@ class SkuGeneratorService
 
         return $this->ensureUniqueBundleSku($newSku, $attempts + 1);
     }
-
 
     /**
      * Validate SKU format
@@ -227,7 +226,7 @@ class SkuGeneratorService
      */
     public function parse(string $sku): array
     {
-        if (!$this->isValidFormat($sku)) {
+        if (! $this->isValidFormat($sku)) {
             throw new \InvalidArgumentException('Invalid SKU format');
         }
 
@@ -242,7 +241,7 @@ class SkuGeneratorService
 
     public function parseVariantSku(string $sku): array
     {
-        if (!$this->isValidVariantFormat($sku)) {
+        if (! $this->isValidVariantFormat($sku)) {
             throw new \InvalidArgumentException('Invalid variant SKU format');
         }
 
@@ -259,7 +258,7 @@ class SkuGeneratorService
 
     public function parseBundleSku(string $sku): array
     {
-        if (!$this->isValidBundleFormat($sku)) {
+        if (! $this->isValidBundleFormat($sku)) {
             throw new \InvalidArgumentException('Invalid bundle SKU format');
         }
 
@@ -287,7 +286,7 @@ class SkuGeneratorService
     private function generateVariantCode(Product $product, array $data): string
     {
         // Option 1: Use attributes to create meaningful code
-        if (!empty($data['attributes'])) {
+        if (! empty($data['attributes'])) {
             return $this->generateCodeFromAttributes($data['attributes']);
         }
 
@@ -298,7 +297,7 @@ class SkuGeneratorService
     private function generateCodeFromAttributes(array $attributes): string
     {
         if (empty($attributes)) {
-            return 'V' . Str::upper(Str::random(2));
+            return 'V'.Str::upper(Str::random(2));
         }
 
         $code = '';
@@ -316,7 +315,7 @@ class SkuGeneratorService
         $code = Str::substr($code, 0, 3);
         $code = Str::padRight($code, 3, 'X');
 
-        return 'V' . $code;
+        return 'V'.$code;
     }
 
     private function generateSequentialVariantCode(Product $product): string
@@ -335,7 +334,7 @@ class SkuGeneratorService
 
         $exists = ProductVariant::where('sku', $sku)->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             return $sku;
         }
 

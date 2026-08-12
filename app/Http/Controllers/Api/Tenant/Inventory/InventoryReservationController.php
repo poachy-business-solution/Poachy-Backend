@@ -30,59 +30,74 @@ class InventoryReservationController extends Controller
      *         in="query",
      *         description="Filter by specific store ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Filter by specific product ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by reservation status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"active", "fulfilled", "cancelled", "expired"},
      *             example="active"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         description="Filter reservations created from this date (inclusive, format: Y-m-d). Defaults to 7 days ago.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-02-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         description="Filter reservations created up to this date (inclusive, format: Y-m-d, must be after or equal to from_date). Defaults to today.",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date", example="2026-02-26")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=20, example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1, example=1)
      *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Inventory reservations retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Inventory reservations retrieved successfully"),
      *             @OA\Property(
@@ -91,8 +106,10 @@ class InventoryReservationController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(
      *                             property="inventory",
@@ -161,7 +178,9 @@ class InventoryReservationController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(property="meta", type="object")
@@ -171,7 +190,9 @@ class InventoryReservationController extends Controller
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(property="meta", type="object")
@@ -205,13 +226,16 @@ class InventoryReservationController extends Controller
      *         in="path",
      *         description="ID of the inventory reservation",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Reservation retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Reservation retrieved successfully"),
      *             @OA\Property(property="data", type="object"),
@@ -222,7 +246,9 @@ class InventoryReservationController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Reservation not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found"),
      *             @OA\Property(property="meta", type="object")
@@ -232,7 +258,9 @@ class InventoryReservationController extends Controller
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(property="meta", type="object")

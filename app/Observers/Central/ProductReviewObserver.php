@@ -20,9 +20,9 @@ class ProductReviewObserver
         }
 
         Log::info('ProductReview created', [
-            'review_id'              => $review->id,
+            'review_id' => $review->id,
             'marketplace_product_id' => $review->marketplace_product_id,
-            'status'                 => $review->status->value,
+            'status' => $review->status->value,
         ]);
     }
 
@@ -46,9 +46,9 @@ class ProductReviewObserver
         }
 
         Log::info('ProductReview updated', [
-            'review_id'              => $review->id,
+            'review_id' => $review->id,
             'marketplace_product_id' => $review->marketplace_product_id,
-            'changes'                => $review->getChanges(),
+            'changes' => $review->getChanges(),
         ]);
     }
 
@@ -62,9 +62,9 @@ class ProductReviewObserver
         }
 
         Log::info('ProductReview soft-deleted', [
-            'review_id'              => $review->id,
+            'review_id' => $review->id,
             'marketplace_product_id' => $review->marketplace_product_id,
-            'was_approved'           => $review->status === ReviewStatus::Approved,
+            'was_approved' => $review->status === ReviewStatus::Approved,
         ]);
     }
 
@@ -77,7 +77,7 @@ class ProductReviewObserver
         }
 
         Log::info('ProductReview restored', [
-            'review_id'              => $review->id,
+            'review_id' => $review->id,
             'marketplace_product_id' => $review->marketplace_product_id,
         ]);
     }
@@ -96,7 +96,7 @@ class ProductReviewObserver
         } catch (\Exception $e) {
             Log::error('ProductReviewObserver: failed to clear cache', [
                 'review_id' => $review->id,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

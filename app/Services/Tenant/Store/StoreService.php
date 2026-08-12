@@ -17,7 +17,7 @@ class StoreService
         $query = Store::query()->with(['manager:id,name,email']);
 
         // Apply filters
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
@@ -33,15 +33,15 @@ class StoreService
             }
         }
 
-        if (!empty($filters['city'])) {
+        if (! empty($filters['city'])) {
             $query->byCity($filters['city']);
         }
 
-        if (!empty($filters['region'])) {
+        if (! empty($filters['region'])) {
             $query->byRegion($filters['region']);
         }
 
-        if (!empty($filters['manager_id'])) {
+        if (! empty($filters['manager_id'])) {
             $query->where('manager_id', $filters['manager_id']);
         }
 
@@ -75,7 +75,7 @@ class StoreService
         return Store::with([
             'manager:id,name,email,phone',
             'creator:id,name',
-            'updater:id,name'
+            'updater:id,name',
         ])->find($id);
     }
 
@@ -94,6 +94,7 @@ class StoreService
             $store = Store::create($data);
 
             $this->clearStoresCache();
+
             return $store->fresh(['manager', 'creator']);
         });
     }
@@ -109,6 +110,7 @@ class StoreService
             $store->update($data);
 
             $this->clearStoresCache();
+
             return $store->fresh(['manager', 'creator', 'updater']);
         });
     }
@@ -184,7 +186,6 @@ class StoreService
             return $result;
         });
     }
-
 
     // Remove manager from a store
     public function removeManagerFromStore(Store $store): bool

@@ -6,6 +6,7 @@ use App\Mail\Tenant\Auth\TenantCredentialsMail;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
 use App\Services\Central\Admin\Tenant\TenantUserService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -135,7 +136,7 @@ class TenantUserServiceCreateTenantUserTest extends TestCase
 
     public function test_throws_for_unknown_tenant(): void
     {
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         $this->makeService()->createTenantUser('does-not-exist', [
             'name' => 'Nobody', 'email' => 'nobody@example.com',

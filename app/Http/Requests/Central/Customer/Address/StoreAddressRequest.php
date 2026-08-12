@@ -16,19 +16,19 @@ class StoreAddressRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'address_type'          => ['nullable', 'string', 'in:' . implode(',', AddressType::values())],
-            'label'                 => ['nullable', 'string', 'max:50'],
-            'recipient_name'        => ['required', 'string', 'max:100'],
-            'recipient_phone'       => ['required', 'string', 'max:20'],
-            'address_line'          => ['required', 'string', 'max:255'],
-            'building_apartment'    => ['nullable', 'string', 'max:100'],
-            'city'                  => ['required', 'string', 'max:100'],
-            'county'                => ['required', 'string', 'max:100'],
-            'postal_code'           => ['nullable', 'string', 'max:20'],
-            'latitude'              => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude'             => ['nullable', 'numeric', 'between:-180,180'],
+            'address_type' => ['nullable', 'string', 'in:'.implode(',', AddressType::values())],
+            'label' => ['nullable', 'string', 'max:50'],
+            'recipient_name' => ['required', 'string', 'max:100'],
+            'recipient_phone' => ['required', 'string', 'max:20'],
+            'address_line' => ['required', 'string', 'max:255'],
+            'building_apartment' => ['nullable', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:100'],
+            'county' => ['required', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'delivery_instructions' => ['nullable', 'string', 'max:500'],
-            'is_default'            => ['nullable', 'boolean'],
+            'is_default' => ['nullable', 'boolean'],
         ];
     }
 

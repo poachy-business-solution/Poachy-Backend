@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Tenant\Uom;
 
+use App\Models\Tenant\UomConversion;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreUomConversionRequest extends FormRequest
 {
@@ -17,7 +20,7 @@ class StoreUomConversionRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -45,8 +48,6 @@ class StoreUomConversionRequest extends FormRequest
 
     /**
      * Get custom messages for validator errors.
-     *
-     * @return array
      */
     public function messages(): array
     {
@@ -66,14 +67,13 @@ class StoreUomConversionRequest extends FormRequest
     /**
      * Configure the validator instance.
      *
-     * @param  \Illuminate\Validation\Validator  $validator
-     * @return void
+     * @param  Validator  $validator
      */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             // Check if conversion already exists
-            $exists = \App\Models\Tenant\UomConversion::where(function ($query) {
+            $exists = UomConversion::where(function ($query) {
                 $query->where('from_uom_id', $this->from_uom_id)
                     ->where('to_uom_id', $this->to_uom_id);
             })->orWhere(function ($query) {

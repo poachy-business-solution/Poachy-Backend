@@ -6,6 +6,8 @@ use App\Models\Tenant\SyncQueueOutbound;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
@@ -16,8 +18,11 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
+
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public array $backoff = [60, 300, 900];
 
     public function __construct(
@@ -48,7 +53,7 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
             $syncQueue->update(['status' => 'stale']);
             Log::warning('Delivery zone sync is stale, marking as expired', [
                 'sync_queue_id' => $syncQueue->id,
-                'expires_at'    => $syncQueue->expires_at,
+                'expires_at' => $syncQueue->expires_at,
             ]);
 
             return;
@@ -67,10 +72,10 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
             $syncQueue->markAsProcessing();
 
             Log::info('Processing outbound delivery zone sync', [
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
-                'zone_id'       => $syncQueue->syncable_id,
-                'action'        => $syncQueue->action,
+                'zone_id' => $syncQueue->syncable_id,
+                'action' => $syncQueue->action,
             ]);
 
             $response = $this->sendToCentralApi($syncQueue);
@@ -80,16 +85,16 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
             $syncQueue->markAsCompleted($response);
 
             Log::info('Outbound delivery zone sync delivered to central', [
-                'tenant_id'      => $syncQueue->tenant_id,
-                'sync_queue_id'  => $syncQueue->id,
+                'tenant_id' => $syncQueue->tenant_id,
+                'sync_queue_id' => $syncQueue->id,
                 'central_sync_id' => $response['sync_id'] ?? null,
             ]);
         } catch (\Exception $e) {
             Log::error('Outbound delivery zone sync failed', [
-                'tenant_id'     => $syncQueue->tenant_id,
+                'tenant_id' => $syncQueue->tenant_id,
                 'sync_queue_id' => $syncQueue->id,
-                'error'         => $e->getMessage(),
-                'trace'         => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $syncQueue->markAsFailed(
@@ -97,8 +102,8 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
                 errorCode: $this->getErrorCode($e),
                 errorDetails: [
                     'exception' => get_class($e),
-                    'file'      => $e->getFile(),
-                    'line'      => $e->getLine(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                 ]
             );
 
@@ -107,7 +112,7 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
 
                 Log::info('Delivery zone sync will be retried', [
                     'sync_queue_id' => $syncQueue->id,
-                    'retry_count'   => $syncQueue->retry_count,
+                    'retry_count' => $syncQueue->retry_count,
                     'next_retry_at' => $syncQueue->next_retry_at,
                 ]);
 
@@ -119,7 +124,7 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
             } else {
                 Log::error('Max retries reached for delivery zone sync, failed permanently', [
                     'sync_queue_id' => $syncQueue->id,
-                    'retry_count'   => $syncQueue->retry_count,
+                    'retry_count' => $syncQueue->retry_count,
                 ]);
             }
 
@@ -133,30 +138,30 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
 
     protected function sendToCentralApi(SyncQueueOutbound $syncQueue): array
     {
-        $centralApiUrl = config('services.central_api.url') . '/api/v1/central/sync/inbound/delivery-zone';
+        $centralApiUrl = config('services.central_api.url').'/api/v1/central/sync/inbound/delivery-zone';
         $apiToken = config('services.central_api.token');
 
         Log::debug('Sending delivery zone sync to central API', [
-            'url'           => $centralApiUrl,
+            'url' => $centralApiUrl,
             'sync_queue_id' => $syncQueue->id,
         ]);
 
         $response = Http::timeout(60)
             ->retry(2, 100)
             ->withHeaders([
-                'Accept'            => 'application/json',
-                'X-Tenant-ID'       => $syncQueue->tenant_id,
-                'X-Sync-Queue-ID'   => $syncQueue->id,
+                'Accept' => 'application/json',
+                'X-Tenant-ID' => $syncQueue->tenant_id,
+                'X-Sync-Queue-ID' => $syncQueue->id,
                 'X-Idempotency-Key' => $syncQueue->idempotency_key,
             ])
             ->withToken($apiToken)
             ->post($centralApiUrl, [
-                'tenant_id'               => $syncQueue->tenant_id,
-                'action'                  => $syncQueue->action,
-                'priority'                => $syncQueue->priority,
-                'payload'                 => $syncQueue->payload,
-                'metadata'                => $syncQueue->metadata,
-                'idempotency_key'         => $syncQueue->idempotency_key,
+                'tenant_id' => $syncQueue->tenant_id,
+                'action' => $syncQueue->action,
+                'priority' => $syncQueue->priority,
+                'payload' => $syncQueue->payload,
+                'metadata' => $syncQueue->metadata,
+                'idempotency_key' => $syncQueue->idempotency_key,
             ]);
 
         if (! $response->successful()) {
@@ -169,7 +174,7 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
 
         if (! isset($responseData['success']) || ! $responseData['success']) {
             throw new \RuntimeException(
-                'Central API returned error: ' . ($responseData['message'] ?? 'Unknown error')
+                'Central API returned error: '.($responseData['message'] ?? 'Unknown error')
             );
         }
 
@@ -178,11 +183,11 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
 
     protected function getErrorCode(\Throwable $e): string
     {
-        if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+        if ($e instanceof ConnectionException) {
             return 'NETWORK_ERROR';
         }
 
-        if ($e instanceof \Illuminate\Http\Client\RequestException) {
+        if ($e instanceof RequestException) {
             return 'API_ERROR';
         }
 
@@ -197,17 +202,17 @@ class ProcessOutboundDeliveryZoneSync implements ShouldQueue
     {
         Log::error('ProcessOutboundDeliveryZoneSync job failed permanently', [
             'sync_queue_id' => $this->syncQueueId,
-            'error'         => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
 
         $syncQueue = SyncQueueOutbound::find($this->syncQueueId);
         if ($syncQueue) {
             $syncQueue->markAsFailed(
-                errorMessage: 'Job failed permanently: ' . $exception->getMessage(),
+                errorMessage: 'Job failed permanently: '.$exception->getMessage(),
                 errorCode: 'JOB_FAILED',
                 errorDetails: [
                     'exception' => get_class($exception),
-                    'trace'     => $exception->getTraceAsString(),
+                    'trace' => $exception->getTraceAsString(),
                 ]
             );
         }

@@ -10,6 +10,7 @@ use App\Models\ShoppingCart;
 use App\Models\ShoppingCartItem;
 use App\Models\User;
 use App\Services\Central\Marketplace\ShoppingCartService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,7 @@ class ShoppingCartServiceTest extends TestCase
             'phone_verified' => true,
         ]);
 
-        $this->service = new ShoppingCartService();
+        $this->service = new ShoppingCartService;
     }
 
     protected function tearDown(): void
@@ -216,7 +217,7 @@ class ShoppingCartServiceTest extends TestCase
         $cart = $this->createCart();
         $product = $this->createProduct(['is_active' => false]);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         $this->service->addItem($cart, ['marketplace_product_id' => $product->id, 'quantity' => 1]);
     }
@@ -254,7 +255,7 @@ class ShoppingCartServiceTest extends TestCase
         $product = $this->createProduct(['available_quantity' => 10]);
         $item = $this->service->addItem($otherCart, ['marketplace_product_id' => $product->id, 'quantity' => 1]);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         $this->service->updateItemQuantity($cart, $item->id, 2);
     }

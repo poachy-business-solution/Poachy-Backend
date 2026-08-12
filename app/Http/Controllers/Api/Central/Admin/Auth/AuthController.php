@@ -30,19 +30,25 @@ class AuthController extends Controller
      *     description="Validate admin credentials and send OTP code to email. This is the first step of 2FA authentication.",
      *     operationId="adminLogin",
      *     tags={"Central - Admin - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Admin credentials",
+     *
      *         @OA\JsonContent(
      *             required={"email", "password"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="admin@poachy.com"),
      *             @OA\Property(property="password", type="string", format="password", example="password123")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="OTP sent successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="OTP sent to your email. Please check and verify."),
      *             @OA\Property(
@@ -61,10 +67,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -73,6 +82,7 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The provided credentials are incorrect.")
      *                 )
      *             )
@@ -102,19 +112,25 @@ class AuthController extends Controller
      *     description="Verify the OTP code sent to email and complete authentication. Returns bearer token on success.",
      *     operationId="verifyOtp",
      *     tags={"Central - Admin - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="OTP verification data",
+     *
      *         @OA\JsonContent(
      *             required={"email", "otp_code"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="admin@poachy.com"),
      *             @OA\Property(property="otp_code", type="string", minLength=7, maxLength=7, example="1234567", description="7-digit OTP code from email")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Login successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Login successful"),
      *             @OA\Property(
@@ -129,10 +145,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Invalid or expired OTP",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -141,6 +160,7 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="otp_code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Invalid OTP code. 2 attempts remaining.")
      *                 )
      *             )
@@ -174,18 +194,24 @@ class AuthController extends Controller
      *     description="Request a new OTP code if the previous one expired or was lost. This invalidates any existing OTP.",
      *     operationId="resendOtp",
      *     tags={"Central - Admin - Auth"},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Email address to resend OTP",
+     *
      *         @OA\JsonContent(
      *             required={"email"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="admin@poachy.com")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="OTP resent successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="OTP resent successfully"),
      *             @OA\Property(
@@ -195,10 +221,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid.")
      *         )
@@ -229,11 +258,14 @@ class AuthController extends Controller
      *     operationId="createAdmin",
      *     tags={"Central - Admin - Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="New admin details",
+     *
      *         @OA\JsonContent(
      *             required={"name", "email", "password", "password_confirmation", "role"},
+     *
      *             @OA\Property(property="name", type="string", example="John Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="john@poachy.com"),
      *             @OA\Property(property="password", type="string", format="password", minLength=8, example="securepass123"),
@@ -241,10 +273,13 @@ class AuthController extends Controller
      *             @OA\Property(property="role", type="string", enum={"admin", "support"}, example="admin", description="User role: admin (full access) or support (limited access)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Admin created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Admin created successfully"),
      *             @OA\Property(
@@ -253,26 +288,35 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Admin role required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -281,6 +325,7 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="email",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The email has already been taken.")
      *                 )
      *             )
@@ -308,20 +353,26 @@ class AuthController extends Controller
      *     operationId="resetAdminPassword",
      *     tags={"Central - Admin - Management"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Password reset details",
+     *
      *         @OA\JsonContent(
      *             required={"admin_id", "password", "password_confirmation"},
+     *
      *             @OA\Property(property="admin_id", type="integer", example=2, description="ID of the admin user to reset"),
      *             @OA\Property(property="password", type="string", format="password", minLength=8, example="newpassword123"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="newpassword123")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password reset successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Password reset successfully"),
      *             @OA\Property(
@@ -330,26 +381,35 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - Admin role required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid.")
      *         )
@@ -379,18 +439,24 @@ class AuthController extends Controller
      *     operationId="adminLogout",
      *     tags={"Central - Admin - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Logged out successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Logged out successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
@@ -414,10 +480,13 @@ class AuthController extends Controller
      *     operationId="getCurrentAdmin",
      *     tags={"Central - Admin - Auth"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Admin details retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Admin details retrieved"),
      *             @OA\Property(
@@ -426,10 +495,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )

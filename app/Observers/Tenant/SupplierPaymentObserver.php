@@ -107,8 +107,6 @@ class SupplierPaymentObserver
 
     /**
      * Generate unique payment number
-     *
-     * @return string
      */
     private function generatePaymentNumber(): string
     {
@@ -132,6 +130,7 @@ class SupplierPaymentObserver
 
         if ($payment->purchase_order_id) {
             $poNumber = $payment->purchaseOrder->po_number ?? 'Unknown PO';
+
             return "{$user} recorded payment {$payment->payment_number} of KES {$amount} to {$supplierName} for PO {$poNumber}";
         }
 
@@ -146,6 +145,7 @@ class SupplierPaymentObserver
         if (isset($changes['amount'])) {
             $oldAmount = number_format($payment->getOriginal('amount'), 2);
             $newAmount = number_format($changes['amount'], 2);
+
             return "{$user} adjusted payment {$payment->payment_number} amount from KES {$oldAmount} to KES {$newAmount}";
         }
 
@@ -153,11 +153,13 @@ class SupplierPaymentObserver
         if (isset($changes['payment_method'])) {
             $oldMethod = $payment->getOriginal('payment_method');
             $newMethod = $changes['payment_method'];
+
             return "{$user} changed payment {$payment->payment_number} method from {$oldMethod} to {$newMethod}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated payment {$payment->payment_number} ({$changedFields})";
     }
 }

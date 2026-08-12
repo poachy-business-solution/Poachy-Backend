@@ -3,7 +3,6 @@
 namespace App\DataTransferObjects\Sync;
 
 use App\Models\Tenant\Product;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class ProductSyncDTO
@@ -38,16 +37,16 @@ class ProductSyncDTO
      */
     public static function fromProduct(Product $product, bool $skipValidation = false): self
     {
-        if (!tenant()) {
+        if (! tenant()) {
             throw new \RuntimeException('Cannot create ProductSyncDTO outside tenant context');
         }
 
-        if (!$skipValidation) {
-            if (!$product->is_available_online) {
+        if (! $skipValidation) {
+            if (! $product->is_available_online) {
                 throw new \InvalidArgumentException('Product must be available online to sync');
             }
 
-            if (!$product->online_price) {
+            if (! $product->online_price) {
                 throw new \InvalidArgumentException('Product must have online_price set');
             }
         }
@@ -157,10 +156,10 @@ class ProductSyncDTO
         $payloadHash = hash('sha256', $payload);
 
         return md5(
-            $this->tenantId .
-                $this->productType .
-                $this->productId .
-                $action .
+            $this->tenantId.
+                $this->productType.
+                $this->productId.
+                $action.
                 $payloadHash
         );
     }

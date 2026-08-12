@@ -51,7 +51,7 @@ class TaxRateService
             $shouldBeDefault = true;
         }
         // If no default exists and is_default was not provided, this should be default
-        elseif (!isset($data['is_default']) && !$this->repository->hasDefault()) {
+        elseif (! isset($data['is_default']) && ! $this->repository->hasDefault()) {
             $shouldBeDefault = true;
         }
 
@@ -66,6 +66,7 @@ class TaxRateService
         return DB::transaction(function () use ($data) {
             $taxRate = $this->repository->create($data);
             $this->clearCache();
+
             return $taxRate;
         });
     }
@@ -78,18 +79,18 @@ class TaxRateService
         return DB::transaction(function () use ($id) {
             $taxRate = $this->repository->findById($id);
 
-            if (!$taxRate) {
-                throw new \InvalidArgumentException('Tax rate not found');
+            if (! $taxRate) {
+                throw new InvalidArgumentException('Tax rate not found');
             }
 
-            $newStatus = !$taxRate->is_active;
+            $newStatus = ! $taxRate->is_active;
             $this->repository->update($taxRate, ['is_active' => $newStatus]);
 
             $this->clearCache();
 
             return [
                 'is_active' => $newStatus,
-                'message' => $newStatus ? 'Tax rate activated successfully' : 'Tax rate deactivated successfully'
+                'message' => $newStatus ? 'Tax rate activated successfully' : 'Tax rate deactivated successfully',
             ];
         });
     }
@@ -101,11 +102,11 @@ class TaxRateService
     {
         return DB::transaction(function () use ($id) {
             $taxRate = $this->repository->findById($id);
-            if (!$taxRate) {
-                throw new \InvalidArgumentException('Tax rate not found');
+            if (! $taxRate) {
+                throw new InvalidArgumentException('Tax rate not found');
             }
 
-            $newDefaultStatus = !$taxRate->is_default;
+            $newDefaultStatus = ! $taxRate->is_default;
 
             // If setting as default, unset all other defaults
             if ($newDefaultStatus) {
@@ -117,7 +118,7 @@ class TaxRateService
                 $defaultCount = TaxRate::where('is_default', true)->count();
 
                 if ($defaultCount <= 1) {
-                    throw new \InvalidArgumentException('Cannot remove default status. At least one tax rate must be default');
+                    throw new InvalidArgumentException('Cannot remove default status. At least one tax rate must be default');
                 }
 
                 $this->repository->update($taxRate, ['is_default' => false]);
@@ -128,7 +129,7 @@ class TaxRateService
 
             return [
                 'is_default' => $newDefaultStatus,
-                'message' => $message
+                'message' => $message,
             ];
         });
     }
@@ -141,8 +142,8 @@ class TaxRateService
         return DB::transaction(function () use ($id, $effectiveUntil) {
             $taxRate = $this->repository->findById($id);
 
-            if (!$taxRate) {
-                throw new \InvalidArgumentException('Tax rate not found');
+            if (! $taxRate) {
+                throw new InvalidArgumentException('Tax rate not found');
             }
 
             $this->repository->update($taxRate, ['effective_until' => $effectiveUntil]);

@@ -41,7 +41,7 @@ class SkuGeneratorServiceTest extends TestCase
 
     private function makeService(): SkuGeneratorService
     {
-        return new SkuGeneratorService();
+        return new SkuGeneratorService;
     }
 
     // =========================================================================

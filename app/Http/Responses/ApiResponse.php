@@ -3,9 +3,9 @@
 namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Http\Response;
 
 class ApiResponse
 {
@@ -41,7 +41,7 @@ class ApiResponse
 
         if ($errors !== null) {
             // Ensure errors is always an array
-            $structuredErrors = is_array($errors) ? $errors : ['message' => (string)$errors];
+            $structuredErrors = is_array($errors) ? $errors : ['message' => (string) $errors];
         }
 
         $response = [
@@ -127,6 +127,7 @@ class ApiResponse
         int $status = 200
     ): JsonResponse {
         $data = $resource->response()->getData(true);
+
         return self::success($message, $data, $status);
     }
 

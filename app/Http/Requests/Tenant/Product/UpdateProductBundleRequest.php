@@ -10,6 +10,7 @@ class UpdateProductBundleRequest extends FormRequest
     public function authorize(): bool
     {
         $bundle = $this->route('bundle');
+
         return $this->user()?->can('manage-products') ?? false;
     }
 

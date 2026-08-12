@@ -32,85 +32,102 @@ class CouponController extends Controller
      *     operationId="listCoupons",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by coupon code or description",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="SAVE20")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by coupon status",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"active", "inactive", "expired", "upcoming"},
      *             example="active"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="applicable_to",
      *         in="query",
      *         description="Filter by applicability type",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"all_products", "specific_products", "specific_categories", "specific_brands"},
      *             example="specific_products"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean", example=true)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"created_at", "code", "valid_from", "valid_until", "usage_count"},
      *             default="created_at"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
      *         required=false,
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"asc", "desc"},
      *             default="desc"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1, minimum=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, minimum=1, maximum=100)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coupons retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupons retrieved successfully"),
      *             @OA\Property(
@@ -119,8 +136,10 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="code", type="string", example="SAVE10"),
      *                         @OA\Property(property="description", type="string", example="Get 10% off on all electronic brands"),
@@ -163,12 +182,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -181,12 +202,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -230,13 +253,15 @@ class CouponController extends Controller
      *     operationId="createCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Coupon details",
+     *
      *         @OA\JsonContent(
      *             required={"code", "description", "discount_type", "discount_value", "valid_from", "valid_until", "applicable_to"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="code",
      *                 type="string",
@@ -275,8 +300,10 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="product_id", type="integer", example=5),
      *                         @OA\Property(property="product_variant_id", type="integer", nullable=true, example=12)
      *                     ),
@@ -285,13 +312,16 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="categories",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={1, 11, 12},
      *                     description="Category IDs to attach (for specific_categories type)"
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="brands",
      *                     type="array",
+     *
      *                     @OA\Items(type="integer"),
      *                     example={3},
      *                     description="Brand IDs to attach (for specific_brands type)"
@@ -299,12 +329,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Coupon created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupon created successfully"),
      *             @OA\Property(
@@ -340,8 +372,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Electronics"),
      *                             @OA\Property(property="slug", type="string", example="electronics")
@@ -363,12 +397,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -381,12 +417,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -395,19 +433,25 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The code has already been taken.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="valid_until",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The valid until must be a date after valid from.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicability.categories",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Categories are required when applicable_to is specific_categories.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -418,12 +462,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -456,20 +502,23 @@ class CouponController extends Controller
      *     operationId="getCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coupon retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupon retrieved successfully"),
      *             @OA\Property(
@@ -504,8 +553,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=5),
      *                             @OA\Property(property="name", type="string", example="iPhone 13"),
      *                             @OA\Property(property="sku", type="string", example="IP13-128GB")
@@ -514,8 +565,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Electronics"),
      *                             @OA\Property(property="slug", type="string", example="electronics")
@@ -524,8 +577,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=3),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -552,12 +607,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -570,12 +627,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -588,12 +647,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -612,7 +673,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -630,20 +691,23 @@ class CouponController extends Controller
      *     operationId="updateCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Coupon fields to update (all optional)",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="code", type="string", example="NEWSAVE20", description="Coupon code"),
      *             @OA\Property(property="description", type="string", example="Updated description", description="Coupon description"),
      *             @OA\Property(property="discount_value", type="number", format="float", example=25.00, description="Discount value"),
@@ -656,12 +720,14 @@ class CouponController extends Controller
      *             @OA\Property(property="is_active", type="boolean", example=false, description="Active status")
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coupon updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupon updated successfully"),
      *             @OA\Property(
@@ -697,8 +763,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Electronics"),
      *                             @OA\Property(property="slug", type="string", example="electronics")
@@ -720,12 +788,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -738,12 +808,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -756,12 +828,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -770,9 +844,11 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="code",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The code has already been taken.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -783,12 +859,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -807,7 +885,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -827,20 +905,23 @@ class CouponController extends Controller
      *     operationId="deleteCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coupon deleted successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupon deleted successfully"),
      *             @OA\Property(
@@ -853,12 +934,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -871,12 +954,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -889,12 +974,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -913,7 +1000,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -930,20 +1017,23 @@ class CouponController extends Controller
      *     operationId="activateCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coupon activated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupon activated successfully"),
      *             @OA\Property(
@@ -985,12 +1075,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1003,12 +1095,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1021,12 +1115,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1045,7 +1141,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -1065,20 +1161,23 @@ class CouponController extends Controller
      *     operationId="deactivateCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coupon deactivated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Coupon deactivated successfully"),
      *             @OA\Property(
@@ -1120,12 +1219,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1138,12 +1239,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1156,12 +1259,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1180,7 +1285,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -1200,24 +1305,28 @@ class CouponController extends Controller
      *     operationId="attachCategoriesToCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Category IDs to attach",
+     *
      *         @OA\JsonContent(
      *             required={"category_ids"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="category_ids",
      *                 type="array",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={14, 15, 13},
      *                 description="Array of category IDs to attach to the coupon",
@@ -1225,12 +1334,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Categories attached to coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Categories attached to coupon successfully"),
      *             @OA\Property(
@@ -1266,8 +1377,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Electronics"),
      *                             @OA\Property(property="slug", type="string", example="electronics")
@@ -1289,12 +1402,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1307,12 +1422,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1325,12 +1442,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1339,14 +1458,18 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="category_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The category ids field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_to",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Can only attach categories to coupons with applicable_to set to specific_categories.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1357,12 +1480,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1381,7 +1506,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -1401,27 +1526,32 @@ class CouponController extends Controller
      *     operationId="detachCategoryFromCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="categoryId",
      *         in="path",
      *         description="Category ID to detach",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=15)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Category detached from coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Category detached from coupon successfully"),
      *             @OA\Property(
@@ -1457,8 +1587,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="categories",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Electronics"),
      *                             @OA\Property(property="slug", type="string", example="electronics")
@@ -1480,12 +1612,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1498,12 +1632,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon or category not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1516,12 +1652,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1540,7 +1678,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -1560,24 +1698,28 @@ class CouponController extends Controller
      *     operationId="attachBrandsToCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Brand IDs to attach",
+     *
      *         @OA\JsonContent(
      *             required={"brand_ids"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="brand_ids",
      *                 type="array",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={4, 5, 7},
      *                 description="Array of brand IDs to attach to the coupon",
@@ -1585,12 +1727,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brands attached to coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brands attached to coupon successfully"),
      *             @OA\Property(
@@ -1627,8 +1771,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -1649,12 +1795,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1667,12 +1815,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1685,12 +1835,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1699,14 +1851,18 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="brand_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The brand ids field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_to",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Can only attach brands to coupons with applicable_to set to specific_brands.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1717,12 +1873,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1741,7 +1899,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -1761,27 +1919,32 @@ class CouponController extends Controller
      *     operationId="detachBrandFromCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="brandId",
      *         in="path",
      *         description="Brand ID to detach",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=11)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Brand detached from coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Brand detached from coupon successfully"),
      *             @OA\Property(
@@ -1818,8 +1981,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -1840,12 +2005,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -1858,12 +2025,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon or brand not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -1876,12 +2045,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -1900,7 +2071,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -1920,29 +2091,34 @@ class CouponController extends Controller
      *     operationId="attachProductsToCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Products to attach (with optional variants)",
+     *
      *         @OA\JsonContent(
      *             required={"products"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="products",
      *                 type="array",
      *                 description="Array of products to attach to the coupon",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"product_id"},
+     *
      *                     @OA\Property(property="product_id", type="integer", example=1, description="Product ID"),
      *                     @OA\Property(property="product_variant_id", type="integer", nullable=true, example=null, description="Product variant ID (optional, null for base product)")
      *                 ),
@@ -1953,12 +2129,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Products attached to coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products attached to coupon successfully"),
      *             @OA\Property(
@@ -1993,8 +2171,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung Galaxy A54 5G 128GB"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-SAMS-VTFM"),
@@ -2006,8 +2186,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -2028,12 +2210,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2046,12 +2230,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -2064,12 +2250,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2078,14 +2266,18 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The products field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_to",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Can only attach products to coupons with applicable_to set to specific_products or all_products.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2096,12 +2288,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2120,7 +2314,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -2140,27 +2334,32 @@ class CouponController extends Controller
      *     operationId="detachProductFromCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="productId",
      *         in="path",
      *         description="Product ID to detach",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product detached from coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product detached from coupon successfully"),
      *             @OA\Property(
@@ -2195,8 +2394,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=4),
      *                             @OA\Property(property="name", type="string", example="TCL 55 4K UHD Smart LED TV"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-DELL-56QT"),
@@ -2208,8 +2409,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -2230,12 +2433,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2248,12 +2453,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon or product not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -2266,12 +2473,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2290,7 +2499,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -2310,29 +2519,34 @@ class CouponController extends Controller
      *     operationId="bulkAttachProductsToCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Products to attach in bulk (with optional variants)",
+     *
      *         @OA\JsonContent(
      *             required={"products"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="products",
      *                 type="array",
      *                 description="Array of products to attach to the coupon",
      *                 minItems=1,
+     *
      *                 @OA\Items(
      *                     type="object",
      *                     required={"product_id"},
+     *
      *                     @OA\Property(property="product_id", type="integer", example=1, description="Product ID"),
      *                     @OA\Property(property="product_variant_id", type="integer", nullable=true, example=null, description="Product variant ID (optional, null for base product)")
      *                 ),
@@ -2344,12 +2558,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Products bulk attached to coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products bulk attached to coupon successfully"),
      *             @OA\Property(
@@ -2384,8 +2600,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung Galaxy A54 5G 128GB"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-SAMS-VTFM"),
@@ -2397,8 +2615,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -2419,12 +2639,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2437,12 +2659,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -2455,12 +2679,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2469,14 +2695,18 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="products",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The products field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="applicable_to",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="Can only attach products to coupons with applicable_to set to specific_products or all_products.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2487,12 +2717,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2511,7 +2743,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -2531,24 +2763,28 @@ class CouponController extends Controller
      *     operationId="bulkDetachProductsFromCoupon",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Coupon ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Product IDs to detach in bulk",
+     *
      *         @OA\JsonContent(
      *             required={"product_ids"},
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="product_ids",
      *                 type="array",
+     *
      *                 @OA\Items(type="integer"),
      *                 example={2, 3},
      *                 description="Array of product IDs to detach from the coupon",
@@ -2556,12 +2792,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Products bulk detached from coupon successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Products bulk detached from coupon successfully"),
      *             @OA\Property(
@@ -2596,8 +2834,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="products",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung Galaxy A54 5G 128GB"),
      *                             @OA\Property(property="sku", type="string", example="ELEC-SAMS-VTFM"),
@@ -2609,8 +2849,10 @@ class CouponController extends Controller
      *                     @OA\Property(
      *                         property="brands",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="name", type="string", example="Samsung"),
      *                             @OA\Property(property="slug", type="string", example="samsung")
@@ -2631,12 +2873,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2649,12 +2893,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Coupon not found",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The requested resource was not found."),
      *             @OA\Property(
@@ -2667,12 +2913,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -2681,9 +2929,11 @@ class CouponController extends Controller
      *                 @OA\Property(
      *                     property="product_ids",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The product ids field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2694,12 +2944,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(
@@ -2718,7 +2970,7 @@ class CouponController extends Controller
     {
         $coupon = $this->couponService->getCouponById($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return ApiResponse::notFound('Coupon not found');
         }
 
@@ -2738,20 +2990,24 @@ class CouponController extends Controller
      *     operationId="getAvailableCoupons",
      *     tags={"Coupons"},
      *     security={{"sanctum": {}}},
-     *     
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Available coupons retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Available coupons retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 description="Array of available coupons (not paginated)",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="code", type="string", example="SAVE20"),
      *                     @OA\Property(property="description", type="string", example="Updated description"),
@@ -2789,20 +3045,24 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=201,
      *         description="No available coupons (empty array)",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Available coupons retrieved successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(type="object"),
      *                 example={}
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -2813,12 +3073,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated."),
      *             @OA\Property(
@@ -2831,12 +3093,14 @@ class CouponController extends Controller
      *             )
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=500,
      *         description="Internal server error",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="An unexpected error occurred."),
      *             @OA\Property(

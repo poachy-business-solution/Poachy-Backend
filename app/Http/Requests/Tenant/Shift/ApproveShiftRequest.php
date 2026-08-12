@@ -57,7 +57,7 @@ class ApproveShiftRequest extends FormRequest
             if ($assignment->status !== ShiftStatus::COMPLETED) {
                 $validator->errors()->add(
                     'status',
-                    'Can only approve completed shifts. Current status: ' . $assignment->status->label()
+                    'Can only approve completed shifts. Current status: '.$assignment->status->label()
                 );
             }
 
@@ -65,7 +65,7 @@ class ApproveShiftRequest extends FormRequest
             if ($assignment->is_approved) {
                 $validator->errors()->add(
                     'already_approved',
-                    'This shift has already been approved by ' . $assignment->approver->name
+                    'This shift has already been approved by '.$assignment->approver->name
                 );
             }
 
@@ -83,11 +83,11 @@ class ApproveShiftRequest extends FormRequest
             if ($assignment->has_significant_cash_variance) {
                 $requiresApproval = config('shift.auto_approve_below_variance_threshold', true);
 
-                if ($requiresApproval && !$this->override_cash_variance) {
+                if ($requiresApproval && ! $this->override_cash_variance) {
                     $variance = $assignment->cash_variance;
                     $validator->errors()->add(
                         'cash_variance',
-                        "Significant cash variance detected: " . number_format(abs($variance), 2) . ". Set 'override_cash_variance' to true to approve anyway."
+                        'Significant cash variance detected: '.number_format(abs($variance), 2).". Set 'override_cash_variance' to true to approve anyway."
                     );
                 }
             }

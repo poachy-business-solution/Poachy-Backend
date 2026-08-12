@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Events\Tenant\MerchantReviewResponseCreated;
+use App\Jobs\Tenant\SeedTenantDatabase;
+use App\Listeners\Tenant\EnqueueMerchantReviewResponseSync;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -28,7 +32,7 @@ class TenancyServiceProvider extends ServiceProvider
                 JobPipeline::make([
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
-                    \App\Jobs\Tenant\SeedTenantDatabase::class,
+                    SeedTenantDatabase::class,
                 ])->send(function (Events\TenantCreated $event) {
                     return $event->tenant;
                 })->shouldBeQueued(false),
@@ -167,7 +171,7 @@ class TenancyServiceProvider extends ServiceProvider
         // Log when tenant is created (Paybill account is assigned by TenantObserver::creating)
         Event::listen(Events\TenantCreated::class, function (Events\TenantCreated $event) {
             Log::info('New tenant created', [
-                'tenant_id'             => $event->tenant->id,
+                'tenant_id' => $event->tenant->id,
                 'mpesa_paybill_account' => $event->tenant->mpesa_paybill_account,
             ]);
         });
@@ -196,8 +200,8 @@ class TenancyServiceProvider extends ServiceProvider
 
         // Tenant review response sync
         Event::listen(
-            \App\Events\Tenant\MerchantReviewResponseCreated::class,
-            \App\Listeners\Tenant\EnqueueMerchantReviewResponseSync::class
+            MerchantReviewResponseCreated::class,
+            EnqueueMerchantReviewResponseSync::class
         );
     }
 
@@ -222,7 +226,7 @@ class TenancyServiceProvider extends ServiceProvider
         ];
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);
+            $this->app[Kernel::class]->prependToMiddlewarePriority($middleware);
         }
     }
 }

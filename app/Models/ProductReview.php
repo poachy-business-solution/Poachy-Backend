@@ -42,13 +42,13 @@ class ProductReview extends Model
     protected function casts(): array
     {
         return [
-            'rating'                => 'decimal:1',
-            'review_images'         => 'array',
-            'is_verified_purchase'  => 'boolean',
-            'status'                => ReviewStatus::class,
-            'helpful_count'         => 'integer',
-            'not_helpful_count'     => 'integer',
-            'moderated_at'          => 'datetime',
+            'rating' => 'decimal:1',
+            'review_images' => 'array',
+            'is_verified_purchase' => 'boolean',
+            'status' => ReviewStatus::class,
+            'helpful_count' => 'integer',
+            'not_helpful_count' => 'integer',
+            'moderated_at' => 'datetime',
             'merchant_responded_at' => 'datetime',
         ];
     }

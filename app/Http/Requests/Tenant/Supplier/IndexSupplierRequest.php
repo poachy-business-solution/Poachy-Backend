@@ -27,7 +27,7 @@ class IndexSupplierRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'supplier_type.enum' => 'Invalid supplier type. Must be one of: ' .
+            'supplier_type.enum' => 'Invalid supplier type. Must be one of: '.
                 implode(', ', SupplierType::values()),
         ];
     }
@@ -38,7 +38,7 @@ class IndexSupplierRequest extends FormRequest
             'is_active' => $this->input('is_active'),
             'supplier_type' => $this->input('supplier_type'),
             'search' => $this->input('search'),
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
     }
 
     public function shouldPaginate(): bool

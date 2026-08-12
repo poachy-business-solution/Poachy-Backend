@@ -17,7 +17,7 @@ class ExpenseAnalyticsResource extends JsonResource
                     'category_code' => $item->category->code ?? null,
                     'expense_count' => (int) $item->expense_count,
                     'total_amount' => (float) $item->total_amount,
-                    'formatted_amount' => 'KES ' . number_format($item->total_amount, 2),
+                    'formatted_amount' => 'KES '.number_format($item->total_amount, 2),
                 ];
             }),
 
@@ -27,19 +27,19 @@ class ExpenseAnalyticsResource extends JsonResource
                     'payment_method_label' => $item->payment_method->label(),
                     'expense_count' => (int) $item->expense_count,
                     'total_amount' => (float) $item->total_amount,
-                    'formatted_amount' => 'KES ' . number_format($item->total_amount, 2),
+                    'formatted_amount' => 'KES '.number_format($item->total_amount, 2),
                 ];
             }),
 
             'summary' => [
                 'total_amount' => (float) $this->resource['total_amount'],
-                'formatted_total_amount' => 'KES ' . number_format($this->resource['total_amount'], 2),
+                'formatted_total_amount' => 'KES '.number_format($this->resource['total_amount'], 2),
                 'total_count' => (int) $this->resource['total_count'],
                 'average_expense' => $this->resource['total_count'] > 0
                     ? (float) ($this->resource['total_amount'] / $this->resource['total_count'])
                     : 0,
                 'formatted_average_expense' => $this->resource['total_count'] > 0
-                    ? 'KES ' . number_format($this->resource['total_amount'] / $this->resource['total_count'], 2)
+                    ? 'KES '.number_format($this->resource['total_amount'] / $this->resource['total_count'], 2)
                     : 'KES 0.00',
             ],
         ];

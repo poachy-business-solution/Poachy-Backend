@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class CentralRolesPermissionsSeeder extends Seeder
 {
@@ -18,7 +18,7 @@ class CentralRolesPermissionsSeeder extends Seeder
         config(['permission.connection' => 'central']);
 
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Permissions
         $permissions = [
@@ -65,10 +65,10 @@ class CentralRolesPermissionsSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('✓ Created ' . count($permissions) . ' permissions');
+        $this->command->info('✓ Created '.count($permissions).' permissions');
 
         // Flush the cache so givePermissionTo() can find the permissions we just created
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Roles and Assign Permissions
 

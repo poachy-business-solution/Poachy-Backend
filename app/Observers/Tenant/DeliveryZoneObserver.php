@@ -22,8 +22,8 @@ class DeliveryZoneObserver
         } catch (\Exception $e) {
             Log::error('Failed to sync new delivery zone to marketplace', [
                 'tenant_id' => tenant()->id,
-                'zone_id'   => $zone->id,
-                'error'     => $e->getMessage(),
+                'zone_id' => $zone->id,
+                'error' => $e->getMessage(),
             ]);
             // Don't throw — zone creation should succeed even if sync fails
         }
@@ -39,8 +39,8 @@ class DeliveryZoneObserver
         } catch (\Exception $e) {
             Log::error('Failed to sync updated delivery zone to marketplace', [
                 'tenant_id' => tenant()->id,
-                'zone_id'   => $zone->id,
-                'error'     => $e->getMessage(),
+                'zone_id' => $zone->id,
+                'error' => $e->getMessage(),
             ]);
             // Don't throw — zone update should succeed even if sync fails
         }
@@ -56,8 +56,8 @@ class DeliveryZoneObserver
         } catch (\Exception $e) {
             Log::error('Failed to sync deleted delivery zone to marketplace', [
                 'tenant_id' => tenant()->id,
-                'zone_id'   => $zone->id,
-                'error'     => $e->getMessage(),
+                'zone_id' => $zone->id,
+                'error' => $e->getMessage(),
             ]);
             // Don't throw — zone deletion should succeed even if sync fails
         }

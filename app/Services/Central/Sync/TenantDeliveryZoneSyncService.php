@@ -20,9 +20,9 @@ class TenantDeliveryZoneSyncService
 
         if ($existing) {
             Log::info('Delivery zone already exists in central, updating (idempotent create)', [
-                'tenant_id'           => $dto->tenantId,
-                'tenant_zone_id'      => $dto->zoneId,
-                'central_zone_id'     => $existing->id,
+                'tenant_id' => $dto->tenantId,
+                'tenant_zone_id' => $dto->zoneId,
+                'central_zone_id' => $existing->id,
             ]);
 
             return $this->applyZoneData($existing, $dto);
@@ -31,14 +31,14 @@ class TenantDeliveryZoneSyncService
         $zone = TenantDeliveryZone::create(array_merge(
             $this->buildZoneAttributes($dto),
             [
-                'tenant_id'      => $dto->tenantId,
+                'tenant_id' => $dto->tenantId,
                 'tenant_zone_id' => $dto->zoneId,
             ]
         ));
 
         Log::info('Delivery zone created in central', [
-            'tenant_id'       => $dto->tenantId,
-            'tenant_zone_id'  => $dto->zoneId,
+            'tenant_id' => $dto->tenantId,
+            'tenant_zone_id' => $dto->zoneId,
             'central_zone_id' => $zone->id,
         ]);
 
@@ -57,7 +57,7 @@ class TenantDeliveryZoneSyncService
 
         if (! $zone) {
             Log::warning('Delivery zone not found in central for update — creating (out-of-order delivery)', [
-                'tenant_id'      => $dto->tenantId,
+                'tenant_id' => $dto->tenantId,
                 'tenant_zone_id' => $dto->zoneId,
             ]);
 
@@ -79,7 +79,7 @@ class TenantDeliveryZoneSyncService
 
         if (! $zone) {
             Log::warning('Delivery zone not found in central for delete — already absent (idempotent)', [
-                'tenant_id'      => $dto->tenantId,
+                'tenant_id' => $dto->tenantId,
                 'tenant_zone_id' => $dto->zoneId,
             ]);
 
@@ -89,8 +89,8 @@ class TenantDeliveryZoneSyncService
         $zone->delete();
 
         Log::info('Delivery zone deleted from central', [
-            'tenant_id'       => $dto->tenantId,
-            'tenant_zone_id'  => $dto->zoneId,
+            'tenant_id' => $dto->tenantId,
+            'tenant_zone_id' => $dto->zoneId,
             'central_zone_id' => $zone->id,
         ]);
     }
@@ -101,13 +101,13 @@ class TenantDeliveryZoneSyncService
             $this->buildZoneAttributes($dto),
             [
                 'last_synced_at' => now(),
-                'sync_status'    => 'synced',
+                'sync_status' => 'synced',
             ]
         ));
 
         Log::info('Delivery zone updated in central', [
-            'tenant_id'       => $dto->tenantId,
-            'tenant_zone_id'  => $dto->zoneId,
+            'tenant_id' => $dto->tenantId,
+            'tenant_zone_id' => $dto->zoneId,
             'central_zone_id' => $zone->id,
         ]);
 
@@ -117,26 +117,26 @@ class TenantDeliveryZoneSyncService
     private function buildZoneAttributes(DeliveryZoneSyncDTO $dto): array
     {
         return [
-            'zone_name'               => $dto->zoneName,
-            'zone_type'               => $dto->zoneType,
-            'cities'                  => $dto->cities,
-            'counties'                => $dto->counties,
-            'postal_codes'            => $dto->postalCodes,
-            'latitude'                => $dto->latitude,
-            'longitude'               => $dto->longitude,
-            'radius_km'               => $dto->radiusKm,
-            'standard_fee'            => $dto->standardFee,
-            'express_fee'             => $dto->expressFee,
-            'scheduled_fee'           => $dto->scheduledFee,
+            'zone_name' => $dto->zoneName,
+            'zone_type' => $dto->zoneType,
+            'cities' => $dto->cities,
+            'counties' => $dto->counties,
+            'postal_codes' => $dto->postalCodes,
+            'latitude' => $dto->latitude,
+            'longitude' => $dto->longitude,
+            'radius_km' => $dto->radiusKm,
+            'standard_fee' => $dto->standardFee,
+            'express_fee' => $dto->expressFee,
+            'scheduled_fee' => $dto->scheduledFee,
             'free_delivery_threshold' => $dto->freeDeliveryThreshold,
-            'standard_delivery_time'  => $dto->standardDeliveryTime,
-            'express_delivery_time'   => $dto->expressDeliveryTime,
+            'standard_delivery_time' => $dto->standardDeliveryTime,
+            'express_delivery_time' => $dto->expressDeliveryTime,
             'scheduled_delivery_time' => $dto->scheduledDeliveryTime,
-            'supported_methods'       => $dto->supportedMethods,
-            'priority'                => $dto->priority,
-            'is_active'               => $dto->isActive,
-            'last_synced_at'          => now(),
-            'sync_status'             => 'synced',
+            'supported_methods' => $dto->supportedMethods,
+            'priority' => $dto->priority,
+            'is_active' => $dto->isActive,
+            'last_synced_at' => now(),
+            'sync_status' => 'synced',
         ];
     }
 }

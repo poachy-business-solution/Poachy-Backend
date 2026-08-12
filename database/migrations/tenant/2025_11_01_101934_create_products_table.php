@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->string('sku')->unique(); // Stock Keeping Unit            
+            $table->string('sku')->unique(); // Stock Keeping Unit
 
             // Categorization
             $table->foreignId('category_id')->constrained('product_categories')->onDelete('restrict');

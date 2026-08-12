@@ -59,14 +59,14 @@ class PhoneNumber
 
         // Resolve local format: 07XXXXXXXX or 01XXXXXXXX (10 digits)
         if (strlen($cleaned) === 10 && in_array($cleaned[0], ['0'], true)) {
-            $cleaned = '254' . substr($cleaned, 1);
+            $cleaned = '254'.substr($cleaned, 1);
         }
 
         // At this point we expect 12-digit 254XXXXXXXXX
         if (strlen($cleaned) !== 12 || ! str_starts_with($cleaned, '254')) {
             throw new \InvalidArgumentException(
                 "Phone number '{$phone}' could not be normalised to a valid Kenyan number. "
-                . "Expected formats: 07XXXXXXXX, 01XXXXXXXX, +254XXXXXXXXX, 254XXXXXXXXX."
+                .'Expected formats: 07XXXXXXXX, 01XXXXXXXX, +254XXXXXXXXX, 254XXXXXXXXX.'
             );
         }
 
@@ -106,7 +106,7 @@ class PhoneNumber
      */
     public static function isKenyanMobile(string $phone): bool
     {
-        $e164   = self::normalize($phone);
+        $e164 = self::normalize($phone);
         $prefix = substr($e164, 3, 3); // characters 4-6 are the network prefix
 
         return in_array($prefix, self::KENYAN_MOBILE_PREFIXES, true);
@@ -129,7 +129,7 @@ class PhoneNumber
             return str_repeat('*', strlen($e164));
         }
 
-        return substr($e164, 0, 4) . str_repeat('*', strlen($e164) - 8) . substr($e164, -4);
+        return substr($e164, 0, 4).str_repeat('*', strlen($e164) - 8).substr($e164, -4);
     }
 
     /**

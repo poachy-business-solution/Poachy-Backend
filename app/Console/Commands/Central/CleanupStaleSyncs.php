@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class CleanupStaleSyncs extends Command
 {
     protected $signature = 'sync:cleanup-stale';
+
     protected $description = 'Mark stale sync queue records as expired';
 
     public function handle(): int

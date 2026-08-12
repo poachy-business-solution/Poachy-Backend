@@ -16,7 +16,6 @@ use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Business\BusinessDetailsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class BusinessDetailsController extends Controller
 {
@@ -31,12 +30,16 @@ class BusinessDetailsController extends Controller
      *     description="Tenant submits comprehensive business details including logo, banner, and operational information for admin approval (stored in central DB)",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 required={"business_name", "business_type_id", "business_category_id", "business_phone"},
+     *
      *                 @OA\Property(property="business_name", type="string", maxLength=255, example="Tech Haven Electronics", description="Official business name"),
      *                 @OA\Property(property="business_description", type="string", maxLength=1000, example="Leading electronics retailer offering the latest gadgets, computers, and accessories with competitive prices and excellent customer service.", description="Brief description of the business"),
      *                 @OA\Property(property="business_logo", type="string", format="binary", description="Business logo image (JPEG, PNG, JPG, WEBP - Max 2MB)"),
@@ -94,10 +97,13 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Business details submitted successfully and awaiting admin approval",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Business details submitted successfully. Awaiting admin approval."),
      *             @OA\Property(
@@ -187,26 +193,35 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Business details already submitted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Business details already submitted. Please contact admin for updates.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Authentication required",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid or missing required fields",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -241,15 +256,19 @@ class BusinessDetailsController extends Controller
      *     description="Get current tenant's business details submission",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business details retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Business details retrieved successfully"),
      *             @OA\Property(property="data", ref="#/components/schemas/BusinessDetailResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Business details not found"),
      *     @OA\Response(response=401, description="Unauthorized")
      * )
@@ -258,7 +277,7 @@ class BusinessDetailsController extends Controller
     {
         $businessDetail = $this->businessDetailsService->getBusinessDetails(tenant()->id);
 
-        if (!$businessDetail) {
+        if (! $businessDetail) {
             return ApiResponse::notFound('Business details not yet submitted');
         }
 
@@ -275,10 +294,13 @@ class BusinessDetailsController extends Controller
      *     description="Update business name, description, email, phone, and contact person",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
      *             required={"business_name", "business_phone"},
+     *
      *             @OA\Property(property="business_name", type="string", example="Tech Haven Electronics"),
      *             @OA\Property(property="business_description", type="string", example="Leading electronics retailer"),
      *             @OA\Property(property="business_email", type="string", format="email", example="info@techhaven.com"),
@@ -286,6 +308,7 @@ class BusinessDetailsController extends Controller
      *             @OA\Property(property="contact_person", type="string", example="John Doe")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business profile updated successfully"
@@ -314,15 +337,20 @@ class BusinessDetailsController extends Controller
      *     description="Update business logo and banner images",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
+     *
      *                 @OA\Property(property="business_logo", type="string", format="binary", description="Logo image (max 2MB)"),
      *                 @OA\Property(property="business_banner", type="string", format="binary", description="Banner image (max 5MB)")
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business media updated successfully"
@@ -351,15 +379,19 @@ class BusinessDetailsController extends Controller
      *     description="Update business address, city, and county",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
      *             required={"address", "city", "county"},
+     *
      *             @OA\Property(property="address", type="string", example="123 Kimathi Street, Nairobi CBD"),
      *             @OA\Property(property="city", type="string", example="Nairobi"),
      *             @OA\Property(property="county", type="string", example="Nairobi")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business location updated successfully"
@@ -388,9 +420,12 @@ class BusinessDetailsController extends Controller
      *     description="Update business operating hours for specific days. Only provided days will be updated, other days remain unchanged. You can update all days at once or just specific days.",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="operating_hours",
      *                 type="object",
@@ -430,10 +465,13 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Operating hours updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Operating hours updated successfully"),
      *             @OA\Property(
      *                 property="data",
@@ -442,6 +480,7 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
@@ -449,7 +488,9 @@ class BusinessDetailsController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
      *                 property="errors",
@@ -482,9 +523,12 @@ class BusinessDetailsController extends Controller
      *     description="Update delivery availability. Use `available` to enable or disable delivery for the business. Use `zones_enabled` to switch between zone-based fee calculation and free delivery (default until zones are configured). Fees and areas are managed through delivery zones.",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="delivery_info",
      *                 type="object",
@@ -494,10 +538,13 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Delivery information updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Delivery information updated successfully"),
      *             @OA\Property(
      *                 property="data",
@@ -506,11 +553,14 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
      *                 property="errors",
@@ -543,9 +593,12 @@ class BusinessDetailsController extends Controller
      *     description="Update business settings. Only provided fields will be updated, other fields remain unchanged. You can update all fields at once or just specific fields.",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="settings",
      *                 type="object",
@@ -588,10 +641,13 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Business settings updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Business settings updated successfully"),
      *             @OA\Property(
      *                 property="data",
@@ -600,11 +656,14 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
      *                 property="errors",
@@ -637,9 +696,12 @@ class BusinessDetailsController extends Controller
      *     description="Update social media links. Only provided fields will be updated, other fields remain unchanged. You can update all links at once or just specific links.",
      *     tags={"Tenant Business Details"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="social_media",
      *                 type="object",
@@ -681,10 +743,13 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Social media links updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Social media links updated successfully"),
      *             @OA\Property(
      *                 property="data",
@@ -693,11 +758,14 @@ class BusinessDetailsController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
      *                 property="errors",

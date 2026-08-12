@@ -8,6 +8,7 @@ use App\Http\Requests\Tenant\Subscription\InitiateSubscriptionPaymentRequest;
 use App\Http\Resources\Central\Subscription\SubscriptionPaymentResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
 class SubscriptionPaymentController extends Controller
@@ -24,17 +25,23 @@ class SubscriptionPaymentController extends Controller
      *     operationId="initiateSubscriptionSTKPayment",
      *     tags={"Tenant - Subscription"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"plan_id"},
+     *
      *             @OA\Property(property="plan_id", type="integer", example=2, description="ID of the subscription plan to purchase")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="STK push sent, or cooldown active (push already in flight). Check `message` to distinguish: 'STK push sent...' vs 'STK push already sent...'. When cooldown is active, `data.instructions.wait_seconds` holds the remaining seconds.",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="STK push sent. Please complete payment on your phone."),
      *             @OA\Property(
@@ -75,11 +82,14 @@ class SubscriptionPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Business details or subscription plan not found"),
      *     @OA\Response(
      *         response=422,
      *         description="STK push failed (Daraja error)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Invalid Access Token"),
      *             @OA\Property(property="data", type="object",
@@ -96,17 +106,17 @@ class SubscriptionPaymentController extends Controller
         try {
             $result = $this->paymentService->initiateSTKPayment(
                 tenantId: $tenantId,
-                planId:   $request->integer('plan_id'),
+                planId: $request->integer('plan_id'),
             );
 
             return ApiResponse::success(
                 $result['message'],
                 array_filter([
-                    'payment'      => new SubscriptionPaymentResource($result['payment']),
+                    'payment' => new SubscriptionPaymentResource($result['payment']),
                     'instructions' => $result['instructions'] ?? null,
                 ]),
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Business details or subscription plan not found.');
         } catch (MpesaException $e) {
             return ApiResponse::error($e->getMessage(), ['error_code' => $e->darajaErrorCode], 422);
@@ -123,10 +133,13 @@ class SubscriptionPaymentController extends Controller
      *     operationId="getSubscriptionPaybillInstructions",
      *     tags={"Tenant - Subscription"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Paybill instructions returned",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Pay via M-Pesa Paybill using the details below."),
      *             @OA\Property(
@@ -138,7 +151,9 @@ class SubscriptionPaymentController extends Controller
      *                     property="plans",
      *                     type="array",
      *                     description="Available subscription plans. Enter the exact plan price as the amount on M-Pesa.",
+     *
      *                     @OA\Items(
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="name", type="string", example="Basic"),
      *                         @OA\Property(property="price", type="number", format="float", example=2500),
@@ -154,6 +169,7 @@ class SubscriptionPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Tenant not found")
      * )
      */
@@ -163,7 +179,7 @@ class SubscriptionPaymentController extends Controller
             $instructions = $this->paymentService->getPaybillInstructions(tenant('id'));
 
             return ApiResponse::success('Pay via M-Pesa Paybill using the details below.', $instructions);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return ApiResponse::notFound('Tenant not found.');
         }
     }
@@ -176,10 +192,13 @@ class SubscriptionPaymentController extends Controller
      *     operationId="getSubscriptionPaymentStatus",
      *     tags={"Tenant - Subscription"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payment status retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Payment status retrieved."),
      *             @OA\Property(
@@ -209,6 +228,7 @@ class SubscriptionPaymentController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="No payment record found for this tenant")
      * )
      */

@@ -28,82 +28,103 @@ class ProductVariantController extends Controller
      *     description="Retrieves all variants for a specific product with filtering capabilities. Variants represent different configurations of the same product (e.g., different sizes, colors, specifications).",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search term to filter variants by name or SKU",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="QLED"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by stock status",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"in_stock", "out_of_stock", "discontinued"}),
      *         example="in_stock"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="attribute_key",
      *         in="query",
      *         description="Filter by attribute key (e.g., 'Panel Tech', 'Refresh Rate')",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Refresh Rate"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="attribute_value",
      *         in="query",
      *         description="Filter by attribute value (requires attribute_key)",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="144 Hz"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="created_at"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_available_online",
      *         in="query",
      *         description="Filter by online availability",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}),
      *         example="desc"
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product variants retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product variants retrieved successfully"),
      *             @OA\Property(
@@ -121,8 +142,10 @@ class ProductVariantController extends Controller
      *                 @OA\Property(
      *                     property="variants",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="product_id", type="integer", example=4),
      *                         @OA\Property(property="product_name", type="string", example="TCL 55 4K UHD Smart LED TV"),
@@ -165,6 +188,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -214,18 +238,23 @@ class ProductVariantController extends Controller
      *     description="Creates a new variant for a product. Variants represent different configurations (e.g., size, color, specifications) with their own SKU, pricing, and attributes. SKU is auto-generated if not provided.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="uuid",
      *         in="path",
      *         description="Product UUID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", format="uuid"),
      *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"variant_name", "uom_id", "uom_quantity"},
+     *
      *             @OA\Property(property="variant_name", type="string", maxLength=255, example="55C725-QLED", description="Variant name/identifier"),
      *             @OA\Property(property="sku", type="string", maxLength=20, example="ELEC-DELL-56QT-V14Q", description="Unique SKU (auto-generated if not provided)"),
      *             @OA\Property(
@@ -248,10 +277,13 @@ class ProductVariantController extends Controller
      *             @OA\Property(property="is_active", type="boolean", example=true, description="Active status")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Product variant created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product variant created successfully"),
      *             @OA\Property(
@@ -331,6 +363,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -342,7 +375,9 @@ class ProductVariantController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -351,14 +386,18 @@ class ProductVariantController extends Controller
      *                 @OA\Property(
      *                     property="variant_name",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The variant name field is required.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="uom_id",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The uom id field is required.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -390,90 +429,113 @@ class ProductVariantController extends Controller
      *     description="Retrieves a paginated list of all product variants across all products with filtering, search, and sorting capabilities. Returns up to 15 variants per page with a maximum of 100 per page.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search term to filter variants by name, SKU, or product name",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="QLED"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         description="Filter by product ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer"),
      *         example=4
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by stock status",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"in_stock", "out_of_stock", "discontinued"}),
      *         example="in_stock"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
      *         description="Filter by active status",
      *         required=false,
+     *
      *         @OA\Schema(type="boolean"),
      *         example=true
      *     ),
+     *
      *     @OA\Parameter(
      *         name="attribute_key",
      *         in="query",
      *         description="Filter by attribute key",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="Panel Tech"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="attribute_value",
      *         in="query",
      *         description="Filter by attribute value (requires attribute_key)",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="QLED (Quantum-dot)"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string"),
      *         example="created_at"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}),
      *         example="desc"
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1),
      *         example=1
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page (max 100)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, maximum=100),
      *         example=15
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Variants retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variants retrieved successfully"),
      *             @OA\Property(
@@ -482,8 +544,10 @@ class ProductVariantController extends Controller
      *                 @OA\Property(
      *                     property="variants",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="product_id", type="integer", example=4),
      *                         @OA\Property(property="product_name", type="string", example="TCL 55 4K UHD Smart LED TV"),
@@ -507,7 +571,7 @@ class ProductVariantController extends Controller
      *                         @OA\Property(property="online_price", type="number", example=141499),
      *                         @OA\Property(property="formatted_online_price", type="string", example="KES 141,499.00"),
      *                         @OA\Property(property="computed_online_price", type="number", example=141499),
-     *                         @OA\Property(property="formatted_computed_online_price", type="string", example="KES 141,499.00"),   
+     *                         @OA\Property(property="formatted_computed_online_price", type="string", example="KES 141,499.00"),
      *                         @OA\Property(property="is_available_online", type="boolean", example=true),
      *                         @OA\Property(property="stock_status", type="string", example="in_stock"),
      *                         @OA\Property(property="stock_status_label", type="string", example="In Stock"),
@@ -536,6 +600,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -587,18 +652,23 @@ class ProductVariantController extends Controller
      *     description="Retrieves detailed information about a specific product variant including product details, UOM, pricing, attributes, and inventory settings.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Variant ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=1
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Variant retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variant retrieved successfully"),
      *             @OA\Property(
@@ -672,6 +742,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -679,7 +750,9 @@ class ProductVariantController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Variant not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Variant not found"),
      *             @OA\Property(
@@ -711,18 +784,23 @@ class ProductVariantController extends Controller
      *     description="Updates a product variant's basic information including name, SKU, attributes, and pricing. All fields are optional - only provided fields will be updated.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Variant ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Variant fields to update (all fields optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="variant_name", type="string", maxLength=255, example="55C725-GAL", description="Variant name/identifier"),
      *             @OA\Property(property="sku", type="string", maxLength=20, example="ELEC-DELL-56QT-V14Q", description="Unique variant SKU"),
      *             @OA\Property(
@@ -740,10 +818,13 @@ class ProductVariantController extends Controller
      *             @OA\Property(property="online_price", type="number", format="decimal", nullable=true, minimum=0, maximum=9999999999.99, example=151999, description="Online price (overrides adjustment)"),
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Variant updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variant updated successfully"),
      *             @OA\Property(
@@ -799,7 +880,7 @@ class ProductVariantController extends Controller
      *                 @OA\Property(property="variant_price", type="string", example="151999.00"),
      *                 @OA\Property(property="computed_price", type="number", example=151999),
      *                 @OA\Property(property="formatted_variant_price", type="string", example="KES 151,999.00"),
-     *                 @OA\Property(property="formatted_computed_price", type="string", example="KES 151,999.00"),  
+     *                 @OA\Property(property="formatted_computed_price", type="string", example="KES 151,999.00"),
      *                 @OA\Property(property="online_price", type="number", example=151999),
      *                 @OA\Property(property="formatted_online_price", type="string", example="KES 151,999.00"),
      *                 @OA\Property(property="computed_online_price", type="number", example=151999),
@@ -823,6 +904,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -834,7 +916,9 @@ class ProductVariantController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -843,9 +927,11 @@ class ProductVariantController extends Controller
      *                 @OA\Property(
      *                     property="sku",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The sku has already been taken.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -877,18 +963,23 @@ class ProductVariantController extends Controller
      *     description="Updates inventory-related settings for a product variant including stock status, reorder level, and shelf life. All fields are optional.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Variant ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
      *         description="Inventory settings to update (all fields optional)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="stock_status",
      *                 type="string",
@@ -916,10 +1007,13 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Variant inventory details updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variant inventory details updated successfully"),
      *             @OA\Property(
@@ -999,6 +1093,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -1010,7 +1105,9 @@ class ProductVariantController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error - Invalid input data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(
@@ -1019,14 +1116,18 @@ class ProductVariantController extends Controller
      *                 @OA\Property(
      *                     property="stock_status",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The selected stock status is invalid.")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="reorder_level",
      *                     type="array",
+     *
      *                     @OA\Items(type="string", example="The reorder level must be at least 0.")
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -1061,18 +1162,23 @@ class ProductVariantController extends Controller
      *     description="Toggles the active/inactive status of a product variant. Activates inactive variants and deactivates active variants. No request body required.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Variant ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Variant status toggled successfully (activated)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variant activated successfully"),
      *             @OA\Property(
@@ -1085,10 +1191,13 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response="200 ",
      *         description="Variant status toggled successfully (deactivated)",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variant deactivated successfully"),
      *             @OA\Property(
@@ -1101,6 +1210,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -1108,7 +1218,9 @@ class ProductVariantController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Variant not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Variant not found"),
      *             @OA\Property(
@@ -1143,18 +1255,23 @@ class ProductVariantController extends Controller
      *     description="Permanently deletes a product variant. This action cannot be undone. The variant will be removed from inventory and all associated data will be deleted.",
      *     tags={"Tenant Product Variants"},
      *     security={{"sanctum": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Variant ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer"),
      *         example=2
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Variant deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Variant deleted successfully"),
      *             @OA\Property(
@@ -1167,6 +1284,7 @@ class ProductVariantController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized - Invalid or missing authentication token"
@@ -1174,7 +1292,9 @@ class ProductVariantController extends Controller
      *     @OA\Response(
      *         response=404,
      *         description="Variant not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Variant not found"),
      *             @OA\Property(

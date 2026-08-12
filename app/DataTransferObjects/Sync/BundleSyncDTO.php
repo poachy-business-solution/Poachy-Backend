@@ -36,16 +36,16 @@ class BundleSyncDTO
      */
     public static function fromBundle(ProductBundle $bundle, bool $skipValidation = false): self
     {
-        if (!tenant()) {
+        if (! tenant()) {
             throw new \RuntimeException('Cannot create BundleSyncDTO outside tenant context');
         }
 
-        if (!$skipValidation) {
-            if (!$bundle->is_available_online) {
+        if (! $skipValidation) {
+            if (! $bundle->is_available_online) {
                 throw new \InvalidArgumentException('Bundle must be available online to sync');
             }
 
-            if (!$bundle->online_price || $bundle->online_price <= 0) {
+            if (! $bundle->online_price || $bundle->online_price <= 0) {
                 throw new \InvalidArgumentException('Bundle must have online_price set');
             }
         }
@@ -167,10 +167,10 @@ class BundleSyncDTO
         $payloadHash = hash('sha256', $payload);
 
         return md5(
-            $this->tenantId .
-                $this->productType .
-                $this->bundleId .
-                $action .
+            $this->tenantId.
+                $this->productType.
+                $this->bundleId.
+                $action.
                 $payloadHash
         );
     }

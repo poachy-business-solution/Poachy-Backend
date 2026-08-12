@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Tenant\Sales;
 
+use App\Services\Tenant\Sales\CreditService;
+use App\Services\Tenant\Sales\LoyaltyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,12 +25,12 @@ class CustomerSearchResource extends JsonResource
             'customer_type' => $this->customer_type->value,
             'customer_type_label' => $this->customer_type->label(),
             'loyalty' => [
-                'enabled' => app(\App\Services\Tenant\Sales\LoyaltyService::class)->isEnabled(),
+                'enabled' => app(LoyaltyService::class)->isEnabled(),
                 'balance' => (float) $this->loyalty_points,
                 'expiring_soon' => $this->when(
-                    app(\App\Services\Tenant\Sales\LoyaltyService::class)->isEnabled(),
+                    app(LoyaltyService::class)->isEnabled(),
                     function () {
-                        return (float) app(\App\Services\Tenant\Sales\LoyaltyService::class)
+                        return (float) app(LoyaltyService::class)
                             ->getExpiringPoints($this->resource, 30);
                     },
                     0
@@ -36,15 +38,16 @@ class CustomerSearchResource extends JsonResource
                 'expiring_in_days' => 30,
             ],
             'credit' => [
-                'enabled' => app(\App\Services\Tenant\Sales\CreditService::class)->isEnabled(),
+                'enabled' => app(CreditService::class)->isEnabled(),
                 'credit_limit' => (float) $this->credit_limit,
                 'current_debt' => (float) $this->current_debt,
                 'available_credit' => (float) $this->available_credit,
                 'is_overdue' => $this->when(
-                    app(\App\Services\Tenant\Sales\CreditService::class)->isEnabled(),
+                    app(CreditService::class)->isEnabled(),
                     function () {
-                        $summary = app(\App\Services\Tenant\Sales\CreditService::class)
+                        $summary = app(CreditService::class)
                             ->getCreditSummary($this->resource);
+
                         return $summary['is_overdue'] ?? false;
                     },
                     false

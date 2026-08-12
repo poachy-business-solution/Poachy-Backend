@@ -3,11 +3,11 @@
 namespace App\Models\Tenant;
 
 use App\Enums\Tenant\ReservationStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class InventoryReservation extends Model
@@ -96,7 +96,7 @@ class InventoryReservation extends Model
     }
 
     // ============================================
-    // ACCESSORS 
+    // ACCESSORS
     // ============================================
 
     public function getIsExpiredAttribute(): bool
@@ -118,7 +118,7 @@ class InventoryReservation extends Model
 
     public function getRemainingMinutesAttribute(): ?int
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return null;
         }
 
@@ -126,7 +126,7 @@ class InventoryReservation extends Model
     }
 
     // ============================================
-    // HELPER METHODS 
+    // HELPER METHODS
     // ============================================
 
     public function shouldExpire(): bool
@@ -138,12 +138,14 @@ class InventoryReservation extends Model
     public function markAsExpired(): bool
     {
         $this->status = ReservationStatus::EXPIRED;
+
         return $this->save();
     }
 
     public function markAsFulfilled(): bool
     {
         $this->status = ReservationStatus::FULFILLED;
+
         return $this->save();
     }
 
@@ -152,6 +154,7 @@ class InventoryReservation extends Model
         $this->status = ReservationStatus::CANCELLED;
         $this->cancellation_reason = $reason;
         $this->cancelled_by = $cancelledBy ?? Auth::id();
+
         return $this->save();
     }
 

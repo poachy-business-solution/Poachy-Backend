@@ -9,7 +9,6 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductPriceHistory;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ProductPriceHistoryController extends Controller
 {
@@ -20,73 +19,94 @@ class ProductPriceHistoryController extends Controller
      *     summary="List price history records",
      *     description="Retrieve a paginated list of all price change records with extensive filtering and sorting options",
      *     operationId="listPriceHistory",
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         required=false,
      *         description="Page number",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         required=false,
      *         description="Items per page (maximum 100)",
+     *
      *         @OA\Schema(type="integer", maximum=100, example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="product_id",
      *         in="query",
      *         required=false,
      *         description="Filter by specific product",
+     *
      *         @OA\Schema(type="integer", example=5)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="variant_id",
      *         in="query",
      *         required=false,
      *         description="Filter by specific variant",
+     *
      *         @OA\Schema(type="integer", example=3)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         required=false,
      *         description="Filter from date (Y-m-d format)",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         required=false,
      *         description="Filter to date (Y-m-d format)",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="changed_by",
      *         in="query",
      *         required=false,
      *         description="Filter by user who made changes",
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         required=false,
      *         description="Sort field",
+     *
      *         @OA\Schema(type="string", enum={"created_at", "new_selling_price"}, default="created_at", example="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         required=false,
      *         description="Sort direction",
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc", example="desc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Price history retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Price history retrieved successfully"),
      *             @OA\Property(
@@ -95,8 +115,10 @@ class ProductPriceHistoryController extends Controller
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=3),
      *                         @OA\Property(
      *                             property="product",
@@ -177,11 +199,11 @@ class ProductPriceHistoryController extends Controller
                 'product:id,name,sku',
                 'productVariant:id,product_id,variant_name,sku',
                 'baseUom:id,code,name',
-                'changedBy:id,name'
+                'changedBy:id,name',
             ]);
 
         // Apply filters
-        if (!empty($validated['product_id'])) {
+        if (! empty($validated['product_id'])) {
             $query->byProduct($validated['product_id']);
         }
 
@@ -189,15 +211,15 @@ class ProductPriceHistoryController extends Controller
             $query->byVariant($validated['variant_id']);
         }
 
-        if (!empty($validated['from_date'])) {
+        if (! empty($validated['from_date'])) {
             $query->where('created_at', '>=', $validated['from_date']);
         }
 
-        if (!empty($validated['to_date'])) {
-            $query->where('created_at', '<=', $validated['to_date'] . ' 23:59:59');
+        if (! empty($validated['to_date'])) {
+            $query->where('created_at', '<=', $validated['to_date'].' 23:59:59');
         }
 
-        if (!empty($validated['changed_by'])) {
+        if (! empty($validated['changed_by'])) {
             $query->where('changed_by', $validated['changed_by']);
         }
 
@@ -223,45 +245,58 @@ class ProductPriceHistoryController extends Controller
      *     summary="Get product price history",
      *     description="Retrieve detailed price history for a specific product including summary statistics",
      *     operationId="getProductPriceHistory",
+     *
      *     @OA\Parameter(
      *         name="product",
      *         in="path",
      *         required=true,
      *         description="The product ID",
+     *
      *         @OA\Schema(type="integer", example=4)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="variant_id",
      *         in="query",
      *         required=false,
      *         description="Filter by specific variant",
+     *
      *         @OA\Schema(type="integer", example=3)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
      *         required=false,
      *         description="Filter from date (Y-m-d format)",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
      *         required=false,
      *         description="Filter to date (Y-m-d format)",
+     *
      *         @OA\Schema(type="string", format="date", example="2026-01-31")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         required=false,
      *         description="Items per page (maximum 100)",
+     *
      *         @OA\Schema(type="integer", maximum=100, example=20)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product price history retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Product price history retrieved successfully"),
      *             @OA\Property(
@@ -282,8 +317,10 @@ class ProductPriceHistoryController extends Controller
      *                     @OA\Property(
      *                         property="data",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(property="id", type="integer", example=3),
      *                             @OA\Property(
      *                                 property="product",
@@ -397,7 +434,7 @@ class ProductPriceHistoryController extends Controller
             ->with([
                 'productVariant:id,product_id,variant_name,sku',
                 'baseUom:id,code,name',
-                'changedBy:id,name'
+                'changedBy:id,name',
             ]);
 
         // Apply variant filter if provided
@@ -406,12 +443,12 @@ class ProductPriceHistoryController extends Controller
         }
 
         // Apply date filters
-        if (!empty($validated['from_date'])) {
+        if (! empty($validated['from_date'])) {
             $query->where('created_at', '>=', $validated['from_date']);
         }
 
-        if (!empty($validated['to_date'])) {
-            $query->where('created_at', '<=', $validated['to_date'] . ' 23:59:59');
+        if (! empty($validated['to_date'])) {
+            $query->where('created_at', '<=', $validated['to_date'].' 23:59:59');
         }
 
         // Get all records for summary calculation
@@ -490,7 +527,7 @@ class ProductPriceHistoryController extends Controller
         $largestDecrease = $decreases->sortBy('price_change_amount')->first();
 
         // Calculate average change
-        $changes = $history->pluck('price_change_amount')->filter(fn($v) => $v !== null);
+        $changes = $history->pluck('price_change_amount')->filter(fn ($v) => $v !== null);
         $averageChange = $changes->isEmpty() ? 0 : $changes->avg();
 
         return [

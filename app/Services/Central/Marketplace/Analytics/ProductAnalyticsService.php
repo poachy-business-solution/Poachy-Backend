@@ -3,7 +3,6 @@
 namespace App\Services\Central\Marketplace\Analytics;
 
 use App\Models\ProductPageView;
-use Illuminate\Support\Facades\DB;
 
 class ProductAnalyticsService
 {
@@ -33,16 +32,16 @@ class ProductAnalyticsService
             ->first();
 
         return [
-            'total_views'              => $views->total_views ?? 0,
-            'added_to_cart'            => $views->added_to_cart_count ?? 0,
-            'added_to_wishlist'        => $views->added_to_wishlist_count ?? 0,
-            'view_to_cart_rate'        => $this->calculateRate($views->added_to_cart_count ?? 0, $views->total_views ?? 0),
-            'view_to_wishlist_rate'    => $this->calculateRate($views->added_to_wishlist_count ?? 0, $views->total_views ?? 0),
-            'avg_time_spent_seconds'   => round($views->avg_time_spent ?? 0, 2),
-            'scrolled_to_description'  => $views->scrolled_to_description_count ?? 0,
-            'scrolled_to_reviews'      => $views->scrolled_to_reviews_count ?? 0,
-            'clicked_images'           => $views->clicked_images_count ?? 0,
-            'engagement_rate'          => $this->calculateEngagementRate($views),
+            'total_views' => $views->total_views ?? 0,
+            'added_to_cart' => $views->added_to_cart_count ?? 0,
+            'added_to_wishlist' => $views->added_to_wishlist_count ?? 0,
+            'view_to_cart_rate' => $this->calculateRate($views->added_to_cart_count ?? 0, $views->total_views ?? 0),
+            'view_to_wishlist_rate' => $this->calculateRate($views->added_to_wishlist_count ?? 0, $views->total_views ?? 0),
+            'avg_time_spent_seconds' => round($views->avg_time_spent ?? 0, 2),
+            'scrolled_to_description' => $views->scrolled_to_description_count ?? 0,
+            'scrolled_to_reviews' => $views->scrolled_to_reviews_count ?? 0,
+            'clicked_images' => $views->clicked_images_count ?? 0,
+            'engagement_rate' => $this->calculateEngagementRate($views),
         ];
     }
 
@@ -65,9 +64,9 @@ class ProductAnalyticsService
             ->get()
             ->map(function ($item) {
                 return [
-                    'product_id'      => $item->marketplace_product_id,
-                    'total_views'     => $item->total_views,
-                    'conversions'     => $item->conversions,
+                    'product_id' => $item->marketplace_product_id,
+                    'total_views' => $item->total_views,
+                    'conversions' => $item->conversions,
                     'conversion_rate' => round($item->conversion_rate, 2),
                 ];
             })
@@ -92,8 +91,8 @@ class ProductAnalyticsService
             ->map(function ($item) {
                 return [
                     'referrer_source' => $item->referrer_source ?? 'direct',
-                    'views'           => $item->views,
-                    'conversions'     => $item->conversions,
+                    'views' => $item->views,
+                    'conversions' => $item->conversions,
                     'conversion_rate' => $this->calculateRate($item->conversions, $item->views),
                 ];
             })

@@ -5,6 +5,7 @@ namespace App\Services\Tenant\Business;
 use App\Models\Tenant\TenantDeliveryZone;
 use App\Repositories\Tenant\DeliveryZoneRepository;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class DeliveryZoneService
 {
@@ -28,7 +29,7 @@ class DeliveryZoneService
         $zone = $this->repository->findById($id);
 
         if (! $zone) {
-            throw new \Illuminate\Database\Eloquent\ModelNotFoundException(
+            throw new ModelNotFoundException(
                 "Delivery zone [{$id}] not found."
             );
         }

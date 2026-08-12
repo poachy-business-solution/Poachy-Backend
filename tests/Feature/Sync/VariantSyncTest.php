@@ -53,7 +53,7 @@ class VariantSyncTest extends TestCase
         ];
     }
 
-    public function testVariantSyncDTOFromArrayCreatesValidDTO(): void
+    public function test_variant_sync_dto_from_array_creates_valid_dto(): void
     {
         $data = $this->getValidVariantDTOData();
 
@@ -102,7 +102,7 @@ class VariantSyncTest extends TestCase
         $this->assertSame(['source' => 'test'], $dto->metadata);
     }
 
-    public function testVariantSyncDTOToArrayAndFromArrayRoundTrip(): void
+    public function test_variant_sync_dto_to_array_and_from_array_round_trip(): void
     {
         $data = $this->getValidVariantDTOData();
 
@@ -148,7 +148,7 @@ class VariantSyncTest extends TestCase
         $this->assertSame($dto->toArray(), $restoredDto->toArray());
     }
 
-    public function testVariantSyncDTOGenerateIdempotencyKeyIsConsistent(): void
+    public function test_variant_sync_dto_generate_idempotency_key_is_consistent(): void
     {
         $data = $this->getValidVariantDTOData();
 
@@ -163,7 +163,7 @@ class VariantSyncTest extends TestCase
         $this->assertIsString($key1);
     }
 
-    public function testVariantSyncDTOGenerateIdempotencyKeyDiffersForDifferentActions(): void
+    public function test_variant_sync_dto_generate_idempotency_key_differs_for_different_actions(): void
     {
         $data = $this->getValidVariantDTOData();
 
@@ -178,9 +178,9 @@ class VariantSyncTest extends TestCase
         $this->assertNotSame($updateKey, $deleteKey);
     }
 
-    public function testVariantSyncServiceIsEligibleForSyncReturnsTrueWhenAllConditionsMet(): void
+    public function test_variant_sync_service_is_eligible_for_sync_returns_true_when_all_conditions_met(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'id' => 1,
             'is_available_online' => true,
@@ -189,7 +189,7 @@ class VariantSyncTest extends TestCase
             'base_uom_id' => 1,
         ]);
 
-        $variant = new ProductVariant();
+        $variant = new ProductVariant;
         $variant->forceFill([
             'id' => 10,
             'product_id' => 1,
@@ -198,13 +198,13 @@ class VariantSyncTest extends TestCase
         ]);
         $variant->setRelation('product', $product);
 
-        $service = new VariantSyncService();
+        $service = new VariantSyncService;
         $this->assertTrue($service->isEligibleForSync($variant));
     }
 
-    public function testVariantSyncServiceIsEligibleForSyncReturnsFalseWhenVariantInactive(): void
+    public function test_variant_sync_service_is_eligible_for_sync_returns_false_when_variant_inactive(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'id' => 1,
             'is_available_online' => true,
@@ -213,7 +213,7 @@ class VariantSyncTest extends TestCase
             'base_uom_id' => 1,
         ]);
 
-        $variant = new ProductVariant();
+        $variant = new ProductVariant;
         $variant->forceFill([
             'id' => 10,
             'product_id' => 1,
@@ -222,13 +222,13 @@ class VariantSyncTest extends TestCase
         ]);
         $variant->setRelation('product', $product);
 
-        $service = new VariantSyncService();
+        $service = new VariantSyncService;
         $this->assertFalse($service->isEligibleForSync($variant));
     }
 
-    public function testVariantSyncServiceIsEligibleForSyncReturnsFalseWhenNoOnlinePrice(): void
+    public function test_variant_sync_service_is_eligible_for_sync_returns_false_when_no_online_price(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'id' => 1,
             'is_available_online' => true,
@@ -237,7 +237,7 @@ class VariantSyncTest extends TestCase
             'base_uom_id' => 1,
         ]);
 
-        $variant = new ProductVariant();
+        $variant = new ProductVariant;
         $variant->forceFill([
             'id' => 10,
             'product_id' => 1,
@@ -246,13 +246,13 @@ class VariantSyncTest extends TestCase
         ]);
         $variant->setRelation('product', $product);
 
-        $service = new VariantSyncService();
+        $service = new VariantSyncService;
         $this->assertFalse($service->isEligibleForSync($variant));
     }
 
-    public function testVariantSyncServiceIsEligibleForSyncReturnsFalseWhenParentNotOnline(): void
+    public function test_variant_sync_service_is_eligible_for_sync_returns_false_when_parent_not_online(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'id' => 1,
             'is_available_online' => false,
@@ -261,7 +261,7 @@ class VariantSyncTest extends TestCase
             'base_uom_id' => 1,
         ]);
 
-        $variant = new ProductVariant();
+        $variant = new ProductVariant;
         $variant->forceFill([
             'id' => 10,
             'product_id' => 1,
@@ -270,13 +270,13 @@ class VariantSyncTest extends TestCase
         ]);
         $variant->setRelation('product', $product);
 
-        $service = new VariantSyncService();
+        $service = new VariantSyncService;
         $this->assertFalse($service->isEligibleForSync($variant));
     }
 
-    public function testVariantSyncServiceGetSyncValidationErrorsReturnsAllErrors(): void
+    public function test_variant_sync_service_get_sync_validation_errors_returns_all_errors(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'id' => 1,
             'is_available_online' => false,
@@ -285,7 +285,7 @@ class VariantSyncTest extends TestCase
             'base_uom_id' => null,
         ]);
 
-        $variant = new ProductVariant();
+        $variant = new ProductVariant;
         $variant->forceFill([
             'id' => 10,
             'product_id' => 1,
@@ -294,7 +294,7 @@ class VariantSyncTest extends TestCase
         ]);
         $variant->setRelation('product', $product);
 
-        $service = new VariantSyncService();
+        $service = new VariantSyncService;
         $errors = $service->getSyncValidationErrors($variant);
 
         $this->assertNotEmpty($errors);
@@ -307,9 +307,9 @@ class VariantSyncTest extends TestCase
         $this->assertCount(6, $errors);
     }
 
-    public function testVariantSyncServiceGetSyncValidationErrorsReturnsEmptyWhenEligible(): void
+    public function test_variant_sync_service_get_sync_validation_errors_returns_empty_when_eligible(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'id' => 1,
             'is_available_online' => true,
@@ -318,7 +318,7 @@ class VariantSyncTest extends TestCase
             'base_uom_id' => 1,
         ]);
 
-        $variant = new ProductVariant();
+        $variant = new ProductVariant;
         $variant->forceFill([
             'id' => 10,
             'product_id' => 1,
@@ -327,7 +327,7 @@ class VariantSyncTest extends TestCase
         ]);
         $variant->setRelation('product', $product);
 
-        $service = new VariantSyncService();
+        $service = new VariantSyncService;
         $errors = $service->getSyncValidationErrors($variant);
 
         $this->assertEmpty($errors);

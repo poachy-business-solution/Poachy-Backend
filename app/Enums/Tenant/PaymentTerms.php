@@ -70,7 +70,7 @@ enum PaymentTerms: string
     public static function options(): array
     {
         return array_map(
-            fn(self $term) => [
+            fn (self $term) => [
                 'value' => $term->value,
                 'label' => $term->displayName(),
                 'description' => $term->description(),

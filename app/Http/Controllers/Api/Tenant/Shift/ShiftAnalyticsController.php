@@ -26,43 +26,52 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves the attendance rate for a specific user within a given date range",
      *     operationId="getAttendanceRate",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
      *         description="User ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Attendance rate calculated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -171,43 +180,52 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves cash variance analysis for a specific store within a given date range",
      *     operationId="getCashVariances",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Store ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Cash variances calculated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -252,10 +270,12 @@ class ShiftAnalyticsController extends Controller
      *                     @OA\Property(
      *                         property="significant_variances",
      *                         type="array",
+     *
      *                         @OA\Items(type="object")
      *                     )
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -317,64 +337,77 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves top performing employees for a specific store based on selected metric within a given date range",
      *     operationId="getTopPerformers",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Store ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="metric",
      *         in="query",
      *         description="Performance metric",
      *         required=false,
      *         example="attendance",
+     *
      *         @OA\Schema(
      *             type="string",
      *             enum={"attendance", "punctuality", "sales"}
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="limit",
      *         in="query",
      *         description="Number of top performers to return",
      *         required=false,
      *         example=10,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Top performers retrieved successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -391,8 +424,10 @@ class ShiftAnalyticsController extends Controller
      *                 @OA\Property(
      *                     property="top_performers",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(
      *                             property="user_id",
      *                             type="integer",
@@ -491,43 +526,52 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves detailed shift coverage report for a specific store within a given date range, including daily breakdown and summary statistics",
      *     operationId="getCoverageReport",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Store ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Coverage report generated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -547,8 +591,10 @@ class ShiftAnalyticsController extends Controller
      *                     @OA\Property(
      *                         property="daily_coverage",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(
      *                                 property="date",
      *                                 type="string",
@@ -689,43 +735,52 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves overtime analysis for a specific store within a given date range, including total overtime hours, rates, and breakdown by user",
      *     operationId="getOvertimeAnalysis",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Store ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Overtime analysis generated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -770,10 +825,12 @@ class ShiftAnalyticsController extends Controller
      *                     @OA\Property(
      *                         property="by_user",
      *                         type="array",
+     *
      *                         @OA\Items(type="object")
      *                     )
      *                 )
      *             ),
+     *
      *             @OA\Property(
      *                 property="meta",
      *                 type="object",
@@ -835,43 +892,52 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves punctuality analysis for a specific store within a given date range, including late arrivals, early departures, and punctuality rates",
      *     operationId="getPunctualityAnalysis",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Store ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Punctuality analysis generated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -986,43 +1052,52 @@ class ShiftAnalyticsController extends Controller
      *     description="Retrieves a comprehensive dashboard summary for a specific store within a given date range, combining coverage, cash variances, overtime, punctuality, and top performers metrics",
      *     operationId="getDashboardSummary",
      *     tags={"Tenant - Shift Analytics"},
+     *
      *     @OA\Parameter(
      *         name="store_id",
      *         in="query",
      *         description="Store ID",
      *         required=true,
      *         example=1,
+     *
      *         @OA\Schema(
      *             type="integer"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date",
      *         required=true,
      *         example="2025-01-01",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date",
      *         required=true,
      *         example="2025-01-31",
+     *
      *         @OA\Schema(
      *             type="string",
      *             format="date"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Dashboard summary generated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
@@ -1045,8 +1120,10 @@ class ShiftAnalyticsController extends Controller
      *                         @OA\Property(
      *                             property="daily_coverage",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
+     *
      *                                 @OA\Property(
      *                                     property="date",
      *                                     type="string",
@@ -1156,9 +1233,11 @@ class ShiftAnalyticsController extends Controller
      *                         @OA\Property(
      *                             property="significant_variances",
      *                             type="array",
+     *
      *                             @OA\Items(type="object")
      *                         )
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="overtime",
      *                         type="object",
@@ -1190,9 +1269,11 @@ class ShiftAnalyticsController extends Controller
      *                         @OA\Property(
      *                             property="by_user",
      *                             type="array",
+     *
      *                             @OA\Items(type="object")
      *                         )
      *                     ),
+     *
      *                     @OA\Property(
      *                         property="punctuality",
      *                         type="object",
@@ -1235,8 +1316,10 @@ class ShiftAnalyticsController extends Controller
      *                     @OA\Property(
      *                         property="top_performers",
      *                         type="array",
+     *
      *                         @OA\Items(
      *                             type="object",
+     *
      *                             @OA\Property(
      *                                 property="user_id",
      *                                 type="integer",

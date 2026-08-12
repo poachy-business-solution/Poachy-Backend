@@ -48,7 +48,7 @@ class ProductCategoryRepository
                             'stock_status',
                             'primary_image',
                         ]);
-                }
+                },
             ])
             ->ordered()
             ->get();
@@ -73,7 +73,7 @@ class ProductCategoryRepository
                             'stock_status',
                             'primary_image',
                         ]);
-                }
+                },
             ])
             ->ordered()
             ->paginate($perPage);
@@ -109,7 +109,7 @@ class ProductCategoryRepository
                         'stock_status',
                         'primary_image',
                     ]);
-            }
+            },
         ])->find($id);
     }
 
@@ -223,8 +223,8 @@ class ProductCategoryRepository
         }
 
         // Search by name
-        if (!empty($filters['search'])) {
-            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        if (! empty($filters['search'])) {
+            $query->where('name', 'like', '%'.$filters['search'].'%');
         }
 
         // Include children

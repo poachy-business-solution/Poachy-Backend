@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class SyncQueueInbound extends Model
 {
     use HasFactory;
 
     protected $connection = 'central';
+
     protected $table = 'sync_queue_inbound';
 
     protected $fillable = [
@@ -207,7 +209,7 @@ class SyncQueueInbound extends Model
 
     public function acquireLock(string $workerId): bool
     {
-        $lockToken = \Illuminate\Support\Str::uuid()->toString();
+        $lockToken = Str::uuid()->toString();
 
         return $this->whereNull('lock_token')
             ->where('id', $this->id)

@@ -49,7 +49,7 @@ class IndexProductBrandRequest extends FormRequest
             'is_active' => $this->input('is_active'),
             'is_featured' => $this->input('is_featured'),
             'search' => $this->input('search'),
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
     }
 
     /**

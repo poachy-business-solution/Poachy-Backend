@@ -4,7 +4,6 @@ namespace Tests\Feature\Tenant\Product;
 
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductUom;
-use App\Models\Tenant\ProductVariant;
 use App\Services\Tenant\Product\ProductVariantService;
 use App\Services\Tenant\Product\SkuGeneratorService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;

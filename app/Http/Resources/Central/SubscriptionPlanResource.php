@@ -32,7 +32,7 @@ class SubscriptionPlanResource extends JsonResource
             // Features
             'features' => $this->features,
 
-            // Feature Highlights 
+            // Feature Highlights
             'feature_highlights' => $this->getFeatureHighlights(),
 
             // Status

@@ -17,7 +17,7 @@ return new class extends Migration
 
             // Variant info
             $table->string('variant_name'); // e.g., "500ml",
-            $table->string('sku')->unique(); // Must be unique across all variants            
+            $table->string('sku')->unique(); // Must be unique across all variants
             $table->json('attributes')->nullable(); // e.g., {"color": "Red", "size": "L"}
 
             // Variant UOM (can be different from product base UOM)

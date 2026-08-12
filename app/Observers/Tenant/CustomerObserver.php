@@ -8,7 +8,6 @@ use App\Services\Tenant\AuditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class CustomerObserver
 {
@@ -27,7 +26,7 @@ class CustomerObserver
         }
 
         // Normalize phone number (safety layer - should already be normalized from request)
-        if (!empty($customer->phone)) {
+        if (! empty($customer->phone)) {
             $normalizedPhone = PhoneNumberNormalizer::normalize($customer->phone);
 
             if ($customer->phone !== $normalizedPhone) {
@@ -87,7 +86,7 @@ class CustomerObserver
     public function updating(Customer $customer): void
     {
         // Normalize phone number if it's being changed
-        if ($customer->isDirty('phone') && !empty($customer->phone)) {
+        if ($customer->isDirty('phone') && ! empty($customer->phone)) {
             $normalizedPhone = PhoneNumberNormalizer::normalize($customer->phone);
 
             if ($customer->phone !== $normalizedPhone) {
@@ -109,7 +108,7 @@ class CustomerObserver
             $criticalFields = $customer->getCriticalFields();
             $criticalChanges = array_intersect_key($changes, array_flip($criticalFields));
 
-            if (!empty($criticalChanges)) {
+            if (! empty($criticalChanges)) {
                 $oldValues = $customer->getOriginal();
 
                 // Generate context-aware description
@@ -223,7 +222,6 @@ class CustomerObserver
         return sprintf('%s%s-%06d', $prefix, $year, $newNumber);
     }
 
-
     /**
      * Sanitize PII (Personally Identifiable Information) for audit logs
      * Based on GDPR compliance requirements
@@ -233,7 +231,7 @@ class CustomerObserver
         $piiFields = ['email', 'phone', 'address', 'date_of_birth'];
 
         foreach ($piiFields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
+            if (isset($data[$field]) && ! empty($data[$field])) {
                 // Mask PII data for audit logs
                 if ($field === 'email') {
                     $data[$field] = $this->maskEmail($data[$field]);
@@ -263,12 +261,12 @@ class CustomerObserver
 
         // Show first 2 chars and last char of username
         if (strlen($username) > 3) {
-            $masked = substr($username, 0, 2) . str_repeat('*', strlen($username) - 3) . substr($username, -1);
+            $masked = substr($username, 0, 2).str_repeat('*', strlen($username) - 3).substr($username, -1);
         } else {
-            $masked = substr($username, 0, 1) . str_repeat('*', strlen($username) - 1);
+            $masked = substr($username, 0, 1).str_repeat('*', strlen($username) - 1);
         }
 
-        return $masked . '@' . $domain;
+        return $masked.'@'.$domain;
     }
 
     /**
@@ -278,7 +276,7 @@ class CustomerObserver
     {
         // Show last 4 digits only
         if (strlen($phone) > 4) {
-            return str_repeat('*', strlen($phone) - 4) . substr($phone, -4);
+            return str_repeat('*', strlen($phone) - 4).substr($phone, -4);
         }
 
         return str_repeat('*', strlen($phone));
@@ -314,6 +312,7 @@ class CustomerObserver
         if (isset($changes['name'])) {
             $oldName = $customer->getOriginal('name');
             $newName = $changes['name'];
+
             return "{$user} changed customer name from {$oldName} to {$newName} ({$customer->customer_number})";
         }
 
@@ -331,6 +330,7 @@ class CustomerObserver
         if (isset($changes['credit_limit'])) {
             $oldLimit = number_format($customer->getOriginal('credit_limit'), 2);
             $newLimit = number_format($changes['credit_limit'], 2);
+
             return "{$user} changed credit limit for {$customer->name} from KES {$oldLimit} to KES {$newLimit}";
         }
 
@@ -338,12 +338,14 @@ class CustomerObserver
         if (isset($changes['current_debt'])) {
             $oldDebt = number_format($customer->getOriginal('current_debt'), 2);
             $newDebt = number_format($changes['current_debt'], 2);
+
             return "{$user} updated debt for {$customer->name} from KES {$oldDebt} to KES {$newDebt}";
         }
 
         // Active status change
         if (isset($changes['is_active'])) {
             $status = $changes['is_active'] ? 'activated' : 'deactivated';
+
             return "{$user} {$status} customer {$customer->name} ({$customer->customer_number})";
         }
 
@@ -351,11 +353,13 @@ class CustomerObserver
         if (isset($changes['customer_type'])) {
             $oldType = $customer->getOriginal('customer_type');
             $newType = $changes['customer_type'];
+
             return "{$user} changed customer {$customer->name} type from {$oldType} to {$newType}";
         }
 
         // Generic update
         $changedFields = implode(', ', array_keys($changes));
+
         return "{$user} updated customer {$customer->name} ({$customer->customer_number}) - {$changedFields}";
     }
 

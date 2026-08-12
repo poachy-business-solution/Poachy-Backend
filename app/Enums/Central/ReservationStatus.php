@@ -4,11 +4,11 @@ namespace App\Enums\Central;
 
 enum ReservationStatus: string
 {
-    case Pending   = 'pending';
+    case Pending = 'pending';
     case Confirmed = 'confirmed';
-    case Failed    = 'failed';
-    case Released  = 'released';
-    case Expired   = 'expired';
+    case Failed = 'failed';
+    case Released = 'released';
+    case Expired = 'expired';
 
     /**
      * Human-readable label for display.
@@ -16,11 +16,11 @@ enum ReservationStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending   => 'Pending',
+            self::Pending => 'Pending',
             self::Confirmed => 'Confirmed',
-            self::Failed    => 'Failed',
-            self::Released  => 'Released',
-            self::Expired   => 'Expired',
+            self::Failed => 'Failed',
+            self::Released => 'Released',
+            self::Expired => 'Expired',
         };
     }
 

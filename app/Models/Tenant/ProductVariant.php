@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy([ProductVariantObserver::class])]
@@ -86,6 +87,16 @@ class ProductVariant extends Model
             ->where('is_expired', false)
             ->orderBy('purchase_order_id', 'asc')
             ->orderBy('expiry_date', 'asc');
+    }
+
+    public function barcodes(): MorphMany
+    {
+        return $this->morphMany(ProductBarcode::class, 'barcodeable');
+    }
+
+    public function activeBarcodes(): MorphMany
+    {
+        return $this->barcodes()->active()->currentlyValid();
     }
 
     // Scopes

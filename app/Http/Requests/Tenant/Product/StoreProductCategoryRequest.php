@@ -94,7 +94,7 @@ class StoreProductCategoryRequest extends FormRequest
         }
 
         // Set default display_order if not provided
-        if (!$this->has('display_order')) {
+        if (! $this->has('display_order')) {
             $this->merge(['display_order' => 0]);
         }
     }

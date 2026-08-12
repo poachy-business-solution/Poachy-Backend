@@ -50,7 +50,6 @@ class PurchaseOrderItem extends Model
     /**
      * RELATIONSHIPS
      */
-
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
@@ -79,10 +78,9 @@ class PurchaseOrderItem extends Model
     /**
      * ACCESSORS
      */
-
     public function getIsPendingAttribute(): bool
     {
-        return $this->status === \App\Enums\Tenant\PurchaseOrderItemStatus::PENDING;
+        return $this->status === PurchaseOrderItemStatus::PENDING;
     }
 
     public function getIsFullyReceivedAttribute(): bool
@@ -132,11 +130,11 @@ class PurchaseOrderItem extends Model
         $oldStatus = $this->status;
 
         if ($this->quantity_received >= $this->quantity_ordered) {
-            $this->status = \App\Enums\Tenant\PurchaseOrderItemStatus::RECEIVED;
+            $this->status = PurchaseOrderItemStatus::RECEIVED;
         } elseif ($this->quantity_received > 0) {
-            $this->status = \App\Enums\Tenant\PurchaseOrderItemStatus::PARTIALLY_RECEIVED;
+            $this->status = PurchaseOrderItemStatus::PARTIALLY_RECEIVED;
         } else {
-            $this->status = \App\Enums\Tenant\PurchaseOrderItemStatus::PENDING;
+            $this->status = PurchaseOrderItemStatus::PENDING;
         }
 
         // Only save if status changed

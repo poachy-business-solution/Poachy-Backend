@@ -34,11 +34,11 @@ class CartRecoveryMail extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.central.cart-recovery',
             with: [
-                'cart'         => $this->cart,
+                'cart' => $this->cart,
                 'customerName' => $this->customerName,
-                'cartUrl'      => $this->cartUrl,
-                'itemCount'    => $this->cart->getItemCount(),
-                'subtotal'     => $this->cart->getSubtotal(),
+                'cartUrl' => $this->cartUrl,
+                'itemCount' => $this->cart->getItemCount(),
+                'subtotal' => $this->cart->getSubtotal(),
             ],
         );
     }

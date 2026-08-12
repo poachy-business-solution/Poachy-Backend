@@ -4,6 +4,7 @@ namespace App\Console\Commands\Tenant;
 
 use App\Jobs\Tenant\CheckBatchExpiriesJob;
 use App\Models\Tenant;
+use App\Services\Tenant\Inventory\ExpiryAlertService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -47,13 +48,15 @@ class CheckBatchExpiriesCommand extends Command
             }
 
             $this->info('✓ Batch expiry check completed successfully');
+
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('✗ Failed to check batch expiries: ' . $e->getMessage());
+            $this->error('✗ Failed to check batch expiries: '.$e->getMessage());
             Log::error('CheckBatchExpiriesCommand failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return Command::FAILURE;
         }
     }
@@ -65,7 +68,7 @@ class CheckBatchExpiriesCommand extends Command
     {
         $tenant = Tenant::find($tenantId);
 
-        if (!$tenant) {
+        if (! $tenant) {
             throw new \RuntimeException("Tenant not found: {$tenantId}");
         }
 
@@ -74,8 +77,8 @@ class CheckBatchExpiriesCommand extends Command
                 // Run synchronously
                 $this->line("  → Running synchronously for tenant {$tenantId}");
 
-                $job = new CheckBatchExpiriesJob();
-                $job->handle(app(\App\Services\Tenant\Inventory\ExpiryAlertService::class));
+                $job = new CheckBatchExpiriesJob;
+                $job->handle(app(ExpiryAlertService::class));
 
                 $this->info("  ✓ Completed for tenant {$tenantId}");
             } else {
@@ -100,6 +103,7 @@ class CheckBatchExpiriesCommand extends Command
 
         if ($totalTenants === 0) {
             $this->warn('No tenants found');
+
             return;
         }
 
@@ -114,10 +118,10 @@ class CheckBatchExpiriesCommand extends Command
 
         foreach ($tenants as $tenant) {
             try {
-                $tenant->run(function () use ($runSync, $queueName, $tenant) {
+                $tenant->run(function () use ($runSync, $queueName) {
                     if ($runSync) {
-                        $job = new CheckBatchExpiriesJob();
-                        $job->handle(app(\App\Services\Tenant\Inventory\ExpiryAlertService::class));
+                        $job = new CheckBatchExpiriesJob;
+                        $job->handle(app(ExpiryAlertService::class));
                     } else {
                         CheckBatchExpiriesJob::dispatch()
                             ->onQueue($queueName);

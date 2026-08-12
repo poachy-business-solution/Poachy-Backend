@@ -39,16 +39,16 @@ class MarketplaceSale extends Model
     protected function casts(): array
     {
         return [
-            'subtotal'           => 'decimal:2',
-            'tax_amount'         => 'decimal:2',
-            'discount_amount'    => 'decimal:2',
-            'total_amount'       => 'decimal:2',
-            'amount_paid'        => 'decimal:2',
-            'amount_due'         => 'decimal:2',
-            'payment_status'     => PaymentStatus::class,
-            'payment_method'     => PaymentMethod::class,
+            'subtotal' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
+            'amount_due' => 'decimal:2',
+            'payment_status' => PaymentStatus::class,
+            'payment_method' => PaymentMethod::class,
             'fulfillment_status' => MarketplaceFulfillmentStatus::class,
-            'sale_date'          => 'datetime',
+            'sale_date' => 'datetime',
         ];
     }
 

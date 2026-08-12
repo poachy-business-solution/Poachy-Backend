@@ -14,6 +14,7 @@ use App\Services\Tenant\Inventory\StockAlertService;
 use App\Services\Tenant\Sync\InventoryCountSyncService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -47,13 +48,37 @@ class InventoryCountSyncTest extends TestCase
 
         Auth::setUser(new class implements Authenticatable
         {
-            public function getAuthIdentifierName() { return 'id'; }
-            public function getAuthIdentifier() { return 1; }
-            public function getAuthPasswordName() { return 'password'; }
-            public function getAuthPassword() { return ''; }
-            public function getRememberToken() { return null; }
+            public function getAuthIdentifierName()
+            {
+                return 'id';
+            }
+
+            public function getAuthIdentifier()
+            {
+                return 1;
+            }
+
+            public function getAuthPasswordName()
+            {
+                return 'password';
+            }
+
+            public function getAuthPassword()
+            {
+                return '';
+            }
+
+            public function getRememberToken()
+            {
+                return null;
+            }
+
             public function setRememberToken($value) {}
-            public function getRememberTokenName() { return 'remember_token'; }
+
+            public function getRememberTokenName()
+            {
+                return 'remember_token';
+            }
         });
     }
 
@@ -369,7 +394,7 @@ class InventoryCountSyncTest extends TestCase
         try {
             (new ProcessOutboundInventoryCountSync($sync->id))->handle();
             $this->fail('Expected exception was not thrown');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             // expected
         }
 
@@ -393,7 +418,7 @@ class InventoryCountSyncTest extends TestCase
         try {
             (new ProcessOutboundInventoryCountSync($sync->id))->handle();
             $this->fail('Expected exception was not thrown');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             // expected — see comment in the sibling retry test for why.
         }
 

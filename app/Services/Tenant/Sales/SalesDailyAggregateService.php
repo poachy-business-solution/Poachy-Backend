@@ -7,8 +7,8 @@ use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SalesDailyAggregate;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SalesDailyAggregateService
@@ -18,9 +18,6 @@ class SalesDailyAggregateService
     /**
      * Update aggregates from a completed sale
      * This is the main entry point called by queued jobs
-     *
-     * @param Sale $sale
-     * @return void
      */
     public function updateFromSale(Sale $sale): void
     {
@@ -56,12 +53,6 @@ class SalesDailyAggregateService
 
     /**
      * Update aggregate for a single sale item
-     *
-     * @param string $aggregateDate
-     * @param int $storeId
-     * @param SaleItem $item
-     * @param Sale $sale
-     * @return void
      */
     protected function updateAggregateForItem(
         string $aggregateDate,
@@ -119,9 +110,6 @@ class SalesDailyAggregateService
 
     /**
      * Determine sellable type and related IDs from sale item
-     *
-     * @param SaleItem $item
-     * @return array
      */
     protected function determineSellableData(SaleItem $item): array
     {
@@ -156,9 +144,6 @@ class SalesDailyAggregateService
 
     /**
      * Calculate metrics from sale item
-     *
-     * @param SaleItem $item
-     * @return array
      */
     protected function calculateMetrics(SaleItem $item): array
     {
@@ -184,10 +169,6 @@ class SalesDailyAggregateService
     /**
      * Update unique customer count for a date/store
      * Called by queued job
-     *
-     * @param string $aggregateDate
-     * @param int $storeId
-     * @return void
      */
     public function updateUniqueCustomerCount(string $aggregateDate, int $storeId): void
     {
@@ -212,10 +193,6 @@ class SalesDailyAggregateService
 
     /**
      * Get aggregates for a specific date and store
-     *
-     * @param Carbon|string $date
-     * @param int $storeId
-     * @return Collection
      */
     public function getAggregatesForDate(Carbon|string $date, int $storeId): Collection
     {
@@ -237,11 +214,6 @@ class SalesDailyAggregateService
 
     /**
      * Get aggregates for a date range
-     *
-     * @param Carbon|string $from
-     * @param Carbon|string $to
-     * @param int $storeId
-     * @return Collection
      */
     public function getAggregatesForDateRange(
         Carbon|string $from,
@@ -261,11 +233,6 @@ class SalesDailyAggregateService
 
     /**
      * Get top selling products for a date
-     *
-     * @param Carbon|string $date
-     * @param int $storeId
-     * @param int $limit
-     * @return Collection
      */
     public function getTopSellingProducts(
         Carbon|string $date,
@@ -283,11 +250,6 @@ class SalesDailyAggregateService
 
     /**
      * Get top revenue products for a date
-     *
-     * @param Carbon|string $date
-     * @param int $storeId
-     * @param int $limit
-     * @return Collection
      */
     public function getTopRevenueProducts(
         Carbon|string $date,
@@ -305,10 +267,6 @@ class SalesDailyAggregateService
 
     /**
      * Get category summary for a date
-     *
-     * @param Carbon|string $date
-     * @param int $storeId
-     * @return Collection
      */
     public function getCategorySummary(Carbon|string $date, int $storeId): Collection
     {
@@ -337,10 +295,6 @@ class SalesDailyAggregateService
 
     /**
      * Get store-level summary (all products combined)
-     *
-     * @param Carbon|string $date
-     * @param int $storeId
-     * @return array
      */
     public function getStoreSummary(Carbon|string $date, int $storeId): array
     {
@@ -360,7 +314,7 @@ class SalesDailyAggregateService
             ')
             ->first();
 
-        if (!$summary) {
+        if (! $summary) {
             return [
                 'total_quantity' => 0,
                 'total_revenue' => 0,
@@ -400,10 +354,6 @@ class SalesDailyAggregateService
     /**
      * Recalculate aggregates for a specific date/store
      * Used for corrections or initial backfill
-     *
-     * @param Carbon|string $date
-     * @param int $storeId
-     * @return Collection
      */
     public function recalculateForDate(Carbon|string $date, int $storeId): Collection
     {
@@ -451,10 +401,6 @@ class SalesDailyAggregateService
 
     /**
      * Clear cache for a date/store
-     *
-     * @param string $date
-     * @param int $storeId
-     * @return void
      */
     protected function clearCache(string $date, int $storeId): void
     {
@@ -463,25 +409,21 @@ class SalesDailyAggregateService
 
     /**
      * Get cache key
-     *
-     * @param string $suffix
-     * @return string
      */
     protected function getCacheKey(string $suffix): string
     {
         $tenantId = tenant()->id ?? 'global';
+
         return "daily_aggregates:{$tenantId}:{$suffix}";
     }
 
     /**
      * Get cache tags
-     *
-     * @param int $storeId
-     * @return array
      */
     protected function getCacheTags(int $storeId): array
     {
         $tenantId = tenant()->id ?? 'global';
+
         return [
             "tenant:{$tenantId}",
             "daily_aggregates:{$tenantId}",

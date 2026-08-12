@@ -3,6 +3,7 @@
 namespace App\Traits\Tenant;
 
 use App\Services\Tenant\AuditService;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Trait HasAuditLogging
@@ -24,15 +25,11 @@ trait HasAuditLogging
 {
     /**
      * Temporary storage for old values
-     *
-     * @var array
      */
     protected array $auditOldValues = [];
 
     /**
      * Get the audit service instance
-     *
-     * @return AuditService
      */
     protected function getAuditService(): AuditService
     {
@@ -42,12 +39,11 @@ trait HasAuditLogging
     /**
      * Log an audit entry for this model
      *
-     * @param string $action Action performed (created, updated, deleted, etc.)
-     * @param array|null $oldValues Values before change
-     * @param array|null $newValues Values after change
-     * @param string|null $description Custom description
-     * @param array|null $tags Custom tags
-     * @return void
+     * @param  string  $action  Action performed (created, updated, deleted, etc.)
+     * @param  array|null  $oldValues  Values before change
+     * @param  array|null  $newValues  Values after change
+     * @param  string|null  $description  Custom description
+     * @param  array|null  $tags  Custom tags
      */
     public function logAudit(
         string $action,
@@ -72,10 +68,9 @@ trait HasAuditLogging
      * Useful for models like Sale, PurchaseOrder, StockTransfer
      * that need to include related items in the audit.
      *
-     * @param string $action Action performed
-     * @param string|null $description Custom description
-     * @param array|null $tags Custom tags
-     * @return void
+     * @param  string  $action  Action performed
+     * @param  string|null  $description  Custom description
+     * @param  array|null  $tags  Custom tags
      */
     public function logAggregatedAudit(
         string $action,
@@ -99,8 +94,6 @@ trait HasAuditLogging
      * Override this method in your model to specify which fields
      * should be included in audits. If not overridden, all fields
      * will be included (subject to global excluded_fields config).
-     *
-     * @return array
      */
     public function getAuditableFields(): array
     {
@@ -116,20 +109,18 @@ trait HasAuditLogging
      *
      * This method reads from config but can be overridden in models
      * for runtime determination.
-     *
-     * @return array
      */
     public function getCriticalFields(): array
     {
         $modelClass = get_class($this);
+
         return config("audit.models.{$modelClass}.critical_fields", []);
     }
 
     /**
      * Check if a specific field should trigger an audit
      *
-     * @param string $field Field name
-     * @return bool
+     * @param  string  $field  Field name
      */
     public function shouldAuditField(string $field): bool
     {
@@ -137,7 +128,7 @@ trait HasAuditLogging
         $excludedFields = config('audit.excluded_fields', []);
 
         return in_array($field, $auditableFields)
-            && !in_array($field, $excludedFields);
+            && ! in_array($field, $excludedFields);
     }
 
     /**
@@ -145,8 +136,6 @@ trait HasAuditLogging
      *
      * Override this method in your model to provide custom tags
      * based on model state or context.
-     *
-     * @return array
      */
     public function getAuditTags(): array
     {
@@ -159,8 +148,7 @@ trait HasAuditLogging
     /**
      * Check if this model should be audited for the given action
      *
-     * @param string $action Action being performed
-     * @return bool
+     * @param  string  $action  Action being performed
      */
     public function shouldAudit(string $action): bool
     {
@@ -174,8 +162,6 @@ trait HasAuditLogging
      * the original values before they change.
      *
      * IMPORTANT: This stores values in memory, NOT in the database
-     *
-     * @return void
      */
     public function storeOldValuesForAudit(): void
     {
@@ -184,8 +170,6 @@ trait HasAuditLogging
 
     /**
      * Get stored old values for audit
-     *
-     * @return array
      */
     public function getOldValuesForAudit(): array
     {
@@ -194,8 +178,6 @@ trait HasAuditLogging
 
     /**
      * Clear stored old values (cleanup after audit)
-     *
-     * @return void
      */
     public function clearOldValuesForAudit(): void
     {
@@ -206,8 +188,6 @@ trait HasAuditLogging
      * Get only the changed critical fields
      *
      * Useful for critical_only audit mode to only log relevant changes.
-     *
-     * @return array
      */
     public function getCriticalChanges(): array
     {
@@ -226,8 +206,8 @@ trait HasAuditLogging
      *
      * Useful for finding all models that have auditing enabled.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeAuditable($query)
     {

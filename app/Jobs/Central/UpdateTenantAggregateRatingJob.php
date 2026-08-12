@@ -65,46 +65,46 @@ class UpdateTenantAggregateRatingJob implements ShouldQueue
 
         // Store old values for logging
         $oldValues = [
-            'avg_overall'         => $profile->average_overall_rating,
+            'avg_overall' => $profile->average_overall_rating,
             'avg_product_quality' => $profile->average_product_quality_rating,
-            'avg_delivery'        => $profile->average_delivery_rating,
-            'avg_service'         => $profile->average_service_rating,
-            'total_reviews'       => $profile->total_reviews,
-            'approved_reviews'    => $profile->approved_reviews,
-            'pending_reviews'     => $profile->pending_reviews,
+            'avg_delivery' => $profile->average_delivery_rating,
+            'avg_service' => $profile->average_service_rating,
+            'total_reviews' => $profile->total_reviews,
+            'approved_reviews' => $profile->approved_reviews,
+            'pending_reviews' => $profile->pending_reviews,
         ];
 
         // Update profile with new ratings
         $profile->update([
-            'average_overall_rating'         => $aggregate->approved_count > 0
+            'average_overall_rating' => $aggregate->approved_count > 0
                 ? round((float) $aggregate->avg_overall, 2)
                 : null,
             'average_product_quality_rating' => $aggregate->approved_count > 0 && $aggregate->avg_product_quality
                 ? round((float) $aggregate->avg_product_quality, 2)
                 : null,
-            'average_delivery_rating'        => $aggregate->approved_count > 0 && $aggregate->avg_delivery
+            'average_delivery_rating' => $aggregate->approved_count > 0 && $aggregate->avg_delivery
                 ? round((float) $aggregate->avg_delivery, 2)
                 : null,
-            'average_service_rating'         => $aggregate->approved_count > 0 && $aggregate->avg_service
+            'average_service_rating' => $aggregate->approved_count > 0 && $aggregate->avg_service
                 ? round((float) $aggregate->avg_service, 2)
                 : null,
-            'total_reviews'                  => $totalReviews,
-            'approved_reviews'               => (int) $aggregate->approved_count,
-            'pending_reviews'                => $pendingReviews,
-            'ratings_last_calculated_at'     => now(),
+            'total_reviews' => $totalReviews,
+            'approved_reviews' => (int) $aggregate->approved_count,
+            'pending_reviews' => $pendingReviews,
+            'ratings_last_calculated_at' => now(),
         ]);
 
         Log::info('UpdateTenantAggregateRatingJob: updated tenant profile ratings', [
-            'tenant_id'   => $this->tenantId,
-            'old_values'  => $oldValues,
-            'new_values'  => [
-                'avg_overall'         => $profile->average_overall_rating,
+            'tenant_id' => $this->tenantId,
+            'old_values' => $oldValues,
+            'new_values' => [
+                'avg_overall' => $profile->average_overall_rating,
                 'avg_product_quality' => $profile->average_product_quality_rating,
-                'avg_delivery'        => $profile->average_delivery_rating,
-                'avg_service'         => $profile->average_service_rating,
-                'total_reviews'       => $profile->total_reviews,
-                'approved_reviews'    => $profile->approved_reviews,
-                'pending_reviews'     => $profile->pending_reviews,
+                'avg_delivery' => $profile->average_delivery_rating,
+                'avg_service' => $profile->average_service_rating,
+                'total_reviews' => $profile->total_reviews,
+                'approved_reviews' => $profile->approved_reviews,
+                'pending_reviews' => $profile->pending_reviews,
             ],
         ]);
     }
