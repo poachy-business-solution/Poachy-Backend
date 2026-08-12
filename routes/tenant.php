@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Business\DeliverySettingsController;
 use App\Http\Controllers\Api\Tenant\Business\DeliveryZoneController;
+use App\Http\Controllers\Api\Tenant\Catalog\CatalogSyncController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerCreditTransactionController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
@@ -100,6 +101,8 @@ Route::prefix('v1/tenant')->group(function () {
 Route::prefix('v1/tenant')
     ->middleware(['auth:tenant', 'tenant.access'])
     ->group(function () {
+
+        Route::get('/catalog/sync', CatalogSyncController::class);
 
         // Store Management — read is available to any authenticated tenant user
         // (no dedicated view-locations permission, and operational staff need
