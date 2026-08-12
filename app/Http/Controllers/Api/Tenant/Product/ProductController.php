@@ -4,22 +4,28 @@ namespace App\Http\Controllers\Api\Tenant\Product;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Product\AddProductImagesRequest;
+use App\Http\Requests\Tenant\Product\ReceiveProductStockRequest;
 use App\Http\Requests\Tenant\Product\RemoveProductImageRequest;
 use App\Http\Requests\Tenant\Product\StoreProductRequest;
 use App\Http\Requests\Tenant\Product\UpdateInventoryConfigRequest;
 use App\Http\Requests\Tenant\Product\UpdateOnlineConfigRequest;
 use App\Http\Requests\Tenant\Product\UpdateProductRequest;
+use App\Http\Resources\Tenant\Inventory\ProductBatchResource;
+use App\Http\Resources\Tenant\Inventory\ProductSerialResource;
+use App\Http\Resources\Tenant\Inventory\PurchaseOrderResource;
 use App\Http\Resources\Tenant\Product\ProductListResource;
 use App\Http\Resources\Tenant\Product\ProductResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Tenant\Product\ProductService;
+use App\Services\Tenant\Product\ProductStockReceivingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function __construct(
-        private ProductService $productService
+        private ProductService $productService,
+        private ProductStockReceivingService $stockReceivingService
     ) {}
 
     /**
@@ -1986,6 +1992,22 @@ class ProductController extends Controller
 
         return ApiResponse::success(
             message: 'Primary image updated successfully'
+        );
+    }
+
+    public function receiveStock(string $uuid, ReceiveProductStockRequest $request): JsonResponse
+    {
+        $product = $this->productService->getByUuid($uuid);
+        $result = $this->stockReceivingService->receive($product, $request->validated());
+
+        return ApiResponse::created(
+            "Stock received successfully. Created {$result['batches']->count()} batch(es), {$result['serials']->count()} serial(s)",
+            [
+                'store_product_created' => $result['store_product_created'],
+                'batches' => ProductBatchResource::collection($result['batches']),
+                'serials' => ProductSerialResource::collection($result['serials']),
+                'purchase_order' => new PurchaseOrderResource($result['purchase_order']),
+            ]
         );
     }
 }

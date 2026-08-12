@@ -214,6 +214,7 @@ Route::prefix('v1/tenant')
             Route::patch('/{uuid}', [ProductController::class, 'update']);
             Route::patch('/{uuid}/inventory', [ProductController::class, 'updateInventoryConfig']);
             Route::patch('/{uuid}/online', [ProductController::class, 'updateOnlineConfig']);
+            Route::post('/{uuid}/receive-stock', [ProductController::class, 'receiveStock']);
             // toggleActive/toggleFeatured/updatePrimaryImage have no FormRequest
             // of their own (unlike store/update/addImages/removeImage), so the
             // manage-products check has to be wired in here at the route level.
