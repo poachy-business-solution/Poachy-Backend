@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[ObservedBy([ProductUomObserver::class])]
 class ProductUom extends Model
@@ -51,6 +52,16 @@ class ProductUom extends Model
     public function uom(): BelongsTo
     {
         return $this->belongsTo(UnitOfMeasure::class, 'uom_id');
+    }
+
+    public function barcodes(): MorphMany
+    {
+        return $this->morphMany(ProductBarcode::class, 'barcodeable');
+    }
+
+    public function activeBarcodes(): MorphMany
+    {
+        return $this->barcodes()->active()->currentlyValid();
     }
 
     // Scopes

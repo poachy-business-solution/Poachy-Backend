@@ -29973,6 +29973,14 @@
                                                             "type": "integer",
                                                             "example": 30
                                                         },
+                                                        "barcodes": {
+                                                            "type": "integer",
+                                                            "example": 135
+                                                        },
+                                                        "scale_barcode_formats": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
                                                         "prices": {
                                                             "type": "integer",
                                                             "example": 140
@@ -30274,6 +30282,281 @@
                                                                     "is_active": {
                                                                         "type": "boolean",
                                                                         "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "barcodes": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 25
+                                                                    },
+                                                                    "deleted": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "synced_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-01T10:20:30.000000Z"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "deleted_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "barcodeable_type": {
+                                                                        "type": "string",
+                                                                        "example": "App\\\\Models\\\\Tenant\\\\Product"
+                                                                    },
+                                                                    "barcodeable_id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "barcode": {
+                                                                        "type": "string",
+                                                                        "example": "6161234567890"
+                                                                    },
+                                                                    "barcode_type": {
+                                                                        "type": "string",
+                                                                        "example": "EAN-13"
+                                                                    },
+                                                                    "is_primary": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "supplier_id": {
+                                                                        "type": "integer",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "region": {
+                                                                        "type": "string",
+                                                                        "example": "KE",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "store_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "valid_from": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": "2026-01-01",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "valid_until": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": "2026-12-31",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "source": {
+                                                                        "type": "string",
+                                                                        "example": "manufacturer"
+                                                                    },
+                                                                    "metadata": {
+                                                                        "type": "object"
+                                                                    },
+                                                                    "notes": {
+                                                                        "type": "string",
+                                                                        "example": "Manufacturer pack barcode",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "sale_line": {
+                                                                        "description": "Offline POS-ready sale line defaults matching the product-barcodes lookup response.",
+                                                                        "properties": {
+                                                                            "target_type": {
+                                                                                "type": "string",
+                                                                                "enum": [
+                                                                                    "product",
+                                                                                    "variant",
+                                                                                    "product_uom"
+                                                                                ],
+                                                                                "example": "product_uom"
+                                                                            },
+                                                                            "product_id": {
+                                                                                "type": "integer",
+                                                                                "example": 10
+                                                                            },
+                                                                            "variant_id": {
+                                                                                "type": "integer",
+                                                                                "example": null,
+                                                                                "nullable": true
+                                                                            },
+                                                                            "product_uom_id": {
+                                                                                "type": "integer",
+                                                                                "example": 40,
+                                                                                "nullable": true
+                                                                            },
+                                                                            "uom_id": {
+                                                                                "type": "integer",
+                                                                                "example": 2
+                                                                            },
+                                                                            "uom_code": {
+                                                                                "type": "string",
+                                                                                "example": "ctn"
+                                                                            },
+                                                                            "quantity": {
+                                                                                "type": "number",
+                                                                                "format": "float",
+                                                                                "example": 1
+                                                                            },
+                                                                            "quantity_in_base_uom": {
+                                                                                "type": "number",
+                                                                                "format": "float",
+                                                                                "example": 12
+                                                                            },
+                                                                            "sale_item_payload": {
+                                                                                "properties": {
+                                                                                    "product_id": {
+                                                                                        "type": "integer",
+                                                                                        "example": 10
+                                                                                    },
+                                                                                    "variant_id": {
+                                                                                        "type": "integer",
+                                                                                        "example": null,
+                                                                                        "nullable": true
+                                                                                    },
+                                                                                    "bundle_id": {
+                                                                                        "type": "integer",
+                                                                                        "example": null,
+                                                                                        "nullable": true
+                                                                                    },
+                                                                                    "uom_id": {
+                                                                                        "type": "integer",
+                                                                                        "example": 2
+                                                                                    },
+                                                                                    "quantity": {
+                                                                                        "type": "number",
+                                                                                        "format": "float",
+                                                                                        "example": 1
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "scale_barcode_formats": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "deleted": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "synced_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-01T10:20:30.000000Z"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "EAN13 weight scale"
+                                                                    },
+                                                                    "prefix": {
+                                                                        "type": "string",
+                                                                        "example": "21"
+                                                                    },
+                                                                    "length": {
+                                                                        "type": "integer",
+                                                                        "example": 13
+                                                                    },
+                                                                    "product_code_start": {
+                                                                        "description": "Zero-based start offset for the embedded PLU/product code.",
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "product_code_length": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "value_start": {
+                                                                        "description": "Zero-based start offset for embedded weight, price, or quantity.",
+                                                                        "type": "integer",
+                                                                        "example": 7
+                                                                    },
+                                                                    "value_length": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "value_type": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "weight",
+                                                                            "price",
+                                                                            "quantity"
+                                                                        ],
+                                                                        "example": "weight"
+                                                                    },
+                                                                    "decimal_places": {
+                                                                        "type": "integer",
+                                                                        "example": 3
+                                                                    },
+                                                                    "checksum": {
+                                                                        "type": "string",
+                                                                        "example": "ean13",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "store_id": {
+                                                                        "type": "integer",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "priority": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "metadata": {
+                                                                        "type": "object"
+                                                                    },
+                                                                    "notes": {
+                                                                        "type": "string",
+                                                                        "example": "Mobile should parse after static barcode miss and resolve extracted PLU against SCALE barcodes.",
+                                                                        "nullable": true
                                                                     }
                                                                 },
                                                                 "type": "object"
@@ -87020,6 +87303,1212 @@
                 ]
             }
         },
+        "/api/v1/tenant/product-barcodes/lookup": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Lookup a sellable item by barcode",
+                "description": "Resolves an active, currently-valid barcode to a product, product variant, or product UOM. Exact static barcode matches are attempted first. If none is found, configured weighing-scale/price-embedded barcode formats are parsed and the extracted PLU is resolved as a SCALE barcode. When store_id is supplied, a matching store-specific barcode takes precedence over a global barcode and the response includes store price/availability context.",
+                "operationId": "cb8206bfde15dbfdb725cc8b295dcc18",
+                "parameters": [
+                    {
+                        "name": "barcode",
+                        "in": "query",
+                        "description": "Barcode value scanned by POS/mobile. Leading zeroes are preserved; the backend trims surrounding whitespace only.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "example": "6161234567890"
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "description": "Optional store context used to prefer store-specific barcode mappings and return store availability/price.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Barcode resolved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Barcode resolved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "barcode": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "barcode": {
+                                                            "type": "string",
+                                                            "example": "6161234567890"
+                                                        },
+                                                        "barcode_type": {
+                                                            "type": "string",
+                                                            "example": "EAN-13"
+                                                        },
+                                                        "is_primary": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "store_id": {
+                                                            "type": "integer",
+                                                            "example": 1,
+                                                            "nullable": true
+                                                        },
+                                                        "source": {
+                                                            "type": "string",
+                                                            "example": "manufacturer"
+                                                        },
+                                                        "barcodeable": {
+                                                            "properties": {
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "product",
+                                                                        "variant",
+                                                                        "product_uom"
+                                                                    ],
+                                                                    "example": "product"
+                                                                },
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 4
+                                                                },
+                                                                "uuid": {
+                                                                    "type": "string",
+                                                                    "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72",
+                                                                    "nullable": true
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Maize Flour 2kg",
+                                                                    "nullable": true
+                                                                },
+                                                                "sku": {
+                                                                    "type": "string",
+                                                                    "example": "GROC-MAIZ-2KG",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "store_context": {
+                                                    "properties": {
+                                                        "store_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "is_available": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "store_selling_price": {
+                                                            "type": "string",
+                                                            "example": "155.00",
+                                                            "nullable": true
+                                                        },
+                                                        "min_stock_level": {
+                                                            "type": "integer",
+                                                            "example": 5,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "sale_line": {
+                                                    "description": "POS-ready sale line defaults derived from the resolved barcode target.",
+                                                    "properties": {
+                                                        "target_type": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "product",
+                                                                "variant",
+                                                                "product_uom"
+                                                            ],
+                                                            "example": "product_uom"
+                                                        },
+                                                        "product_id": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "variant_id": {
+                                                            "type": "integer",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        },
+                                                        "product_uom_id": {
+                                                            "type": "integer",
+                                                            "example": 9,
+                                                            "nullable": true
+                                                        },
+                                                        "uom_id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "uom_code": {
+                                                            "type": "string",
+                                                            "example": "ctn"
+                                                        },
+                                                        "quantity": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 1
+                                                        },
+                                                        "quantity_in_base_uom": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 12
+                                                        },
+                                                        "sale_item_payload": {
+                                                            "properties": {
+                                                                "product_id": {
+                                                                    "type": "integer",
+                                                                    "example": 4
+                                                                },
+                                                                "variant_id": {
+                                                                    "type": "integer",
+                                                                    "example": null,
+                                                                    "nullable": true
+                                                                },
+                                                                "bundle_id": {
+                                                                    "type": "integer",
+                                                                    "example": null,
+                                                                    "nullable": true
+                                                                },
+                                                                "uom_id": {
+                                                                    "type": "integer",
+                                                                    "example": 2
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 1
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "scale_barcode": {
+                                                    "description": "Present only when the scanned value was parsed using a configured scale barcode format.",
+                                                    "properties": {
+                                                        "format_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "format_name": {
+                                                            "type": "string",
+                                                            "example": "EAN13 weight scale"
+                                                        },
+                                                        "raw_barcode": {
+                                                            "type": "string",
+                                                            "example": "2101234007501"
+                                                        },
+                                                        "plu": {
+                                                            "type": "string",
+                                                            "example": "01234"
+                                                        },
+                                                        "value_type": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "weight",
+                                                                "price",
+                                                                "quantity"
+                                                            ],
+                                                            "example": "weight"
+                                                        },
+                                                        "raw_value": {
+                                                            "type": "string",
+                                                            "example": "00750"
+                                                        },
+                                                        "value": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 0.75
+                                                        },
+                                                        "decimal_places": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "checksum": {
+                                                            "type": "string",
+                                                            "example": "ean13",
+                                                            "nullable": true
+                                                        },
+                                                        "store_id": {
+                                                            "type": "integer",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Barcode not found, inactive, expired, or attached to an inactive sellable item"
+                    },
+                    "409": {
+                        "description": "Multiple active barcode mappings matched this lookup"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/suggestions": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Submit unknown barcode attachment suggestion",
+                "description": "Allows any authenticated POS/mobile user to submit an unknown scanned barcode as a pending suggestion against an existing product, variant, or product UOM. The suggestion does not affect live barcode lookup or offline catalog sync until a manage-products user approves it.",
+                "operationId": "317d8259de1ddad4f8c7b141420cadcc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Barcode suggestion submitted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Target product, variant, or product UOM not found"
+                    },
+                    "409": {
+                        "description": "A pending suggestion already exists for this barcode context"
+                    },
+                    "422": {
+                        "description": "Validation error or active barcode already exists"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/suggestions/pending": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "List pending barcode suggestions",
+                "description": "Returns unknown barcode attachment suggestions waiting for manager/admin review. Requires manage-products permission.",
+                "operationId": "f20f654c5fd3aedac9d01472d3fffda3",
+                "responses": {
+                    "200": {
+                        "description": "Pending barcode suggestions retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/suggestions/{suggestion}/approve": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Approve barcode suggestion",
+                "description": "Approves a pending unknown-barcode suggestion and creates an active product barcode mapping. Requires manage-products permission.",
+                "operationId": "060630fc29a11d11ab3a985546e568b3",
+                "parameters": [
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_primary": {
+                                        "type": "boolean",
+                                        "example": false,
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Approved after manager verified package",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Barcode suggestion approved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Suggestion not found"
+                    },
+                    "422": {
+                        "description": "Suggestion is not pending or active barcode already exists"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/suggestions/{suggestion}/reject": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Reject barcode suggestion",
+                "description": "Rejects a pending unknown-barcode suggestion without creating a live barcode mapping. Requires manage-products permission.",
+                "operationId": "66daf471c531b5ba07ec5a34d2416902",
+                "parameters": [
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rejection_reason"
+                                ],
+                                "properties": {
+                                    "rejection_reason": {
+                                        "type": "string",
+                                        "example": "Barcode belongs to a different product"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Barcode suggestion rejected successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Suggestion not found"
+                    },
+                    "422": {
+                        "description": "Suggestion is not pending or rejection reason is missing"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/manual": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Create a manually entered barcode",
+                "description": "Creates a barcode from an admin-entered value and records metadata.workflow=manual_entry. Requires manage-products permission.",
+                "operationId": "cd0767c347f086ebeb54403cc98c7238",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Manual barcode created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Target product, variant, or product UOM not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/scanned": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Attach a scanned barcode",
+                "description": "Creates a barcode mapping from a cashier/mobile scan and records metadata.workflow=scanned_attachment. This supports the unknown barcode -> attach to existing product flow.",
+                "operationId": "0f4706dfff09f569dc6f18cbab6c5cbd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Scanned barcode attached successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Target product, variant, or product UOM not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/generated": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Generate and attach an internal barcode",
+                "description": "Generates a unique INTERNAL barcode value, attaches it to the selected target, and records source=generated with metadata.workflow=backend_generation.",
+                "operationId": "cb49e27d972ac9e73aaeed9f1ba57745",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "target_type"
+                                ],
+                                "properties": {
+                                    "target_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "product",
+                                            "variant",
+                                            "product_uom"
+                                        ],
+                                        "example": "product"
+                                    },
+                                    "product_uuid": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72",
+                                        "nullable": true
+                                    },
+                                    "variant_id": {
+                                        "type": "integer",
+                                        "example": 12,
+                                        "nullable": true
+                                    },
+                                    "product_uom_id": {
+                                        "type": "integer",
+                                        "example": 8,
+                                        "nullable": true
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "store_id": {
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Internal shelf label",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Internal barcode generated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Target product, variant, or product UOM not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/imported": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Import barcode mappings in batch",
+                "description": "Accepts parsed import rows and creates barcode mappings with source=imported and metadata.workflow=structured_import. CSV parsing can happen outside this endpoint and submit rows here.",
+                "operationId": "2eb32a8540bb4046b1b24cd0c122aebc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rows"
+                                ],
+                                "properties": {
+                                    "rows": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/ProductBarcodeWorkflowRequest"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Barcode import completed"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/supplier": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Attach a supplier-provided barcode",
+                "description": "Creates a supplier-provided barcode mapping and requires supplier_id. Records source=supplier and metadata.workflow=supplier_catalog.",
+                "operationId": "05b37c899df46b3c33805c1436c37963",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Supplier barcode created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Target product, variant, product UOM, or supplier not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/scale": {
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Register a scale barcode",
+                "description": "Registers a weighing-scale barcode mapping with source=scale and barcode_type=SCALE. This does not parse embedded weight or price yet; parsing needs the scale barcode format.",
+                "operationId": "257e5c9e9ef56af73355c637ec3d4c69",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Scale barcode registered successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Target product, variant, or product UOM not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/barcodes": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "List product barcodes",
+                "description": "Returns all barcode mappings attached directly to a product, including inactive and future/expired mappings for administration.",
+                "operationId": "adde141f2245071ef6d8b9701da5ba28",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product barcodes retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Attach a barcode to a product",
+                "description": "Creates a barcode mapping for a product. Requires manage-products permission. If is_primary=true, other barcodes on the same product are marked non-primary.",
+                "operationId": "f5af6c4c72e20564c44fb54f574d8499",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "barcode"
+                                ],
+                                "properties": {
+                                    "barcode": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "6161234567890"
+                                    },
+                                    "barcode_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "EAN-13",
+                                            "EAN-8",
+                                            "UPC-A",
+                                            "UPC-E",
+                                            "CODE-128",
+                                            "CODE-39",
+                                            "QR",
+                                            "INTERNAL",
+                                            "SCALE"
+                                        ],
+                                        "example": "EAN-13"
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "supplier_id": {
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "region": {
+                                        "type": "string",
+                                        "example": "KE",
+                                        "nullable": true
+                                    },
+                                    "store_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "valid_from": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-01-01",
+                                        "nullable": true
+                                    },
+                                    "valid_until": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-12-31",
+                                        "nullable": true
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "enum": [
+                                            "manufacturer",
+                                            "manual",
+                                            "generated",
+                                            "supplier",
+                                            "imported",
+                                            "scale"
+                                        ],
+                                        "example": "manual"
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Manufacturer pack barcode",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Product barcode created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/variants/{id}/barcodes": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "List product variant barcodes",
+                "description": "Returns all barcode mappings attached directly to a product variant.",
+                "operationId": "8729e38a2c9944e5253694a1240adf67",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Product variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variant barcodes retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Variant not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Attach a barcode to a product variant",
+                "description": "Creates a barcode mapping for a variant. Requires manage-products permission. Use this when each sellable variant has its own manufacturer or internal barcode.",
+                "operationId": "148ab74debfd970b0349fc0eb3363276",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Product variant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Variant barcode created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Variant not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/uoms/{productUom}/barcodes": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "List product UOM barcodes",
+                "description": "Returns barcode mappings attached to a configured product UOM/package size.",
+                "operationId": "470d54717cf7198a68ebbb890ae6987d",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "productUom",
+                        "in": "path",
+                        "description": "Product UOM ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product UOM barcodes retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Product or product UOM not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Attach a barcode to a product UOM",
+                "description": "Creates a barcode mapping for a package/sellable UOM. Requires manage-products permission.",
+                "operationId": "0d902f02da0b724d5442cd44685daf82",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "productUom",
+                        "in": "path",
+                        "description": "Product UOM ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductBarcodeStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Product UOM barcode created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Product or product UOM not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-barcodes/{barcode}": {
+            "delete": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Delete a product barcode",
+                "description": "Soft-deletes a barcode mapping. Requires manage-products permission.",
+                "operationId": "98111710fda7f53450f1edbf96652f05",
+                "parameters": [
+                    {
+                        "name": "barcode",
+                        "in": "path",
+                        "description": "Product barcode row ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product barcode deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Barcode not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/brands": {
             "get": {
                 "tags": [
@@ -96985,6 +98474,320 @@
                 }
             }
         },
+        "/api/v1/tenant/product-scale-barcode-formats": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "List scale barcode formats",
+                "description": "Lists configured weighing-scale/price-embedded barcode parser formats. Read access is open to authenticated tenant users because POS/mobile also receives this data through catalog sync.",
+                "operationId": "fd568b6db03247893a33b72b185e2b40",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "description": "Filter to formats for a specific store.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter active/inactive formats.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "example": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Scale barcode formats retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Scale barcode formats retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "formats": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ProductScaleBarcodeFormat"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Create scale barcode format",
+                "description": "Creates a configurable parser format for dynamic weighing-scale/price-embedded barcodes. Requires manage-products permission. Segments must fit within length, product-code and value segments must not overlap, and checksum=ean13 requires length=13.",
+                "operationId": "64625ce2bc2013a30fca2224be6be305",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductScaleBarcodeFormatRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Scale barcode format created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Scale barcode format created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "format": {
+                                                    "$ref": "#/components/schemas/ProductScaleBarcodeFormat"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/product-scale-barcode-formats/{scaleBarcodeFormat}": {
+            "get": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Show scale barcode format",
+                "description": "Returns one configured scale barcode parser format. Read access is open to authenticated tenant users.",
+                "operationId": "7da177f51cd22d40f00c1cc4314a4c0f",
+                "parameters": [
+                    {
+                        "name": "scaleBarcodeFormat",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Scale barcode format retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Scale barcode format retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "format": {
+                                                    "$ref": "#/components/schemas/ProductScaleBarcodeFormat"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Format not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Deactivate scale barcode format",
+                "description": "Deactivates a scale barcode parser format instead of hard deleting it, so mobile/offline clients receive the updated inactive state through catalog sync. Requires manage-products permission.",
+                "operationId": "23570b541c5acbf8632f1a4bce9f1051",
+                "parameters": [
+                    {
+                        "name": "scaleBarcodeFormat",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Scale barcode format deactivated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Format not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant Product Barcodes"
+                ],
+                "summary": "Update scale barcode format",
+                "description": "Updates a scale barcode parser format. Requires manage-products permission. Partial updates are validated against the existing format so final segment windows still fit and do not overlap.",
+                "operationId": "d88886b129161542fbc38e5833f56a3c",
+                "parameters": [
+                    {
+                        "name": "scaleBarcodeFormat",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductScaleBarcodeFormatUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Scale barcode format updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Scale barcode format updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "format": {
+                                                    "$ref": "#/components/schemas/ProductScaleBarcodeFormat"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Format not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/products/{uuid}/uoms": {
             "get": {
                 "tags": [
@@ -104992,6 +106795,12 @@
                                                     "example": null,
                                                     "nullable": true
                                                 },
+                                                "uom_id": {
+                                                    "description": "Optional sellable UOM ID for product/package barcode scans. When supplied for product lines, quantity is interpreted in this UOM and converted to base UOM.",
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
                                                 "bundle_id": {
                                                     "description": "Bundle ID (required if product_id is null)",
                                                     "type": "integer",
@@ -105037,12 +106846,14 @@
                                         "product_id": 1,
                                         "variant_id": null,
                                         "bundle_id": null,
+                                        "uom_id": null,
                                         "quantity": 2
                                     },
                                     {
                                         "product_id": 4,
                                         "variant_id": 3,
                                         "bundle_id": null,
+                                        "uom_id": null,
                                         "quantity": 1
                                     }
                                 ],
@@ -106166,6 +107977,12 @@
                                                     "example": null,
                                                     "nullable": true
                                                 },
+                                                "uom_id": {
+                                                    "description": "Optional sellable UOM ID returned by barcode lookup sale_line.sale_item_payload",
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
                                                 "quantity": {
                                                     "description": "Quantity in selected UOM",
                                                     "type": "number",
@@ -106259,6 +108076,7 @@
                                                 "product_id": 4,
                                                 "variant_id": 2,
                                                 "bundle_id": null,
+                                                "uom_id": null,
                                                 "quantity": 1
                                             }
                                         ],
@@ -106285,6 +108103,7 @@
                                                 "product_id": 4,
                                                 "variant_id": 2,
                                                 "bundle_id": null,
+                                                "uom_id": null,
                                                 "quantity": 1
                                             }
                                         ],
@@ -129958,6 +131777,454 @@
                     "wholesale": []
                 }
             },
+            "ProductBarcodeStoreRequest": {
+                "required": [
+                    "barcode"
+                ],
+                "properties": {
+                    "barcode": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "6161234567890"
+                    },
+                    "barcode_type": {
+                        "type": "string",
+                        "enum": [
+                            "EAN-13",
+                            "EAN-8",
+                            "UPC-A",
+                            "UPC-E",
+                            "CODE-128",
+                            "CODE-39",
+                            "QR",
+                            "INTERNAL",
+                            "SCALE"
+                        ],
+                        "example": "EAN-13"
+                    },
+                    "is_primary": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "supplier_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "region": {
+                        "type": "string",
+                        "example": "KE",
+                        "nullable": true
+                    },
+                    "store_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "valid_from": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-01-01",
+                        "nullable": true
+                    },
+                    "valid_until": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-12-31",
+                        "nullable": true
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "manufacturer",
+                            "manual",
+                            "generated",
+                            "supplier",
+                            "imported",
+                            "scale"
+                        ],
+                        "example": "manual"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Manufacturer pack barcode",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductBarcodeWorkflowRequest": {
+                "required": [
+                    "target_type",
+                    "barcode"
+                ],
+                "properties": {
+                    "target_type": {
+                        "type": "string",
+                        "enum": [
+                            "product",
+                            "variant",
+                            "product_uom"
+                        ],
+                        "example": "product"
+                    },
+                    "product_uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72",
+                        "nullable": true
+                    },
+                    "variant_id": {
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "product_uom_id": {
+                        "type": "integer",
+                        "example": 8,
+                        "nullable": true
+                    },
+                    "barcode": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "6161234567890"
+                    },
+                    "barcode_type": {
+                        "type": "string",
+                        "enum": [
+                            "EAN-13",
+                            "EAN-8",
+                            "UPC-A",
+                            "UPC-E",
+                            "CODE-128",
+                            "CODE-39",
+                            "QR",
+                            "INTERNAL",
+                            "SCALE"
+                        ],
+                        "example": "EAN-13"
+                    },
+                    "is_primary": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "supplier_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "store_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "region": {
+                        "type": "string",
+                        "example": "KE",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Captured during POS setup",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductScaleBarcodeFormat": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "EAN13 weight scale"
+                    },
+                    "prefix": {
+                        "type": "string",
+                        "example": "21"
+                    },
+                    "length": {
+                        "type": "integer",
+                        "example": 13
+                    },
+                    "product_code_start": {
+                        "description": "Zero-based start offset for the embedded PLU/product code.",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "product_code_length": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "value_start": {
+                        "description": "Zero-based start offset for embedded weight, price, or quantity.",
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "value_length": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "value_type": {
+                        "type": "string",
+                        "enum": [
+                            "weight",
+                            "price",
+                            "quantity"
+                        ],
+                        "example": "weight"
+                    },
+                    "decimal_places": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "checksum": {
+                        "type": "string",
+                        "enum": [
+                            "ean13"
+                        ],
+                        "example": "ean13",
+                        "nullable": true
+                    },
+                    "store_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "metadata": {
+                        "type": "object"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Format used by deli weighing scale",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductScaleBarcodeFormatRequest": {
+                "required": [
+                    "name",
+                    "prefix",
+                    "length",
+                    "product_code_start",
+                    "product_code_length",
+                    "value_start",
+                    "value_length",
+                    "value_type",
+                    "decimal_places"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "EAN13 weight scale"
+                    },
+                    "prefix": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "pattern": "^[0-9]+$",
+                        "example": "21"
+                    },
+                    "length": {
+                        "type": "integer",
+                        "maximum": 50,
+                        "minimum": 1,
+                        "example": 13
+                    },
+                    "product_code_start": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 2
+                    },
+                    "product_code_length": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "value_start": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 7
+                    },
+                    "value_length": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "value_type": {
+                        "type": "string",
+                        "enum": [
+                            "weight",
+                            "price",
+                            "quantity"
+                        ],
+                        "example": "weight"
+                    },
+                    "decimal_places": {
+                        "type": "integer",
+                        "maximum": 6,
+                        "minimum": 0,
+                        "example": 3
+                    },
+                    "checksum": {
+                        "type": "string",
+                        "enum": [
+                            "ean13"
+                        ],
+                        "example": "ean13",
+                        "nullable": true
+                    },
+                    "store_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "example": 10
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "example": "Mobile parses after static barcode miss and resolves extracted PLU against SCALE barcodes.",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductScaleBarcodeFormatUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "EAN13 weight scale"
+                    },
+                    "prefix": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "pattern": "^[0-9]+$",
+                        "example": "21"
+                    },
+                    "length": {
+                        "type": "integer",
+                        "maximum": 50,
+                        "minimum": 1,
+                        "example": 13
+                    },
+                    "product_code_start": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 2
+                    },
+                    "product_code_length": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "value_start": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 7
+                    },
+                    "value_length": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "value_type": {
+                        "type": "string",
+                        "enum": [
+                            "weight",
+                            "price",
+                            "quantity"
+                        ],
+                        "example": "weight"
+                    },
+                    "decimal_places": {
+                        "type": "integer",
+                        "maximum": 6,
+                        "minimum": 0,
+                        "example": 3
+                    },
+                    "checksum": {
+                        "type": "string",
+                        "enum": [
+                            "ean13"
+                        ],
+                        "example": "ean13",
+                        "nullable": true
+                    },
+                    "store_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "example": 10
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "example": "Mobile parses after static barcode miss and resolves extracted PLU against SCALE barcodes.",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "AdminResource": {
                 "title": "Admin Resource",
                 "description": "Admin user resource representation",
@@ -130869,6 +133136,10 @@
         {
             "name": "Tenant - Promotions",
             "description": "Tenant - Promotions"
+        },
+        {
+            "name": "Tenant Product Barcodes",
+            "description": "Tenant Product Barcodes"
         },
         {
             "name": "Tenant Product Brands",

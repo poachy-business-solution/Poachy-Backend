@@ -163,6 +163,49 @@ class SaleCalculationServiceTest extends TestCase
         $this->assertEquals(350.0, $lineItem['line_total_after_discount']);
     }
 
+    public function test_resolve_product_item_with_sales_uom_converts_quantity_and_price(): void
+    {
+        $product = $this->createProduct(['base_selling_price' => 25.0]);
+        DB::connection('tenant')->table('product_uoms')->insert([
+            'product_id' => $product->id,
+            'uom_id' => 2,
+            'is_base_uom' => false,
+            'is_sales_uom' => true,
+            'conversion_to_base' => 12,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $lineItem = $this->resolveProductItem(
+            storeId: 1,
+            productId: $product->id,
+            quantity: 2.0,
+            requestedUomId: 2
+        );
+
+        $this->assertSame(2, $lineItem['uom_id']);
+        $this->assertSame('ctn', $lineItem['uom_code']);
+        $this->assertEquals(2.0, $lineItem['quantity']);
+        $this->assertEquals(24.0, $lineItem['quantity_in_base_uom']);
+        $this->assertEquals(300.0, $lineItem['unit_price']);
+        $this->assertEquals(600.0, $lineItem['line_total_after_discount']);
+    }
+
+    public function test_resolve_product_item_rejects_uom_not_configured_for_product_sales(): void
+    {
+        $product = $this->createProduct(['base_selling_price' => 25.0]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Selected UOM is not configured as a sales UOM for this product');
+
+        $this->resolveProductItem(
+            storeId: 1,
+            productId: $product->id,
+            quantity: 1.0,
+            requestedUomId: 2
+        );
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
@@ -175,12 +218,12 @@ class SaleCalculationServiceTest extends TestCase
         return $method->invoke(app(SaleCalculationService::class), $product, $storeId, $variantId);
     }
 
-    private function resolveProductItem(int $storeId, int $productId, float $quantity): array
+    private function resolveProductItem(int $storeId, int $productId, float $quantity, ?int $requestedUomId = null): array
     {
         $method = new ReflectionMethod(SaleCalculationService::class, 'resolveProductItem');
         $method->setAccessible(true);
 
-        return $method->invoke(app(SaleCalculationService::class), $storeId, $productId, $quantity);
+        return $method->invoke(app(SaleCalculationService::class), $storeId, $productId, $quantity, [], $requestedUomId);
     }
 
     private function resolveVariantItem(int $storeId, int $productId, int $variantId, float $quantity): array
@@ -291,6 +334,7 @@ class SaleCalculationServiceTest extends TestCase
             'store_products',
             'product_bundle_items',
             'product_bundles',
+            'product_uoms',
             'product_variants',
             'products',
             'units_of_measure',
@@ -322,14 +366,26 @@ class SaleCalculationServiceTest extends TestCase
         });
 
         DB::connection($conn)->table('units_of_measure')->insert([
-            'id' => 1,
-            'code' => 'pcs',
-            'name' => 'Piece',
-            'type' => 'count',
-            'is_base_unit' => true,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            [
+                'id' => 1,
+                'code' => 'pcs',
+                'name' => 'Piece',
+                'type' => 'count',
+                'is_base_unit' => true,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'code' => 'ctn',
+                'name' => 'Carton',
+                'type' => 'count',
+                'is_base_unit' => false,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         Schema::connection($conn)->create('products', function (Blueprint $table) {
@@ -381,6 +437,16 @@ class SaleCalculationServiceTest extends TestCase
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_uoms', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('uom_id');
+            $table->boolean('is_base_uom')->default(false);
+            $table->boolean('is_sales_uom')->default(true);
+            $table->decimal('conversion_to_base', 12, 6)->default(1);
+            $table->timestamps();
         });
 
         Schema::connection($conn)->create('product_bundles', function (Blueprint $table) {

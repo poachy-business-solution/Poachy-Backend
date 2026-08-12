@@ -12,11 +12,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[ObservedBy([ProductObserver::class])]
 class Product extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'products';
 
@@ -112,7 +113,7 @@ class Product extends Model
     public function activeProductUoms(): HasMany
     {
         return $this->productUoms()
-            ->whereHas('uom', fn($q) => $q->where('is_active', true));
+            ->whereHas('uom', fn ($q) => $q->where('is_active', true));
     }
 
     public function variants(): HasMany
@@ -169,6 +170,15 @@ class Product extends Model
             ->withTimestamps();
     }
 
+    public function barcodes(): MorphMany
+    {
+        return $this->morphMany(ProductBarcode::class, 'barcodeable');
+    }
+
+    public function activeBarcodes(): MorphMany
+    {
+        return $this->barcodes()->active()->currentlyValid();
+    }
 
     // Scopes
 
@@ -215,13 +225,13 @@ class Product extends Model
 
     public function getFormattedBasePriceAttribute(): string
     {
-        return 'KES ' . number_format($this->base_selling_price, 2);
+        return 'KES '.number_format($this->base_selling_price, 2);
     }
 
     public function getFormattedOnlinePriceAttribute(): ?string
     {
         return $this->online_price
-            ? 'KES ' . number_format($this->online_price, 2)
+            ? 'KES '.number_format($this->online_price, 2)
             : null;
     }
 
@@ -312,6 +322,7 @@ class Product extends Model
     public function isAvailableInStore(int $storeId, float $quantity = 1): bool
     {
         $inventory = $this->inventoryForStore($storeId);
+
         return $inventory && $inventory->hasStock($quantity);
     }
 

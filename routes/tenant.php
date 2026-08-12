@@ -29,11 +29,13 @@ use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
+use App\Http\Controllers\Api\Tenant\Product\ProductBarcodeController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBrandController;
 use App\Http\Controllers\Api\Tenant\Product\ProductBundleController;
 use App\Http\Controllers\Api\Tenant\Product\ProductCategoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductController;
 use App\Http\Controllers\Api\Tenant\Product\ProductPriceHistoryController;
+use App\Http\Controllers\Api\Tenant\Product\ProductScaleBarcodeFormatController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
@@ -211,6 +213,35 @@ Route::prefix('v1/tenant')
         });
 
         // Products Routes
+        Route::prefix('product-barcodes')->group(function () {
+            Route::get('/lookup', [ProductBarcodeController::class, 'lookup']);
+            Route::post('/suggestions', [ProductBarcodeController::class, 'suggest']);
+
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::get('/suggestions/pending', [ProductBarcodeController::class, 'pendingSuggestions']);
+                Route::post('/suggestions/{suggestion}/approve', [ProductBarcodeController::class, 'approveSuggestion']);
+                Route::post('/suggestions/{suggestion}/reject', [ProductBarcodeController::class, 'rejectSuggestion']);
+                Route::post('/manual', [ProductBarcodeController::class, 'manual']);
+                Route::post('/scanned', [ProductBarcodeController::class, 'scanned']);
+                Route::post('/generated', [ProductBarcodeController::class, 'generated']);
+                Route::post('/imported', [ProductBarcodeController::class, 'imported']);
+                Route::post('/supplier', [ProductBarcodeController::class, 'supplier']);
+                Route::post('/scale', [ProductBarcodeController::class, 'scale']);
+                Route::delete('/{barcode}', [ProductBarcodeController::class, 'destroy']);
+            });
+        });
+
+        Route::prefix('product-scale-barcode-formats')->group(function () {
+            Route::get('/', [ProductScaleBarcodeFormatController::class, 'index']);
+            Route::get('/{scaleBarcodeFormat}', [ProductScaleBarcodeFormatController::class, 'show']);
+
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::post('/', [ProductScaleBarcodeFormatController::class, 'store']);
+                Route::patch('/{scaleBarcodeFormat}', [ProductScaleBarcodeFormatController::class, 'update']);
+                Route::delete('/{scaleBarcodeFormat}', [ProductScaleBarcodeFormatController::class, 'destroy']);
+            });
+        });
+
         Route::prefix('products')->group(function () {
             Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
@@ -234,6 +265,8 @@ Route::prefix('v1/tenant')
                 Route::get('/', [ProductUomController::class, 'index']);
                 Route::post('/', [ProductUomController::class, 'store']);
                 Route::patch('/{productUom}', [ProductUomController::class, 'update']);
+                Route::get('/{productUom}/barcodes', [ProductBarcodeController::class, 'productUomIndex']);
+                Route::post('/{productUom}/barcodes', [ProductBarcodeController::class, 'productUomStore']);
                 Route::delete('/{productUomId}', [ProductUomController::class, 'destroy'])
                     ->middleware(['permission:manage-products,tenant']);
                 Route::get('/base', [ProductUomController::class, 'base']);
@@ -245,6 +278,9 @@ Route::prefix('v1/tenant')
                 Route::get('/', [ProductVariantController::class, 'index']);
                 Route::post('/', [ProductVariantController::class, 'store']);
             });
+
+            Route::get('/{uuid}/barcodes', [ProductBarcodeController::class, 'productIndex']);
+            Route::post('/{uuid}/barcodes', [ProductBarcodeController::class, 'productStore']);
         });
 
         // Product variants Routes
@@ -253,6 +289,8 @@ Route::prefix('v1/tenant')
             Route::get('/{id}', [ProductVariantController::class, 'show']);
             Route::patch('/{id}', [ProductVariantController::class, 'update']);
             Route::patch('/{id}/inventory', [ProductVariantController::class, 'updateInventory']);
+            Route::get('/{id}/barcodes', [ProductBarcodeController::class, 'variantIndex']);
+            Route::post('/{id}/barcodes', [ProductBarcodeController::class, 'variantStore']);
 
             Route::middleware(['permission:manage-products,tenant'])->group(function () {
                 Route::delete('/{id}', [ProductVariantController::class, 'destroy']);

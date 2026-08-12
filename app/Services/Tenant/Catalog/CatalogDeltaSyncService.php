@@ -5,14 +5,17 @@ namespace App\Services\Tenant\Catalog;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductBarcode;
 use App\Models\Tenant\ProductBrand;
 use App\Models\Tenant\ProductCategory;
+use App\Models\Tenant\ProductScaleBarcodeFormat;
 use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\Promotion;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TaxRate;
 use App\Models\Tenant\UnitOfMeasure;
+use App\Services\Tenant\Product\ProductBarcodeService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +37,8 @@ class CatalogDeltaSyncService
             'brands' => $this->fetch(ProductBrand::class, $since, $startedAt, $includeDeleted, fn (ProductBrand $brand) => $this->brand($brand)),
             'products' => $this->fetch(Product::class, $since, $startedAt, $includeDeleted, fn (Product $product) => $this->product($product)),
             'variants' => $this->fetch(ProductVariant::class, $since, $startedAt, $includeDeleted, fn (ProductVariant $variant) => $this->variant($variant)),
+            'barcodes' => $this->fetch(ProductBarcode::class, $since, $startedAt, $includeDeleted, fn (ProductBarcode $barcode) => $this->barcode($barcode)),
+            'scale_barcode_formats' => $this->fetch(ProductScaleBarcodeFormat::class, $since, $startedAt, $includeDeleted, fn (ProductScaleBarcodeFormat $format) => $this->scaleBarcodeFormat($format)),
             'prices' => $this->fetch(StoreProduct::class, $since, $startedAt, $includeDeleted, fn (StoreProduct $price) => $this->price($price)),
             'product_uoms' => $this->fetch(ProductUom::class, $since, $startedAt, $includeDeleted, fn (ProductUom $productUom) => $this->productUom($productUom)),
             'uoms' => $this->fetch(UnitOfMeasure::class, $since, $startedAt, $includeDeleted, fn (UnitOfMeasure $uom) => $this->uom($uom)),
@@ -213,6 +218,32 @@ class CatalogDeltaSyncService
     /**
      * @return array<string, mixed>
      */
+    protected function barcode(ProductBarcode $barcode): array
+    {
+        $barcode->loadMissing('barcodeable');
+
+        return $this->base($barcode) + [
+            'barcodeable_type' => $barcode->barcodeable_type,
+            'barcodeable_id' => $barcode->barcodeable_id,
+            'barcode' => $barcode->barcode,
+            'barcode_type' => $barcode->barcode_type,
+            'is_primary' => $barcode->is_primary,
+            'is_active' => $barcode->is_active,
+            'supplier_id' => $barcode->supplier_id,
+            'region' => $barcode->region,
+            'store_id' => $barcode->store_id,
+            'valid_from' => $barcode->valid_from?->format('Y-m-d'),
+            'valid_until' => $barcode->valid_until?->format('Y-m-d'),
+            'source' => $barcode->source,
+            'metadata' => $barcode->metadata ?? [],
+            'notes' => $barcode->notes,
+            'sale_line' => app(ProductBarcodeService::class)->saleLine($barcode),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     protected function price(StoreProduct $price): array
     {
         return $this->base($price) + [
@@ -222,6 +253,30 @@ class CatalogDeltaSyncService
             'store_selling_price' => $this->decimal($price->store_selling_price),
             'is_available' => $price->is_available,
             'min_stock_level' => $price->min_stock_level,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function scaleBarcodeFormat(ProductScaleBarcodeFormat $format): array
+    {
+        return $this->base($format) + [
+            'name' => $format->name,
+            'prefix' => $format->prefix,
+            'length' => $format->length,
+            'product_code_start' => $format->product_code_start,
+            'product_code_length' => $format->product_code_length,
+            'value_start' => $format->value_start,
+            'value_length' => $format->value_length,
+            'value_type' => $format->value_type,
+            'decimal_places' => $format->decimal_places,
+            'checksum' => $format->checksum,
+            'store_id' => $format->store_id,
+            'is_active' => $format->is_active,
+            'priority' => $format->priority,
+            'metadata' => $format->metadata ?? [],
+            'notes' => $format->notes,
         ];
     }
 
