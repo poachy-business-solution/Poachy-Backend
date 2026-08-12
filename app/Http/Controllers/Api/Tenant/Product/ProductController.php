@@ -1995,6 +1995,109 @@ class ProductController extends Controller
         );
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/tenant/products/{uuid}/receive-stock",
+     *     summary="Receive product stock in one call",
+     *     description="Mobile-friendly stock receiving endpoint that allocates the product to the store when missing, creates a single-item purchase order, sends it, and receives the stock through the existing purchase-order receiving flow. Requires the authenticated tenant user to have the manage-inventory permission. For batch-tracked products, manufacture_date and expiry_date are passed to batch receiving. For serial-tracked products, serial_numbers must be supplied and the count must match quantity.",
+     *     operationId="receiveProductStock",
+     *     tags={"Tenant Products"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="uuid",
+     *         in="path",
+     *         required=true,
+     *         description="Product UUID",
+     *
+     *         @OA\Schema(type="string", format="uuid"),
+     *         example="67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *             required={"store_id", "quantity"},
+     *
+     *             @OA\Property(property="store_id", type="integer", example=1, description="Store receiving the stock"),
+     *             @OA\Property(property="quantity", type="number", format="float", minimum=0.0001, example=12, description="Quantity in the product base UOM"),
+     *             @OA\Property(property="unit_cost", type="number", format="float", nullable=true, minimum=0, example=80.50, description="Purchase cost per base UOM unit. Defaults to 0 when omitted."),
+     *             @OA\Property(property="supplier_id", type="integer", nullable=true, example=3, description="Supplier to use for the generated purchase order. Defaults to the product supplier when omitted."),
+     *             @OA\Property(property="manufacture_date", type="string", format="date", nullable=true, example="2026-08-01", description="Manufacture date for batch-tracked stock"),
+     *             @OA\Property(property="expiry_date", type="string", format="date", nullable=true, example="2027-08-01", description="Expiry date for batch-tracked stock. Must be after manufacture_date when both are present."),
+     *             @OA\Property(
+     *                 property="serial_numbers",
+     *                 type="array",
+     *                 nullable=true,
+     *                 description="Required for serial-tracked products. Count must equal quantity.",
+     *
+     *                 @OA\Items(type="string", example="SN-2026-0001")
+     *             ),
+     *
+     *             @OA\Property(property="notes", type="string", nullable=true, maxLength=500, example="Initial mobile stock receipt")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=201,
+     *         description="Stock received successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Stock received successfully. Created 1 batch(es), 0 serial(s)"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="store_product_created", type="boolean", example=true, description="True when the endpoint created the store_products allocation before receiving stock"),
+     *                 @OA\Property(property="batches", type="array", @OA\Items(type="object",
+     *                     @OA\Property(property="id", type="integer", example=10),
+     *                     @OA\Property(property="batch_number", type="string", example="BATCH-20260812-001"),
+     *                     @OA\Property(property="product_id", type="integer", example=4),
+     *                     @OA\Property(property="store_id", type="integer", example=1),
+     *                     @OA\Property(property="quantity_received_in_base_uom", type="number", format="float", example=12),
+     *                     @OA\Property(property="quantity_remaining_in_base_uom", type="number", format="float", example=12),
+     *                     @OA\Property(property="unit_cost", type="number", format="float", example=80.50),
+     *                     @OA\Property(property="manufacture_date", type="string", format="date", nullable=true, example="2026-08-01"),
+     *                     @OA\Property(property="expiry_date", type="string", format="date", nullable=true, example="2027-08-01")
+     *                 )),
+     *                 @OA\Property(property="serials", type="array", @OA\Items(type="object",
+     *                     @OA\Property(property="id", type="integer", example=22),
+     *                     @OA\Property(property="serial_number", type="string", example="SN-2026-0001"),
+     *                     @OA\Property(property="product_id", type="integer", example=4),
+     *                     @OA\Property(property="store_id", type="integer", example=1),
+     *                     @OA\Property(property="status", type="string", example="available")
+     *                 )),
+     *                 @OA\Property(property="purchase_order", type="object",
+     *                     @OA\Property(property="id", type="integer", example=55),
+     *                     @OA\Property(property="po_number", type="string", example="PO-20260812-0001"),
+     *                     @OA\Property(property="supplier", type="object",
+     *                         @OA\Property(property="id", type="integer", example=3),
+     *                         @OA\Property(property="name", type="string", example="Acme Supplies")
+     *                     ),
+     *                     @OA\Property(property="store", type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Main Store")
+     *                     ),
+     *                     @OA\Property(property="status", type="object",
+     *                         @OA\Property(property="value", type="string", example="received"),
+     *                         @OA\Property(property="label", type="string", example="Received")
+     *                     ),
+     *                     @OA\Property(property="amounts", type="object",
+     *                         @OA\Property(property="subtotal", type="number", format="float", example=966),
+     *                         @OA\Property(property="tax_amount", type="number", format="float", example=0),
+     *                         @OA\Property(property="total_amount", type="number", format="float", example=966)
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - authenticated user lacks manage-inventory permission"),
+     *     @OA\Response(response=404, description="Product not found"),
+     *     @OA\Response(response=422, description="Validation error or receiving rule failure")
+     * )
+     */
     public function receiveStock(string $uuid, ReceiveProductStockRequest $request): JsonResponse
     {
         $product = $this->productService->getByUuid($uuid);

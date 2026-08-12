@@ -19666,13 +19666,160 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Workspace found"
+                        "description": "Workspace found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Workspace found successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "workspace": {
+                                                    "properties": {
+                                                        "tenant_id": {
+                                                            "type": "string",
+                                                            "example": "demo"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Demo Store Ltd"
+                                                        },
+                                                        "domain": {
+                                                            "type": "string",
+                                                            "example": "demo.poachy.test",
+                                                            "nullable": true
+                                                        },
+                                                        "login_url": {
+                                                            "type": "string",
+                                                            "format": "url",
+                                                            "example": "https://demo.poachy.test/login",
+                                                            "nullable": true
+                                                        },
+                                                        "business": {
+                                                            "properties": {
+                                                                "status": {
+                                                                    "type": "string",
+                                                                    "example": "active",
+                                                                    "nullable": true
+                                                                },
+                                                                "city": {
+                                                                    "type": "string",
+                                                                    "example": "Nairobi",
+                                                                    "nullable": true
+                                                                },
+                                                                "county": {
+                                                                    "type": "string",
+                                                                    "example": "Nairobi",
+                                                                    "nullable": true
+                                                                },
+                                                                "is_verified": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "logo_url": {
+                                                                    "type": "string",
+                                                                    "format": "url",
+                                                                    "example": "https://api.poachy.test/storage/business/logos/demo.png",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-12T10:20:30.000000Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "1ad5c0a7-0890-4a7d-a614-22a27b2c4782"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Workspace not found"
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Workspace not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "q": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The q field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -21857,7 +22004,7 @@
                     "Tenant Authentication"
                 ],
                 "summary": "Verify OTP (Step 2 - Complete Login)",
-                "description": "Verify OTP and receive authentication token",
+                "description": "Verify a 7-digit login OTP and receive a 7-day Sanctum access token plus a 30-day rotating refresh token for mobile/POS sessions.",
                 "operationId": "44de5a07de5b280b4379a53ecec27b78",
                 "requestBody": {
                     "required": true,
@@ -21866,7 +22013,7 @@
                             "schema": {
                                 "required": [
                                     "email",
-                                    "otp"
+                                    "otp_code"
                                 ],
                                 "properties": {
                                     "email": {
@@ -21874,8 +22021,10 @@
                                         "format": "email",
                                         "example": "owner@merchant.com"
                                     },
-                                    "otp": {
+                                    "otp_code": {
                                         "type": "string",
+                                        "maxLength": 7,
+                                        "minLength": 7,
                                         "example": "1234567"
                                     }
                                 },
@@ -21902,12 +22051,100 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Demo Owner"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "format": "email",
+                                                            "example": "owner@merchant.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+254700000000",
+                                                            "nullable": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "roles": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "owner"
+                                                            ]
+                                                        },
+                                                        "last_login_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-12T10:20:30.000000Z",
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-01T10:20:30.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-12T10:20:30.000000Z"
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 },
                                                 "token": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "example": "1|sanctum-access-token"
+                                                },
+                                                "token_expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-19T10:20:30.000000Z"
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string",
+                                                    "example": "plain-text-refresh-token-returned-once"
+                                                },
+                                                "refresh_token_expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-09-11T10:20:30.000000Z"
                                                 },
                                                 "tenant": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "demo"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Demo Store",
+                                                            "nullable": true
+                                                        },
+                                                        "domains": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "demo.poachy.test"
+                                                            ]
+                                                        },
+                                                        "has_business_details": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -21921,6 +22158,188 @@
                     },
                     "422": {
                         "description": "Invalid or expired OTP"
+                    }
+                }
+            }
+        },
+        "/api/v1/tenant/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Tenant Authentication"
+                ],
+                "summary": "Refresh tenant POS token",
+                "description": "Rotate a tenant refresh token and issue a fresh 7-day Sanctum access token without requiring OTP re-authentication. The submitted refresh token is revoked on success and cannot be reused.",
+                "operationId": "0cef2b8160a74a670b1a4801898b390c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "plain-text-refresh-token-returned-by-login-or-previous-refresh"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "iPhone 15 POS",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token refreshed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Demo Owner"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "format": "email",
+                                                            "example": "owner@merchant.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+254700000000",
+                                                            "nullable": true
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "roles": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "owner"
+                                                            ]
+                                                        },
+                                                        "last_login_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-12T10:20:30.000000Z",
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-01T10:20:30.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-08-12T10:20:30.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "2|new-sanctum-access-token"
+                                                },
+                                                "token_expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-19T10:20:30.000000Z"
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string",
+                                                    "example": "new-plain-text-refresh-token-returned-once"
+                                                },
+                                                "refresh_token_expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-09-11T10:20:30.000000Z"
+                                                },
+                                                "tenant": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "demo"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Demo Store",
+                                                            "nullable": true
+                                                        },
+                                                        "domains": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "demo.poachy.test"
+                                                            ]
+                                                        },
+                                                        "has_business_details": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error, invalid refresh token, expired refresh token, revoked refresh token, or token replay",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The refresh token is invalid or has expired."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -27511,10 +27930,208 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Onboarding template retrieved successfully"
+                        "description": "Onboarding template retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Onboarding template retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "template_key": {
+                                                    "type": "string",
+                                                    "example": "pharmacy"
+                                                },
+                                                "template_name": {
+                                                    "type": "string",
+                                                    "example": "Pharmacy"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Starter setup for pharmacies with medicine categories and stock-tracking defaults.",
+                                                    "nullable": true
+                                                },
+                                                "source": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "business_category",
+                                                        "business_type",
+                                                        "default"
+                                                    ],
+                                                    "example": "business_category"
+                                                },
+                                                "business_type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Healthcare"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "healthcare"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "business_category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Pharmacy"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "pharmacy"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "key": {
+                                                                "type": "string",
+                                                                "example": "medicine"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Medicine"
+                                                            },
+                                                            "slug": {
+                                                                "type": "string",
+                                                                "example": "medicine"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Prescription and over-the-counter medicines",
+                                                                "nullable": true
+                                                            },
+                                                            "display_order": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "children": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "Pain Relief"
+                                                                        },
+                                                                        "slug": {
+                                                                            "type": "string",
+                                                                            "example": "pain-relief"
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "display_order": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "units_of_measure": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "pcs"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Piece"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "count"
+                                                            },
+                                                            "source_type": {
+                                                                "type": "string",
+                                                                "example": "system"
+                                                            },
+                                                            "is_base_unit": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Single item",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-12T10:20:30.000000Z"
+                                                },
+                                                "request_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "1ad5c0a7-0890-4a7d-a614-22a27b2c4782"
+                                                },
+                                                "tenant_id": {
+                                                    "type": "string",
+                                                    "example": "demo"
+                                                },
+                                                "tenant_name": {
+                                                    "type": "string",
+                                                    "example": "Demo Store",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error - business_type_id or business_category_id is invalid"
                     }
                 },
                 "security": [
@@ -29260,6 +29877,652 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/catalog/sync": {
+            "get": {
+                "tags": [
+                    "Tenant Catalog"
+                ],
+                "summary": "Sync offline catalog data",
+                "description": "Returns a full catalog snapshot when updated_since is omitted, or only rows changed after the supplied high-water cursor. The response is bounded to records changed at or before sync_started_at; clients should persist next_cursor and send it as updated_since on the next sync. Use include_deleted=true to receive soft-delete tombstones for supported entities.",
+                "operationId": "syncTenantCatalog",
+                "parameters": [
+                    {
+                        "name": "updated_since",
+                        "in": "query",
+                        "description": "ISO-8601 cursor from a previous response's next_cursor. Omit for a full snapshot.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "example": "2026-08-12T10:20:30.000000Z"
+                    },
+                    {
+                        "name": "include_deleted",
+                        "in": "query",
+                        "description": "When true, includes soft-deleted rows as tombstones where the underlying entity supports soft deletes.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "example": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catalog sync retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catalog sync retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "sync_started_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-12T10:20:30.000000Z"
+                                                },
+                                                "updated_since": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-11T10:20:30.000000Z",
+                                                    "nullable": true
+                                                },
+                                                "next_cursor": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-08-12T10:20:30.000000Z"
+                                                },
+                                                "include_deleted": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "entity_counts": {
+                                                    "properties": {
+                                                        "categories": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "brands": {
+                                                            "type": "integer",
+                                                            "example": 6
+                                                        },
+                                                        "products": {
+                                                            "type": "integer",
+                                                            "example": 120
+                                                        },
+                                                        "variants": {
+                                                            "type": "integer",
+                                                            "example": 30
+                                                        },
+                                                        "prices": {
+                                                            "type": "integer",
+                                                            "example": 140
+                                                        },
+                                                        "product_uoms": {
+                                                            "type": "integer",
+                                                            "example": 120
+                                                        },
+                                                        "uoms": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "tax_rates": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "customers": {
+                                                            "type": "integer",
+                                                            "example": 25
+                                                        },
+                                                        "promotions": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "coupons": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "entities": {
+                                                    "properties": {
+                                                        "categories": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "deleted": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "synced_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-01T10:20:30.000000Z"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "deleted_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "General"
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string",
+                                                                        "example": "general"
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "parent_id": {
+                                                                        "type": "integer",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "display_order": {
+                                                                        "type": "integer",
+                                                                        "example": 0
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "brands": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "deleted": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "synced_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "deleted_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Acme"
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string",
+                                                                        "example": "acme"
+                                                                    },
+                                                                    "logo_url": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_featured": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "display_order": {
+                                                                        "type": "integer",
+                                                                        "example": 0
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "products": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "uuid": {
+                                                                        "type": "string",
+                                                                        "format": "uuid",
+                                                                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "deleted": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "synced_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-08-12T10:20:30.000000Z"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Product One"
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string",
+                                                                        "example": "product-one"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "SKU-001"
+                                                                    },
+                                                                    "category_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "brand_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "supplier_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "product_type": {
+                                                                        "type": "string",
+                                                                        "example": "simple"
+                                                                    },
+                                                                    "stock_status": {
+                                                                        "type": "string",
+                                                                        "example": "in_stock"
+                                                                    },
+                                                                    "base_selling_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 100
+                                                                    },
+                                                                    "online_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "tax_rate_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "base_uom_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "is_weighed": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "requires_batch_tracking": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "requires_serial_tracking": {
+                                                                        "type": "boolean",
+                                                                        "example": false
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "variants": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 20
+                                                                    },
+                                                                    "uuid": {
+                                                                        "type": "string",
+                                                                        "format": "uuid",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "product_id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "variant_name": {
+                                                                        "type": "string",
+                                                                        "example": "Small"
+                                                                    },
+                                                                    "sku": {
+                                                                        "type": "string",
+                                                                        "example": "SKU-001-S",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "attributes": {
+                                                                        "type": "object"
+                                                                    },
+                                                                    "uom_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "uom_quantity": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 1
+                                                                    },
+                                                                    "quantity_in_base_uom": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 1
+                                                                    },
+                                                                    "variant_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "prices": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 30
+                                                                    },
+                                                                    "store_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "product_id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "product_variant_id": {
+                                                                        "type": "integer",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "store_selling_price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 95,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "is_available": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "min_stock_level": {
+                                                                        "type": "integer",
+                                                                        "example": 0
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "product_uoms": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 40
+                                                                    },
+                                                                    "product_id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "uom_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "is_base_uom": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_purchase_uom": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_sales_uom": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_inventory_uom": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "conversion_to_base": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 1
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "uoms": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "pcs"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Piece"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "example": "count"
+                                                                    },
+                                                                    "source_type": {
+                                                                        "type": "string",
+                                                                        "example": "system"
+                                                                    },
+                                                                    "is_base_unit": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "tax_rates": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "tax_name": {
+                                                                        "type": "string",
+                                                                        "example": "VAT"
+                                                                    },
+                                                                    "rate": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 16
+                                                                    },
+                                                                    "effective_from": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": "2026-01-01"
+                                                                    },
+                                                                    "effective_until": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    },
+                                                                    "is_default": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "customers": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "customer_number": {
+                                                                        "type": "string",
+                                                                        "example": "CUS-001"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Jane Buyer"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "format": "email",
+                                                                        "example": "jane@example.com",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "phone": {
+                                                                        "type": "string",
+                                                                        "example": "+254700000000",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "customer_type": {
+                                                                        "type": "string",
+                                                                        "example": "regular"
+                                                                    },
+                                                                    "loyalty_points": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 25
+                                                                    },
+                                                                    "credit_limit": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 0
+                                                                    },
+                                                                    "current_debt": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 0
+                                                                    },
+                                                                    "store_credit_balance": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 0
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "promotions": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "coupons": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error - invalid updated_since date or include_deleted value"
                     }
                 },
                 "security": [
@@ -94419,6 +95682,300 @@
                 ]
             }
         },
+        "/api/v1/tenant/products/{uuid}/receive-stock": {
+            "post": {
+                "tags": [
+                    "Tenant Products"
+                ],
+                "summary": "Receive product stock in one call",
+                "description": "Mobile-friendly stock receiving endpoint that allocates the product to the store when missing, creates a single-item purchase order, sends it, and receives the stock through the existing purchase-order receiving flow. Requires the authenticated tenant user to have the manage-inventory permission. For batch-tracked products, manufacture_date and expiry_date are passed to batch receiving. For serial-tracked products, serial_numbers must be supplied and the count must match quantity.",
+                "operationId": "receiveProductStock",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "example": "67b466f5-8b6d-4122-af5d-1683d1dd7a72"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "store_id",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "store_id": {
+                                        "description": "Store receiving the stock",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "quantity": {
+                                        "description": "Quantity in the product base UOM",
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0.0001,
+                                        "example": 12
+                                    },
+                                    "unit_cost": {
+                                        "description": "Purchase cost per base UOM unit. Defaults to 0 when omitted.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 80.5,
+                                        "nullable": true
+                                    },
+                                    "supplier_id": {
+                                        "description": "Supplier to use for the generated purchase order. Defaults to the product supplier when omitted.",
+                                        "type": "integer",
+                                        "example": 3,
+                                        "nullable": true
+                                    },
+                                    "manufacture_date": {
+                                        "description": "Manufacture date for batch-tracked stock",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-08-01",
+                                        "nullable": true
+                                    },
+                                    "expiry_date": {
+                                        "description": "Expiry date for batch-tracked stock. Must be after manufacture_date when both are present.",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2027-08-01",
+                                        "nullable": true
+                                    },
+                                    "serial_numbers": {
+                                        "description": "Required for serial-tracked products. Count must equal quantity.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "SN-2026-0001"
+                                        },
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Initial mobile stock receipt",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Stock received successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Stock received successfully. Created 1 batch(es), 0 serial(s)"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "store_product_created": {
+                                                    "description": "True when the endpoint created the store_products allocation before receiving stock",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "batches": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 10
+                                                            },
+                                                            "batch_number": {
+                                                                "type": "string",
+                                                                "example": "BATCH-20260812-001"
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "store_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "quantity_received_in_base_uom": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 12
+                                                            },
+                                                            "quantity_remaining_in_base_uom": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 12
+                                                            },
+                                                            "unit_cost": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 80.5
+                                                            },
+                                                            "manufacture_date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2026-08-01",
+                                                                "nullable": true
+                                                            },
+                                                            "expiry_date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2027-08-01",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "serials": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 22
+                                                            },
+                                                            "serial_number": {
+                                                                "type": "string",
+                                                                "example": "SN-2026-0001"
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "store_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "available"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "purchase_order": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 55
+                                                        },
+                                                        "po_number": {
+                                                            "type": "string",
+                                                            "example": "PO-20260812-0001"
+                                                        },
+                                                        "supplier": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Acme Supplies"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "store": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Main Store"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "status": {
+                                                            "properties": {
+                                                                "value": {
+                                                                    "type": "string",
+                                                                    "example": "received"
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "example": "Received"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "amounts": {
+                                                            "properties": {
+                                                                "subtotal": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 966
+                                                                },
+                                                                "tax_amount": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 0
+                                                                },
+                                                                "total_amount": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 966
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - authenticated user lacks manage-inventory permission"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    },
+                    "422": {
+                        "description": "Validation error or receiving rule failure"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/price-history": {
             "get": {
                 "tags": [
@@ -104240,7 +105797,7 @@
                     "Sales - Transactions"
                 ],
                 "summary": "Create new sale transaction",
-                "description": "Complete POS sale transaction with inventory deduction, payment processing, and loyalty/credit operations. This endpoint performs 16-step atomic transaction including: inventory validation, server-side price recalculation, sale record creation, payment processing, FIFO inventory deduction, coupon/promotion usage tracking, loyalty earning/redemption, credit transaction processing, and customer aggregate updates. All operations wrapped in database transaction with automatic rollback on any error.\n     *\n     *     **Supported Payment Scenarios:**\n     *     - Simple cash/card/mpesa payments\n     *     - Mixed payments (cash + mpesa, cash + card, etc.)\n     *     - Credit sales (customer account charging)\n     *     - Payments with loyalty redemption\n     *     - Walk-in sales (no customer_id)\n     *\n     *     **Key Features:**\n     *     - Server-side price recalculation (send same data as calculate endpoint)\n     *     - Automatic FIFO inventory deduction\n     *     - Coupon and promotion application (coupons take priority)\n     *     - Loyalty points earning and redemption in same transaction\n     *     - Customer aggregate updates (lifetime purchases, visit count, debt balance)\n     *     - Credit limit validation for credit sales",
+                "description": "Complete POS sale transaction with inventory deduction, payment processing, and loyalty/credit operations. This endpoint performs 16-step atomic transaction including: inventory validation, server-side price recalculation, sale record creation, payment processing, FIFO inventory deduction, coupon/promotion usage tracking, loyalty earning/redemption, credit transaction processing, and customer aggregate updates. All operations wrapped in database transaction with automatic rollback on any error.\n     *\n     *     **Supported Payment Scenarios:**\n     *     - Simple cash/card/mpesa payments\n     *     - Mixed payments (cash + mpesa, cash + card, etc.)\n     *     - Credit sales (customer account charging)\n     *     - Payments with loyalty redemption\n     *     - Walk-in sales (no customer_id)\n     *\n     *     **Key Features:**\n     *     - Server-side price recalculation (send same data as calculate endpoint)\n     *     - Automatic FIFO inventory deduction\n     *     - Coupon and promotion application (coupons take priority)\n     *     - Loyalty points earning and redemption in same transaction\n     *     - Customer aggregate updates (lifetime purchases, visit count, debt balance)\n     *     - Credit limit validation for credit sales\n     *     - Optional Idempotency-Key header or idempotency_key body field for safe mobile/offline retries",
                 "operationId": "createSale",
                 "parameters": [
                     {
@@ -104276,6 +105833,13 @@
                                         "description": "Required for loyalty/credit sales, null for walk-in customers",
                                         "type": "integer",
                                         "example": 4,
+                                        "nullable": true
+                                    },
+                                    "idempotency_key": {
+                                        "description": "Optional fallback for clients that cannot send the Idempotency-Key header. Header value takes precedence when both are supplied.",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "pos-sale-20260810-8f3b9c",
                                         "nullable": true
                                     },
                                     "items": {
@@ -128924,6 +130488,10 @@
         {
             "name": "Tenant Business Details",
             "description": "Tenant Business Details"
+        },
+        {
+            "name": "Tenant Catalog",
+            "description": "Tenant Catalog"
         },
         {
             "name": "Customers",

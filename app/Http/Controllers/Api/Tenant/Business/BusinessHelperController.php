@@ -132,9 +132,73 @@ class BusinessHelperController extends Controller
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Onboarding template retrieved successfully"
+     *         description="Onboarding template retrieved successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Onboarding template retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="template_key", type="string", example="pharmacy"),
+     *                 @OA\Property(property="template_name", type="string", example="Pharmacy"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Starter setup for pharmacies with medicine categories and stock-tracking defaults."),
+     *                 @OA\Property(property="source", type="string", enum={"business_category", "business_type", "default"}, example="business_category"),
+     *                 @OA\Property(property="business_type", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Healthcare"),
+     *                     @OA\Property(property="slug", type="string", example="healthcare")
+     *                 ),
+     *                 @OA\Property(property="business_category", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=5),
+     *                     @OA\Property(property="name", type="string", example="Pharmacy"),
+     *                     @OA\Property(property="slug", type="string", example="pharmacy")
+     *                 ),
+     *                 @OA\Property(property="categories", type="array",
+     *
+     *                     @OA\Items(type="object",
+     *
+     *                         @OA\Property(property="key", type="string", example="medicine"),
+     *                         @OA\Property(property="name", type="string", example="Medicine"),
+     *                         @OA\Property(property="slug", type="string", example="medicine"),
+     *                         @OA\Property(property="description", type="string", nullable=true, example="Prescription and over-the-counter medicines"),
+     *                         @OA\Property(property="display_order", type="integer", example=1),
+     *                         @OA\Property(property="children", type="array",
+     *
+     *                             @OA\Items(type="object",
+     *
+     *                                 @OA\Property(property="name", type="string", example="Pain Relief"),
+     *                                 @OA\Property(property="slug", type="string", example="pain-relief"),
+     *                                 @OA\Property(property="description", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="display_order", type="integer", example=1)
+     *                             )
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="units_of_measure", type="array",
+     *
+     *                     @OA\Items(type="object",
+     *
+     *                         @OA\Property(property="code", type="string", example="pcs"),
+     *                         @OA\Property(property="name", type="string", example="Piece"),
+     *                         @OA\Property(property="type", type="string", example="count"),
+     *                         @OA\Property(property="source_type", type="string", example="system"),
+     *                         @OA\Property(property="is_base_unit", type="boolean", example=true),
+     *                         @OA\Property(property="is_active", type="boolean", example=true),
+     *                         @OA\Property(property="description", type="string", nullable=true, example="Single item")
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2026-08-12T10:20:30.000000Z"),
+     *                 @OA\Property(property="request_id", type="string", format="uuid", example="1ad5c0a7-0890-4a7d-a614-22a27b2c4782"),
+     *                 @OA\Property(property="tenant_id", type="string", example="demo"),
+     *                 @OA\Property(property="tenant_name", type="string", nullable=true, example="Demo Store")
+     *             )
+     *         )
      *     ),
-     *     @OA\Response(response=401, description="Unauthorized")
+     *
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=422, description="Validation error - business_type_id or business_category_id is invalid")
      * )
      */
     public function onboardingTemplate(Request $request): JsonResponse

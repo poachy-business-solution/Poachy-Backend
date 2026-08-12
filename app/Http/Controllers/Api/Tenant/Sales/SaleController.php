@@ -808,7 +808,8 @@ class SaleController extends Controller
      *     - Coupon and promotion application (coupons take priority)
      *     - Loyalty points earning and redemption in same transaction
      *     - Customer aggregate updates (lifetime purchases, visit count, debt balance)
-     *     - Credit limit validation for credit sales",
+     *     - Credit limit validation for credit sales
+     *     - Optional Idempotency-Key header or idempotency_key body field for safe mobile/offline retries",
      *     operationId="createSale",
      *     tags={"Sales - Transactions"},
      *     security={{"sanctum":{}}},
@@ -846,6 +847,14 @@ class SaleController extends Controller
      *                     nullable=true,
      *                     example=4,
      *                     description="Required for loyalty/credit sales, null for walk-in customers"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="idempotency_key",
+     *                     type="string",
+     *                     nullable=true,
+     *                     maxLength=100,
+     *                     example="pos-sale-20260810-8f3b9c",
+     *                     description="Optional fallback for clients that cannot send the Idempotency-Key header. Header value takes precedence when both are supplied."
      *                 ),
      *                 @OA\Property(
      *                     property="items",
