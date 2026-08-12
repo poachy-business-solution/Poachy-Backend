@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Tenant\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Auth\ChangePasswordRequest;
+use App\Http\Requests\Tenant\Auth\RefreshTokenRequest;
 use App\Http\Requests\Tenant\Auth\ResendOtpRequest;
 use App\Http\Requests\Tenant\Auth\TenantLoginRequest;
 use App\Http\Requests\Tenant\Auth\UpdatePasswordRequest;
@@ -124,6 +125,51 @@ class TenantAuthController extends Controller
             [
                 'user' => new TenantUserResource($result['user']),
                 'token' => $result['token'],
+                'token_expires_at' => $result['token_expires_at'],
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_at' => $result['refresh_token_expires_at'],
+                'tenant' => $result['tenant'],
+            ]
+        );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/tenant/auth/refresh",
+     *     summary="Refresh tenant POS token",
+     *     description="Rotate a tenant refresh token and issue a fresh access token without requiring OTP re-authentication.",
+     *     tags={"Tenant Authentication"},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *             required={"refresh_token"},
+     *
+     *             @OA\Property(property="refresh_token", type="string"),
+     *             @OA\Property(property="device_name", type="string", nullable=true, example="iPhone 15 POS")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Token refreshed successfully"),
+     *     @OA\Response(response=422, description="Invalid or expired refresh token")
+     * )
+     */
+    public function refresh(RefreshTokenRequest $request): JsonResponse
+    {
+        $result = $this->authService->refreshToken(
+            $request->validated('refresh_token'),
+            $request->validated('device_name')
+        );
+
+        return ApiResponse::success(
+            'Token refreshed successfully',
+            [
+                'user' => new TenantUserResource($result['user']),
+                'token' => $result['token'],
+                'token_expires_at' => $result['token_expires_at'],
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_at' => $result['refresh_token_expires_at'],
                 'tenant' => $result['tenant'],
             ]
         );
