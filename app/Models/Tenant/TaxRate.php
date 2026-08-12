@@ -11,11 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 #[ObservedBy([TaxRateObserver::class])]
 class TaxRate extends Model
 {
-    use HasFactory, HasAuditLogging;
+    use HasAuditLogging, HasFactory;
 
     protected $table = 'tax_rates';
-
-    public $timestamps = false;
 
     protected $fillable = [
         'tax_name',
@@ -33,6 +31,7 @@ class TaxRate extends Model
         'is_active' => 'boolean',
         'is_default' => 'boolean',
         'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     protected $attributes = [
