@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Central\Marketplace\Analytics;
 
+use App\Jobs\Central\Analytics\SendAbandonedCartSMSJob;
+use App\Mail\Central\Marketplace\CartRecoveryMail;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceProduct;
 use App\Models\ShoppingCart;
@@ -10,6 +12,7 @@ use App\Models\User;
 use App\Services\Central\Marketplace\Analytics\AbandonedCartService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AbandonedCartServiceTest extends TestCase
@@ -236,6 +239,16 @@ class AbandonedCartServiceTest extends TestCase
         $this->assertFalse(collect($result)->contains('cart_id', $cart->id));
     }
 
+    public function test_get_sms_eligible_carts_excludes_when_email_recovery_already_sent(): void
+    {
+        $customer = $this->createCustomer();
+        $cart = $this->createCart(['customer_id' => $customer->id, 'recovery_email_sent' => true]);
+
+        $result = $this->makeService()->getSMSEligibleCarts();
+
+        $this->assertFalse(collect($result)->contains('cart_id', $cart->id));
+    }
+
     public function test_get_sms_eligible_carts_excludes_customer_who_opted_out_of_sms(): void
     {
         $customer = $this->createCustomer(['accepts_sms' => false]);
@@ -264,6 +277,45 @@ class AbandonedCartServiceTest extends TestCase
         $result = $this->makeService()->getSMSEligibleCarts();
 
         $this->assertFalse(collect($result)->contains('cart_id', $cart->id));
+    }
+
+    public function test_send_abandoned_cart_sms_job_sends_email_fallback_and_marks_recovery_sent(): void
+    {
+        Mail::fake();
+
+        $customer = $this->createCustomer();
+        $cart = $this->createCart(['customer_id' => $customer->id]);
+        $this->addItem($cart);
+
+        (new SendAbandonedCartSMSJob($cart->id))->handle();
+
+        Mail::assertQueued(CartRecoveryMail::class, fn (CartRecoveryMail $mail) => $mail->hasTo($customer->user->email));
+
+        $cart->refresh();
+        $this->assertTrue($cart->recovery_sms_sent);
+        $this->assertNotNull($cart->recovery_sms_sent_at);
+        $this->assertTrue($cart->recovery_email_sent);
+        $this->assertNotNull($cart->recovery_email_sent_at);
+    }
+
+    public function test_send_abandoned_cart_sms_job_skips_email_fallback_when_email_recovery_already_sent(): void
+    {
+        Mail::fake();
+
+        $customer = $this->createCustomer();
+        $cart = $this->createCart([
+            'customer_id' => $customer->id,
+            'recovery_email_sent' => true,
+            'recovery_email_sent_at' => now(),
+        ]);
+
+        (new SendAbandonedCartSMSJob($cart->id))->handle();
+
+        Mail::assertNotQueued(CartRecoveryMail::class);
+
+        $cart->refresh();
+        $this->assertFalse($cart->recovery_sms_sent);
+        $this->assertNull($cart->recovery_sms_sent_at);
     }
 
     // =========================================================================
