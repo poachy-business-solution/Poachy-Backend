@@ -92,6 +92,20 @@ trait InteractsWithTenantHttpAuth
         return $user;
     }
 
+    protected function createTenantUserWithoutRole(): User
+    {
+        config(['permission.connection' => 'tenant']);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return User::create([
+            'name' => 'Tenant HTTP Unprivileged',
+            'email' => sprintf('tenant-http-unprivileged-%s@example.com', uniqid()),
+            'password' => Hash::make('password'),
+            'phone' => '0712345678',
+            'is_active' => true,
+        ]);
+    }
+
     protected function actingAsTenant(User $user): void
     {
         Sanctum::actingAs($user, ['*'], 'tenant');

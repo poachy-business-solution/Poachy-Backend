@@ -28,6 +28,8 @@ class TenantRouteMiddlewareSmokeTest extends TestCase
         return [
             'manage locations' => ['POST', '/api/v1/tenant/stores'],
             'manage products' => ['POST', '/api/v1/tenant/categories'],
+            'product creation request authorization' => ['POST', '/api/v1/tenant/products'],
+            'inventory adjustment request authorization' => ['POST', '/api/v1/tenant/inventory-movements/adjustment'],
             'manage store settings' => ['POST', '/api/v1/tenant/tax-rates'],
             'financial reports' => ['GET', '/api/v1/tenant/reports/daily-sales'],
         ];
@@ -60,6 +62,7 @@ class TenantRouteMiddlewareSmokeTest extends TestCase
                 $cashier = $this->createTenantUserWithRole('cashier');
                 $manager = $this->createTenantUserWithRole('manager');
                 $owner = $this->createTenantUserWithRole('owner');
+                $unprivilegedUser = $this->createTenantUserWithoutRole();
                 $store = Store::create([
                     'name' => 'HTTP Smoke Store',
                     'address' => 'HTTP Smoke Street',
@@ -93,6 +96,12 @@ class TenantRouteMiddlewareSmokeTest extends TestCase
 
                     $this->assertSame(403, $response->getStatusCode(), "{$method} {$uri}: {$response->getContent()}");
                 }
+
+                $this->actingAsTenant($unprivilegedUser);
+
+                $this->withHeaders($this->tenantHeaders($domain))
+                    ->postJson($this->tenantUrl($domain, '/api/v1/tenant/sales'))
+                    ->assertForbidden();
 
                 $this->actingAsTenant($manager);
 
