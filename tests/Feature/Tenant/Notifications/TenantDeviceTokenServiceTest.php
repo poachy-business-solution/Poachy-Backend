@@ -3,6 +3,7 @@
 namespace Tests\Feature\Tenant\Notifications;
 
 use App\Jobs\Tenant\SendNotificationJob;
+use App\Mail\Tenant\NotificationMail;
 use App\Models\Tenant\TenantDeviceToken;
 use App\Models\Tenant\User;
 use App\Services\Tenant\Notifications\PushNotificationService;
@@ -11,6 +12,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
 use Tests\TestCase;
@@ -126,6 +128,27 @@ class TenantDeviceTokenServiceTest extends TestCase
             message: ['subject' => 'New order', 'body' => 'Order #1001 is ready to fulfil'],
             metadata: ['user_id' => 1]
         ))->handle($pushService);
+    }
+
+    public function test_send_notification_job_sends_email_channel_via_mailer(): void
+    {
+        Mail::fake();
+
+        $pushService = Mockery::mock(PushNotificationService::class);
+
+        (new SendNotificationJob(
+            channel: 'email',
+            recipient: 'owner@example.com',
+            message: ['subject' => 'Budget Exceeded', 'body' => 'Budget has exceeded its limit.'],
+            metadata: ['notification_type' => 'budget_exceeded']
+        ))->handle($pushService);
+
+        Mail::assertSent(NotificationMail::class, function (NotificationMail $mail) {
+            return $mail->hasTo('owner@example.com')
+                && $mail->subjectLine === 'Budget Exceeded'
+                && $mail->body === 'Budget has exceeded its limit.'
+                && $mail->notificationMetadata['notification_type'] === 'budget_exceeded';
+        });
     }
 
     private function createUser(string $email = 'owner@example.com'): User
