@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Tenant\Http;
 
+use App\Models\Tenant\Shift;
+use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\Store;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Tenant\Concerns\InteractsWithTenantHttpAuth;
@@ -69,12 +71,40 @@ class TenantRouteMiddlewareSmokeTest extends TestCase
                     'city' => 'Nairobi',
                     'is_active' => true,
                 ]);
+                $shift = Shift::create([
+                    'shift_name' => 'HTTP Smoke Shift',
+                    'store_id' => $store->id,
+                    'scheduled_start_time' => '08:00',
+                    'scheduled_end_time' => '16:00',
+                    'applicable_days' => [strtolower(now()->addDay()->format('l'))],
+                    'is_active' => true,
+                ]);
+                $cashierAssignment = ShiftAssignment::create([
+                    'shift_id' => $shift->id,
+                    'store_id' => $store->id,
+                    'user_id' => $cashier->id,
+                    'shift_date' => now()->addDay()->toDateString(),
+                ]);
+                $managerAssignment = ShiftAssignment::create([
+                    'shift_id' => $shift->id,
+                    'store_id' => $store->id,
+                    'user_id' => $manager->id,
+                    'shift_date' => now()->addDay()->toDateString(),
+                ]);
 
                 $this->actingAsTenant($cashier);
                 $this->withHeaders($this->tenantHeaders($domain))
                     ->getJson($this->tenantUrl($domain, '/api/v1/tenant/stores'))
                     ->assertOk()
                     ->assertJsonPath('success', true);
+
+                $shiftAssignmentResponse = $this->withHeaders($this->tenantHeaders($domain))
+                    ->getJson($this->tenantUrl($domain, "/api/v1/tenant/shift-assignments?user_id={$manager->id}"))
+                    ->assertOk()
+                    ->assertJsonPath('data.assignments.0.id', $cashierAssignment->id);
+
+                $assignmentIds = collect($shiftAssignmentResponse->json('data.assignments'))->pluck('id');
+                $this->assertFalse($assignmentIds->contains($managerAssignment->id));
 
                 foreach (self::protectedTenantRoutes() as [$method, $uri]) {
                     $requestUri = $uri === '/api/v1/tenant/inventory'

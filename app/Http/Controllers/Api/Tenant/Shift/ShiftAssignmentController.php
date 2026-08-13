@@ -229,8 +229,8 @@ class ShiftAssignmentController extends Controller
         $query = ShiftAssignment::query()
             ->with(['shift', 'store', 'user', 'salesSummary']);
 
-        // Filter by user (regular users can only see their own)
-        if ($request->user()->hasRole(['cashier'])) {
+        // Non-management staff can only see their own assignments.
+        if (! $request->user()->hasAnyRole(['manager', 'admin', 'owner'])) {
             $query->forUser($request->user()->id);
         } elseif ($request->has('user_id')) {
             $query->forUser($request->input('user_id'));
