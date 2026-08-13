@@ -61,6 +61,7 @@ use App\Http\Controllers\Api\Tenant\TenantAccessController;
 use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
 use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
+use App\Models\Tenant\Shift;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
@@ -173,15 +174,20 @@ Route::prefix('v1/tenant')
             });
         });
 
-        // Suppliers Routes
-        Route::prefix('suppliers')->group(function () {
+        // Suppliers Routes — reads require supplier visibility; mutations
+        // require supplier management. Controllers also authorize through
+        // SupplierPolicy, but route middleware keeps the surface consistent.
+        Route::prefix('suppliers')->middleware(['permission:view-suppliers,tenant'])->group(function () {
             Route::get('/', [SupplierController::class, 'index']);
-            Route::post('/', [SupplierController::class, 'store']);
             Route::get('/supplier-options', [SupplierController::class, 'supplierOptions']);
             Route::get('/{supplier}', [SupplierController::class, 'show']);
-            Route::patch('/{supplier}/personal-details', [SupplierController::class, 'updatePersonalDetails']);
-            Route::patch('/{supplier}/financial-details', [SupplierController::class, 'updateFinancialDetails']);
-            Route::patch('/{supplier}/toggle-active', [SupplierController::class, 'toggleActive']);
+
+            Route::middleware(['permission:manage-suppliers,tenant'])->group(function () {
+                Route::post('/', [SupplierController::class, 'store']);
+                Route::patch('/{supplier}/personal-details', [SupplierController::class, 'updatePersonalDetails']);
+                Route::patch('/{supplier}/financial-details', [SupplierController::class, 'updateFinancialDetails']);
+                Route::patch('/{supplier}/toggle-active', [SupplierController::class, 'toggleActive']);
+            });
         });
 
         // Units of Measure Routes — read/conversion-options open to any tenant
@@ -335,18 +341,21 @@ Route::prefix('v1/tenant')
         });
 
         // Store Products Routes
-        Route::prefix('stores')->group(function () {
+        Route::prefix('stores')->middleware(['permission:view-products,tenant'])->group(function () {
             Route::get('{store?}/products', [StoreProductController::class, 'index']);
-            Route::post('{store?}/products', [StoreProductController::class, 'store']);
             Route::get('{store?}/products/stats', [StoreProductController::class, 'stats']);
             Route::get('{store?}/products/{product}', [StoreProductController::class, 'show']);
-            Route::patch('{store?}/products/{product}', [StoreProductController::class, 'update']);
-            Route::patch('{store?}/products/{product}/availability', [StoreProductController::class, 'toggleAvailability']);
-            Route::delete('{store?}/products/{product}', [StoreProductController::class, 'destroy']);
+
+            Route::middleware(['permission:manage-products,tenant'])->group(function () {
+                Route::post('{store?}/products', [StoreProductController::class, 'store']);
+                Route::patch('{store?}/products/{product}', [StoreProductController::class, 'update']);
+                Route::patch('{store?}/products/{product}/availability', [StoreProductController::class, 'toggleAvailability']);
+                Route::delete('{store?}/products/{product}', [StoreProductController::class, 'destroy']);
+            });
         });
 
         // Inventory Management Routes
-        Route::prefix('inventory')->group(function () {
+        Route::prefix('inventory')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [InventoryController::class, 'index']);
             Route::post('/check-availability', [InventoryController::class, 'checkAvailability']);
             Route::get('/low-stock/list', [InventoryController::class, 'getLowStock']);
@@ -357,74 +366,81 @@ Route::prefix('v1/tenant')
             Route::get('/product/{productId}', [InventoryController::class, 'getProductInventory']);
         });
 
-        Route::prefix('inventory-movements')->group(function () {
+        Route::prefix('inventory-movements')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [InventoryMovementController::class, 'index']);
             Route::get('/{id}', [InventoryMovementController::class, 'show']);
-            Route::post('/adjustment', [InventoryMovementController::class, 'createAdjustment']);
-            Route::post('/damage', [InventoryMovementController::class, 'createDamage']);
+
+            Route::middleware(['permission:adjust-stock,tenant'])->group(function () {
+                Route::post('/adjustment', [InventoryMovementController::class, 'createAdjustment']);
+                Route::post('/damage', [InventoryMovementController::class, 'createDamage']);
+            });
         });
 
-        Route::prefix('inventory-reservations')->group(function () {
+        Route::prefix('inventory-reservations')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [InventoryReservationController::class, 'index']);
             Route::get('/{id}', [InventoryReservationController::class, 'show']);
         });
 
         // Stock Transfers Routes
-        Route::prefix('transfers')->group(function () {
+        Route::prefix('transfers')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [StockTransferController::class, 'index']);
-            Route::get('/pending/approvals', [StockTransferController::class, 'pendingApprovals']);
             Route::get('/{id}', [StockTransferController::class, 'show']);
-            Route::post('/', [StockTransferController::class, 'store']);
-            Route::post('/{id}/approve', [StockTransferController::class, 'approve']);
-            Route::post('/{id}/send', [StockTransferController::class, 'send']);
-            Route::post('/{id}/receive', [StockTransferController::class, 'receive']);
-            Route::post('/{id}/cancel', [StockTransferController::class, 'cancel']);
+
+            Route::middleware(['permission:transfer-stock,tenant'])->group(function () {
+                Route::get('/pending/approvals', [StockTransferController::class, 'pendingApprovals']);
+                Route::post('/', [StockTransferController::class, 'store']);
+                Route::post('/{id}/approve', [StockTransferController::class, 'approve']);
+                Route::post('/{id}/send', [StockTransferController::class, 'send']);
+                Route::post('/{id}/receive', [StockTransferController::class, 'receive']);
+                Route::post('/{id}/cancel', [StockTransferController::class, 'cancel']);
+            });
         });
 
-        Route::prefix('purchase-orders')->group(function () {
+        Route::prefix('purchase-orders')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [PurchaseOrderController::class, 'index']);
             Route::get('/{id}', [PurchaseOrderController::class, 'show']);
-            Route::post('/', [PurchaseOrderController::class, 'store']);
-            Route::patch('/{id}', [PurchaseOrderController::class, 'update']);
 
-            // send/cancel have no FormRequest of their own (unlike store/update,
-            // which check manage-inventory) — wire the same check in here.
             Route::middleware(['permission:manage-inventory,tenant'])->group(function () {
+                Route::post('/', [PurchaseOrderController::class, 'store']);
+                Route::patch('/{id}', [PurchaseOrderController::class, 'update']);
                 Route::post('/{id}/send', [PurchaseOrderController::class, 'send']);
                 Route::post('/{id}/cancel', [PurchaseOrderController::class, 'cancel']);
             });
         });
 
         // Product Batches Routes
-        Route::prefix('batches')->group(function () {
+        Route::prefix('batches')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [ProductBatchController::class, 'index']);
-            Route::post('/receive', [ProductBatchController::class, 'store']);
             Route::get('/valuation/calculate', [ProductBatchController::class, 'valuation']);
             Route::get('/cogs/calculate', [ProductBatchController::class, 'calculateCogs']);
-            Route::post('/expired/mark', [ProductBatchController::class, 'markExpired']);
             Route::get('/{id}', [ProductBatchController::class, 'show']);
+
+            Route::middleware(['permission:manage-inventory,tenant'])->group(function () {
+                Route::post('/receive', [ProductBatchController::class, 'store']);
+                Route::post('/expired/mark', [ProductBatchController::class, 'markExpired']);
+            });
         });
 
         // Product Serials Routes
-        Route::prefix('serials')->group(function () {
+        Route::prefix('serials')->middleware(['permission:view-inventory,tenant'])->group(function () {
             Route::get('/', [ProductSerialController::class, 'index']);
             Route::get('/lookup/{serialNumber}', [ProductSerialController::class, 'lookup']);
             Route::get('/{id}', [ProductSerialController::class, 'show']);
         });
 
-        // Customer Management Routes
-        Route::prefix('customers')->group(function () {
+        // Customer Management Routes — reads require customer visibility;
+        // mutations require manage-customers because several customer
+        // FormRequests only validate shape and deliberately defer auth.
+        Route::prefix('customers')->middleware(['permission:view-customers,tenant'])->group(function () {
             Route::get('/search', [CustomerController::class, 'search']);
             Route::get('marketing-eligible', [CustomerController::class, 'marketingEligible']);
             Route::get('/', [CustomerController::class, 'index']);
-            Route::post('/', [CustomerController::class, 'store']);
             Route::get('/{customer}', [CustomerController::class, 'show']);
-            Route::patch('/{customer}', [CustomerController::class, 'update']);
-            Route::patch('/{customer}/upgrade-type', [CustomerController::class, 'upgradeType']);
 
-            // destroy/restore/toggleStatus/toggleMarketingConsent have no
-            // FormRequest of their own — wire manage-customers in here.
             Route::middleware(['permission:manage-customers,tenant'])->group(function () {
+                Route::post('/', [CustomerController::class, 'store']);
+                Route::patch('/{customer}', [CustomerController::class, 'update']);
+                Route::patch('/{customer}/upgrade-type', [CustomerController::class, 'upgradeType']);
                 Route::delete('/{customer}', [CustomerController::class, 'destroy']);
                 Route::post('/{customer}/restore', [CustomerController::class, 'restore']);
                 Route::patch('/{customer}/toggle-status', [CustomerController::class, 'toggleStatus']);
@@ -433,17 +449,20 @@ Route::prefix('v1/tenant')
         });
 
         // Customer Group Routes
-        Route::prefix('customer-groups')->group(function () {
+        Route::prefix('customer-groups')->middleware(['permission:view-customers,tenant'])->group(function () {
             Route::get('/', [CustomerGroupController::class, 'index']);
-            Route::post('/', [CustomerGroupController::class, 'store']);
             Route::get('/{customer_group}', [CustomerGroupController::class, 'show']);
-            Route::patch('/{customer_group}', [CustomerGroupController::class, 'update']);
-            Route::delete('/{customer_group}', [CustomerGroupController::class, 'destroy']);
-            Route::patch('/{customer_group}/toggle', [CustomerGroupController::class, 'toggleStatus']);
             Route::get('/{customer_group}/members', [CustomerGroupController::class, 'members']);
-            Route::post('/{customer_group}/members', [CustomerGroupController::class, 'addMember']);
-            Route::delete('/{customer_group}/members/{customer}', [CustomerGroupController::class, 'removeMember']);
-            Route::post('/{customer_group}/members/bulk', [CustomerGroupController::class, 'bulkAddMembers']);
+
+            Route::middleware(['permission:manage-customers,tenant'])->group(function () {
+                Route::post('/', [CustomerGroupController::class, 'store']);
+                Route::patch('/{customer_group}', [CustomerGroupController::class, 'update']);
+                Route::delete('/{customer_group}', [CustomerGroupController::class, 'destroy']);
+                Route::patch('/{customer_group}/toggle', [CustomerGroupController::class, 'toggleStatus']);
+                Route::post('/{customer_group}/members', [CustomerGroupController::class, 'addMember']);
+                Route::delete('/{customer_group}/members/{customer}', [CustomerGroupController::class, 'removeMember']);
+                Route::post('/{customer_group}/members/bulk', [CustomerGroupController::class, 'bulkAddMembers']);
+            });
         });
 
         // Coupon Management
@@ -512,42 +531,48 @@ Route::prefix('v1/tenant')
         });
 
         // Expense Categories
-        Route::prefix('expense-categories')->group(function () {
+        Route::prefix('expense-categories')->middleware(['permission:view-expenses,tenant'])->group(function () {
             Route::get('/', [ExpenseCategoryController::class, 'index']);
             Route::get('/tree', [ExpenseCategoryController::class, 'tree']);
             Route::get('/recurring-eligible', [ExpenseCategoryController::class, 'recurringEligible']);
-            Route::post('/', [ExpenseCategoryController::class, 'store']);
             Route::get('/{expense_category}', [ExpenseCategoryController::class, 'show']);
-            Route::patch('/{expense_category}', [ExpenseCategoryController::class, 'update']);
-            Route::delete('/{expense_category}', [ExpenseCategoryController::class, 'destroy']);
             Route::get('/{expense_category}/children', [ExpenseCategoryController::class, 'children']);
-            Route::post('/{expense_category}/toggle-active', [ExpenseCategoryController::class, 'toggleActive']);
+
+            Route::middleware(['permission:manage-expenses,tenant'])->group(function () {
+                Route::post('/', [ExpenseCategoryController::class, 'store']);
+                Route::patch('/{expense_category}', [ExpenseCategoryController::class, 'update']);
+                Route::delete('/{expense_category}', [ExpenseCategoryController::class, 'destroy']);
+                Route::post('/{expense_category}/toggle-active', [ExpenseCategoryController::class, 'toggleActive']);
+            });
         });
 
         // Expenses
-        Route::prefix('expenses')->group(function () {
+        Route::prefix('expenses')->middleware(['permission:view-expenses,tenant'])->group(function () {
             Route::get('/', [ExpenseController::class, 'index']);
-            Route::post('/', [ExpenseController::class, 'store']);
             Route::get('/pending-approval', [ExpenseController::class, 'pendingApproval']);
             Route::get('/analytics', [ExpenseController::class, 'analytics']);
             Route::get('/{expense}', [ExpenseController::class, 'show']);
-            Route::patch('/{expense}', [ExpenseController::class, 'update']);
-            Route::delete('/{expense}', [ExpenseController::class, 'destroy']);
-
-            // Approval actions
-            Route::post('/{expense}/approve', [ExpenseController::class, 'approve']);
-            Route::post('/{expense}/reject', [ExpenseController::class, 'reject']);
-
-            // Receipt management
-            Route::post('/{expense}/upload-receipt', [ExpenseController::class, 'uploadReceipt']);
-            Route::delete('/{expense}/delete-receipt', [ExpenseController::class, 'deleteReceipt']);
-
-            // Recurrences
-            Route::post('/{expense}/set-recurrence', [ExpenseController::class, 'setRecurrence']);
-            Route::patch('/{expense}/update-recurrence', [ExpenseController::class, 'updateRecurrence']);
-            Route::post('/{expense}/cancel-recurrence', [ExpenseController::class, 'cancelRecurrence']);
             Route::get('/{expense}/recurrences', [ExpenseController::class, 'getRecurrences']);
-            Route::post('/{expense}/generate-recurrence', [ExpenseController::class, 'generateRecurrence']);
+
+            Route::middleware(['permission:manage-expenses,tenant'])->group(function () {
+                Route::post('/', [ExpenseController::class, 'store']);
+                Route::patch('/{expense}', [ExpenseController::class, 'update']);
+                Route::delete('/{expense}', [ExpenseController::class, 'destroy']);
+
+                // Approval actions
+                Route::post('/{expense}/approve', [ExpenseController::class, 'approve']);
+                Route::post('/{expense}/reject', [ExpenseController::class, 'reject']);
+
+                // Receipt management
+                Route::post('/{expense}/upload-receipt', [ExpenseController::class, 'uploadReceipt']);
+                Route::delete('/{expense}/delete-receipt', [ExpenseController::class, 'deleteReceipt']);
+
+                // Recurrences
+                Route::post('/{expense}/set-recurrence', [ExpenseController::class, 'setRecurrence']);
+                Route::patch('/{expense}/update-recurrence', [ExpenseController::class, 'updateRecurrence']);
+                Route::post('/{expense}/cancel-recurrence', [ExpenseController::class, 'cancelRecurrence']);
+                Route::post('/{expense}/generate-recurrence', [ExpenseController::class, 'generateRecurrence']);
+            });
         });
 
         // Budgets — reads require view-financial-reports (withheld from
@@ -574,13 +599,17 @@ Route::prefix('v1/tenant')
         Route::prefix('shifts')->group(function () {
             Route::get('/', [ShiftController::class, 'index']);
             Route::post('/', [ShiftController::class, 'store']);
-            Route::get('/statistics', [ShiftController::class, 'statistics']);
+            Route::get('/statistics', [ShiftController::class, 'statistics'])
+                ->middleware(['role:owner|manager|admin,tenant']);
             Route::get('/for-date', [ShiftController::class, 'forDate']);
             Route::get('/{shift}', [ShiftController::class, 'show']);
             Route::patch('/{shift}', [ShiftController::class, 'update']);
-            Route::delete('/{shift}', [ShiftController::class, 'destroy']);
-            Route::post('/{shift}/toggle-active', [ShiftController::class, 'toggleActive']);
-            Route::post('/{shift}/duplicate', [ShiftController::class, 'duplicate']);
+            Route::delete('/{shift}', [ShiftController::class, 'destroy'])
+                ->middleware(['can:delete,shift']);
+            Route::post('/{shift}/toggle-active', [ShiftController::class, 'toggleActive'])
+                ->middleware(['can:update,shift']);
+            Route::post('/{shift}/duplicate', [ShiftController::class, 'duplicate'])
+                ->middleware(['can:create,'.Shift::class]);
         });
 
         // Shift Assignments Routes
@@ -588,9 +617,11 @@ Route::prefix('v1/tenant')
             Route::get('/', [ShiftAssignmentController::class, 'index']);
             Route::post('/', [ShiftAssignmentController::class, 'store']);
             Route::post('/bulk', [ShiftAssignmentController::class, 'bulkStore']);
-            Route::get('/statistics', [ShiftAssignmentController::class, 'statistics']);
+            Route::get('/statistics', [ShiftAssignmentController::class, 'statistics'])
+                ->middleware(['role:owner|manager|admin,tenant']);
             Route::get('/upcoming', [ShiftAssignmentController::class, 'upcomingAssignments']);
-            Route::get('/needing-approval', [ShiftAssignmentController::class, 'needingApproval']);
+            Route::get('/needing-approval', [ShiftAssignmentController::class, 'needingApproval'])
+                ->middleware(['role:owner|manager|admin,tenant']);
             Route::get('/{assignment}', [ShiftAssignmentController::class, 'show']);
             Route::post('/{assignment}/cancel', [ShiftAssignmentController::class, 'cancel']);
             Route::post('/{assignment}/clock-in', [ShiftAssignmentController::class, 'clockIn']);
@@ -599,7 +630,8 @@ Route::prefix('v1/tenant')
             Route::get('/{assignment}/clock-out-info', [ShiftAssignmentController::class, 'getClockOutInfo']);
         });
         Route::get('/users/{userId}/shift-assignments', [ShiftAssignmentController::class, 'userAssignments']);
-        Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments']);
+        Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments'])
+            ->middleware(['role:owner|manager|admin,tenant']);
 
         // Shift Sales Summary Routes
         Route::prefix('shifts/{shiftAssignment}')->middleware(['permission:view-sales-reports,tenant'])->group(function () {
@@ -609,7 +641,7 @@ Route::prefix('v1/tenant')
         });
 
         // Shift Analytics
-        Route::prefix('shift-analytics')->group(function () {
+        Route::prefix('shift-analytics')->middleware(['role:owner|manager|admin,tenant'])->group(function () {
             Route::get('/attendance-rate', [ShiftAnalyticsController::class, 'attendanceRate']);
             Route::get('/cash-variances', [ShiftAnalyticsController::class, 'cashVariances']);
             Route::get('/top-performers', [ShiftAnalyticsController::class, 'topPerformers']);
@@ -621,117 +653,138 @@ Route::prefix('v1/tenant')
 
         // Shift Swaps
         Route::prefix('shift-swaps')->group(function () {
-            Route::get('/', [ShiftSwapController::class, 'index']);
+            Route::get('/', [ShiftSwapController::class, 'index'])
+                ->middleware(['role:owner|manager|admin,tenant']);
             Route::post('/', [ShiftSwapController::class, 'store']);
-            Route::get('/statistics', [ShiftSwapController::class, 'statistics']);
+            Route::get('/statistics', [ShiftSwapController::class, 'statistics'])
+                ->middleware(['role:owner|manager|admin,tenant']);
             Route::get('/{swapRequest}', [ShiftSwapController::class, 'show']);
         });
 
         // Sales Management
-        Route::prefix('sales')->group(function () {
+        Route::prefix('sales')->middleware(['permission:view-sales,tenant'])->group(function () {
             Route::get('customers/search', [SaleController::class, 'searchCustomer']);
             Route::post('calculate', [SaleController::class, 'calculateSale']);
-            Route::post('/', [SaleController::class, 'createSale']);
             Route::get('/', [SaleController::class, 'listSales']);
             Route::get('{sale}', [SaleController::class, 'getSale']);
             Route::get('{sale}/receipt', [SaleController::class, 'generateReceipt']);
 
+            Route::post('/', [SaleController::class, 'createSale'])
+                ->middleware(['permission:create-sales,tenant']);
+
             // Refunds
             Route::get('{sale}/refundable-items', [RefundController::class, 'getRefundableItems']);
-            Route::post('{sale}/refunds', [RefundController::class, 'initiateRefund']);
             Route::get('{sale}/refunds', [RefundController::class, 'listSaleRefunds']);
-            Route::post('{sale}/exchange', [RefundController::class, 'initiateExchange']);
+            Route::middleware(['permission:process-refunds,tenant'])->group(function () {
+                Route::post('{sale}/refunds', [RefundController::class, 'initiateRefund']);
+                Route::post('{sale}/exchange', [RefundController::class, 'initiateExchange']);
+            });
         });
 
         // Refund Management
-        Route::prefix('refunds')->group(function () {
+        Route::prefix('refunds')->middleware(['permission:view-sales,tenant'])->group(function () {
             Route::get('/', [RefundController::class, 'index']);
             Route::get('/{refund}', [RefundController::class, 'show']);
             Route::get('/{refund}/receipt', [RefundController::class, 'generateReceipt']);
-            Route::patch('/{refund}/cancel', [RefundController::class, 'cancel']);
+            Route::patch('/{refund}/cancel', [RefundController::class, 'cancel'])
+                ->middleware(['permission:process-refunds,tenant']);
         });
 
         // Marketplace Sales — fulfillment tracking for orders synced from central
-        Route::prefix('marketplace-sales')->group(function () {
+        Route::prefix('marketplace-sales')->middleware(['permission:view-marketplace-sales,tenant'])->group(function () {
             Route::get('/', [MarketplaceSaleController::class, 'index']);
             Route::get('/{id}', [MarketplaceSaleController::class, 'show']);
-            Route::patch('/{id}/fulfillment-status', [MarketplaceSaleController::class, 'updateFulfillmentStatus']);
-            Route::patch('/{id}/location', [MarketplaceSaleController::class, 'updateLocation']);
+            Route::middleware(['permission:manage-marketplace-sales,tenant'])->group(function () {
+                Route::patch('/{id}/fulfillment-status', [MarketplaceSaleController::class, 'updateFulfillmentStatus']);
+                Route::patch('/{id}/location', [MarketplaceSaleController::class, 'updateLocation']);
+            });
         });
 
         // Loyalty Transactions
-        Route::prefix('loyalty-transactions')->group(function () {
+        Route::prefix('loyalty-transactions')->middleware(['permission:loyalty-transactions,tenant'])->group(function () {
             Route::get('/', [LoyaltyTransactionController::class, 'index']);
             Route::post('/award-manual', [LoyaltyTransactionController::class, 'awardManual']);
-            Route::get('/analytics/overview', [LoyaltyTransactionController::class, 'analytics'])->middleware('permission:loyalty-transactions');
-            Route::get('/{id}', [LoyaltyTransactionController::class, 'show'])->middleware('permission:loyalty-transactions');
+            Route::get('/analytics/overview', [LoyaltyTransactionController::class, 'analytics']);
+            Route::get('/{id}', [LoyaltyTransactionController::class, 'show']);
         });
-        Route::get('/customers/{customerId}/loyalty-transactions', [LoyaltyTransactionController::class, 'customerHistory']);
+        Route::get('/customers/{customerId}/loyalty-transactions', [LoyaltyTransactionController::class, 'customerHistory'])
+            ->middleware('permission:loyalty-transactions,tenant');
 
         // Customer credits Routes
-        Route::prefix('credit-transactions')->group(function () {
+        Route::prefix('credit-transactions')->middleware(['permission:credit-management,tenant'])->group(function () {
             Route::get('/', [CustomerCreditTransactionController::class, 'index']);
             Route::post('/record-payment', [CustomerCreditTransactionController::class, 'recordPayment']);
             Route::post('/record-adjustment', [CustomerCreditTransactionController::class, 'recordAdjustment']);
             Route::post('/record-write-off', [CustomerCreditTransactionController::class, 'recordWriteOff']);
             Route::get('/analytics/overview', [CustomerCreditTransactionController::class, 'analytics']);
-            Route::get('/{id}', [CustomerCreditTransactionController::class, 'show'])->middleware('permission:credit-management');
+            Route::get('/{id}', [CustomerCreditTransactionController::class, 'show']);
         });
-        Route::get('/customers/{customerId}/credit-transactions', [CustomerCreditTransactionController::class, 'customerHistory']);
+        Route::get('/customers/{customerId}/credit-transactions', [CustomerCreditTransactionController::class, 'customerHistory'])
+            ->middleware('permission:credit-management,tenant');
 
         // Supplier Payment routes
-        Route::prefix('supplier-payments')->group(function () {
-            Route::post('/', [SupplierPaymentController::class, 'store']);
+        Route::prefix('supplier-payments')->middleware(['permission:view-supplier-payments,tenant'])->group(function () {
             Route::get('/', [SupplierPaymentController::class, 'index']);
             Route::get('/{id}', [SupplierPaymentController::class, 'show']);
+
+            Route::post('/', [SupplierPaymentController::class, 'store'])
+                ->middleware(['permission:manage-supplier-payments,tenant']);
         });
-        Route::get('suppliers/{supplierId}/payments', [SupplierPaymentController::class, 'supplierPayments']);
-        Route::get('suppliers/{supplierId}/payment-summary', [SupplierPaymentController::class, 'supplierPaymentSummary']);
-        Route::get('purchase-orders/{poId}/payments', [SupplierPaymentController::class, 'purchaseOrderPayments']);
+        Route::middleware(['permission:view-supplier-payments,tenant'])->group(function () {
+            Route::get('suppliers/{supplierId}/payments', [SupplierPaymentController::class, 'supplierPayments']);
+            Route::get('suppliers/{supplierId}/payment-summary', [SupplierPaymentController::class, 'supplierPaymentSummary']);
+            Route::get('purchase-orders/{poId}/payments', [SupplierPaymentController::class, 'purchaseOrderPayments']);
+        });
 
         // Stock Alerts
-        Route::prefix('stock-alerts')->group(function () {
+        Route::prefix('stock-alerts')->middleware(['permission:view-stock-alerts,tenant'])->group(function () {
             Route::get('/', [StockAlertController::class, 'index']);
             Route::get('/{id}', [StockAlertController::class, 'show']);
-            Route::post('/{id}/resolve', [StockAlertController::class, 'resolve']);
+            Route::post('/{id}/resolve', [StockAlertController::class, 'resolve'])
+                ->middleware(['permission:resolve-stock-alerts,tenant']);
         });
 
         // Expiry Alerts
-        Route::prefix('expiry-alerts')->group(function () {
+        Route::prefix('expiry-alerts')->middleware(['permission:view-expiry-alerts,tenant'])->group(function () {
             Route::get('/', [ExpiryAlertController::class, 'index']);
             Route::get('/{id}', [ExpiryAlertController::class, 'show']);
-            Route::post('/{id}/resolve', [ExpiryAlertController::class, 'resolve']);
+            Route::post('/{id}/resolve', [ExpiryAlertController::class, 'resolve'])
+                ->middleware(['permission:resolve-expiry-alerts,tenant']);
         });
 
         // Inventory Waste
-        Route::prefix('inventory-waste')->group(function () {
+        Route::prefix('inventory-waste')->middleware(['permission:view-waste-records,tenant'])->group(function () {
             Route::get('/', [InventoryWasteController::class, 'index']);
-            Route::post('/', [InventoryWasteController::class, 'store']);
             Route::get('/{id}', [InventoryWasteController::class, 'show']);
-            Route::patch('/{id}', [InventoryWasteController::class, 'update']);
-            Route::post('/{id}/approve', [InventoryWasteController::class, 'approve']);
-            Route::post('/{id}/reject', [InventoryWasteController::class, 'reject']);
 
-            // destroy has no FormRequest of its own (unlike store/update/approve/
-            // reject, which check manage-waste-records) — wire the same check in here.
-            Route::delete('/{id}', [InventoryWasteController::class, 'destroy'])
-                ->middleware(['permission:manage-waste-records,tenant']);
+            Route::middleware(['permission:manage-waste-records,tenant'])->group(function () {
+                Route::post('/', [InventoryWasteController::class, 'store']);
+                Route::patch('/{id}', [InventoryWasteController::class, 'update']);
+                Route::post('/{id}/approve', [InventoryWasteController::class, 'approve']);
+                Route::post('/{id}/reject', [InventoryWasteController::class, 'reject']);
+                Route::delete('/{id}', [InventoryWasteController::class, 'destroy']);
+            });
         });
 
         // Store-specific routes
         Route::prefix('stores/{storeId}')->group(function () {
             // Stock Alerts by Store
-            Route::get('/stock-alerts', [StockAlertController::class, 'byStore']);
-            Route::get('/stock-alerts/summary', [StockAlertController::class, 'summary']);
-            Route::get('/stock-alerts/dashboard', [StockAlertController::class, 'dashboard']);
+            Route::middleware(['permission:view-stock-alerts,tenant'])->group(function () {
+                Route::get('/stock-alerts', [StockAlertController::class, 'byStore']);
+                Route::get('/stock-alerts/summary', [StockAlertController::class, 'summary']);
+                Route::get('/stock-alerts/dashboard', [StockAlertController::class, 'dashboard']);
+            });
 
             // Expiry Alerts by Store
-            Route::get('/expiry-alerts', [ExpiryAlertController::class, 'byStore']);
-            Route::get('/expiry-alerts/summary', [ExpiryAlertController::class, 'summary']);
-            Route::get('/expiry-alerts/dashboard', [ExpiryAlertController::class, 'dashboard']);
+            Route::middleware(['permission:view-expiry-alerts,tenant'])->group(function () {
+                Route::get('/expiry-alerts', [ExpiryAlertController::class, 'byStore']);
+                Route::get('/expiry-alerts/summary', [ExpiryAlertController::class, 'summary']);
+                Route::get('/expiry-alerts/dashboard', [ExpiryAlertController::class, 'dashboard']);
+            });
 
             // Waste Summary by Store
-            Route::get('/inventory-waste/summary', [InventoryWasteController::class, 'summary']);
+            Route::get('/inventory-waste/summary', [InventoryWasteController::class, 'summary'])
+                ->middleware(['permission:view-waste-records,tenant']);
         });
 
         // Daily sales aggregates
