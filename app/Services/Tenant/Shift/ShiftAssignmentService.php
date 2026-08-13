@@ -366,6 +366,16 @@ class ShiftAssignmentService
 
             DB::commit();
 
+            $freshAssignment = $assignment->fresh(['shift', 'store', 'user']);
+
+            if (! $freshAssignment->approved_at) {
+                app(ShiftNotificationService::class)->notifyShiftNeedsApproval($freshAssignment);
+            }
+
+            if ($freshAssignment->has_significant_cash_variance) {
+                app(ShiftNotificationService::class)->notifyCashVariance($freshAssignment);
+            }
+
             // ShiftAssignmentObserver::updating() already dispatches ShiftEnded off the
             // status change in the update() call above — don't fire it a second time here.
 
@@ -378,7 +388,7 @@ class ShiftAssignmentService
                 'tenant_id' => tenant()->id,
             ]);
 
-            return $assignment->fresh(['shift', 'store', 'user', 'salesSummary']);
+            return $freshAssignment->fresh(['shift', 'store', 'user', 'salesSummary']);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -571,6 +581,8 @@ class ShiftAssignmentService
             $overdueAssignments = $this->getOverdueShifts(null, $gracePeriodMinutes);
             $count = 0;
 
+            $markedAssignments = collect();
+
             foreach ($overdueAssignments as $assignment) {
                 $assignment->update([
                     'status' => ShiftStatus::NO_SHOW,
@@ -579,6 +591,7 @@ class ShiftAssignmentService
                         : "Auto-marked as no-show after {$gracePeriodMinutes} minute grace period.",
                 ]);
 
+                $markedAssignments->push($assignment->fresh(['shift', 'store', 'user']));
                 $count++;
             }
 
@@ -587,6 +600,12 @@ class ShiftAssignmentService
             DB::commit();
 
             if ($count > 0) {
+                $notifications = app(ShiftNotificationService::class);
+
+                $markedAssignments->each(
+                    fn (ShiftAssignment $assignment) => $notifications->notifyNoShow($assignment)
+                );
+
                 Log::info('Auto-marked overdue shifts as no-show', [
                     'count' => $count,
                     'grace_period_minutes' => $gracePeriodMinutes,

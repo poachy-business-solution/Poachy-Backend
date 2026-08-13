@@ -14,6 +14,7 @@ use App\Models\Tenant\ProductBundle;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductSerialService;
 use App\Services\Tenant\Inventory\StockReservationService;
+use App\Services\Tenant\Marketplace\MarketplaceOrderStaffNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -44,6 +45,7 @@ class ProcessInboundPaymentSync implements ShouldQueue
         StockReservationService $reservationService,
         ProductBatchService $batchService,
         ProductSerialService $serialService,
+        MarketplaceOrderStaffNotificationService $notifications,
     ): void {
         $orderId = $this->paymentPayload['order_id'];
         $orderNumber = $this->paymentPayload['order_number'];
@@ -218,6 +220,10 @@ class ProcessInboundPaymentSync implements ShouldQueue
         });
 
         $this->respondToCentral($orderId, 'completed', null, $outboundSyncId, $sale?->id, 'marketplace_sales');
+
+        if ($sale) {
+            $notifications->notifyPaymentConfirmed($this->paymentPayload, $sale);
+        }
 
         Log::info('Inbound payment sync processed — marketplace sale created', [
             'order_id' => $orderId,

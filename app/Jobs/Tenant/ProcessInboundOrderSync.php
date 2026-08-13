@@ -8,6 +8,7 @@ use App\Models\Tenant\InventoryReservation;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBundle;
 use App\Services\Tenant\Inventory\StockReservationService;
+use App\Services\Tenant\Marketplace\MarketplaceOrderStaffNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,8 +34,10 @@ class ProcessInboundOrderSync implements ShouldQueue
         public array $orderPayload,
     ) {}
 
-    public function handle(StockReservationService $reservationService): void
-    {
+    public function handle(
+        StockReservationService $reservationService,
+        MarketplaceOrderStaffNotificationService $notifications,
+    ): void {
         $orderId = $this->orderPayload['order_id'];
         $items = $this->orderPayload['items'] ?? [];
         $outboundSyncId = $this->orderPayload['_outbound_sync_id'] ?? null;
@@ -136,6 +139,10 @@ class ProcessInboundOrderSync implements ShouldQueue
             );
 
             $this->respondToCentral($orderId, 'confirmed', null, $outboundSyncId);
+            $notifications->notifyNewOrderReserved(
+                orderPayload: $this->orderPayload,
+                storeIds: collect($reservationItems)->pluck('store_id')->filter()->unique()->values()->all(),
+            );
 
             Log::info('Inbound order reservation successful', [
                 'order_id' => $orderId,

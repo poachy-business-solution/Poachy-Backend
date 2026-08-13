@@ -12,6 +12,7 @@ use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\Supplier;
 use App\Models\Tenant\TaxRate;
+use App\Services\Tenant\Supplier\SupplierNotificationService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -214,7 +215,7 @@ class PurchaseOrderService
      */
     public function sendPurchaseOrder(int $poId): PurchaseOrder
     {
-        return DB::transaction(function () use ($poId) {
+        $sentPurchaseOrder = DB::transaction(function () use ($poId) {
             $po = PurchaseOrder::lockForUpdate()->findOrFail($poId);
 
             if (! $po->status->canBeSent()) {
@@ -230,8 +231,12 @@ class PurchaseOrderService
                 'po_number' => $po->po_number,
             ]);
 
-            return $po->fresh();
+            return $po->fresh(['supplier', 'store', 'items.product', 'items.productVariant', 'items.uom']);
         });
+
+        app(SupplierNotificationService::class)->notifyPurchaseOrderSent($sentPurchaseOrder);
+
+        return $sentPurchaseOrder;
     }
 
     /**

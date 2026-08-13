@@ -3,6 +3,7 @@
 namespace Tests\Feature\Tenant\Inventory;
 
 use App\Enums\Tenant\PurchaseOrderStatus;
+use App\Jobs\Tenant\SendNotificationJob;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\Supplier;
@@ -13,6 +14,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 use Tests\TestCase;
@@ -242,6 +244,27 @@ class PurchaseOrderServiceTest extends TestCase
         $this->assertSame(PurchaseOrderStatus::SENT, $sent->status);
     }
 
+    public function test_send_purchase_order_emails_supplier_when_email_is_present(): void
+    {
+        Queue::fake();
+        DB::connection('tenant')->table('suppliers')->where('id', 1)->update([
+            'email' => 'supplier@example.com',
+        ]);
+
+        $po = $this->createDraftPo(quantity: 2, unitCost: 25.0);
+
+        $sent = Model::withoutEvents(fn () => $this->service()->sendPurchaseOrder($po->id));
+
+        Queue::assertPushed(SendNotificationJob::class, function (SendNotificationJob $job) use ($sent) {
+            return $job->channel === 'email'
+                && $job->recipient === 'supplier@example.com'
+                && $job->metadata['notification_type'] === 'purchase_order_sent'
+                && $job->metadata['purchase_order_id'] === $sent->id
+                && str_contains($job->message['subject'], $sent->po_number)
+                && str_contains($job->message['body'], 'Allocated Product x 2 pcs');
+        });
+    }
+
     public function test_send_purchase_order_throws_if_not_draft(): void
     {
         $po = $this->createDraftPo(quantity: 1, unitCost: 10.0);
@@ -395,6 +418,7 @@ class PurchaseOrderServiceTest extends TestCase
         Schema::connection($conn)->create('suppliers', function (Blueprint $table) {
             $table->id();
             $table->string('name')->default('Test Supplier');
+            $table->string('email')->nullable();
             $table->decimal('outstanding_balance', 15, 2)->default(0);
             $table->unsignedInteger('total_orders')->default(0);
             $table->boolean('is_active')->default(true);

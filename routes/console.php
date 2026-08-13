@@ -17,6 +17,12 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 // Shift Management Scheduled Tasks
+Schedule::command('shifts:send-reminders')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Send upcoming shift reminder emails');
+
 Schedule::command('shifts:auto-mark-noshow')
     ->hourly()
     ->withoutOverlapping()

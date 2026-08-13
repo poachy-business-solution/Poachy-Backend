@@ -4,6 +4,7 @@ namespace App\Listeners\Tenant;
 
 use App\Events\Tenant\SaleCompleted;
 use App\Services\Tenant\Sales\ShiftSalesSummaryService;
+use App\Services\Tenant\Shift\ShiftNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -72,6 +73,6 @@ class UpdateShiftSalesSummary implements ShouldQueue
             'error' => $exception->getMessage(),
         ]);
 
-        // Could notify admins here
+        app(ShiftNotificationService::class)->notifyShiftSummaryFailure($event->sale, $exception);
     }
 }

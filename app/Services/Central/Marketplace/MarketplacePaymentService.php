@@ -24,7 +24,10 @@ class MarketplacePaymentService
     public function __construct(
         private readonly MpesaService $mpesaService,
         private readonly MarketplaceProductService $productService,
-    ) {}
+        private ?OrderNotificationService $notifications = null,
+    ) {
+        $this->notifications ??= app(OrderNotificationService::class);
+    }
 
     // =========================================================================
 
@@ -412,6 +415,8 @@ class MarketplacePaymentService
             'method' => $payment->payment_method->value,
         ]);
 
+        $this->notifications->notifyCustomer($order, 'payment_confirmed', $payment->fresh());
+
         // Fire analytics event for payment completion
         event(new PaymentCompleted(
             order: $order,
@@ -432,6 +437,10 @@ class MarketplacePaymentService
         Log::info('Payment failed', [
             'order_id' => $payment->order_id,
             'payment_id' => $payment->id,
+            'reason' => $reason,
+        ]);
+
+        $this->notifications->notifyCustomer($payment->order, 'payment_failed', $payment->fresh(), [
             'reason' => $reason,
         ]);
 
@@ -484,6 +493,10 @@ class MarketplacePaymentService
 
         Log::info('Payment deadline exceeded — order cancelled', [
             'order_id' => $order->id,
+        ]);
+
+        $this->notifications->notifyCustomer($order->fresh(), 'payment_timeout', context: [
+            'reason' => 'Payment deadline exceeded',
         ]);
     }
 

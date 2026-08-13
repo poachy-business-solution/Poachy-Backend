@@ -4,6 +4,8 @@ namespace Tests\Feature\Tenant\Supplier;
 
 use App\Enums\Tenant\PaymentMethod;
 use App\Events\Tenant\SupplierPaymentRecorded;
+use App\Jobs\Tenant\SendNotificationJob;
+use App\Listeners\Tenant\LogSupplierPaymentRecorded;
 use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Supplier\SupplierPaymentService;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
@@ -106,6 +109,46 @@ class SupplierPaymentServiceTest extends TestCase
         $this->assertEquals(700.0, (float) $supplier->fresh()->outstanding_balance);
 
         Event::assertDispatched(SupplierPaymentRecorded::class, fn ($event) => $event->payment->id === $payment->id);
+    }
+
+    public function test_supplier_payment_recorded_listener_is_registered(): void
+    {
+        $this->assertTrue(Event::getFacadeRoot()->hasListeners(SupplierPaymentRecorded::class));
+    }
+
+    public function test_supplier_payment_recorded_listener_emails_supplier(): void
+    {
+        Queue::fake();
+        $supplier = $this->createSupplierRow([
+            'email' => 'supplier-payments@example.com',
+            'outstanding_balance' => 1000,
+        ]);
+        $poId = $this->insertPurchaseOrder($supplier->id, status: 'sent', paymentStatus: 'unpaid', totalAmount: 1000, amountPaid: 0);
+
+        Event::fake([SupplierPaymentRecorded::class]);
+
+        $payment = $this->service()->recordPayment([
+            'supplier_id' => $supplier->id,
+            'purchase_order_id' => $poId,
+            'payment_date' => '2026-08-13',
+            'amount' => 250,
+            'payment_method' => PaymentMethod::MPESA->value,
+            'reference_number' => 'MPESA-123',
+        ]);
+
+        Event::assertDispatched(SupplierPaymentRecorded::class);
+
+        (new LogSupplierPaymentRecorded)->handle(new SupplierPaymentRecorded($payment));
+
+        Queue::assertPushed(SendNotificationJob::class, function (SendNotificationJob $job) use ($payment) {
+            return $job->channel === 'email'
+                && $job->recipient === 'supplier-payments@example.com'
+                && $job->metadata['notification_type'] === 'supplier_payment_recorded'
+                && $job->metadata['supplier_payment_id'] === $payment->id
+                && str_contains($job->message['subject'], $payment->payment_number)
+                && str_contains($job->message['body'], 'Amount: KES 250.00')
+                && str_contains($job->message['body'], 'Reference: MPESA-123');
+        });
     }
 
     public function test_record_payment_throws_when_supplier_inactive(): void
