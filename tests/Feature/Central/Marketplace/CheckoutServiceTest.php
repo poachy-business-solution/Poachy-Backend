@@ -7,6 +7,7 @@ use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Events\Central\Marketplace\CheckoutCompleted;
 use App\Jobs\Central\ProcessCheckoutReservation;
+use App\Mail\Central\Marketplace\MarketplaceOrderLifecycleMail;
 use App\Models\CustomerAddress;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -122,6 +124,20 @@ class CheckoutServiceTest extends TestCase
 
         $this->assertSame($firstRun->pluck('id')->all(), $secondRun->pluck('id')->all());
         $this->assertSame(1, MarketplaceOrder::on('central')->where('checkout_idempotency_key', $key)->count());
+    }
+
+    public function test_initiate_checkout_queues_order_placed_email(): void
+    {
+        Mail::fake();
+        $cart = $this->cartWithItem();
+
+        $orders = $this->service->initiateCheckout($cart, $this->checkoutData());
+
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($orders) {
+            return $mail->lifecycleType === 'order_placed'
+                && $mail->order->id === $orders->first()->id
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_initiate_checkout_throws_when_lock_already_held(): void

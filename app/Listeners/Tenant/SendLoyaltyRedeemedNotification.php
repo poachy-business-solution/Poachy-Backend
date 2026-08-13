@@ -42,6 +42,23 @@ class SendLoyaltyRedeemedNotification implements ShouldQueue
                 ]
             )->onQueue('sync-normal');
         }
+
+        // Send email notification if customer has email
+        if ($customer->email) {
+            SendNotificationJob::dispatch(
+                channel: 'email',
+                recipient: $customer->email,
+                message: [
+                    'subject' => 'Loyalty Points Redeemed',
+                    'body' => "You've redeemed {$pointsRedeemed} loyalty points. Remaining balance: {$transaction->balance_after} points.",
+                ],
+                metadata: [
+                    'customer_id' => $customer->id,
+                    'transaction_id' => $transaction->id,
+                    'notification_type' => 'loyalty_redeemed',
+                ]
+            )->onQueue('sync-normal');
+        }
     }
 
     /**

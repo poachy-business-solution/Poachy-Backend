@@ -11,6 +11,7 @@ use App\Events\Central\Marketplace\PaymentFailed;
 use App\Http\Controllers\Api\Central\Mpesa\MpesaC2BController;
 use App\Jobs\Central\ProcessOrderCancellation;
 use App\Jobs\Central\ProcessPaymentConfirmation;
+use App\Mail\Central\Marketplace\MarketplaceOrderLifecycleMail;
 use App\Models\CentralPaymentLog;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
@@ -25,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Tests\TestCase;
@@ -348,6 +350,7 @@ class MarketplacePaymentServiceTest extends TestCase
 
     public function test_confirm_payment_fires_payment_completed_and_dispatches_job(): void
     {
+        Mail::fake();
         $order = $this->createOrder();
         $payment = $order->payments()->first();
 
@@ -356,10 +359,16 @@ class MarketplacePaymentServiceTest extends TestCase
         $this->assertSame('confirmed', $order->fresh()->order_status->value);
         Event::assertDispatched(PaymentCompleted::class, fn ($e) => $e->payment->id === $payment->id);
         Queue::assertPushed(ProcessPaymentConfirmation::class, fn ($job) => $job->orderId === $order->id);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'payment_confirmed'
+                && $mail->order->id === $order->id
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_handle_payment_failure_fires_payment_failed(): void
     {
+        Mail::fake();
         $order = $this->createOrder();
         $payment = $order->payments()->first();
 
@@ -367,6 +376,12 @@ class MarketplacePaymentServiceTest extends TestCase
 
         $this->assertSame('failed', $payment->fresh()->payment_status->value);
         Event::assertDispatched(PaymentFailed::class, fn ($e) => $e->payment->id === $payment->id);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'payment_failed'
+                && $mail->order->id === $order->id
+                && $mail->context['reason'] === 'Timeout'
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_initiate_refund_marks_payment_refunded(): void
@@ -403,6 +418,7 @@ class MarketplacePaymentServiceTest extends TestCase
 
     public function test_handle_payment_timeout_cancels_order_and_releases_reservation(): void
     {
+        Mail::fake();
         $order = $this->createOrder(paymentOverrides: [
             'payment_status' => MarketplacePaymentStatus::Pending,
         ]);
@@ -414,6 +430,11 @@ class MarketplacePaymentServiceTest extends TestCase
         $this->assertSame('released', $fresh->reservation_status->value);
         $this->assertSame('failed', $order->payments()->first()->fresh()->payment_status->value);
         Queue::assertPushed(ProcessOrderCancellation::class, fn ($job) => $job->orderId === $order->id);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'payment_timeout'
+                && $mail->order->id === $order->id
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_handle_payment_timeout_is_noop_when_order_already_terminal(): void

@@ -15,6 +15,12 @@ class MarketplaceOrderService
 {
     private const DEFAULT_PER_PAGE = 15;
 
+    public function __construct(
+        private ?OrderNotificationService $notifications = null,
+    ) {
+        $this->notifications ??= app(OrderNotificationService::class);
+    }
+
     /**
      * List orders for a customer with optional filters.
      */
@@ -87,7 +93,10 @@ class MarketplaceOrderService
             'new_status' => $newStatus->value,
         ]);
 
-        return $order->fresh();
+        $fresh = $order->fresh();
+        $this->notifications->notifyCustomer($fresh, $this->lifecycleTypeForStatus($newStatus));
+
+        return $fresh;
     }
 
     /**
@@ -136,7 +145,12 @@ class MarketplaceOrderService
             'reason' => $reason,
         ]);
 
-        return $order->fresh();
+        $fresh = $order->fresh();
+        $this->notifications->notifyCustomer($fresh, 'order_cancelled', context: [
+            'reason' => $reason,
+        ]);
+
+        return $fresh;
     }
 
     /**
@@ -165,7 +179,10 @@ class MarketplaceOrderService
             'tenant_id' => $order->tenant_id,
         ]);
 
-        return $order->fresh();
+        $fresh = $order->fresh();
+        $this->notifications->notifyCustomer($fresh, 'reservation_confirmed');
+
+        return $fresh;
     }
 
     /**
@@ -197,6 +214,10 @@ class MarketplaceOrderService
             'tenant_id' => $order->tenant_id,
             'reason' => $failureDetails['reason'] ?? 'Insufficient stock',
         ]);
+
+        $this->notifications->notifyCustomer($order->fresh(), 'reservation_failed', context: [
+            'reason' => $failureDetails['reason'] ?? 'Insufficient stock',
+        ]);
     }
 
     /**
@@ -220,6 +241,10 @@ class MarketplaceOrderService
             'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
         ]);
+
+        $this->notifications->notifyCustomer($order->fresh(), 'reservation_expired', context: [
+            'reason' => 'Reservation expired',
+        ]);
     }
 
     /**
@@ -228,5 +253,19 @@ class MarketplaceOrderService
     public function generateOrderNumber(): string
     {
         return MarketplaceOrder::generateOrderNumber();
+    }
+
+    private function lifecycleTypeForStatus(OrderStatus $status): string
+    {
+        return match ($status) {
+            OrderStatus::Processing => 'order_processing',
+            OrderStatus::ReadyForPickup => 'order_ready_for_pickup',
+            OrderStatus::OutForDelivery => 'order_out_for_delivery',
+            OrderStatus::Completed => 'order_completed',
+            OrderStatus::Cancelled => 'order_cancelled',
+            OrderStatus::Refunded => 'order_refunded',
+            OrderStatus::Confirmed => 'payment_confirmed',
+            OrderStatus::Pending => 'order_placed',
+        };
     }
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Events\Tenant\MerchantReviewResponseCreated;
+use App\Events\Tenant\SupplierPaymentRecorded;
 use App\Jobs\Tenant\SeedTenantDatabase;
 use App\Listeners\Tenant\EnqueueMerchantReviewResponseSync;
+use App\Listeners\Tenant\LogSupplierPaymentRecorded;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -202,6 +204,12 @@ class TenancyServiceProvider extends ServiceProvider
         Event::listen(
             MerchantReviewResponseCreated::class,
             EnqueueMerchantReviewResponseSync::class
+        );
+
+        // Supplier payment audit and email notification
+        Event::listen(
+            SupplierPaymentRecorded::class,
+            LogSupplierPaymentRecorded::class
         );
     }
 

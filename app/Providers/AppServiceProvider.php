@@ -2,6 +2,17 @@
 
 namespace App\Providers;
 
+use App\Events\Central\Marketplace\CartItemAdded;
+use App\Events\Central\Marketplace\CartItemRemoved;
+use App\Events\Central\Marketplace\CheckoutCompleted;
+use App\Events\Central\Marketplace\PaymentAttempted;
+use App\Events\Central\Marketplace\PaymentCompleted;
+use App\Events\Central\Marketplace\PaymentFailed;
+use App\Events\Central\ProductReviewApproved;
+use App\Listeners\Central\EnqueueApprovedReviewSync;
+use App\Listeners\Central\Marketplace\TrackCartAnalytics;
+use App\Listeners\Central\Marketplace\TrackCheckoutAnalytics;
+use App\Listeners\Central\Marketplace\TrackPaymentAnalytics;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Http\Request;
@@ -70,43 +81,44 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->header('X-Session-Id') ?? $request->ip());
         });
 
-        // Central review sync when approved
-        // Event::listen(
-        //     \App\Events\Central\ProductReviewApproved::class,
-        //     \App\Listeners\Central\EnqueueApprovedReviewSync::class
-        // );
+        $this->registerCentralMarketplaceEvents();
+    }
 
-        // // Analytics: Cart tracking
-        // Event::listen(
-        //     \App\Events\Central\Marketplace\CartItemAdded::class,
-        //     [\App\Listeners\Central\Marketplace\TrackCartAnalytics::class, 'handleCartItemAdded']
-        // );
+    private function registerCentralMarketplaceEvents(): void
+    {
+        Event::listen(
+            ProductReviewApproved::class,
+            EnqueueApprovedReviewSync::class
+        );
 
-        // Event::listen(
-        //     \App\Events\Central\Marketplace\CartItemRemoved::class,
-        //     [\App\Listeners\Central\Marketplace\TrackCartAnalytics::class, 'handleCartItemRemoved']
-        // );
+        Event::listen(
+            CartItemAdded::class,
+            [TrackCartAnalytics::class, 'handleCartItemAdded']
+        );
 
-        // // Analytics: Checkout tracking
-        // Event::listen(
-        //     \App\Events\Central\Marketplace\CheckoutCompleted::class,
-        //     \App\Listeners\Central\Marketplace\TrackCheckoutAnalytics::class
-        // );
+        Event::listen(
+            CartItemRemoved::class,
+            [TrackCartAnalytics::class, 'handleCartItemRemoved']
+        );
 
-        // // Analytics: Payment tracking
-        // Event::listen(
-        //     \App\Events\Central\Marketplace\PaymentAttempted::class,
-        //     [\App\Listeners\Central\Marketplace\TrackPaymentAnalytics::class, 'handlePaymentAttempted']
-        // );
+        Event::listen(
+            CheckoutCompleted::class,
+            TrackCheckoutAnalytics::class
+        );
 
-        // Event::listen(
-        //     \App\Events\Central\Marketplace\PaymentCompleted::class,
-        //     [\App\Listeners\Central\Marketplace\TrackPaymentAnalytics::class, 'handlePaymentCompleted']
-        // );
+        Event::listen(
+            PaymentAttempted::class,
+            [TrackPaymentAnalytics::class, 'handlePaymentAttempted']
+        );
 
-        // Event::listen(
-        //     \App\Events\Central\Marketplace\PaymentFailed::class,
-        //     [\App\Listeners\Central\Marketplace\TrackPaymentAnalytics::class, 'handlePaymentFailed']
-        // );
+        Event::listen(
+            PaymentCompleted::class,
+            [TrackPaymentAnalytics::class, 'handlePaymentCompleted']
+        );
+
+        Event::listen(
+            PaymentFailed::class,
+            [TrackPaymentAnalytics::class, 'handlePaymentFailed']
+        );
     }
 }

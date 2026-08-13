@@ -6,6 +6,7 @@ use App\Enums\Central\MarketplacePaymentStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReservationStatus;
 use App\Jobs\Central\ProcessOrderCancellation;
+use App\Mail\Central\Marketplace\MarketplaceOrderLifecycleMail;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
@@ -14,6 +15,7 @@ use App\Services\Central\Marketplace\MarketplaceOrderService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -203,11 +205,17 @@ class MarketplaceOrderServiceTest extends TestCase
 
     public function test_update_order_status_allows_valid_transition(): void
     {
+        Mail::fake();
         $order = $this->createOrder(['order_status' => OrderStatus::Pending]);
 
         $updated = $this->service->updateOrderStatus($order, OrderStatus::Confirmed);
 
         $this->assertSame(OrderStatus::Confirmed, $updated->order_status);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'payment_confirmed'
+                && $mail->order->id === $order->id
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_update_order_status_throws_for_invalid_transition(): void
@@ -225,6 +233,7 @@ class MarketplaceOrderServiceTest extends TestCase
 
     public function test_cancel_order_succeeds_and_releases_pending_reservation(): void
     {
+        Mail::fake();
         $order = $this->createOrder([
             'order_status' => OrderStatus::Pending,
             'reservation_status' => ReservationStatus::Pending,
@@ -236,6 +245,12 @@ class MarketplaceOrderServiceTest extends TestCase
         $this->assertSame(ReservationStatus::Released, $cancelled->reservation_status);
         $this->assertSame('Changed my mind', $cancelled->cancellation_reason);
         Queue::assertPushed(ProcessOrderCancellation::class, fn ($job) => $job->orderId === $order->id);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'order_cancelled'
+                && $mail->order->id === $order->id
+                && $mail->context['reason'] === 'Changed my mind'
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_cancel_order_releases_confirmed_reservation_too(): void
@@ -331,12 +346,18 @@ class MarketplaceOrderServiceTest extends TestCase
 
     public function test_confirm_order_from_tenant_confirms_pending_reservation(): void
     {
+        Mail::fake();
         $order = $this->createOrder(['reservation_status' => ReservationStatus::Pending]);
 
         $confirmed = $this->service->confirmOrderFromTenant($order->id, []);
 
         $this->assertSame(ReservationStatus::Confirmed, $confirmed->reservation_status);
         $this->assertNotNull($confirmed->reservation_confirmed_at);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'reservation_confirmed'
+                && $mail->order->id === $order->id
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_confirm_order_from_tenant_ignores_non_pending_reservation(): void
@@ -354,6 +375,7 @@ class MarketplaceOrderServiceTest extends TestCase
 
     public function test_handle_reservation_failure_marks_failed_and_cancels_order(): void
     {
+        Mail::fake();
         $order = $this->createOrder([
             'order_status' => OrderStatus::Pending,
             'reservation_status' => ReservationStatus::Pending,
@@ -365,6 +387,12 @@ class MarketplaceOrderServiceTest extends TestCase
         $this->assertSame(ReservationStatus::Failed, $fresh->reservation_status);
         $this->assertSame(OrderStatus::Cancelled, $fresh->order_status);
         $this->assertStringContainsString('Out of stock at tenant', $fresh->cancellation_reason);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'reservation_failed'
+                && $mail->order->id === $order->id
+                && $mail->context['reason'] === 'Out of stock at tenant'
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_handle_reservation_failure_is_noop_when_already_terminal(): void
@@ -382,6 +410,7 @@ class MarketplaceOrderServiceTest extends TestCase
 
     public function test_handle_reservation_expiry_marks_expired_and_cancels_order(): void
     {
+        Mail::fake();
         $order = $this->createOrder([
             'order_status' => OrderStatus::Pending,
             'reservation_status' => ReservationStatus::Pending,
@@ -392,6 +421,11 @@ class MarketplaceOrderServiceTest extends TestCase
         $fresh = $order->fresh();
         $this->assertSame(ReservationStatus::Expired, $fresh->reservation_status);
         $this->assertSame(OrderStatus::Cancelled, $fresh->order_status);
+        Mail::assertQueued(MarketplaceOrderLifecycleMail::class, function (MarketplaceOrderLifecycleMail $mail) use ($order) {
+            return $mail->lifecycleType === 'reservation_expired'
+                && $mail->order->id === $order->id
+                && $mail->hasTo($this->user->email);
+        });
     }
 
     public function test_handle_reservation_expiry_is_noop_when_not_pending(): void

@@ -4,6 +4,7 @@ namespace App\Listeners\Tenant;
 
 use App\Events\Tenant\SupplierPaymentRecorded;
 use App\Models\Tenant\AuditLog;
+use App\Services\Tenant\Supplier\SupplierNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
@@ -14,6 +15,8 @@ class LogSupplierPaymentRecorded implements ShouldQueue
      */
     public function handle(SupplierPaymentRecorded $event): void
     {
+        app(SupplierNotificationService::class)->notifySupplierPaymentRecorded($event->payment);
+
         try {
             // AuditLog::create([
             //     'user_id' => $event->payment->created_by,

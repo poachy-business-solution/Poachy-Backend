@@ -32,7 +32,10 @@ class CheckoutService
     public function __construct(
         private ShoppingCartService $cartService,
         private DeliveryFeeService $deliveryFeeService,
-    ) {}
+        private ?OrderNotificationService $notifications = null,
+    ) {
+        $this->notifications ??= app(OrderNotificationService::class);
+    }
 
     /**
      * Initiate checkout: validate cart, group by tenant, create orders.
@@ -150,6 +153,7 @@ class CheckoutService
         // Dispatch reservation jobs (outside transaction)
         foreach ($orders as $order) {
             ProcessCheckoutReservation::dispatch($order->id);
+            $this->notifications->notifyCustomer($order, 'order_placed');
         }
 
         Log::info('Checkout completed', [
