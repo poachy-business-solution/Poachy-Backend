@@ -3,6 +3,7 @@
 namespace App\Jobs\Tenant;
 
 use App\Models\Tenant\SyncQueueOutbound;
+use App\Services\Tenant\Sync\SyncFailureNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -141,7 +142,7 @@ class ProcessOutboundProductSync implements ShouldQueue
                     'retry_count' => $syncQueue->retry_count,
                 ]);
 
-                // TODO: Notify merchant of failed sync
+                app(SyncFailureNotificationService::class)->notifyOwners($syncQueue, 'Product outbound sync');
             }
 
             throw $e;

@@ -6,6 +6,7 @@ use App\DataTransferObjects\Sync\ProductSyncDTO;
 use App\Models\SyncQueueInbound;
 use App\Models\Tenant;
 use App\Services\Central\Sync\MarketplaceSyncService;
+use App\Services\Central\Sync\SyncFailureNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -166,6 +167,8 @@ class ProcessInboundProductSync implements ShouldQueue
                     'sync_queue_id' => $syncQueue->id,
                     'retry_count' => $syncQueue->retry_count,
                 ]);
+
+                app(SyncFailureNotificationService::class)->notifyTenantOwners($syncQueue, 'Product inbound sync');
             }
 
             throw $e;

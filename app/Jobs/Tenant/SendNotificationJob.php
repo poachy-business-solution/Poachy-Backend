@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Tenant;
 
+use App\Mail\Tenant\NotificationMail;
 use App\Services\Tenant\Notifications\PushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SendNotificationJob implements ShouldQueue
 {
@@ -88,19 +90,20 @@ class SendNotificationJob implements ShouldQueue
      */
     protected function sendEmail(): void
     {
-        // Implement email sending
         $subject = is_array($this->message) ? $this->message['subject'] : 'Notification';
         $body = is_array($this->message) ? $this->message['body'] : $this->message;
+
+        Mail::to($this->recipient)->send(new NotificationMail(
+            subjectLine: (string) $subject,
+            body: (string) $body,
+            notificationMetadata: $this->metadata,
+        ));
 
         Log::info('Email sent', [
             'tenant_id' => tenant()?->id,
             'to' => $this->recipient,
             'subject' => $subject,
         ]);
-
-        // TODO: Integrate with email provider
-        // Example:
-        // Mail::to($this->recipient)->send(new NotificationMail($subject, $body));
     }
 
     /**

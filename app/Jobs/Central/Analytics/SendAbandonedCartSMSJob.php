@@ -2,10 +2,12 @@
 
 namespace App\Jobs\Central\Analytics;
 
+use App\Mail\Central\Marketplace\CartRecoveryMail;
 use App\Models\ShoppingCart;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SendAbandonedCartSMSJob implements ShouldQueue
 {
@@ -20,7 +22,7 @@ class SendAbandonedCartSMSJob implements ShouldQueue
     public function handle(): void
     {
         $cart = ShoppingCart::on('central')
-            ->with(['customer', 'items.marketplaceProduct'])
+            ->with(['customer.user', 'items.marketplaceProduct'])
             ->find($this->cartId);
 
         if (! $cart) {
@@ -55,28 +57,35 @@ class SendAbandonedCartSMSJob implements ShouldQueue
             return;
         }
 
-        try {
-            // TODO: Integrate with SMS service (Twilio, Africa's Talking, etc.)
-            // Example SMS content:
-            $smsContent = sprintf(
-                'Hi %s! You left %d %s in your Poachy cart (Total: KES %s). Complete your purchase now: %s',
-                $cart->customer->name,
-                $cart->getItemCount(),
-                $cart->getItemCount() === 1 ? 'item' : 'items',
-                number_format($cart->getSubtotal(), 2),
-                config('app.frontend_url').'/cart'
-            );
+        if ($cart->recovery_email_sent) {
+            Log::info('Skipping cart recovery SMS email fallback - recovery email already sent', [
+                'cart_id' => $cart->id,
+                'customer_id' => $cart->customer->id,
+            ]);
 
-            // Placeholder: Log SMS content (replace with actual SMS service call)
-            Log::info('Cart recovery SMS would be sent', [
+            return;
+        }
+
+        try {
+            // SMS provider integration is deferred. Until then, the SMS recovery
+            // path uses the existing cart recovery email template and Mailpit in
+            // local/test environments.
+            Mail::to($cart->customer->user->email)->send(new CartRecoveryMail(
+                cart: $cart,
+                customerName: $cart->customer->user->name,
+                cartUrl: config('app.frontend_url').'/cart',
+            ));
+
+            Log::info('Cart recovery SMS fallback email sent', [
                 'cart_id' => $cart->id,
                 'customer_id' => $cart->customer->id,
                 'phone' => $cart->customer->phone,
-                'message' => $smsContent,
+                'email' => $cart->customer->user->email,
             ]);
 
-            // Mark as sent
             $cart->update([
+                'recovery_email_sent' => true,
+                'recovery_email_sent_at' => now(),
                 'recovery_sms_sent' => true,
                 'recovery_sms_sent_at' => now(),
             ]);

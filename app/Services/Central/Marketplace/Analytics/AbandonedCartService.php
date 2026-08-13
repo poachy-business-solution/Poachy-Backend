@@ -48,12 +48,13 @@ class AbandonedCartService
         $query = ShoppingCart::on('central')
             ->where('status', CartStatus::Abandoned)
             ->where('recovery_sms_sent', false)
+            ->where('recovery_email_sent', false)
             ->whereNotNull('customer_id')
             ->whereHas('customer', fn ($q) => $q->where('accepts_sms', true)
                 ->where('phone_verified', true)
                 ->where('is_active', true)
             )
-            ->with('customer');
+            ->with('customer.user');
 
         if ($since) {
             $query->where('abandoned_at', '>=', $since);

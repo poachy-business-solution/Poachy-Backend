@@ -3,6 +3,7 @@
 namespace App\Services\Tenant\Business;
 
 use App\Mail\Central\Business\BusinessApprovedMail;
+use App\Mail\Central\Business\BusinessRejectedMail;
 use App\Mail\Central\Business\BusinessVerificationMail;
 use App\Models\BusinessDetail;
 use App\Models\Domain;
@@ -110,7 +111,7 @@ class BusinessDetailsService
      */
     public function reject(int $businessDetailId, ?string $notes = null): BusinessDetail
     {
-        return DB::connection('central')->transaction(function () use ($businessDetailId) {
+        return DB::connection('central')->transaction(function () use ($businessDetailId, $notes) {
             $businessDetail = BusinessDetail::on('central')->findOrFail($businessDetailId);
 
             // Delete uploaded files if rejecting
@@ -124,7 +125,7 @@ class BusinessDetailsService
             // Delete the business details record
             $businessDetail->delete();
 
-            // TODO: Send rejection notification email to tenant with notes
+            $this->sendRejectionEmail($businessDetail, $notes);
 
             return $businessDetail;
         });
@@ -500,6 +501,68 @@ class BusinessDetailsService
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send verification email', [
+                'business_id' => $businessDetail->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Send rejection email to business owner.
+     */
+    private function sendRejectionEmail(BusinessDetail $businessDetail, ?string $notes): void
+    {
+        try {
+            $tenant = Tenant::find($businessDetail->tenant_id);
+
+            if (! $tenant) {
+                Log::warning('Tenant not found for rejected business', [
+                    'business_id' => $businessDetail->id,
+                    'tenant_id' => $businessDetail->tenant_id,
+                ]);
+
+                return;
+            }
+
+            $initialized = false;
+            tenancy()->initialize($tenant);
+            $initialized = true;
+
+            $owner = TenantUser::whereHas('roles', function ($query) {
+                $query->where('name', 'owner');
+            })->first();
+
+            if ($initialized && tenancy()->initialized) {
+                tenancy()->end();
+            }
+
+            if (! $owner) {
+                Log::warning('Owner not found for rejected business', [
+                    'business_id' => $businessDetail->id,
+                    'tenant_id' => $businessDetail->tenant_id,
+                ]);
+
+                return;
+            }
+
+            Mail::to($owner->email)->queue(
+                new BusinessRejectedMail(
+                    ownerName: $owner->name,
+                    businessName: $businessDetail->business_name,
+                    notes: $notes,
+                )
+            );
+
+            Log::info('Business rejection email sent', [
+                'business_id' => $businessDetail->id,
+                'owner_email' => $owner->email,
+            ]);
+        } catch (\Throwable $e) {
+            if (tenancy()->initialized) {
+                tenancy()->end();
+            }
+
+            Log::error('Failed to send business rejection email', [
                 'business_id' => $businessDetail->id,
                 'error' => $e->getMessage(),
             ]);
