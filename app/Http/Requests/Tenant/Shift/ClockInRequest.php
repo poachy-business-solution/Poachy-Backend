@@ -81,12 +81,18 @@ class ClockInRequest extends FormRequest
 
             if ($scheduledStart && config('shift.late_threshold_minutes')) {
                 $maxLateMinutes = config('shift.late_threshold_minutes', 15) + 60; // Allow up to 1 hour late + grace period
-                $minutesLate = $now->diffInMinutes($scheduledStart);
 
-                if ($now->greaterThan($scheduledStart->addMinutes($maxLateMinutes))) {
+                // copy() matters: addMinutes() mutates in place, which previously
+                // left $scheduledStart holding the DEADLINE and made the message
+                // below report the cut-off as if it were the scheduled start.
+                $latestAllowed = $scheduledStart->copy()->addMinutes($maxLateMinutes);
+
+                if ($now->greaterThan($latestAllowed)) {
                     $validator->errors()->add(
                         'clock_in_time',
-                        "Clock-in time is too late. Scheduled start was {$scheduledStart->format('H:i')}. Contact your manager for assistance."
+                        "Clock-in time is too late. This shift started at {$scheduledStart->format('H:i')} "
+                        ."and could be opened until {$latestAllowed->format('H:i')}. "
+                        .'Contact your manager for assistance.'
                     );
                 }
             }

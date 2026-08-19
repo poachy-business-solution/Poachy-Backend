@@ -205,16 +205,23 @@ class ShiftAssignment extends Model
     // ACCESSORS & MUTATORS
     // ========================================
 
+    /**
+     * Grace period, in minutes, before an arrival or departure counts against
+     * the employee.
+     */
+    private const ATTENDANCE_GRACE_MINUTES = 15;
+
     public function getIsLateAttribute(): bool
     {
         if (! $this->actual_start || ! $this->shift) {
             return false;
         }
 
-        $scheduledStart = Carbon::parse($this->shift->scheduled_start_time)
-            ->setDateFrom($this->shift_date);
+        $scheduledStart = $this->getScheduledStartDateTime();
 
-        return $this->actual_start->greaterThan($scheduledStart->addMinutes(15));
+        return $this->actual_start->greaterThan(
+            $scheduledStart->copy()->addMinutes(self::ATTENDANCE_GRACE_MINUTES)
+        );
     }
 
     public function getMinutesLateAttribute(): ?int
@@ -223,10 +230,12 @@ class ShiftAssignment extends Model
             return null;
         }
 
-        $scheduledStart = Carbon::parse($this->shift->scheduled_start_time)
-            ->setDateFrom($this->shift_date);
-
-        return $this->actual_start->diffInMinutes($scheduledStart);
+        // Operand order matters: Carbon 3 returns a SIGNED diff, so calling this
+        // on the later instant with the earlier one as the argument yields a
+        // negative "minutes late". Earlier->diffInMinutes(later) is positive.
+        return (int) round(
+            $this->getScheduledStartDateTime()->diffInMinutes($this->actual_start)
+        );
     }
 
     public function getIsEarlyDepartureAttribute(): bool
@@ -235,15 +244,15 @@ class ShiftAssignment extends Model
             return false;
         }
 
-        $scheduledEnd = Carbon::parse($this->shift->scheduled_end_time)
-            ->setDateFrom($this->shift_date);
-
-        // Handle overnight shifts
-        if ($scheduledEnd->lessThan(Carbon::parse($this->shift->scheduled_start_time))) {
-            $scheduledEnd->addDay();
-        }
-
-        return $this->actual_end->lessThan($scheduledEnd->subMinutes(15));
+        // Delegate rather than re-deriving: getScheduledEndDateTime() anchors
+        // BOTH sides of its overnight check to shift_date. The inlined copy that
+        // used to live here compared the anchored end against an un-anchored
+        // start (which resolves to *today*), so every assignment from a previous
+        // day spuriously gained a day and reported a ~1440-minute early
+        // departure.
+        return $this->actual_end->lessThan(
+            $this->getScheduledEndDateTime()->copy()->subMinutes(self::ATTENDANCE_GRACE_MINUTES)
+        );
     }
 
     public function getMinutesEarlyAttribute(): ?int
@@ -252,14 +261,11 @@ class ShiftAssignment extends Model
             return null;
         }
 
-        $scheduledEnd = Carbon::parse($this->shift->scheduled_end_time)
-            ->setDateFrom($this->shift_date);
-
-        if ($scheduledEnd->lessThan(Carbon::parse($this->shift->scheduled_start_time))) {
-            $scheduledEnd->addDay();
-        }
-
-        return $scheduledEnd->diffInMinutes($this->actual_end);
+        // Signed diff (Carbon 3): the earlier instant must be the receiver, so
+        // that leaving before the scheduled end reports a positive count.
+        return (int) round(
+            $this->actual_end->diffInMinutes($this->getScheduledEndDateTime())
+        );
     }
 
     public function getCashVarianceAttribute(): ?float
@@ -358,7 +364,9 @@ class ShiftAssignment extends Model
             return;
         }
 
-        $this->actual_duration_minutes = $this->actual_start->diffInMinutes($this->actual_end);
+        // Correctly ordered (start -> end), so this is already positive; the cast
+        // just pins the Carbon 3 float return to the integer column.
+        $this->actual_duration_minutes = (int) round($this->actual_start->diffInMinutes($this->actual_end));
     }
 
     public function canClockIn(): bool
