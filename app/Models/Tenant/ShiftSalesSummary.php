@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -59,8 +60,7 @@ class ShiftSalesSummary extends Model
     }
 
     /**
-     * Get expected cash in register
-     * Expected = opening_cash + cash_sales - cash_refunds
+     * Cash that should be in the drawer — see ShiftSalesSummaryService::calculateExpectedCash().
      */
     public function getExpectedCashAttribute(): float
     {
@@ -70,8 +70,7 @@ class ShiftSalesSummary extends Model
             return $this->total_cash_sales;
         }
 
-        // This will be enhanced when sales module includes cash refunds tracking
-        return $assignment->opening_cash + $this->total_cash_sales;
+        return app(ShiftSalesSummaryService::class)->calculateExpectedCash($assignment);
     }
 
     /**

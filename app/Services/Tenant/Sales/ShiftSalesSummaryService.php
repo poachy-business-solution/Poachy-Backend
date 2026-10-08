@@ -3,6 +3,8 @@
 namespace App\Services\Tenant\Sales;
 
 use App\Enums\Tenant\PaymentMethod;
+use App\Enums\Tenant\RefundMethod;
+use App\Enums\Tenant\RefundStatus;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SalePayment;
 use App\Models\Tenant\SaleRefund;
@@ -127,25 +129,71 @@ class ShiftSalesSummaryService
     }
 
     /**
-     * Calculate expected cash in register
-     * Uses actual cash payments, not revenue
+     * Cash that should be in the drawer: the counted float, plus cash taken,
+     * minus change handed back, minus cash refunds paid out of this till.
+     *
+     * Payments store the amount TENDERED (receipts derive change from it), so
+     * summing cash payments alone overstates the drawer by every note of change
+     * given — and would show the cashier a false shortage at every cash-up.
      */
     public function calculateExpectedCash(ShiftAssignment $assignment): float
     {
-        $openingCash = $assignment->opening_cash ?? 0;
+        $openingCash = (float) ($assignment->opening_cash ?? 0);
 
-        // Get actual cash received (from sale_payments table)
-        // This handles overpayments and split payments correctly
-        $cashReceived = SalePayment::whereHas('sale', function ($query) use ($assignment) {
+        $cashTendered = (float) SalePayment::whereHas('sale', function ($query) use ($assignment) {
             $query->where('shift_assignment_id', $assignment->id);
         })
             ->where('payment_method', PaymentMethod::CASH)
             ->sum('amount');
 
-        // Expected = opening + cash received - cash refunds (refunds not implemented yet)
-        $expectedCash = $openingCash + $cashReceived;
+        return round($openingCash + $cashTendered - $this->changeGiven($assignment) - $this->cashRefundsPaidOut($assignment), 2);
+    }
 
-        return round($expectedCash, 2);
+    /**
+     * Change returned on this shift's sales. Overpayment on a sale is change
+     * only up to the cash tendered on it — nobody gets change from M-Pesa.
+     */
+    public function changeGiven(ShiftAssignment $assignment): float
+    {
+        $cashBySale = SalePayment::query()
+            ->whereHas('sale', fn ($query) => $query->where('shift_assignment_id', $assignment->id))
+            ->where('payment_method', PaymentMethod::CASH)
+            ->selectRaw('sale_id, SUM(amount) as cash')
+            ->groupBy('sale_id')
+            ->pluck('cash', 'sale_id');
+
+        if ($cashBySale->isEmpty()) {
+            return 0.0;
+        }
+
+        return round(Sale::query()
+            ->whereIn('id', $cashBySale->keys())
+            ->get(['id', 'amount_paid', 'total_amount'])
+            ->sum(fn (Sale $sale) => min(
+                max(0, (float) $sale->amount_paid - (float) $sale->total_amount),
+                (float) $cashBySale[$sale->id],
+            )), 2);
+    }
+
+    /**
+     * Cash refunds handed over the counter by this till's user, at its store,
+     * while it was open. Refunds belong to the till that paid them out, not
+     * to the shift the original sale was rung on.
+     */
+    public function cashRefundsPaidOut(ShiftAssignment $assignment): float
+    {
+        if (! $assignment->actual_start) {
+            return 0.0;
+        }
+
+        return (float) SaleRefund::query()
+            ->where('refund_method', RefundMethod::CASH)
+            ->where('status', RefundStatus::COMPLETED)
+            ->where('processed_by', $assignment->user_id)
+            ->where('store_id', $assignment->store_id)
+            ->where('created_at', '>=', $assignment->actual_start)
+            ->when($assignment->actual_end, fn ($query) => $query->where('created_at', '<=', $assignment->actual_end))
+            ->sum('refund_amount');
     }
 
     /**
