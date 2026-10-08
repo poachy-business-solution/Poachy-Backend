@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
 use App\Http\Controllers\Api\Tenant\Sales\MarketplaceSaleController;
+use App\Http\Controllers\Api\Tenant\Sales\OwnerSummaryController;
 use App\Http\Controllers\Api\Tenant\Sales\RefundController;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Controllers\Api\Tenant\Sales\ShiftSalesSummaryController;
@@ -788,6 +789,9 @@ Route::prefix('v1/tenant')
         });
 
         // Daily sales aggregates
+        Route::get('reports/owner-summary', [OwnerSummaryController::class, 'show'])
+            ->middleware(['permission:view-financial-reports,tenant']);
+
         Route::prefix('reports/daily-sales')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [DailySalesReportController::class, 'index']);
             Route::get('/range', [DailySalesReportController::class, 'range']);
