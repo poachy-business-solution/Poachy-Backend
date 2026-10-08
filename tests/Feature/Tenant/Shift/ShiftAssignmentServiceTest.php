@@ -407,7 +407,7 @@ class ShiftAssignmentServiceTest extends TestCase
 
     private function dropTestTables(): void
     {
-        foreach (['shift_sales_summary', 'shift_assignments', 'shifts', 'sale_payments', 'sales', 'users', 'stores'] as $table) {
+        foreach (['shift_sales_summary', 'shift_assignments', 'shifts', 'sale_refunds', 'sale_payments', 'sales', 'users', 'stores'] as $table) {
             Schema::connection('tenant')->dropIfExists($table);
         }
     }
@@ -476,6 +476,16 @@ class ShiftAssignmentServiceTest extends TestCase
             $table->unsignedBigInteger('sale_id');
             $table->decimal('amount', 15, 2);
             $table->string('payment_method');
+            $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('sale_refunds', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id')->nullable();
+            $table->decimal('refund_amount', 15, 2);
+            $table->string('refund_method');
+            $table->string('status');
+            $table->unsignedBigInteger('processed_by')->nullable();
             $table->timestamps();
         });
 

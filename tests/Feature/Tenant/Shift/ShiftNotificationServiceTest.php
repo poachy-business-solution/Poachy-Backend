@@ -286,6 +286,16 @@ class ShiftNotificationServiceTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::connection($conn)->create('sale_refunds', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id')->nullable();
+            $table->decimal('refund_amount', 15, 2);
+            $table->string('refund_method');
+            $table->string('status');
+            $table->unsignedBigInteger('processed_by')->nullable();
+            $table->timestamps();
+        });
+
         Schema::connection($conn)->create('shift_sales_summary', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('shift_assignment_id');
@@ -299,6 +309,7 @@ class ShiftNotificationServiceTest extends TestCase
         foreach ([
             'shift_sales_summary',
             'sale_payments',
+            'sale_refunds',
             'sales',
             'shift_assignments',
             'shifts',

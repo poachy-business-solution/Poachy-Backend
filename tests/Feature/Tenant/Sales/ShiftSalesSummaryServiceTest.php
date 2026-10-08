@@ -6,7 +6,9 @@ use App\Enums\Tenant\RefundMethod;
 use App\Enums\Tenant\RefundReason;
 use App\Enums\Tenant\RefundStatus;
 use App\Models\Tenant\Sale;
+use App\Models\Tenant\SalePayment;
 use App\Models\Tenant\SaleRefund;
+use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\ShiftSalesSummary;
 use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +71,73 @@ class ShiftSalesSummaryServiceTest extends TestCase
             'reason' => RefundReason::CUSTOMER_CHANGED_MIND,
             'status' => RefundStatus::COMPLETED,
         ]));
+    }
+
+    private function till(float $openingCash = 1000.0): ShiftAssignment
+    {
+        return (new ShiftAssignment)->forceFill([
+            'id' => 7,
+            'user_id' => 3,
+            'store_id' => 1,
+            'opening_cash' => $openingCash,
+            'actual_start' => now()->subHours(2),
+            'actual_end' => null,
+        ]);
+    }
+
+    private function pay(Sale $sale, string $method, float $amount): void
+    {
+        Model::withoutEvents(fn () => SalePayment::create([
+            'sale_id' => $sale->id,
+            'amount' => $amount,
+            'payment_method' => $method,
+        ]));
+    }
+
+    public function test_expected_cash_excludes_change_handed_back(): void
+    {
+        // KSh 348 sale paid with a 500 note: 152 goes back to the customer.
+        $sale = $this->createSale(shiftAssignmentId: 7, total: 348.0);
+        $sale->update(['amount_paid' => 500.0]);
+        $this->pay($sale, 'cash', 500.0);
+
+        $this->assertEquals(1348.0, app(ShiftSalesSummaryService::class)->calculateExpectedCash($this->till()));
+    }
+
+    public function test_change_is_capped_at_the_cash_tendered_on_a_split_payment(): void
+    {
+        // 300 sale: 250 by M-Pesa + 100 cash → 50 change, all from the cash.
+        $sale = $this->createSale(shiftAssignmentId: 7, total: 300.0, paymentMethod: 'mixed');
+        $sale->update(['amount_paid' => 350.0]);
+        $this->pay($sale, 'mpesa', 250.0);
+        $this->pay($sale, 'cash', 100.0);
+
+        $this->assertEquals(1050.0, app(ShiftSalesSummaryService::class)->calculateExpectedCash($this->till()));
+    }
+
+    public function test_cash_refunds_paid_out_by_this_till_reduce_expected_cash(): void
+    {
+        $sale = $this->createSale(shiftAssignmentId: 7, total: 200.0);
+        $this->pay($sale, 'cash', 200.0);
+
+        $refund = $this->createRefund($sale, 80.0);
+        $refund->forceFill(['processed_by' => 3])->save();
+
+        $otherTill = $this->createRefund($sale, 50.0);
+        $otherTill->forceFill(['processed_by' => 99])->save();
+
+        $mpesa = $this->createRefund($sale, 30.0);
+        $mpesa->forceFill(['processed_by' => 3, 'refund_method' => RefundMethod::MPESA])->save();
+
+        $this->assertEquals(1120.0, app(ShiftSalesSummaryService::class)->calculateExpectedCash($this->till()));
+    }
+
+    public function test_exact_cash_sales_are_unchanged(): void
+    {
+        $sale = $this->createSale(shiftAssignmentId: 7, total: 174.0);
+        $this->pay($sale, 'cash', 174.0);
+
+        $this->assertEquals(2174.0, app(ShiftSalesSummaryService::class)->calculateExpectedCash($this->till(2000.0)));
     }
 
     public function test_recalculate_summary_correctly_populates_refund_totals(): void

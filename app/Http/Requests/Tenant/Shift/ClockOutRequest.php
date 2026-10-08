@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Tenant\Shift;
 
-use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\ShiftStatus;
-use App\Models\Tenant\SalePayment;
+use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClockOutRequest extends FormRequest
@@ -91,15 +90,7 @@ class ClockOutRequest extends FormRequest
 
             // ✅ FIXED: Calculate variance against EXPECTED cash (including sales)
             if ($this->closing_cash !== null && $assignment->opening_cash !== null) {
-                // Get actual cash received from sales
-                $cashReceived = SalePayment::whereHas('sale', function ($query) use ($assignment) {
-                    $query->where('shift_assignment_id', $assignment->id);
-                })
-                    ->where('payment_method', PaymentMethod::CASH)
-                    ->sum('amount');
-
-                // Calculate expected cash
-                $expectedCash = $assignment->opening_cash + $cashReceived;
+                $expectedCash = app(ShiftSalesSummaryService::class)->calculateExpectedCash($assignment);
 
                 // Calculate variance against expected
                 $variance = abs($this->closing_cash - $expectedCash);

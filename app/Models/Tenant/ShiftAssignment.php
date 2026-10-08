@@ -2,9 +2,9 @@
 
 namespace App\Models\Tenant;
 
-use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\ShiftStatus;
 use App\Observers\Tenant\ShiftAssignmentObserver;
+use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -327,7 +327,7 @@ class ShiftAssignment extends Model
     }
 
     /**
-     * Get expected cash (placeholder for sales integration)
+     * Cash that should be in the drawer — see ShiftSalesSummaryService::calculateExpectedCash().
      */
     public function getExpectedCashAttribute(): ?float
     {
@@ -335,15 +335,7 @@ class ShiftAssignment extends Model
             return null;
         }
 
-        // Get actual cash received from sale_payments
-        $cashReceived = SalePayment::whereHas('sale', function ($query) {
-            $query->where('shift_assignment_id', $this->id);
-        })
-            ->where('payment_method', PaymentMethod::CASH)
-            ->sum('amount');
-
-        // Expected = opening + cash received - cash refunds (refunds not implemented yet)
-        return round($this->opening_cash + $cashReceived, 2);
+        return app(ShiftSalesSummaryService::class)->calculateExpectedCash($this);
     }
 
     // ========================================
