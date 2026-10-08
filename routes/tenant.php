@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\Tenant\Shift\ShiftAnalyticsController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftAssignmentController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftController;
 use App\Http\Controllers\Api\Tenant\Shift\ShiftSwapController;
+use App\Http\Controllers\Api\Tenant\Shift\TillController;
 use App\Http\Controllers\Api\Tenant\Store\StoreController;
 use App\Http\Controllers\Api\Tenant\Store\StoreProductController;
 use App\Http\Controllers\Api\Tenant\Subscription\SubscriptionPaymentController;
@@ -629,6 +630,7 @@ Route::prefix('v1/tenant')
             Route::post('/{assignment}/approve', [ShiftAssignmentController::class, 'approve']);
             Route::get('/{assignment}/clock-out-info', [ShiftAssignmentController::class, 'getClockOutInfo']);
         });
+        Route::post('/tills/open', [TillController::class, 'open']); // Open own till without a rostered shift
         Route::get('/users/{userId}/shift-assignments', [ShiftAssignmentController::class, 'userAssignments']);
         Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments'])
             ->middleware(['role:owner|manager|admin,tenant']);
