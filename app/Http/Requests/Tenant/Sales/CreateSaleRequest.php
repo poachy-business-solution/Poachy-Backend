@@ -43,7 +43,7 @@ class CreateSaleRequest extends FormRequest
                 'min:1',
             ],
             'items.*.product_id' => [
-                'required_without:items.*.bundle_id',
+                'required_without_all:items.*.bundle_id,items.*.description',
                 'nullable',
                 'integer',
                 'exists:products,id',
@@ -54,7 +54,7 @@ class CreateSaleRequest extends FormRequest
                 'exists:product_variants,id',
             ],
             'items.*.bundle_id' => [
-                'required_without:items.*.product_id',
+                'required_without_all:items.*.product_id,items.*.description',
                 'nullable',
                 'integer',
                 'exists:product_bundles,id',
@@ -69,6 +69,27 @@ class CreateSaleRequest extends FormRequest
                 'numeric',
                 'min:0.0001',
                 'max:999999.9999',
+            ],
+            'items.*.agreed_unit_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:9999999.99',
+                'required_with:items.*.description',
+            ],
+            'items.*.is_giveaway' => [
+                'nullable',
+                'boolean',
+            ],
+            'items.*.price_override_reason' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'items.*.description' => [
+                'nullable',
+                'string',
+                'max:255',
             ],
             'items.*.serial_numbers' => [
                 'nullable',
@@ -133,8 +154,9 @@ class CreateSaleRequest extends FormRequest
             'store_id.exists' => 'Selected store does not exist',
             'items.required' => 'At least one item is required',
             'items.min' => 'Sale must contain at least one item',
-            'items.*.product_id.required_without' => 'Either product_id or bundle_id is required',
-            'items.*.bundle_id.required_without' => 'Either product_id or bundle_id is required',
+            'items.*.product_id.required_without_all' => 'Each item needs a product, a bundle, or a description for an unlisted item',
+            'items.*.agreed_unit_price.required_with' => 'Enter a price for the unlisted item',
+            'items.*.bundle_id.required_without_all' => 'Each item needs a product, a bundle, or a description for an unlisted item',
             'items.*.quantity.required' => 'Quantity is required for each item',
             'items.*.quantity.min' => 'Quantity must be greater than 0',
             'payments.required' => 'At least one payment method is required',

@@ -376,6 +376,11 @@ class SaleService
         foreach ($items as $item) {
             $quantity = $item['quantity'];
 
+            // Open (unlisted) items carry no stock.
+            if (empty($item['product_id']) && empty($item['bundle_id'])) {
+                continue;
+            }
+
             if (isset($item['bundle_id'])) {
                 $this->validateBundleInventory($storeId, $item['bundle_id'], $quantity);
 
@@ -539,7 +544,11 @@ class SaleService
                 'uom_id' => $item['uom_id'],
                 'quantity' => $item['quantity'],
                 'quantity_in_base_uom' => $item['quantity_in_base_uom'],
+                'description' => $item['description'] ?? null,
                 'unit_price' => $item['unit_price'],
+                'list_unit_price' => $item['list_unit_price'] ?? null,
+                'is_giveaway' => $item['is_giveaway'] ?? false,
+                'price_override_reason' => $item['price_override_reason'] ?? null,
                 'unit_cost' => $item['unit_cost'],
                 'discount_amount' => $totalItemDiscount,
                 'tax_rate_id' => $item['tax_rate_id'],
@@ -587,7 +596,7 @@ class SaleService
 
         // Pre-load batch/serial tracking flags for all non-bundle products in one query
         $nonBundleProductIds = collect($lineItems)
-            ->filter(fn ($item) => ! $item['bundle_id'])
+            ->filter(fn ($item) => ! $item['bundle_id'] && $item['product_id'])
             ->pluck('product_id')
             ->unique()
             ->values();
@@ -598,6 +607,10 @@ class SaleService
 
         foreach ($lineItems as $index => $item) {
             $saleItemId = $saleItems[$index]->id;
+
+            if ($item['is_open_item'] ?? false) {
+                continue;
+            }
 
             if ($item['bundle_id']) {
                 $bundle = ProductBundle::with('items')->find($item['bundle_id']);

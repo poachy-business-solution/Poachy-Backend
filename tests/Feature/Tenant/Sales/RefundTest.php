@@ -111,6 +111,63 @@ class RefundTest extends TestCase
         $this->assertEquals(PaymentStatus::REFUNDED, $sale->payment_status);
     }
 
+    public function test_open_item_refund_completes_without_touching_stock(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 20.00, itemQuantity: 2.0, itemSubtotal: 20.00);
+        Model::withoutEvents(fn () => $saleItem->update(['product_id' => null]));
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldNotReceive('recordReturn');
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+
+        $service = $this->makeRefundService(inventoryMock: $inventoryMock, loyaltyMock: $loyaltyMock);
+
+        Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+            $service->processRefund($sale, [
+                'store_id' => 1,
+                'reason' => RefundReason::CUSTOMER_CHANGED_MIND->value,
+                'refund_method' => RefundMethod::CASH->value,
+                'notes' => null,
+                'items' => [['sale_item_id' => $saleItem->id, 'quantity_refunded' => 2.0, 'refund_amount' => 20.00]],
+            ]);
+        });
+
+        $this->assertEquals(RefundStatus::COMPLETED, SaleRefund::first()->status);
+        $this->assertNull(SaleRefundItem::first()->product_id);
+    }
+
+    public function test_refund_amount_cannot_exceed_what_was_paid_for_the_quantity(): void
+    {
+        $this->enableRefunds();
+
+        [$sale, $saleItem] = $this->createPaidSale(total: 300.00, itemQuantity: 2.0, itemSubtotal: 300.00);
+
+        $loyaltyMock = Mockery::mock(LoyaltyService::class);
+        $loyaltyMock->shouldReceive('isEnabled')->andReturn(false);
+        $service = $this->makeRefundService(inventoryMock: Mockery::spy(InventoryMovementService::class), loyaltyMock: $loyaltyMock);
+
+        try {
+            Model::withoutEvents(function () use ($service, $sale, $saleItem): void {
+                $service->processRefund($sale, [
+                    'store_id' => 1,
+                    'reason' => RefundReason::CUSTOMER_CHANGED_MIND->value,
+                    'refund_method' => RefundMethod::CASH->value,
+                    'notes' => null,
+                    'items' => [['sale_item_id' => $saleItem->id, 'quantity_refunded' => 1.0, 'refund_amount' => 200.00]],
+                ]);
+            });
+            $this->fail('Expected a validation error.');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('KES 150.00', $e->errors()['items.0.refund_amount'][0]);
+        }
+
+        $this->assertSame(0, SaleRefund::count());
+    }
+
     public function test_partial_refund_correctly_tracks_remaining_refundable_quantity(): void
     {
         $this->enableRefunds();
@@ -990,7 +1047,7 @@ class RefundTest extends TestCase
         Schema::connection($conn)->create('sale_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sale_id');
-            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_id')->nullable();
             $table->unsignedBigInteger('product_variant_id')->nullable();
             $table->unsignedBigInteger('bundle_id')->nullable();
             $table->unsignedBigInteger('uom_id')->default(1);

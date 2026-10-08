@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Sales;
 
+use App\Exceptions\Tenant\PriceOverrideNotAllowedException;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Product;
@@ -14,6 +15,8 @@ use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TenantConfiguration;
 use App\Services\Tenant\Offers\CouponService;
 use App\Services\Tenant\Offers\PromotionService;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * PURE PRICING ENGINE
@@ -46,6 +49,7 @@ class SaleCalculationService
 
         // Step 1: Resolve prices and calculate base line items
         $lineItems = $this->resolveLineItems($storeId, $items);
+        $this->assertPriceOverridesAllowed($lineItems, Auth::user());
 
         // Step 2: Check coupon/promotion stacking configuration
         $stackingAllowed = TenantConfiguration::get('allow_coupon_promotion_stacking', false);
@@ -160,9 +164,21 @@ class SaleCalculationService
     }
 
     /**
-     * Resolve single line item
+     * Resolve single line item, then apply any price agreed at the counter.
      */
     protected function resolveLineItem(int $storeId, array $item): array
+    {
+        if ($this->isOpenItem($item)) {
+            return $this->resolveOpenItem($item);
+        }
+
+        return $this->applyNegotiatedPrice($this->resolveCatalogueItem($storeId, $item), $item);
+    }
+
+    /**
+     * Resolve a catalogue (product, variant or bundle) line at its list price.
+     */
+    protected function resolveCatalogueItem(int $storeId, array $item): array
     {
         $quantity = $item['quantity'];
 
@@ -181,6 +197,126 @@ class SaleCalculationService
         }
 
         return $this->resolveProductItem($storeId, $productId, $quantity, $serialNumbers, $item['uom_id'] ?? null);
+    }
+
+    /**
+     * An unlisted item: no product or bundle, just a description and a price.
+     */
+    protected function isOpenItem(array $item): bool
+    {
+        return empty($item['product_id']) && empty($item['bundle_id']);
+    }
+
+    /**
+     * Open item: moves no stock, carries no cost or tax, priced by the cashier.
+     */
+    protected function resolveOpenItem(array $item): array
+    {
+        $quantity = $item['quantity'];
+        $unitPrice = (float) ($item['agreed_unit_price'] ?? 0);
+
+        if ($unitPrice <= 0) {
+            throw new \RuntimeException("Enter the price for '{$item['description']}'.");
+        }
+
+        return [
+            'product_id' => null,
+            'variant_id' => null,
+            'bundle_id' => null,
+            'product_name' => $item['description'],
+            'sku' => null,
+            'uom_id' => null,
+            'uom_code' => null,
+            'quantity' => $quantity,
+            'quantity_in_base_uom' => $quantity,
+            'unit_price' => $unitPrice,
+            'unit_cost' => 0,
+            'tax_rate_id' => null,
+            'tax_rate_percentage' => 0,
+            'line_total_before_discount' => $quantity * $unitPrice,
+            'promotion_discount' => 0,
+            'line_total_after_discount' => $quantity * $unitPrice,
+            'promotion_id' => null,
+            'promotion_details' => null,
+            'serial_numbers' => [],
+            'list_unit_price' => null,
+            'is_giveaway' => false,
+            'price_override_reason' => $item['price_override_reason'] ?? null,
+            'description' => $item['description'],
+            'is_open_item' => true,
+            'is_price_negotiated' => true,
+        ];
+    }
+
+    /**
+     * Swap the list price for the price agreed at the counter, or zero for a
+     * giveaway. The list price is kept as `list_unit_price` (the floor) so the
+     * uplift stays reportable; tax follows the charged price.
+     */
+    protected function applyNegotiatedPrice(array $lineItem, array $item): array
+    {
+        $isGiveaway = (bool) ($item['is_giveaway'] ?? false);
+        $agreedUnitPrice = $item['agreed_unit_price'] ?? null;
+
+        $lineItem['list_unit_price'] = $lineItem['unit_price'];
+        $lineItem['is_giveaway'] = $isGiveaway;
+        $lineItem['price_override_reason'] = $item['price_override_reason'] ?? null;
+        $lineItem['description'] = null;
+        $lineItem['is_open_item'] = false;
+        $lineItem['is_price_negotiated'] = $isGiveaway || $agreedUnitPrice !== null;
+
+        if ($isGiveaway) {
+            $lineItem['unit_price'] = 0;
+            $lineItem['tax_rate_id'] = null;
+            $lineItem['tax_rate_percentage'] = 0;
+        } elseif ($agreedUnitPrice !== null) {
+            if ((float) $agreedUnitPrice <= 0) {
+                throw new \RuntimeException("To hand over {$lineItem['product_name']} free, mark it as a giveaway.");
+            }
+
+            $lineItem['unit_price'] = (float) $agreedUnitPrice;
+        }
+
+        $lineItem['line_total_before_discount'] = $lineItem['quantity'] * $lineItem['unit_price'];
+        $lineItem['line_total_after_discount'] = $lineItem['line_total_before_discount'];
+
+        return $lineItem;
+    }
+
+    /**
+     * Selling below the floor, giving an item away and selling an unlisted
+     * item need `override-sale-price`. Negotiating upward never does.
+     *
+     * @throws PriceOverrideNotAllowedException
+     */
+    public function assertPriceOverridesAllowed(array $lineItems, ?Authenticatable $user): void
+    {
+        if ($user !== null && method_exists($user, 'checkPermissionTo') && $user->checkPermissionTo('override-sale-price')) {
+            return;
+        }
+
+        foreach ($lineItems as $item) {
+            if ($item['is_open_item'] ?? false) {
+                throw new PriceOverrideNotAllowedException(
+                    "Only an owner or manager can sell '{$item['description']}' because it isn't in the catalogue. Ask them to ring it up or add the product."
+                );
+            }
+
+            if ($item['is_giveaway'] ?? false) {
+                throw new PriceOverrideNotAllowedException(
+                    "Only an owner or manager can give {$item['product_name']} away free."
+                );
+            }
+
+            if (($item['list_unit_price'] ?? null) !== null && $item['unit_price'] < (float) $item['list_unit_price']) {
+                throw new PriceOverrideNotAllowedException(sprintf(
+                    'Cannot sell %s below the floor of KES %s. You entered KES %s.',
+                    $item['product_name'],
+                    number_format((float) $item['list_unit_price'], 2),
+                    number_format((float) $item['unit_price'], 2),
+                ));
+            }
+        }
     }
 
     /**
@@ -366,7 +502,8 @@ class SaleCalculationService
         $activePromotions = $this->promotionService->getPosPromotions($storeId);
 
         foreach ($lineItems as &$item) {
-            if ($item['bundle_id']) {
+            // A price agreed at the counter is final — no promotion on top.
+            if ($item['bundle_id'] || ($item['is_price_negotiated'] ?? false)) {
                 continue;
             }
 

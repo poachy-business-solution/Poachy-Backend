@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Tenant\Sales;
 
+use App\Exceptions\Tenant\PriceOverrideNotAllowedException;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\ProductVariant;
 use App\Services\Tenant\Sales\SaleCalculationService;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
@@ -209,6 +211,184 @@ class SaleCalculationServiceTest extends TestCase
     // =========================================================================
     // Helpers
     // =========================================================================
+
+    // =========================================================================
+    // Negotiated pricing, giveaways and open items
+    // =========================================================================
+
+    public function test_agreed_price_replaces_the_list_price_and_keeps_it_as_the_floor(): void
+    {
+        $product = $this->createProduct(['base_selling_price' => 1200.0, 'tax_rate_id' => null]);
+
+        $line = $this->resolveLineItem(['product_id' => $product->id, 'quantity' => 2, 'agreed_unit_price' => 1320]);
+
+        $this->assertEquals(1320.0, $line['unit_price']);
+        $this->assertEquals(1200.0, $line['list_unit_price']);
+        $this->assertEquals(2640.0, $line['line_total_after_discount']);
+        $this->assertTrue($line['is_price_negotiated']);
+    }
+
+    public function test_omitting_the_new_fields_prices_exactly_as_before(): void
+    {
+        $product = $this->createProduct(['base_selling_price' => 1200.0, 'tax_rate_id' => null]);
+
+        $line = $this->resolveLineItem(['product_id' => $product->id, 'quantity' => 2]);
+
+        $this->assertEquals(1200.0, $line['unit_price']);
+        $this->assertEquals(2400.0, $line['line_total_after_discount']);
+        $this->assertFalse($line['is_price_negotiated']);
+        $this->assertFalse($line['is_giveaway']);
+    }
+
+    public function test_giveaway_is_free_untaxed_and_keeps_its_cost(): void
+    {
+        $product = $this->createProduct(['base_selling_price' => 100.0, 'tax_rate_id' => null]);
+        $this->createBatch($product->id, 60.0);
+
+        $line = $this->resolveLineItem(['product_id' => $product->id, 'quantity' => 1, 'is_giveaway' => true, 'agreed_unit_price' => 999]);
+
+        $this->assertEquals(0.0, $line['unit_price']);
+        $this->assertEquals(0.0, $line['line_total_after_discount']);
+        $this->assertSame(0, $line['tax_rate_percentage']);
+        $this->assertNull($line['tax_rate_id']);
+        $this->assertEquals(60.0, $line['unit_cost']);
+        $this->assertEquals(100.0, $line['list_unit_price']);
+    }
+
+    public function test_open_item_has_no_product_cost_or_tax(): void
+    {
+        $line = $this->resolveLineItem(['description' => 'Loose sweets', 'quantity' => 3, 'agreed_unit_price' => 20]);
+
+        $this->assertTrue($line['is_open_item']);
+        $this->assertNull($line['product_id']);
+        $this->assertNull($line['uom_id']);
+        $this->assertSame('Loose sweets', $line['product_name']);
+        $this->assertEquals(60.0, $line['line_total_after_discount']);
+        $this->assertEquals(0, $line['unit_cost']);
+        $this->assertSame(0, $line['tax_rate_percentage']);
+    }
+
+    public function test_zero_agreed_price_without_giveaway_is_rejected(): void
+    {
+        $product = $this->createProduct(['name' => 'Mango Juice 1L', 'base_selling_price' => 100.0]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('mark it as a giveaway');
+        $this->resolveLineItem(['product_id' => $product->id, 'quantity' => 1, 'agreed_unit_price' => 0]);
+    }
+
+    public function test_cashier_may_negotiate_upward_without_permission(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        app(SaleCalculationService::class)->assertPriceOverridesAllowed(
+            [$this->priced(unitPrice: 1320.0, listPrice: 1200.0)],
+            $this->userWithPermission(false)
+        );
+    }
+
+    public function test_cashier_cannot_sell_below_floor_and_is_told_both_figures(): void
+    {
+        $this->expectException(PriceOverrideNotAllowedException::class);
+        $this->expectExceptionMessage('Cannot sell Mango Juice 1L below the floor of KES 1,200.00. You entered KES 1,150.00.');
+
+        app(SaleCalculationService::class)->assertPriceOverridesAllowed(
+            [$this->priced(unitPrice: 1150.0, listPrice: 1200.0)],
+            $this->userWithPermission(false)
+        );
+    }
+
+    public function test_cashier_cannot_give_away_or_sell_open_items(): void
+    {
+        $service = app(SaleCalculationService::class);
+
+        foreach ([
+            $this->priced(unitPrice: 0.0, listPrice: 100.0, extra: ['is_giveaway' => true]),
+            $this->priced(unitPrice: 80.0, listPrice: null, extra: ['is_open_item' => true, 'description' => 'Loose sweets']),
+        ] as $line) {
+            try {
+                $service->assertPriceOverridesAllowed([$line], $this->userWithPermission(false));
+                $this->fail('Expected PriceOverrideNotAllowedException');
+            } catch (PriceOverrideNotAllowedException $e) {
+                $this->assertStringContainsString('owner or manager', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_owner_may_override_everything(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        app(SaleCalculationService::class)->assertPriceOverridesAllowed([
+            $this->priced(unitPrice: 1150.0, listPrice: 1200.0),
+            $this->priced(unitPrice: 0.0, listPrice: 100.0, extra: ['is_giveaway' => true]),
+            $this->priced(unitPrice: 80.0, listPrice: null, extra: ['is_open_item' => true, 'description' => 'Loose sweets']),
+        ], $this->userWithPermission(true));
+    }
+
+    private function resolveLineItem(array $item, int $storeId = 1): array
+    {
+        $method = new ReflectionMethod(SaleCalculationService::class, 'resolveLineItem');
+        $method->setAccessible(true);
+
+        return $method->invoke(app(SaleCalculationService::class), $storeId, $item);
+    }
+
+    private function priced(float $unitPrice, ?float $listPrice, array $extra = []): array
+    {
+        return array_merge([
+            'product_name' => 'Mango Juice 1L',
+            'unit_price' => $unitPrice,
+            'list_unit_price' => $listPrice,
+            'is_giveaway' => false,
+            'is_open_item' => false,
+        ], $extra);
+    }
+
+    private function userWithPermission(bool $granted): Authenticatable
+    {
+        return new class($granted) implements Authenticatable
+        {
+            public function __construct(private bool $granted) {}
+
+            public function checkPermissionTo(string $permission): bool
+            {
+                return $this->granted && $permission === 'override-sale-price';
+            }
+
+            public function getAuthIdentifierName()
+            {
+                return 'id';
+            }
+
+            public function getAuthIdentifier()
+            {
+                return 1;
+            }
+
+            public function getAuthPasswordName()
+            {
+                return 'password';
+            }
+
+            public function getAuthPassword()
+            {
+                return '';
+            }
+
+            public function getRememberToken()
+            {
+                return null;
+            }
+
+            public function setRememberToken($value) {}
+
+            public function getRememberTokenName()
+            {
+                return 'remember_token';
+            }
+        };
+    }
 
     private function getProductCost(Product $product, int $storeId, ?int $variantId): float
     {
