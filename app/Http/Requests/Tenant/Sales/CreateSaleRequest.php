@@ -141,6 +141,11 @@ class CreateSaleRequest extends FormRequest
                 'string',
                 'max:1000',
             ],
+            'sold_at' => [
+                'nullable',
+                'date',
+                'after:-30 days',
+            ],
         ];
     }
 
@@ -152,6 +157,7 @@ class CreateSaleRequest extends FormRequest
         return [
             'store_id.required' => 'Store ID is required',
             'store_id.exists' => 'Selected store does not exist',
+            'sold_at.after' => 'This offline sale is more than 30 days old and can no longer be synced. Ask the owner to record it by hand.',
             'items.required' => 'At least one item is required',
             'items.min' => 'Sale must contain at least one item',
             'items.*.product_id.required_without_all' => 'Each item needs a product, a bundle, or a description for an unlisted item',

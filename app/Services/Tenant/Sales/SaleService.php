@@ -25,6 +25,7 @@ use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductSerialService;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -61,6 +62,22 @@ class SaleService
     /**
      * Get active shift assignment for a user at a specific store
      */
+    /**
+     * The till a sale rung at [$soldAt] belongs to: the user's till at the
+     * store that was open at that moment, even if it has closed since. Used
+     * for offline sales that sync after the fact.
+     */
+    public function getShiftForUserAt(int $userId, int $storeId, Carbon $soldAt): ?ShiftAssignment
+    {
+        return ShiftAssignment::where('user_id', $userId)
+            ->where('store_id', $storeId)
+            ->whereIn('status', [ShiftStatus::IN_PROGRESS, ShiftStatus::COMPLETED])
+            ->where('actual_start', '<=', $soldAt)
+            ->where(fn ($query) => $query->whereNull('actual_end')->orWhere('actual_end', '>=', $soldAt))
+            ->orderByDesc('actual_start')
+            ->first();
+    }
+
     public function getActiveShiftForUser(int $userId, int $storeId): ?ShiftAssignment
     {
         return ShiftAssignment::where('user_id', $userId)
@@ -154,10 +171,13 @@ class SaleService
             $paymentInfo = $this->determinePaymentInfo($data['payments'], $calculations);
 
             // STEP 8: Create Sale record
-            $activeShift = $this->getActiveShiftForUser(
-                Auth::id(),
-                $data['store_id']
-            );
+            // Offline sales carry the moment they were rung up; never trust a
+            // device clock that runs ahead of ours.
+            $soldAt = isset($data['sold_at']) ? Carbon::parse($data['sold_at'])->min(now()) : null;
+
+            $activeShift = $soldAt
+                ? $this->getShiftForUserAt(Auth::id(), $data['store_id'], $soldAt)
+                : $this->getActiveShiftForUser(Auth::id(), $data['store_id']);
 
             $actualLoyaltyPointsEarned = 0;
             if ($this->loyaltyService->isEnabled() && $customerId) {
@@ -176,7 +196,7 @@ class SaleService
                 'store_id' => $data['store_id'],
                 'shift_assignment_id' => $activeShift?->id,
                 'customer_id' => $customerId,
-                'sale_date' => now(),
+                'sale_date' => $soldAt ?? now(),
                 'subtotal' => $calculations['subtotal_after_promotions'],
                 'tax_amount' => $calculations['tax_amount'],
                 'discount_amount' => $calculations['promotion_discount'] + $calculations['coupon_discount'],
