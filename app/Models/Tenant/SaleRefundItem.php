@@ -75,7 +75,7 @@ class SaleRefundItem extends Model
      */
     public function getProductNameAttribute(): ?string
     {
-        return $this->product?->name;
+        return $this->saleItem?->display_name ?? $this->product?->name;
     }
 
     /**
