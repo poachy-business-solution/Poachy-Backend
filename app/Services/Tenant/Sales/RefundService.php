@@ -253,6 +253,16 @@ class RefundService
                 ]);
             }
 
+            $maxRefundAmount = round($saleItem->netUnitPrice() * $item['quantity_refunded'], 2);
+
+            if ($item['refund_amount'] > $maxRefundAmount + 0.01) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.refund_amount" => 'Cannot refund KES '.number_format($item['refund_amount'], 2)
+                        .' for '.$item['quantity_refunded'].' of '.$saleItem->display_name
+                        .'. The most that was paid is KES '.number_format($maxRefundAmount, 2).'.',
+                ]);
+            }
+
             // Scale base UOM quantity proportionally to original
             $qtyInBaseUom = $saleItem->quantity_in_base_uom > 0
                 ? ($item['quantity_refunded'] / $saleItem->quantity) * $saleItem->quantity_in_base_uom
@@ -288,6 +298,11 @@ class RefundService
         foreach ($itemsData as $itemData) {
             /** @var SaleItem $saleItem */
             $saleItem = $itemData['sale_item'];
+
+            // Unlisted items never entered stock, so there is nothing to put back.
+            if ($saleItem->isOpenItem()) {
+                continue;
+            }
 
             try {
                 $this->inventoryMovementService->recordReturn([

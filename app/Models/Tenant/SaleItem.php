@@ -167,6 +167,16 @@ class SaleItem extends Model
     // ============================================
 
     /**
+     * What the customer actually paid per unit, after discounts and including tax.
+     */
+    public function netUnitPrice(): float
+    {
+        return (float) $this->quantity > 0
+            ? (float) $this->subtotal / (float) $this->quantity
+            : (float) $this->unit_price;
+    }
+
+    /**
      * An unlisted item rung up by description and price, with no product or bundle.
      */
     public function isOpenItem(): bool

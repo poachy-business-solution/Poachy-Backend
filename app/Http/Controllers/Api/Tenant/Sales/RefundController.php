@@ -76,22 +76,21 @@ class RefundController extends Controller
      */
     public function getRefundableItems(Sale $sale): JsonResponse
     {
-        $sale->loadMissing('items.product', 'items.productVariant');
+        $sale->loadMissing('items.product', 'items.productVariant', 'items.bundle');
 
         $items = $sale->items->map(function ($saleItem) {
             $alreadyRefunded = SaleRefundItem::getTotalRefundedForSaleItem($saleItem->id);
             $remaining = max(0, (float) $saleItem->quantity - $alreadyRefunded);
 
-            // Calculate max refund amount proportional to remaining quantity
-            $unitNetPrice = $saleItem->quantity > 0
-                ? (float) $saleItem->subtotal / (float) $saleItem->quantity
-                : (float) $saleItem->unit_price;
+            $unitNetPrice = $saleItem->netUnitPrice();
 
             return [
                 'sale_item_id' => $saleItem->id,
                 'product_id' => $saleItem->product_id,
                 'product_variant_id' => $saleItem->product_variant_id,
-                'product_name' => $saleItem->productVariant?->name ?? $saleItem->product?->name,
+                'product_name' => $saleItem->display_name,
+                'is_giveaway' => (bool) $saleItem->is_giveaway,
+                'is_open_item' => $saleItem->isOpenItem(),
                 'uom_id' => $saleItem->uom_id,
                 'unit_price' => (float) $saleItem->unit_price,
                 'tax_amount' => (float) $saleItem->tax_amount,
