@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Tenant\Sales;
 
+use App\Events\Tenant\SaleCompleted;
 use App\Http\Controllers\Api\Tenant\Sales\SaleController;
 use App\Http\Requests\Tenant\Sales\CreateSaleRequest;
 use App\Models\Tenant\Coupon;
@@ -22,6 +23,7 @@ use App\Services\Tenant\Sales\CreditService;
 use App\Services\Tenant\Sales\LoyaltyService;
 use App\Services\Tenant\Sales\SaleCalculationService;
 use App\Services\Tenant\Sales\SaleService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -30,6 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
@@ -297,6 +300,47 @@ class SaleServiceTest extends TestCase
         $saleItem = SaleItem::first();
         $this->assertNull($saleItem->product_id);
         $this->assertSame(1, $saleItem->bundle_id);
+    }
+
+    public function test_offline_sale_keeps_its_sale_time_and_joins_the_till_open_then(): void
+    {
+        $this->seedInventory(productId: 1, qtyAvailable: 10);
+
+        // A till that was open 08:00–12:00 and has since been closed.
+        DB::connection('tenant')->table('shift_assignments')->insert([
+            'id' => 5, 'store_id' => 1, 'user_id' => 1, 'shift_date' => '2026-10-08',
+            'status' => 'completed', 'actual_start' => '2026-10-08 08:00:00', 'actual_end' => '2026-10-08 12:00:00',
+        ]);
+        Carbon::setTestNow('2026-10-08 15:00:00');
+        Event::fake([SaleCompleted::class]);
+
+        $service = $this->makeService($this->mockCalculation($this->calculations([$this->lineItem()])));
+
+        $sale = null;
+        Model::withoutEvents(function () use ($service, &$sale) {
+            $sale = $service->createSale($this->baseSaleData(['sold_at' => '2026-10-08T10:30:00Z']));
+        });
+        Carbon::setTestNow();
+
+        $this->assertSame('2026-10-08 10:30:00', $sale->sale_date->format('Y-m-d H:i:s'));
+        $this->assertSame(5, $sale->shift_assignment_id);
+    }
+
+    public function test_a_device_clock_ahead_of_the_server_is_clamped_to_now(): void
+    {
+        $this->seedInventory(productId: 1, qtyAvailable: 10);
+        Carbon::setTestNow('2026-10-08 15:00:00');
+
+        $service = $this->makeService($this->mockCalculation($this->calculations([$this->lineItem()])));
+
+        $sale = null;
+        Model::withoutEvents(function () use ($service, &$sale) {
+            $sale = $service->createSale($this->baseSaleData(['sold_at' => '2026-10-08T15:20:00Z']));
+        });
+        Carbon::setTestNow();
+
+        $this->assertSame('2026-10-08 15:00:00', $sale->sale_date->format('Y-m-d H:i:s'));
+        $this->assertNull($sale->shift_assignment_id);
     }
 
     public function test_invalid_loyalty_redemption_throws(): void
@@ -1138,6 +1182,8 @@ class SaleServiceTest extends TestCase
             $table->unsignedBigInteger('user_id');
             $table->date('shift_date');
             $table->string('status')->default('scheduled');
+            $table->timestamp('actual_start')->nullable();
+            $table->timestamp('actual_end')->nullable();
             $table->timestamps();
         });
 
