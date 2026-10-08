@@ -52,16 +52,21 @@ class SaleItemResource extends JsonResource
 
             'display_name' => $this->display_name,
 
-            'uom' => [
+            'description' => $this->description,
+
+            'uom' => $this->uom ? [
                 'id' => $this->uom->id,
                 'code' => $this->uom->code,
                 'name' => $this->uom->name,
-            ],
+            ] : null,
 
             'quantity' => (float) $this->quantity,
             'quantity_in_base_uom' => (float) $this->quantity_in_base_uom,
 
             'unit_price' => (float) $this->unit_price,
+            'list_unit_price' => $this->list_unit_price === null ? null : (float) $this->list_unit_price,
+            'is_giveaway' => (bool) $this->is_giveaway,
+            'price_override_reason' => $this->price_override_reason,
             'unit_cost' => $this->when(
                 $request->input('include_cost', false),
                 (float) $this->unit_cost

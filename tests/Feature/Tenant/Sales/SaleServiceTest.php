@@ -299,6 +299,81 @@ class SaleServiceTest extends TestCase
         $this->assertSame(1, $saleItem->bundle_id);
     }
 
+    public function test_negotiated_giveaway_and_open_item_lines_persist_and_open_item_moves_no_stock(): void
+    {
+        $this->seedInventory(productId: 1, qtyAvailable: 10);
+
+        $invMock = Mockery::mock(InventoryMovementService::class);
+        $invMock->shouldReceive('recordSale')->once()->withArgs(function (int $saleId, array $items) {
+            // Two catalogue lines move stock; the open item does not.
+            return count($items) === 2 && collect($items)->every(fn ($item) => $item['product_id'] === 1);
+        });
+
+        $negotiated = $this->lineItem([
+            'quantity' => 1.0,
+            'quantity_in_base_uom' => 1.0,
+            'unit_price' => 1320.0,
+            'list_unit_price' => 1200.0,
+            'is_giveaway' => false,
+            'line_total_after_discount' => 1320.0,
+        ]);
+        $giveaway = $this->lineItem([
+            'quantity' => 1.0,
+            'quantity_in_base_uom' => 1.0,
+            'unit_price' => 0.0,
+            'list_unit_price' => 100.0,
+            'is_giveaway' => true,
+            'price_override_reason' => 'Goodwill on a big order',
+            'line_total_after_discount' => 0.0,
+        ]);
+        $openItem = $this->lineItem([
+            'product_id' => null,
+            'uom_id' => null,
+            'quantity' => 1.0,
+            'quantity_in_base_uom' => 1.0,
+            'unit_price' => 80.0,
+            'unit_cost' => 0.0,
+            'description' => 'Loose sweets',
+            'is_open_item' => true,
+            'line_total_after_discount' => 80.0,
+        ]);
+
+        $service = $this->makeService(
+            $this->mockCalculation($this->calculations([$negotiated, $giveaway, $openItem])),
+            inventoryMovementService: $invMock
+        );
+
+        $data = $this->baseSaleData([
+            'items' => [
+                ['product_id' => 1, 'quantity' => 1, 'agreed_unit_price' => 1320],
+                ['product_id' => 1, 'quantity' => 1, 'is_giveaway' => true],
+                ['description' => 'Loose sweets', 'quantity' => 1, 'agreed_unit_price' => 80],
+            ],
+            'payments' => [['method' => 'cash', 'amount' => 1400.0]],
+        ]);
+
+        Model::withoutEvents(fn () => $service->createSale($data));
+
+        $items = SaleItem::orderBy('id')->get();
+        $this->assertCount(3, $items);
+
+        $this->assertEquals(1320.0, (float) $items[0]->unit_price);
+        $this->assertEquals(1200.0, (float) $items[0]->list_unit_price);
+        $this->assertFalse($items[0]->is_giveaway);
+
+        $this->assertEquals(0.0, (float) $items[1]->unit_price);
+        $this->assertTrue($items[1]->is_giveaway);
+        $this->assertEquals(50.0, (float) $items[1]->unit_cost, 'a gift still carries its cost');
+        $this->assertSame('Goodwill on a big order', $items[1]->price_override_reason);
+
+        $this->assertNull($items[2]->product_id);
+        $this->assertNull($items[2]->uom_id);
+        $this->assertSame('Loose sweets', $items[2]->description);
+        $this->assertTrue($items[2]->isOpenItem());
+        $this->assertSame('Loose sweets', $items[2]->display_name);
+        $this->assertEquals(0.0, $items[2]->profit, 'open items count no margin, not 100%');
+    }
+
     public function test_invalid_loyalty_redemption_throws(): void
     {
         $this->enableLoyalty();
@@ -1193,10 +1268,14 @@ class SaleServiceTest extends TestCase
             $table->unsignedBigInteger('product_id')->nullable();
             $table->unsignedBigInteger('product_variant_id')->nullable();
             $table->unsignedBigInteger('bundle_id')->nullable();
-            $table->unsignedBigInteger('uom_id')->default(1);
+            $table->string('description')->nullable();
+            $table->unsignedBigInteger('uom_id')->nullable();
             $table->decimal('quantity', 15, 4);
             $table->decimal('quantity_in_base_uom', 15, 4);
             $table->decimal('unit_price', 15, 2);
+            $table->decimal('list_unit_price', 15, 2)->nullable();
+            $table->boolean('is_giveaway')->default(false);
+            $table->string('price_override_reason')->nullable();
             $table->decimal('unit_cost', 15, 2)->default(0);
             $table->decimal('discount_amount', 15, 2)->default(0);
             $table->unsignedBigInteger('tax_rate_id')->nullable();

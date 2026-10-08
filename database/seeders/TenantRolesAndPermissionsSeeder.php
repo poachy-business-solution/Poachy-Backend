@@ -39,6 +39,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-sales',
             'process-refunds',
             'apply-discounts',
+            'override-sale-price',
 
             // Marketplace Sales
             'view-marketplace-sales',
@@ -135,6 +136,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-sales',
             'process-refunds',
             'apply-discounts',
+            'override-sale-price',
             'view-marketplace-sales',
             'manage-marketplace-sales',
             'manage-customers',

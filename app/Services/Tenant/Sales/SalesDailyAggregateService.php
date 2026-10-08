@@ -34,6 +34,10 @@ class SalesDailyAggregateService
 
             // Process each sale item
             foreach ($sale->items as $item) {
+                if ($item->isOpenItem()) {
+                    continue;
+                }
+
                 $this->updateAggregateForItem($aggregateDate, $storeId, $item, $sale);
             }
 
@@ -378,6 +382,10 @@ class SalesDailyAggregateService
             // Rebuild aggregates from scratch
             foreach ($sales as $sale) {
                 foreach ($sale->items as $item) {
+                    if ($item->isOpenItem()) {
+                        continue;
+                    }
+
                     $this->updateAggregateForItem($dateString, $storeId, $item, $sale);
                 }
             }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tenant\Sales;
 
+use App\Exceptions\Tenant\PriceOverrideNotAllowedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\Sales\CalculateSaleRequest;
 use App\Http\Requests\Tenant\Sales\CreateSaleRequest;
@@ -783,6 +784,8 @@ class SaleController extends Controller
                 'Sale calculations completed successfully',
                 new SaleCalculationResource($calculations)
             );
+        } catch (PriceOverrideNotAllowedException $e) {
+            return ApiResponse::forbidden($e->getMessage());
         } catch (\Exception $e) {
             Log::error('Sale calculation failed', [
                 'request_data' => $request->validated(),
@@ -1330,6 +1333,8 @@ class SaleController extends Controller
                     'customer_updated' => $customerUpdated,
                 ]
             );
+        } catch (PriceOverrideNotAllowedException $e) {
+            return ApiResponse::forbidden($e->getMessage());
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'sale_in_progress') {
                 return ApiResponse::conflict(
