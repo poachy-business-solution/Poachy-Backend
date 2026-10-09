@@ -448,9 +448,10 @@ class ProductBatchService
         int $storeId,
         int $productId,
         ?int $variantId,
-        float $quantityInBaseUom
+        float $quantityInBaseUom,
+        bool $allowShortfall = false
     ): array {
-        return DB::transaction(function () use ($storeId, $productId, $variantId, $quantityInBaseUom) {
+        return DB::transaction(function () use ($storeId, $productId, $variantId, $quantityInBaseUom, $allowShortfall) {
             // Get available batches ordered by FIFO (oldest first, nearest expiry first)
             $batches = ProductBatch::where('store_id', $storeId)
                 ->where('product_id', $productId)
@@ -495,7 +496,16 @@ class ProductBatchService
             }
 
             // Check if we depleted all requested quantity
-            if ($remainingQuantity > 0) {
+            if ($remainingQuantity > 0 && $allowShortfall) {
+                // Offline sale syncing after the batches ran out: deplete what exists and
+                // leave the rest unbatched; the negative on-hand raises a stock alert.
+                Log::warning('Batch shortfall accepted for offline sale', [
+                    'store_id' => $storeId,
+                    'product_id' => $productId,
+                    'requested' => $quantityInBaseUom,
+                    'unbatched' => $remainingQuantity,
+                ]);
+            } elseif ($remainingQuantity > 0) {
                 throw new \RuntimeException(
                     "Insufficient batch inventory. Requested: {$quantityInBaseUom}, ".
                         'Available: '.($quantityInBaseUom - $remainingQuantity)
@@ -514,7 +524,7 @@ class ProductBatchService
             return [
                 'depletions' => $depletions,
                 'total_cost' => $totalCost,
-                'average_cost' => $totalCost / $quantityInBaseUom,
+                'average_cost' => $quantityInBaseUom > 0 ? $totalCost / $quantityInBaseUom : 0,
             ];
         });
     }

@@ -303,6 +303,28 @@ class InventoryMovementServiceTest extends TestCase
         $this->assertSame(42, $movement->reference_id);
     }
 
+    public function test_record_sale_may_take_stock_negative_for_an_offline_sale(): void
+    {
+        $this->seedInventory(onHand: 2, reserved: 0);
+
+        Model::withoutEvents(fn () => $this->service()->recordSale(43, [
+            ['store_id' => 1, 'product_id' => 1, 'uom_id' => 1, 'quantity' => 5.0],
+        ], allowNegative: true));
+
+        $this->assertEquals(-3.0, (float) $this->freshInventory()->quantity_on_hand);
+        $this->assertSame(1, InventoryMovement::count());
+    }
+
+    public function test_record_sale_still_refuses_negative_stock_by_default(): void
+    {
+        $this->seedInventory(onHand: 2, reserved: 0);
+
+        $this->expectException(\RuntimeException::class);
+        Model::withoutEvents(fn () => $this->service()->recordSale(44, [
+            ['store_id' => 1, 'product_id' => 1, 'uom_id' => 1, 'quantity' => 5.0],
+        ]));
+    }
+
     // =========================================================================
     // recordAdjustment() / recordDamage() / recordReturn()
     // =========================================================================

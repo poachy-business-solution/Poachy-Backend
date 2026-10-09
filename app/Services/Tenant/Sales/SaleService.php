@@ -91,12 +91,19 @@ class SaleService
      * Create complete sale transaction atomically
      * Following real POS flow
      */
-    public function createSale(array $data): Sale
+    /**
+     * @param  bool  $allowNegativeStock  An offline sale syncing after the fact: the goods have
+     *                                    already left the shop, so record it even if stock ran
+     *                                    out meanwhile (the negative count raises a stock alert).
+     *                                    Deliberately not part of $data, so it never changes the
+     *                                    idempotency hash of the sale.
+     */
+    public function createSale(array $data, bool $allowNegativeStock = false): Sale
     {
         $idempotencyKey = $this->normalizeIdempotencyKey($data['idempotency_key'] ?? null);
 
         if ($idempotencyKey === null) {
-            return $this->createSaleTransaction($data);
+            return $this->createSaleTransaction($data, $allowNegativeStock);
         }
 
         $data['idempotency_key'] = $idempotencyKey;
@@ -122,7 +129,7 @@ class SaleService
             }
 
             try {
-                return $this->createSaleTransaction($data);
+                return $this->createSaleTransaction($data, $allowNegativeStock);
             } catch (QueryException $e) {
                 $existingSale = $this->findSaleByIdempotencyKey($idempotencyKey);
 
@@ -137,13 +144,15 @@ class SaleService
         }
     }
 
-    protected function createSaleTransaction(array $data): Sale
+    protected function createSaleTransaction(array $data, bool $allowNegativeStock = false): Sale
     {
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $allowNegativeStock) {
             $customerId = $data['customer_id'] ?? null;
 
             // STEP 1: Validate inventory availability
-            $this->validateInventoryAvailability($data['store_id'], $data['items']);
+            if (! $allowNegativeStock) {
+                $this->validateInventoryAvailability($data['store_id'], $data['items']);
+            }
 
             // STEP 2: Recalculate totals server-side (with stacking rules)
             $calculations = $this->calculationService->calculateSaleTotals($data);
@@ -220,7 +229,7 @@ class SaleService
             $this->createSalePayments($sale, $data['payments']);
 
             // STEP 11: Deduct inventory (FIFO)
-            $this->deductInventory($sale, $calculations['line_items']);
+            $this->deductInventory($sale, $calculations['line_items'], $allowNegativeStock);
 
             // STEP 12: Record coupon usage
             if ($calculations['coupon_data']) {
@@ -604,7 +613,7 @@ class SaleService
     /**
      * Deduct inventory using FIFO
      */
-    protected function deductInventory(Sale $sale, array $lineItems): void
+    protected function deductInventory(Sale $sale, array $lineItems, bool $allowNegativeStock = false): void
     {
         $itemsForInventory = [];
 
@@ -678,16 +687,24 @@ class SaleService
             }
         }
 
-        $this->inventoryMovementService->recordSale($sale->id, $itemsForInventory);
+        $this->inventoryMovementService->recordSale($sale->id, $itemsForInventory, $allowNegativeStock);
 
         foreach ($itemsForInventory as $item) {
             if ($item['requires_batch_tracking']) {
-                $result = $this->productBatchService->depleteBatchesFIFO(
-                    $item['store_id'],
-                    $item['product_id'],
-                    $item['variant_id'],
-                    $item['quantity']
-                );
+                $result = $allowNegativeStock
+                    ? $this->productBatchService->depleteBatchesFIFO(
+                        $item['store_id'],
+                        $item['product_id'],
+                        $item['variant_id'],
+                        $item['quantity'],
+                        allowShortfall: true
+                    )
+                    : $this->productBatchService->depleteBatchesFIFO(
+                        $item['store_id'],
+                        $item['product_id'],
+                        $item['variant_id'],
+                        $item['quantity']
+                    );
 
                 foreach ($result['depletions'] as $batchId => $quantityDepleted) {
                     SaleItemBatchDepletion::create([
