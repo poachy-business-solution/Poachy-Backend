@@ -238,6 +238,22 @@ class SaleServiceTest extends TestCase
         }
     }
 
+    public function test_offline_sale_is_recorded_even_when_stock_ran_out(): void
+    {
+        // No inventory row at all: an online sale would be refused (see above).
+        $invMock = Mockery::mock(InventoryMovementService::class);
+        $invMock->shouldReceive('recordSale')->once()->with(Mockery::any(), Mockery::any(), true);
+
+        $service = $this->makeService(
+            $this->mockCalculation($this->calculations([$this->lineItem()])),
+            inventoryMovementService: $invMock
+        );
+
+        Model::withoutEvents(fn () => $service->createSale($this->baseSaleData(), allowNegativeStock: true));
+
+        $this->assertSame(1, Sale::count());
+    }
+
     public function test_insufficient_stock_for_bundle_component_throws(): void
     {
         $this->seedBundle(bundleId: 1, componentProductId: 3, quantityInBaseUomPerBundle: 5.0);

@@ -89,7 +89,8 @@ class InventoryMovementService
             $newBalance = $oldBalance + $quantityInBaseUom;
 
             // Validate non-negative balance (unless it's damage/theft which updates quantity_damaged)
-            if ($newBalance < 0 && ! in_array($movementType, [
+            // allow_negative: an offline sale syncing late — the goods already left the shop.
+            if ($newBalance < 0 && ! ($data['allow_negative'] ?? false) && ! in_array($movementType, [
                 InventoryMovementType::DAMAGE,
             ])) {
                 throw new \RuntimeException(
@@ -113,7 +114,9 @@ class InventoryMovementService
 
             // Update inventory quantities
             $updateData = [
-                'quantity_on_hand' => max(0, $newBalance), // Ensure non-negative
+                // Normally never below zero; an allowed offline oversell keeps the true
+                // negative so the owner can see the count is off (and gets a stock alert).
+                'quantity_on_hand' => ($data['allow_negative'] ?? false) ? $newBalance : max(0, $newBalance),
             ];
 
             // Special handling for damage - update quantity_damaged
@@ -215,8 +218,9 @@ class InventoryMovementService
      * Record sale (deduct inventory)
      *
      * @param  array  $items  Array of [product_id, variant_id, quantity, uom_id, unit_cost]
+     * @param  bool  $allowNegative  Let on-hand go below zero (offline sales that sync after stock ran out)
      */
-    public function recordSale(int $saleId, array $items): Collection
+    public function recordSale(int $saleId, array $items, bool $allowNegative = false): Collection
     {
         $movements = collect();
 
@@ -233,6 +237,7 @@ class InventoryMovementService
                     'reference_type' => 'Sale',
                     'reference_id' => $saleId,
                     'notes' => $item['notes'] ?? "Sale #{$saleId}",
+                    'allow_negative' => $allowNegative,
                 ]);
 
                 $movements->push($movement);

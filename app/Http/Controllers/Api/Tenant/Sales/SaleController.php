@@ -1297,7 +1297,12 @@ class SaleController extends Controller
     public function createSale(CreateSaleRequest $request): JsonResponse
     {
         try {
-            $sale = $this->saleService->createSale($request->validated());
+            // X-Offline-Sale: 1 is sent by the POS app when replaying a sale it rang up with
+            // no connection — the goods are gone, so stock may go negative (and get flagged).
+            $sale = $this->saleService->createSale(
+                $request->validated(),
+                $request->header('X-Offline-Sale') === '1'
+            );
 
             // Load relationships for response
             $sale->load([
