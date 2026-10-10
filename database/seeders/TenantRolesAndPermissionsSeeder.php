@@ -55,6 +55,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'manage-expenses',
             'view-expenses',
             'record-expenses',
+            'manage-trade-partners',
 
             // Employee Management
             'manage-employees',
@@ -147,6 +148,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'manage-expenses',
             'view-expenses',
             'record-expenses',
+            'manage-trade-partners',
             'view-employees',
             'view-sales-reports',
             'view-inventory-reports',
