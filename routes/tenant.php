@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductScaleBarcodeFormatController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
+use App\Http\Controllers\Api\Tenant\Reports\OwnerOverviewController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
 use App\Http\Controllers\Api\Tenant\Sales\MarketplaceSaleController;
@@ -822,6 +823,8 @@ Route::prefix('v1/tenant')
 
         // Daily sales aggregates
         Route::get('reports/owner-summary', [OwnerSummaryController::class, 'show'])
+            ->middleware(['permission:view-financial-reports,tenant']);
+        Route::get('reports/owner-overview', [OwnerOverviewController::class, 'show'])
             ->middleware(['permission:view-financial-reports,tenant']);
 
         Route::prefix('reports/daily-sales')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
