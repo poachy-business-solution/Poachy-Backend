@@ -8,6 +8,7 @@ use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\ProductVariant;
+use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Sales\SaleCalculationService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
@@ -506,9 +507,26 @@ class SaleCalculationServiceTest extends TestCase
         ]));
     }
 
+    public function test_untracked_product_cost_falls_back_to_the_latest_receipt_cost(): void
+    {
+        DB::connection('tenant')->table('inventory_movements')->insert([
+            ['store_id' => 2, 'product_id' => 1, 'movement_type' => 'purchase', 'quantity_in_base_uom' => 10, 'unit_cost_in_base_uom' => 90, 'created_at' => now(), 'updated_at' => now()],
+            ['store_id' => 1, 'product_id' => 1, 'movement_type' => 'purchase', 'quantity_in_base_uom' => 10, 'unit_cost_in_base_uom' => 100, 'created_at' => now(), 'updated_at' => now()],
+            ['store_id' => 1, 'product_id' => 1, 'movement_type' => 'transfer_in', 'quantity_in_base_uom' => 2, 'unit_cost_in_base_uom' => 120, 'created_at' => now(), 'updated_at' => now()],
+            ['store_id' => 1, 'product_id' => 1, 'movement_type' => 'sale', 'quantity_in_base_uom' => -1, 'unit_cost_in_base_uom' => 5, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $product = (new Product)->forceFill(['id' => 1, 'requires_serial_tracking' => false]);
+        $costs = app(ProductCostService::class);
+
+        $this->assertEquals(120.0, $costs->unitCost($product, 1), 'latest incoming cost at this branch');
+        DB::connection('tenant')->table('inventory_movements')->where('store_id', 1)->delete();
+        $this->assertEquals(90.0, $costs->unitCost($product, 1), 'then any branch');
+    }
+
     private function dropTestTables(): void
     {
         foreach ([
+            'inventory_movements',
             'product_serials',
             'product_batches',
             'store_products',
@@ -668,6 +686,18 @@ class SaleCalculationServiceTest extends TestCase
             $table->boolean('is_available')->default(true);
             $table->integer('min_stock_level')->default(0);
             $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('inventory_movements', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->string('movement_type');
+            $table->decimal('quantity_in_base_uom', 15, 4);
+            $table->decimal('unit_cost_in_base_uom', 15, 4)->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::connection($conn)->create('product_batches', function (Blueprint $table) {

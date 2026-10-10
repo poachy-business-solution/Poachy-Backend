@@ -61,6 +61,7 @@ use App\Http\Controllers\Api\Tenant\Sync\CategorySyncController;
 use App\Http\Controllers\Api\Tenant\Sync\TenantSyncAckController;
 use App\Http\Controllers\Api\Tenant\Tax\TaxRateController;
 use App\Http\Controllers\Api\Tenant\TenantAccessController;
+use App\Http\Controllers\Api\Tenant\Trade\TradePartnerController;
 use App\Http\Controllers\Api\Tenant\Uom\UnitOfMeasureController;
 use App\Http\Controllers\Api\Tenant\Uom\UomConversionController;
 use App\Http\Controllers\Api\Tenant\User\TenantUserController;
@@ -558,6 +559,19 @@ Route::prefix('v1/tenant')
             Route::post('/expenses', [DrawerController::class, 'recordExpense']);
             Route::get('/cash-movements', [DrawerController::class, 'cashMovements']);
             Route::post('/cash-movements', [DrawerController::class, 'recordCashMovement']);
+        });
+
+        // Shop-to-shop trading (neighbour shops lend/borrow goods)
+        Route::prefix('trade-partners')->middleware(['permission:manage-trade-partners,tenant'])->group(function () {
+            Route::get('/', [TradePartnerController::class, 'index']);
+            Route::post('/', [TradePartnerController::class, 'store']);
+            Route::get('/{tradePartner}', [TradePartnerController::class, 'show']);
+            Route::patch('/{tradePartner}', [TradePartnerController::class, 'update']);
+            Route::get('/{tradePartner}/price-hint', [TradePartnerController::class, 'priceHint']);
+            Route::post('/{tradePartner}/goods-out', [TradePartnerController::class, 'goodsOut']);
+            Route::post('/{tradePartner}/goods-in', [TradePartnerController::class, 'goodsIn']);
+            Route::post('/{tradePartner}/returns', [TradePartnerController::class, 'returns']);
+            Route::post('/{tradePartner}/payments', [TradePartnerController::class, 'payments']);
         });
 
         // Expenses

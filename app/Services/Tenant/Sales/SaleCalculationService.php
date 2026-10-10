@@ -6,13 +6,12 @@ use App\Exceptions\Tenant\PriceOverrideNotAllowedException;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Product;
-use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductBundle;
-use App\Models\Tenant\ProductSerial;
 use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TenantConfiguration;
+use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Offers\CouponService;
 use App\Services\Tenant\Offers\PromotionService;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -468,30 +467,12 @@ class SaleCalculationService
     }
 
     /**
-     * Get product cost. Serial-tracked products use the real per-unit acquisition
-     * cost recorded on their available ProductSerial rows (exact, not estimated);
-     * everything else uses the FIFO batch average as before.
+     * Get product cost: serial cost, else batch average, else the latest cost
+     * stock arrived at — see ProductCostService.
      */
     protected function getProductCost(Product $product, int $storeId, ?int $variantId): float
     {
-        if ($product->requires_serial_tracking) {
-            $averageCost = ProductSerial::where('store_id', $storeId)
-                ->where('product_id', $product->id)
-                ->where('product_variant_id', $variantId)
-                ->available()
-                ->avg('cost');
-
-            return $averageCost ?? 0;
-        }
-
-        $averageCost = ProductBatch::where('store_id', $storeId)
-            ->where('product_id', $product->id)
-            ->where('product_variant_id', $variantId)
-            ->where('quantity_remaining_in_base_uom', '>', 0)
-            ->where('is_expired', false)
-            ->avg('cost_per_base_uom');
-
-        return $averageCost ?? 0;
+        return app(ProductCostService::class)->unitCost($product, $storeId, $variantId) ?? 0;
     }
 
     /**
