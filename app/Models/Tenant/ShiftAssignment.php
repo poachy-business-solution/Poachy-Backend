@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ObservedBy(ShiftAssignmentObserver::class)]
@@ -96,6 +97,22 @@ class ShiftAssignment extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /**
+     * Expenses paid from this till's cash.
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    /**
+     * Cash put into or taken out of this till outside sales.
+     */
+    public function cashMovements(): HasMany
+    {
+        return $this->hasMany(CashMovement::class);
     }
 
     public function user(): BelongsTo

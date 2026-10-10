@@ -17,10 +17,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
+use Tests\Feature\Tenant\Concerns\CreatesDrawerCashTables;
 use Tests\TestCase;
 
 class ShiftAssignmentServiceTest extends TestCase
 {
+    use CreatesDrawerCashTables;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,6 +34,8 @@ class ShiftAssignmentServiceTest extends TestCase
         DB::connection('tenant')->statement('SET foreign_key_checks = 0');
 
         $this->createMinimalSchema();
+
+        $this->createDrawerCashTables();
 
         $fakeTenant = new \stdClass;
         $fakeTenant->id = 'test-tenant';
@@ -54,6 +59,7 @@ class ShiftAssignmentServiceTest extends TestCase
     protected function tearDown(): void
     {
         Carbon::setTestNow();
+        $this->dropDrawerCashTables();
         $this->dropTestTables();
         DB::connection('tenant')->statement('SET foreign_key_checks = 1');
         parent::tearDown();

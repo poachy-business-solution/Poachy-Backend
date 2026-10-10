@@ -17,10 +17,13 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
+use Tests\Feature\Tenant\Concerns\CreatesDrawerCashTables;
 use Tests\TestCase;
 
 class ShiftSalesSummaryServiceTest extends TestCase
 {
+    use CreatesDrawerCashTables;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,6 +35,8 @@ class ShiftSalesSummaryServiceTest extends TestCase
 
         $this->createMinimalSchema();
 
+        $this->createDrawerCashTables();
+
         $fakeTenant = new \stdClass;
         $fakeTenant->id = 'test-tenant';
         app()->instance(TenantContract::class, $fakeTenant);
@@ -39,6 +44,7 @@ class ShiftSalesSummaryServiceTest extends TestCase
 
     protected function tearDown(): void
     {
+        $this->dropDrawerCashTables();
         $this->dropTestTables();
         DB::connection('tenant')->statement('SET foreign_key_checks = 1');
         parent::tearDown();
@@ -193,6 +199,22 @@ class ShiftSalesSummaryServiceTest extends TestCase
 
         $this->assertSame(1000.00, (float) $summary->fresh()->total_sales_amount);
         $this->assertSame(800.00, $summary->fresh()->net_sales);
+    }
+
+    public function test_drawer_cash_and_till_expenses_move_expected_cash(): void
+    {
+        $assignment = $this->till(1000.0);
+        DB::connection('tenant')->table('cash_movements')->insert([
+            ['shift_assignment_id' => $assignment->id, 'direction' => 'in', 'amount' => 500, 'created_at' => now(), 'updated_at' => now()],
+            ['shift_assignment_id' => $assignment->id, 'direction' => 'out', 'amount' => 300, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        DB::connection('tenant')->table('expenses')->insert([
+            ['shift_assignment_id' => $assignment->id, 'paid_from' => 'till_cash', 'approval_status' => 'pending', 'amount' => 100, 'created_at' => now(), 'updated_at' => now()],
+            ['shift_assignment_id' => $assignment->id, 'paid_from' => 'till_cash', 'approval_status' => 'rejected', 'amount' => 999, 'created_at' => now(), 'updated_at' => now()],
+            ['shift_assignment_id' => $assignment->id, 'paid_from' => 'mpesa', 'approval_status' => 'approved', 'amount' => 999, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $this->assertEquals(1100.0, (new ShiftSalesSummaryService)->calculateExpectedCash($assignment));
     }
 
     private function dropTestTables(): void
