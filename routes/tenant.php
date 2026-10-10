@@ -39,6 +39,8 @@ use App\Http\Controllers\Api\Tenant\Product\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Tenant\Product\ProductScaleBarcodeFormatController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
+use App\Http\Controllers\Api\Tenant\Reports\OwnerOverviewController;
+use App\Http\Controllers\Api\Tenant\Reports\ReportsController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
 use App\Http\Controllers\Api\Tenant\Sales\MarketplaceSaleController;
@@ -823,6 +825,15 @@ Route::prefix('v1/tenant')
         // Daily sales aggregates
         Route::get('reports/owner-summary', [OwnerSummaryController::class, 'show'])
             ->middleware(['permission:view-financial-reports,tenant']);
+        Route::get('reports/owner-overview', [OwnerOverviewController::class, 'show'])
+            ->middleware(['permission:view-financial-reports,tenant']);
+        Route::prefix('reports')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
+            Route::get('/staff', [ReportsController::class, 'staff']);
+            Route::get('/sales-by-hour', [ReportsController::class, 'salesByHour']);
+            Route::get('/stock', [ReportsController::class, 'stock']);
+            Route::get('/needs-you', [ReportsController::class, 'needsYou']);
+            Route::get('/owed', [ReportsController::class, 'owed']);
+        });
 
         Route::prefix('reports/daily-sales')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [DailySalesReportController::class, 'index']);

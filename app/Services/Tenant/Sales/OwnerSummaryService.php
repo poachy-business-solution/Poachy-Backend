@@ -71,7 +71,7 @@ class OwnerSummaryService
      * @param  Collection<int, SaleRefund>  $refunds
      * @return array<int, array{method: string, label: string, received: float, refunded: float, net: float}>
      */
-    protected function byMethod(\Closure $sales, $refunds): array
+    public function byMethod(\Closure $sales, $refunds): array
     {
         $saleIds = $sales()->pluck('id');
 
@@ -139,7 +139,7 @@ class OwnerSummaryService
      * @param  \Closure(): Builder  $sales
      * @return array<int, array{name: string, quantity: float, revenue: float}>
      */
-    protected function topSellers(\Closure $sales, int $limit): array
+    public function topSellers(\Closure $sales, int $limit): array
     {
         return SaleItem::query()
             ->whereIn('sale_id', $sales()->select('id'))
