@@ -81,13 +81,15 @@ class StockReportService
 
         $products = Product::query()
             ->whereIn('id', $inventory->keys())
-            ->get(['id', 'name', 'reorder_level', 'requires_serial_tracking'])
+            ->get(['id', 'uuid', 'name', 'reorder_level', 'requires_serial_tracking', 'base_selling_price'])
             ->keyBy('id');
 
-        $minLevels = StoreProduct::query()
+        $storeProducts = StoreProduct::query()
             ->where('store_id', $storeId)
             ->whereNull('product_variant_id')
-            ->pluck('min_stock_level', 'product_id');
+            ->get(['product_id', 'min_stock_level', 'store_selling_price'])
+            ->keyBy('product_id');
+        $minLevels = $storeProducts->map(fn ($row) => $row->min_stock_level);
 
         $soldLast30 = $this->quantitySold($storeId, $windowStart);
         $lastSoldAt = SaleItem::query()
@@ -98,7 +100,7 @@ class StockReportService
             ->selectRaw('sale_items.product_id, MAX(sales.sale_date) as last_sold_at')
             ->pluck('last_sold_at', 'product_id');
 
-        $items = $inventory->map(function ($row, $productId) use ($products, $minLevels, $soldLast30, $lastSoldAt, $deadStart, $storeId) {
+        $items = $inventory->map(function ($row, $productId) use ($products, $minLevels, $storeProducts, $soldLast30, $lastSoldAt, $deadStart, $storeId) {
             $product = $products->get($productId);
             $onHand = (float) $row->quantity_on_hand;
             $sold = (float) ($soldLast30[$productId] ?? 0);
@@ -117,7 +119,9 @@ class StockReportService
 
             return [
                 'product_id' => (int) $productId,
+                'uuid' => $product?->uuid,
                 'name' => $product?->name ?? 'Unknown',
+                'selling_price' => round((float) ($storeProducts[$productId]->store_selling_price ?? $product?->base_selling_price ?? 0), 2),
                 'on_hand' => round($onHand, 4),
                 'reorder_level' => $reorderAt,
                 'sold_last_30_days' => round($sold, 4),
