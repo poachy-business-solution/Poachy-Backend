@@ -664,6 +664,8 @@ Route::prefix('v1/tenant')
         Route::get('/tills/history', [TillController::class, 'history']);
         Route::get('/tills/settings', [TillController::class, 'settings']);
         Route::put('/tills/settings', [TillController::class, 'updateSettings']);
+        Route::post('/tills/{assignment}/reopen', [TillController::class, 'reopen'])
+            ->middleware(['role:owner|manager|admin,tenant']);
         Route::get('/users/{userId}/shift-assignments', [ShiftAssignmentController::class, 'userAssignments']);
         Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments'])
             ->middleware(['role:owner|manager|admin,tenant']);

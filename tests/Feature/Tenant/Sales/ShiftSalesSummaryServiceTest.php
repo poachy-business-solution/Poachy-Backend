@@ -217,6 +217,19 @@ class ShiftSalesSummaryServiceTest extends TestCase
         $this->assertEquals(1100.0, (new ShiftSalesSummaryService)->calculateExpectedCash($assignment));
     }
 
+    public function test_the_summary_cash_line_is_what_stayed_in_the_drawer(): void
+    {
+        $sale = $this->createSale(shiftAssignmentId: 1, total: 197.20);
+        $sale->update(['amount_paid' => 200.00]);
+        $this->pay($sale, 'cash', 200.00);
+
+        $service = new ShiftSalesSummaryService;
+        $summary = $service->updateFromSale($sale->fresh(['payments']));
+        $this->assertEquals(197.20, (float) $summary->total_cash_sales);
+
+        $this->assertEquals(197.20, (float) $service->recalculateSummary(1)->total_cash_sales);
+    }
+
     private function dropTestTables(): void
     {
         foreach (['sale_refunds', 'sale_payments', 'sales', 'shift_sales_summary'] as $table) {

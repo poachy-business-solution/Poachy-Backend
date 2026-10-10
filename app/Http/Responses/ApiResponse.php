@@ -2,6 +2,7 @@
 
 namespace App\Http\Responses;
 
+use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -158,7 +159,7 @@ class ApiResponse
             'timestamp' => now()->toISOString(),
             'request_id' => request()->header('X-Request-ID') ?? (string) str()->uuid(),
             'tenant_id' => tenant()?->id ?? null,
-            'tenant_name' => tenant()?->name ?? null,
+            'tenant_name' => tenant() instanceof Tenant ? tenant()->displayName() : null,
         ];
     }
 }

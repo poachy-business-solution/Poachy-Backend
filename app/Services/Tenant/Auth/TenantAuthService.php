@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Auth;
 
+use App\Models\Tenant;
 use App\Models\Tenant\TenantOtp;
 use App\Models\Tenant\TenantRefreshToken;
 use App\Models\Tenant\User as TenantUser;
@@ -331,7 +332,7 @@ class TenantAuthService
 
         return [
             'id' => $tenant?->id,
-            'name' => $tenant->data['tenant_name'] ?? $tenant?->name ?? null,
+            'name' => $tenant instanceof Tenant ? $tenant->displayName() : null,
             'domains' => $domains,
             'has_business_details' => $tenant && method_exists($tenant, 'businessDetail')
                 ? $tenant->businessDetail()->exists()

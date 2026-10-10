@@ -192,6 +192,45 @@ class TillService
     }
 
     /**
+     * Reopen a till closed by mistake today: back to open, count and banked
+     * cleared. Refused when the person has already started a newer session
+     * (selling after a close starts one automatically).
+     *
+     * @throws ValidationException
+     */
+    public function reopen(ShiftAssignment $session, string $reopenedBy): ShiftAssignment
+    {
+        if ($session->status !== ShiftStatus::COMPLETED) {
+            throw ValidationException::withMessages(['status' => 'Only a closed till can be reopened.']);
+        }
+
+        if ($session->shift_date->toDateString() !== $this->localToday()) {
+            throw ValidationException::withMessages(['status' => "Only today's tills can be reopened."]);
+        }
+
+        if ($this->openSessionFor($session->user_id) !== null) {
+            throw ValidationException::withMessages([
+                'status' => 'This person has started selling again on a new till. Close that one instead.',
+            ]);
+        }
+
+        $session->forceFill([
+            'status' => ShiftStatus::IN_PROGRESS,
+            'actual_end' => null,
+            'actual_duration_minutes' => null,
+            'closing_cash' => null,
+            'cash_banked' => null,
+            'cash_variance_reason' => null,
+            'closed_automatically' => false,
+            'approved_by' => null,
+            'approved_at' => null,
+            'notes' => trim(($session->notes ? $session->notes."\n\n" : '')."Reopened by {$reopenedBy} at ".now()->setTimezone($this->timezone())->format('H:i')),
+        ])->saveQuietly();
+
+        return $session->fresh(['shift', 'store', 'user']);
+    }
+
+    /**
      * Whether staff must count the cash to close (owners and managers may
      * always skip).
      */

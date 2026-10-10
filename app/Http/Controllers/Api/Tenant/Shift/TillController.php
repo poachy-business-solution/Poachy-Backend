@@ -177,4 +177,25 @@ class TillController extends Controller
             'timezone' => $this->tillService->timezone(),
         ];
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/tenant/tills/{assignment}/reopen",
+     *     summary="Reopen a till closed by mistake today (owner/manager)",
+     *     operationId="reopenTill",
+     *     tags={"Shift Assignments"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="assignment", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Reopened"),
+     *     @OA\Response(response=422, description="Not closed, not today, or a newer till is open")
+     * )
+     */
+    public function reopen(ShiftAssignment $assignment): JsonResponse
+    {
+        $session = $this->tillService->reopen($assignment, request()->user()->name);
+
+        return ApiResponse::success('Till reopened', ['assignment' => new ShiftAssignmentResource($session)]);
+    }
 }
