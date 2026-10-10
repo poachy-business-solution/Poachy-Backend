@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Shift;
 
+use App\Rules\Tenant\AssignedStore;
 use Illuminate\Foundation\Http\FormRequest;
 
 class OpenTillRequest extends FormRequest
@@ -17,7 +18,7 @@ class OpenTillRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
@@ -26,6 +27,7 @@ class OpenTillRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:stores,id',
+                new AssignedStore,
             ],
             'opening_cash' => [
                 'nullable',

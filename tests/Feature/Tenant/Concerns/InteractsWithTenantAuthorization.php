@@ -79,6 +79,23 @@ trait InteractsWithTenantAuthorization
             $table->index(['user_id', 'revoked_at']);
         });
 
+        Schema::connection($conn)->create('stores', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_main_store')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('store_user', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('user_id');
+            $table->timestamps();
+            $table->unique(['store_id', 'user_id']);
+        });
+
         Schema::connection($conn)->create('permissions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');
@@ -126,7 +143,7 @@ trait InteractsWithTenantAuthorization
     {
         foreach ([
             'role_has_permissions', 'model_has_roles', 'model_has_permissions',
-            'roles', 'permissions', 'tenant_refresh_tokens', 'personal_access_tokens', 'users',
+            'roles', 'permissions', 'tenant_refresh_tokens', 'personal_access_tokens', 'store_user', 'stores', 'users',
         ] as $table) {
             Schema::connection('tenant')->dropIfExists($table);
         }

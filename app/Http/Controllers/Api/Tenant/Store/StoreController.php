@@ -12,6 +12,7 @@ use App\Services\Tenant\Store\StoreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class StoreController extends Controller
 {
@@ -370,6 +371,8 @@ class StoreController extends Controller
                 'Store created successfully',
                 $resource->response()->getData(true)
             );
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to create store', [
                 'tenant_id' => tenant()->id,
@@ -772,6 +775,8 @@ class StoreController extends Controller
             $this->storeService->activateStore($store);
 
             return ApiResponse::success('Store activated successfully');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to activate store', [
                 'tenant_id' => tenant()->id,

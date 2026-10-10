@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Shift;
 
+use App\Rules\Tenant\AssignedStore;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CurrentTillRequest extends FormRequest
@@ -15,12 +16,12 @@ class CurrentTillRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
         return [
-            'store_id' => ['required', 'integer', 'exists:stores,id'],
+            'store_id' => ['required', 'integer', 'exists:stores,id', new AssignedStore],
         ];
     }
 

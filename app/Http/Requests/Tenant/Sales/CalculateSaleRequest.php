@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\Sales;
 
+use App\Rules\Tenant\AssignedStore;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CalculateSaleRequest extends FormRequest
@@ -24,6 +25,7 @@ class CalculateSaleRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:stores,id',
+                new AssignedStore,
             ],
             'customer_id' => [
                 'nullable',

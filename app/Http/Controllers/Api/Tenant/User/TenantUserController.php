@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\User\AssignRoleRequest;
 use App\Http\Requests\Tenant\User\CreateUserRequest;
 use App\Http\Requests\Tenant\User\UpdateUserRequest;
+use App\Http\Requests\Tenant\User\UpdateUserStoresRequest;
 use App\Http\Resources\Tenant\Auth\TenantUserResource;
 use App\Http\Responses\ApiResponse;
+use App\Models\Tenant\User;
 use App\Services\Central\Admin\Tenant\TenantUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -266,5 +268,65 @@ class TenantUserController extends Controller
             'Roles retrieved successfully',
             $roles
         );
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/tenant/users/{userId}/stores",
+     *     summary="Branches a staff member works at",
+     *     description="assigned: branches explicitly assigned; workable: where they may actually sell, open a till or record money (every branch for owners/managers; the main branch for staff with no assignment).",
+     *     operationId="getUserStores",
+     *     tags={"Tenant Users"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="userId", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Branch assignment"),
+     *     @OA\Response(response=404, description="User not found")
+     * )
+     */
+    public function stores(int $userId): JsonResponse
+    {
+        $user = User::query()->findOrFail($userId);
+
+        return ApiResponse::success('User branches', $this->storesPayload($user));
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/v1/tenant/users/{userId}/stores",
+     *     summary="Set the branches a staff member works at (owner/manager)",
+     *     description="Replaces the assignment. An empty list sends a staff member back to the main branch only. Owners and managers always work at every branch.",
+     *     operationId="updateUserStores",
+     *     tags={"Tenant Users"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="userId", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"store_ids"}, @OA\Property(property="store_ids", type="array", @OA\Items(type="integer")))),
+     *
+     *     @OA\Response(response=200, description="Saved"),
+     *     @OA\Response(response=422, description="Unknown or closed branch")
+     * )
+     */
+    public function updateStores(int $userId, UpdateUserStoresRequest $request): JsonResponse
+    {
+        $user = User::query()->findOrFail($userId);
+        $user->stores()->sync($request->validated('store_ids'));
+
+        return ApiResponse::success('Branches saved', $this->storesPayload($user->fresh()));
+    }
+
+    /**
+     * @return array{user_id: int, assigned_store_ids: array<int, int>, workable_store_ids: array<int, int>, works_at_every_branch: bool}
+     */
+    protected function storesPayload(User $user): array
+    {
+        return [
+            'user_id' => $user->id,
+            'assigned_store_ids' => $user->stores()->orderBy('stores.id')->pluck('stores.id')->map(fn ($id) => (int) $id)->all(),
+            'workable_store_ids' => $user->workableStoreIds(),
+            'works_at_every_branch' => $user->worksAtEveryBranch(),
+        ];
     }
 }

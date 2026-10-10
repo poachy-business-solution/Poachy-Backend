@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tenant\Sales;
 
 use App\Enums\Tenant\PaymentMethod;
+use App\Rules\Tenant\AssignedStore;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,6 +32,7 @@ class CreateSaleRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:stores,id',
+                new AssignedStore,
             ],
             'customer_id' => [
                 'nullable',
