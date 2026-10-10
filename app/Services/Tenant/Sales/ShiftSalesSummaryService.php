@@ -2,9 +2,13 @@
 
 namespace App\Services\Tenant\Sales;
 
+use App\Enums\Tenant\ExpensePaidFrom;
+use App\Enums\Tenant\ExpenseStatus;
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\RefundMethod;
 use App\Enums\Tenant\RefundStatus;
+use App\Models\Tenant\CashMovement;
+use App\Models\Tenant\Expense;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SalePayment;
 use App\Models\Tenant\SaleRefund;
@@ -130,7 +134,9 @@ class ShiftSalesSummaryService
 
     /**
      * Cash that should be in the drawer: the counted float, plus cash taken,
-     * minus change handed back, minus cash refunds paid out of this till.
+     * minus change handed back, minus cash refunds paid out of this till,
+     * plus cash put in / minus cash taken out (float top-ups, owner drawings,
+     * suppliers paid from the till) and minus expenses paid from till cash.
      *
      * Payments store the amount TENDERED (receipts derive change from it), so
      * summing cash payments alone overstates the drawer by every note of change
@@ -146,7 +152,39 @@ class ShiftSalesSummaryService
             ->where('payment_method', PaymentMethod::CASH)
             ->sum('amount');
 
-        return round($openingCash + $cashTendered - $this->changeGiven($assignment) - $this->cashRefundsPaidOut($assignment), 2);
+        return round(
+            $openingCash + $cashTendered - $this->changeGiven($assignment) - $this->cashRefundsPaidOut($assignment)
+                + $this->netCashMovements($assignment) - $this->tillCashExpenses($assignment),
+            2
+        );
+    }
+
+    /**
+     * Cash put into the drawer minus cash taken out, outside sales.
+     */
+    public function netCashMovements(ShiftAssignment $assignment): float
+    {
+        $totals = CashMovement::query()
+            ->where('shift_assignment_id', $assignment->id)
+            ->selectRaw('direction, SUM(amount) as total')
+            ->groupBy('direction')
+            ->pluck('total', 'direction');
+
+        return round((float) ($totals[CashMovement::DIRECTION_IN] ?? 0) - (float) ($totals[CashMovement::DIRECTION_OUT] ?? 0), 2);
+    }
+
+    /**
+     * Expenses paid from this till's cash. A rejected expense no longer
+     * counts: the cash still left the drawer, so the cash-up shows it short
+     * and the person who took it accounts for it.
+     */
+    public function tillCashExpenses(ShiftAssignment $assignment): float
+    {
+        return (float) Expense::query()
+            ->where('shift_assignment_id', $assignment->id)
+            ->where('paid_from', ExpensePaidFrom::TILL_CASH)
+            ->where('approval_status', '!=', ExpenseStatus::REJECTED)
+            ->sum('amount');
     }
 
     /**

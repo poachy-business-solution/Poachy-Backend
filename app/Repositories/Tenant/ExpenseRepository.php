@@ -154,8 +154,8 @@ class ExpenseRepository
             // Auto-generate expense number
             $data['expense_number'] = Expense::generateExpenseNumber();
 
-            // Set creator
-            $data['created_by'] = Auth::id();
+            // Set creator (callers recording on someone's behalf pass it)
+            $data['created_by'] ??= Auth::id();
 
             $expense = Expense::create($data);
 

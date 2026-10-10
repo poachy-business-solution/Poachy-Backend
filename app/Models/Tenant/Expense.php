@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use App\Enums\Tenant\ExpensePaidFrom;
 use App\Enums\Tenant\ExpenseStatus;
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\PaymentStatus;
@@ -33,6 +34,8 @@ class Expense extends Model
         'description',
         'expense_date',
         'payment_method',
+        'paid_from',
+        'shift_assignment_id',
         'payment_reference',
         'payment_status',
         'receipt_path',
@@ -56,6 +59,7 @@ class Expense extends Model
         'amount' => 'decimal:2',
         'expense_date' => 'date',
         'payment_method' => PaymentMethod::class,
+        'paid_from' => ExpensePaidFrom::class,
         'payment_status' => PaymentStatus::class,
         'is_recurring' => 'boolean',
         'recurrence_frequency' => RecurrenceFrequency::class,
@@ -80,6 +84,14 @@ class Expense extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /**
+     * The till session a till-cash expense was paid from.
+     */
+    public function shiftAssignment(): BelongsTo
+    {
+        return $this->belongsTo(ShiftAssignment::class);
     }
 
     public function supplier(): BelongsTo

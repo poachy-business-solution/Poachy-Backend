@@ -24,6 +24,9 @@ class ExpenseResource extends JsonResource
 
             // Payment
             'payment_method' => $this->payment_method?->value,
+            'paid_from' => $this->paid_from?->value,
+            'paid_from_label' => $this->paid_from?->label(),
+            'shift_assignment_id' => $this->shift_assignment_id,
             'payment_method_label' => $this->payment_method_label,
             'payment_reference' => $this->payment_reference,
             'payment_status' => $this->payment_status?->value,

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerCreditTransactionController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerGroupController;
 use App\Http\Controllers\Api\Tenant\Customer\LoyaltyTransactionController;
+use App\Http\Controllers\Api\Tenant\Drawer\DrawerController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseCategoryController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseController;
 use App\Http\Controllers\Api\Tenant\Inventory\ExpiryAlertController;
@@ -548,6 +549,15 @@ Route::prefix('v1/tenant')
                 Route::delete('/{expense_category}', [ExpenseCategoryController::class, 'destroy']);
                 Route::post('/{expense_category}/toggle-active', [ExpenseCategoryController::class, 'toggleActive']);
             });
+        });
+
+        // Counter money outside sales: 3-tap expenses + drawer cash in/out
+        Route::prefix('drawer')->middleware(['permission:record-expenses,tenant'])->group(function () {
+            Route::get('/expense-categories', [DrawerController::class, 'categories']);
+            Route::get('/expenses', [DrawerController::class, 'expenses']);
+            Route::post('/expenses', [DrawerController::class, 'recordExpense']);
+            Route::get('/cash-movements', [DrawerController::class, 'cashMovements']);
+            Route::post('/cash-movements', [DrawerController::class, 'recordCashMovement']);
         });
 
         // Expenses

@@ -54,6 +54,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             // Expense Management
             'manage-expenses',
             'view-expenses',
+            'record-expenses',
 
             // Employee Management
             'manage-employees',
@@ -145,6 +146,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-customers',
             'manage-expenses',
             'view-expenses',
+            'record-expenses',
             'view-employees',
             'view-sales-reports',
             'view-inventory-reports',
@@ -189,6 +191,7 @@ class TenantRolesAndPermissionsSeeder extends Seeder
             'view-stock-alerts',
             'view-expiry-alerts',
             'view-waste-records',
+            'record-expenses',
         ]);
 
         $this->command->info('✓ Created role: Cashier (POS operations)');

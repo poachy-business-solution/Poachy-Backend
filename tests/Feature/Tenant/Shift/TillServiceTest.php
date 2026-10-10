@@ -23,10 +23,13 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
+use Tests\Feature\Tenant\Concerns\CreatesDrawerCashTables;
 use Tests\TestCase;
 
 class TillServiceTest extends TestCase
 {
+    use CreatesDrawerCashTables;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,8 +39,11 @@ class TillServiceTest extends TestCase
         DB::purge('tenant');
         DB::connection('tenant')->statement('SET foreign_key_checks = 0');
 
+        $this->dropDrawerCashTables();
+
         $this->dropTestTables();
         $this->createMinimalSchema();
+        $this->createDrawerCashTables();
 
         $fakeTenant = new \stdClass;
         $fakeTenant->id = 'test-tenant';
