@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\Tenant\Reports;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tenant\Reports\NeedsYouRequest;
 use App\Http\Requests\Tenant\Reports\ReportPeriodRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tenant\Store;
+use App\Services\Tenant\Reports\NeedsYouService;
 use App\Services\Tenant\Reports\StaffReportService;
 use App\Services\Tenant\Reports\StockReportService;
 use App\Services\Tenant\Shift\TillService;
@@ -88,5 +90,43 @@ class ReportsController extends Controller
             (int) ($request->validated('days') ?? 30),
             $request->fromDate(),
         ));
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/tenant/reports/needs-you",
+     *     summary="What the owner should look at today",
+     *     description="Plain-words items, most urgent first: low_stock, till_short (counted tills short by at least the variance threshold, last two days), expenses_to_approve, shop_owes (the neighbour shop owing longest), customers_owe. Each: type, title, subtitle, count, amount, ids. Waiting-to-sync sales live on the device and are added by the app.",
+     *     operationId="needsYouReport",
+     *     tags={"Reports"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="store_id", in="query", description="Omit for all branches", @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=200, description="Needs-you items")
+     * )
+     */
+    public function needsYou(NeedsYouRequest $request, NeedsYouService $needsYou): JsonResponse
+    {
+        $storeId = $request->validated('store_id');
+
+        return ApiResponse::success('Needs you', ['items' => $needsYou->items($storeId !== null ? (int) $storeId : null)]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/tenant/reports/owed",
+     *     summary="Money owed both ways",
+     *     description="Owed to you: customers on credit and neighbour shops; you owe: neighbour shops and suppliers. Oldest first.",
+     *     operationId="owedReport",
+     *     tags={"Reports"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Response(response=200, description="Owed both ways")
+     * )
+     */
+    public function owed(NeedsYouService $needsYou): JsonResponse
+    {
+        return ApiResponse::success('Owed both ways', $needsYou->owedBothWays());
     }
 }
