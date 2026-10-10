@@ -524,6 +524,8 @@ Route::prefix('v1/tenant')
             Route::post('/users', [TenantUserController::class, 'store']);
             Route::put('/users/{userId}', [TenantUserController::class, 'update']);
             Route::delete('/users/{userId}', [TenantUserController::class, 'destroy']);
+            Route::get('/users/{userId}/stores', [TenantUserController::class, 'stores']);
+            Route::put('/users/{userId}/stores', [TenantUserController::class, 'updateStores']);
             Route::get('/roles', [TenantUserController::class, 'roles']);
         });
 

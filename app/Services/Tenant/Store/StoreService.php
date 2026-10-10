@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 
 class StoreService
 {
+    public function __construct(protected BranchLimitService $branchLimits) {}
+
     // Get paginated list of stores with optional filtering.
     public function getStores(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
@@ -90,6 +92,10 @@ class StoreService
     // Create a new store.
     public function createStore(array $data): Store
     {
+        if ($data['is_active'] ?? true) {
+            $this->branchLimits->ensureCanAddActiveBranch();
+        }
+
         return DB::transaction(function () use ($data) {
             $store = Store::create($data);
 
@@ -118,6 +124,10 @@ class StoreService
     // Activate a store
     public function activateStore(Store $store): bool
     {
+        if (! $store->is_active) {
+            $this->branchLimits->ensureCanAddActiveBranch($store);
+        }
+
         return DB::transaction(function () use ($store) {
             $result = $store->activate();
 

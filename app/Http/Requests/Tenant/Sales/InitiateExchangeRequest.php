@@ -4,6 +4,7 @@ namespace App\Http\Requests\Tenant\Sales;
 
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\RefundReason;
+use App\Rules\Tenant\AssignedStore;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,7 @@ class InitiateExchangeRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:stores,id',
+                new AssignedStore,
             ],
             'reason' => [
                 'required',

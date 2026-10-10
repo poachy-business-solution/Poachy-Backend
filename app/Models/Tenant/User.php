@@ -3,6 +3,7 @@
 namespace App\Models\Tenant;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -122,5 +123,53 @@ class User extends Authenticatable
     public function canManageStores(): bool
     {
         return $this->hasAnyRole(['owner', 'manager']);
+    }
+
+    /**
+     * Branches this person is assigned to (staff only — see workableStoreIds()).
+     */
+    public function stores(): BelongsToMany
+    {
+        return $this->belongsToMany(Store::class, 'store_user')->withTimestamps();
+    }
+
+    /**
+     * Owners, managers and admins work at every branch.
+     */
+    public function worksAtEveryBranch(): bool
+    {
+        return $this->hasAnyRole(['owner', 'manager', 'admin']);
+    }
+
+    /**
+     * Active branches this person may sell, open a till or record money at:
+     * every branch for owners/managers; for staff, their assigned branches,
+     * or the main branch when nobody has assigned them yet (so a one-shop
+     * business never has to think about assignments).
+     *
+     * @return array<int, int>
+     */
+    public function workableStoreIds(): array
+    {
+        $active = Store::query()->where('is_active', true);
+
+        if ($this->worksAtEveryBranch()) {
+            return $active->orderBy('id')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        }
+
+        $assigned = $this->stores()->where('stores.is_active', true)->orderBy('stores.id')->pluck('stores.id');
+
+        if ($assigned->isNotEmpty()) {
+            return $assigned->map(fn ($id) => (int) $id)->all();
+        }
+
+        $main = $active->orderByDesc('is_main_store')->orderBy('id')->value('id');
+
+        return $main === null ? [] : [(int) $main];
+    }
+
+    public function canWorkAt(int $storeId): bool
+    {
+        return in_array($storeId, $this->workableStoreIds(), true);
     }
 }
