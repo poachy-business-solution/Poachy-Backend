@@ -11,6 +11,7 @@ use App\Enums\Tenant\RefundStatus;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\CustomerCreditTransaction;
 use App\Models\Tenant\LoyaltyTransaction;
+use App\Models\Tenant\ProductBundle;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\SaleItemBatchDepletion;
@@ -304,6 +305,13 @@ class RefundService
                 continue;
             }
 
+            // A bundle left stock as its components — put those back.
+            if ($saleItem->bundle_id !== null && $saleItem->product_id === null) {
+                $this->restoreBundleComponents($refund, $saleItem, (float) $itemData['quantity_refunded']);
+
+                continue;
+            }
+
             try {
                 $this->inventoryMovementService->recordReturn([
                     'store_id' => $refund->store_id,
@@ -328,6 +336,33 @@ class RefundService
 
                 throw $e;
             }
+        }
+    }
+
+    /**
+     * Restock each component of a refunded bundle: the component's base
+     * quantity per bundle times the bundles returned.
+     */
+    private function restoreBundleComponents(SaleRefund $refund, SaleItem $saleItem, float $bundlesReturned): void
+    {
+        $bundle = ProductBundle::query()->with('items.product')->find($saleItem->bundle_id);
+
+        foreach ($bundle?->items ?? [] as $component) {
+            if ($component->product === null) {
+                continue;
+            }
+
+            $this->inventoryMovementService->recordReturn([
+                'store_id' => $refund->store_id,
+                'product_id' => $component->product_id,
+                'variant_id' => $component->product_variant_id,
+                'uom_id' => $component->product->base_uom_id,
+                'quantity' => (float) $component->quantity_in_base_uom * $bundlesReturned,
+                'unit_cost' => null,
+                'reference_type' => SaleRefund::class,
+                'reference_id' => $refund->id,
+                'notes' => "Refund {$refund->refund_number} — {$bundle->bundle_name} ({$refund->reason->label()})",
+            ]);
         }
     }
 

@@ -42,6 +42,19 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasMany(config('tenancy.domain_model'), 'tenant_id', 'id');
     }
 
+    /**
+     * The business name to show people: an explicit tenant name if one was
+     * set, else the registered business name. (Tenants created by
+     * onboarding carry their name only on the business details record.)
+     */
+    public function displayName(): ?string
+    {
+        return once(fn () => $this->data['tenant_name']
+            ?? $this->getAttribute('tenant_name')
+            ?? $this->businessDetail?->business_name
+            ?? $this->getAttribute('name'));
+    }
+
     public function businessDetail()
     {
         return $this->hasOne(BusinessDetail::class, 'tenant_id', 'id');

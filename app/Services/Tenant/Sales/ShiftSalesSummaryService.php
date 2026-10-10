@@ -84,9 +84,18 @@ class ShiftSalesSummaryService
             $summary->total_sales_amount += $sale->total_amount;
 
             // Add to payment method totals using actual payment records
-            // This handles split payments correctly
+            // This handles split payments correctly. Cash counts what was
+            // kept: payments store the amount tendered, so change handed
+            // back comes off (it never stayed in the drawer).
+            $change = $this->saleChange($sale);
             foreach ($sale->payments as $payment) {
-                $this->updatePaymentMethodTotal($summary, $payment->payment_method, $payment->amount);
+                $amount = (float) $payment->amount;
+                if ($payment->payment_method === PaymentMethod::CASH && $change > 0) {
+                    $kept = max(0, $amount - $change);
+                    $change -= $amount - $kept;
+                    $amount = $kept;
+                }
+                $this->updatePaymentMethodTotal($summary, $payment->payment_method, $amount);
             }
 
             // Add discounts given
@@ -130,6 +139,19 @@ class ShiftSalesSummaryService
             PaymentMethod::CREDIT => $summary->total_credit_sales += $amount,
             default => null,
         };
+    }
+
+    /**
+     * Change handed back on one sale: the overpayment, capped at the cash
+     * tendered on it (nobody gets change from M-Pesa).
+     */
+    protected function saleChange(Sale $sale): float
+    {
+        $cashTendered = (float) $sale->payments
+            ->filter(fn (SalePayment $payment) => $payment->payment_method === PaymentMethod::CASH)
+            ->sum('amount');
+
+        return round(min(max(0, (float) $sale->amount_paid - (float) $sale->total_amount), $cashTendered), 2);
     }
 
     /**
@@ -344,7 +366,8 @@ class ShiftSalesSummaryService
                 ->get()
                 ->keyBy('payment_method');
 
-            $summary->total_cash_sales = $paymentTotals->get(PaymentMethod::CASH->value)?->total ?? 0;
+            $summary->total_cash_sales = max(0, ($paymentTotals->get(PaymentMethod::CASH->value)?->total ?? 0)
+                - $sales->sum(fn (Sale $sale) => $this->saleChange($sale)));
             $summary->total_card_sales = $paymentTotals->get(PaymentMethod::CARD->value)?->total ?? 0;
             $summary->total_mpesa_sales = $paymentTotals->get(PaymentMethod::MPESA->value)?->total ?? 0;
             $summary->total_credit_sales = $paymentTotals->get(PaymentMethod::CREDIT->value)?->total ?? 0;

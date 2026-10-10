@@ -794,6 +794,35 @@ class RefundTest extends TestCase
     // =========================================================================
 
     /** @return array{Sale, SaleItem} */
+    public function test_refunding_a_bundle_restocks_its_components(): void
+    {
+        $this->enableRefunds();
+        DB::connection('tenant')->table('product_bundles')->insert(['id' => 1, 'bundle_name' => 'Breakfast pack']);
+        DB::connection('tenant')->table('product_bundle_items')->insert([
+            ['bundle_id' => 1, 'product_id' => 1, 'quantity_in_base_uom' => 2],
+            ['bundle_id' => 1, 'product_id' => 2, 'quantity_in_base_uom' => 1],
+        ]);
+        $sale = $this->createRawSale(total: 600.00);
+        $saleItem = Model::withoutEvents(fn () => SaleItem::create([
+            'sale_id' => $sale->id, 'bundle_id' => 1, 'product_id' => null, 'uom_id' => 1, 'quantity' => 2, 'quantity_in_base_uom' => 2,
+            'unit_price' => 300, 'unit_cost' => 150, 'discount_amount' => 0, 'tax_amount' => 0, 'subtotal' => 600,
+        ]));
+
+        $inventoryMock = Mockery::mock(InventoryMovementService::class);
+        $inventoryMock->shouldReceive('recordReturn')->once()->withArgs(fn (array $m) => $m['product_id'] === 1 && $m['quantity'] === 2.0);
+        $inventoryMock->shouldReceive('recordReturn')->once()->withArgs(fn (array $m) => $m['product_id'] === 2 && $m['quantity'] === 1.0);
+
+        Model::withoutEvents(fn () => $this->makeRefundService(inventoryMock: $inventoryMock)->processRefund($sale, [
+            'store_id' => 1,
+            'reason' => RefundReason::WRONG_ITEM->value,
+            'refund_method' => RefundMethod::CASH->value,
+            'notes' => null,
+            'items' => [['sale_item_id' => $saleItem->id, 'quantity_refunded' => 1.0, 'refund_amount' => 300.00]],
+        ]));
+
+        $this->assertSame(1, SaleRefundItem::count());
+    }
+
     private function createPaidSale(
         float $total,
         float $itemQuantity,
@@ -936,6 +965,8 @@ class RefundTest extends TestCase
     private function dropTestTables(): void
     {
         foreach ([
+            'product_bundle_items',
+            'product_bundles',
             'sale_item_batch_depletions',
             'product_batches',
             'product_serials',
@@ -1171,6 +1202,24 @@ class RefundTest extends TestCase
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_bundles', function (Blueprint $table) {
+            $table->id();
+            $table->string('bundle_name');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::connection($conn)->create('product_bundle_items', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('bundle_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('uom_id')->default(1);
+            $table->decimal('quantity', 12, 4)->default(1);
+            $table->decimal('quantity_in_base_uom', 12, 4)->default(1);
+            $table->timestamps();
         });
 
         Schema::connection($conn)->create('tenant_configurations', function (Blueprint $table) {

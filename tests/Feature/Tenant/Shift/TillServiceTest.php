@@ -312,6 +312,39 @@ class TillServiceTest extends TestCase
         $this->assertTrue($this->clockOutValidator($counted, ['closing_cash' => 5000], cashier: true)->fails());
     }
 
+    public function test_a_manager_can_reopen_a_till_closed_by_mistake_today(): void
+    {
+        $session = $this->makeService()->open(1, 1, 1000.0)['assignment'];
+        $session->update(['status' => ShiftStatus::COMPLETED, 'closing_cash' => 1000, 'cash_banked' => 500, 'actual_end' => now()]);
+
+        $reopened = $this->makeService()->reopen($session->fresh(), 'Amina');
+
+        $this->assertSame(ShiftStatus::IN_PROGRESS, $reopened->status);
+        $this->assertNull($reopened->closing_cash);
+        $this->assertNull($reopened->cash_banked);
+        $this->assertNull($reopened->actual_end);
+        $this->assertStringContainsString('Reopened by Amina', $reopened->notes);
+        $this->assertEquals(1000.0, (float) $reopened->opening_cash, 'the float stays');
+    }
+
+    public function test_reopen_is_refused_once_a_newer_till_is_open_or_for_another_day(): void
+    {
+        $first = $this->makeService()->open(1, 1, 1000.0)['assignment'];
+        $first->update(['status' => ShiftStatus::COMPLETED, 'closing_cash' => 1000, 'actual_end' => now()]);
+        $this->makeService()->sessionForSale(1, 1);
+
+        try {
+            $this->makeService()->reopen($first->fresh(), 'Amina');
+            $this->fail('Expected refusal while a newer till is open');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('new till', $e->errors()['status'][0]);
+        }
+
+        Carbon::setTestNow('2026-10-09 11:30:00');
+        $this->expectException(ValidationException::class);
+        $this->makeService()->reopen($first->fresh(), 'Amina');
+    }
+
     public function test_route_is_registered_for_any_signed_in_user(): void
     {
         $route = collect(RouteFacade::getRoutes())->first(
