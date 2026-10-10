@@ -8,6 +8,7 @@ use App\Events\Tenant\ShiftEnded;
 use App\Events\Tenant\ShiftStarted;
 use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
+use App\Services\Tenant\Shift\TillService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,10 @@ class ShiftAssignmentObserver
      */
     public function creating(ShiftAssignment $assignment): void
     {
+        if ($this->isTillSession($assignment)) {
+            return;
+        }
+
         // Validate no overlapping shifts for the user on same day
         if (config('shift.prevent_overlapping_shifts', true)) {
             $this->validateNoOverlappingShifts($assignment);
@@ -121,6 +126,17 @@ class ShiftAssignmentObserver
     }
 
     /**
+     * Automatic till sessions aren't rostered shifts: a person may have
+     * several a day, at different branches. Rostering rules don't apply.
+     */
+    protected function isTillSession(ShiftAssignment $assignment): bool
+    {
+        $shift = $assignment->shift ?? Shift::find($assignment->shift_id);
+
+        return $shift?->shift_name === TillService::TILL_SHIFT_NAME;
+    }
+
+    /**
      * Validate no overlapping shifts for same user
      */
     protected function validateNoOverlappingShifts(ShiftAssignment $assignment): void
@@ -143,6 +159,7 @@ class ShiftAssignmentObserver
                 return $query->where('id', '!=', $id);
             })
             ->whereNotIn('status', ['cancelled', 'no_show'])
+            ->whereHas('shift', fn ($query) => $query->where('shift_name', '!=', TillService::TILL_SHIFT_NAME))
             ->with('shift')
             ->first();
 
@@ -201,6 +218,7 @@ class ShiftAssignmentObserver
                 return $query->where('id', '!=', $id);
             })
             ->whereNotIn('status', ['cancelled', 'no_show'])
+            ->whereHas('shift', fn ($query) => $query->where('shift_name', '!=', TillService::TILL_SHIFT_NAME))
             ->exists();
 
         if ($existingDifferentStore) {

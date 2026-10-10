@@ -47,6 +47,11 @@ class ShiftAssignmentResource extends JsonResource
 
             // Cash Handling
             'opening_cash' => $this->when($this->opening_cash !== null, $this->opening_cash),
+            'opening_cash_source' => $this->opening_cash_source,
+            'float_known' => $this->opening_cash_source === null ? $this->opening_cash !== null : $this->is_float_known,
+            'cash_banked' => $this->when($this->cash_banked !== null, $this->cash_banked),
+            'started_automatically' => (bool) $this->started_automatically,
+            'closed_automatically' => (bool) $this->closed_automatically,
             'closing_cash' => $this->when($this->closing_cash !== null, $this->closing_cash),
             'cash_variance' => $this->when($this->cash_variance !== null, $this->cash_variance),
             'has_significant_cash_variance' => $this->has_significant_cash_variance,

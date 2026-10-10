@@ -4,6 +4,7 @@ namespace App\Http\Requests\Tenant\Shift;
 
 use App\Enums\Tenant\ShiftStatus;
 use App\Services\Tenant\Sales\ShiftSalesSummaryService;
+use App\Services\Tenant\Shift\TillService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClockOutRequest extends FormRequest
@@ -21,11 +22,26 @@ class ClockOutRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      */
+    /**
+     * Staff must count when the shop says so; owners and managers may skip.
+     */
+    protected function countRequired(): bool
+    {
+        return app(TillService::class)->cashCountRequired()
+            && ! $this->user()?->hasAnyRole(['owner', 'manager', 'admin']);
+    }
+
     public function rules(): array
     {
         return [
             'closing_cash' => [
-                'required',
+                $this->countRequired() ? 'required' : 'nullable',
+                'numeric',
+                'min:0',
+                'max:9999999.99',
+            ],
+            'cash_banked' => [
+                'nullable',
                 'numeric',
                 'min:0',
                 'max:9999999.99',
@@ -54,7 +70,9 @@ class ClockOutRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'closing_cash.required' => 'Closing cash amount is required.',
+            'closing_cash.required' => 'This shop asks staff to count the cash before closing the till.',
+            'cash_banked.numeric' => 'Cash banked must be a valid number.',
+            'cash_banked.min' => 'Cash banked cannot be negative.',
             'closing_cash.numeric' => 'Closing cash must be a valid number.',
             'closing_cash.min' => 'Closing cash cannot be negative.',
             'closing_cash.max' => 'Closing cash amount is too large.',
@@ -80,16 +98,24 @@ class ClockOutRequest extends FormRequest
                 );
             }
 
-            // Validate opening cash exists
-            if ($assignment->opening_cash === null) {
+            // Rostered shifts must have recorded a float; automatic till
+            // sessions may start with the float not counted yet.
+            if ($assignment->opening_cash === null && $assignment->opening_cash_source === null) {
                 $validator->errors()->add(
                     'opening_cash',
                     'Opening cash was not recorded. Cannot complete clock-out.'
                 );
             }
 
-            // ✅ FIXED: Calculate variance against EXPECTED cash (including sales)
-            if ($this->closing_cash !== null && $assignment->opening_cash !== null) {
+            if ($this->closing_cash !== null && $this->cash_banked !== null && (float) $this->cash_banked > (float) $this->closing_cash) {
+                $validator->errors()->add(
+                    'cash_banked',
+                    'You can\'t bank or take home more than you counted.'
+                );
+            }
+
+            // Variance is only meaningful when the float is known.
+            if ($this->closing_cash !== null && $assignment->is_float_known) {
                 $expectedCash = app(ShiftSalesSummaryService::class)->calculateExpectedCash($assignment);
 
                 // Calculate variance against expected

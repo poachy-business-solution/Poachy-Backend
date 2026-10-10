@@ -319,10 +319,11 @@ class ShiftAssignmentService
      */
     public function clockOut(
         ShiftAssignment $assignment,
-        float $closingCash,
+        ?float $closingCash,
         ?string $notes = null,
         ?string $issuesReported = null,
-        ?string $cashVarianceReason = null
+        ?string $cashVarianceReason = null,
+        ?float $cashBanked = null
     ): ShiftAssignment {
         try {
             DB::beginTransaction();
@@ -331,6 +332,7 @@ class ShiftAssignmentService
                 'status' => ShiftStatus::COMPLETED,
                 'actual_end' => now(),
                 'closing_cash' => $closingCash,
+                'cash_banked' => $cashBanked,
             ];
 
             if ($notes) {

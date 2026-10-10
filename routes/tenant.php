@@ -632,6 +632,10 @@ Route::prefix('v1/tenant')
             Route::get('/{assignment}/clock-out-info', [ShiftAssignmentController::class, 'getClockOutInfo']);
         });
         Route::post('/tills/open', [TillController::class, 'open']); // Open own till without a rostered shift
+        Route::get('/tills/current', [TillController::class, 'current']);
+        Route::get('/tills/history', [TillController::class, 'history']);
+        Route::get('/tills/settings', [TillController::class, 'settings']);
+        Route::put('/tills/settings', [TillController::class, 'updateSettings']);
         Route::get('/users/{userId}/shift-assignments', [ShiftAssignmentController::class, 'userAssignments']);
         Route::get('/stores/{storeId}/shift-assignments', [ShiftAssignmentController::class, 'storeAssignments'])
             ->middleware(['role:owner|manager|admin,tenant']);

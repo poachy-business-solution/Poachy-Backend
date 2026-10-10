@@ -78,9 +78,33 @@ class StoreShiftAssignmentRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $this->validateShiftApplicability($validator);
+            $this->validateNotAlreadyAssigned($validator);
             $this->validateNoOverlappingShifts($validator);
             $this->validateNoMultiStoreAssignments($validator);
         });
+    }
+
+    /**
+     * The same shift can't be rostered twice for one person on one day. (The
+     * database no longer enforces this because automatic till sessions may
+     * run several times a day.)
+     */
+    protected function validateNotAlreadyAssigned($validator): void
+    {
+        if (! $this->user_id || ! $this->shift_id || ! $this->shift_date) {
+            return;
+        }
+
+        $alreadyAssigned = ShiftAssignment::query()
+            ->where('user_id', $this->user_id)
+            ->where('shift_id', $this->shift_id)
+            ->whereDate('shift_date', Carbon::parse($this->shift_date))
+            ->whereNotIn('status', ['cancelled', 'no_show'])
+            ->exists();
+
+        if ($alreadyAssigned) {
+            $validator->errors()->add('shift_id', 'This person already has this shift on that day.');
+        }
     }
 
     /**
