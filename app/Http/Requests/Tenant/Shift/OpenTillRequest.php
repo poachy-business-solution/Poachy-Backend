@@ -28,7 +28,7 @@ class OpenTillRequest extends FormRequest
                 'exists:stores,id',
             ],
             'opening_cash' => [
-                'required',
+                'nullable',
                 'numeric',
                 'min:0',
             ],
@@ -50,7 +50,6 @@ class OpenTillRequest extends FormRequest
         return [
             'store_id.required' => 'Choose the store you are selling from.',
             'store_id.exists' => 'Selected store does not exist.',
-            'opening_cash.required' => 'Count the cash in the drawer and enter the float.',
             'opening_cash.numeric' => 'Opening cash must be a valid number.',
             'opening_cash.min' => 'Opening cash cannot be negative.',
             'notes.max' => 'Notes cannot exceed 1000 characters.',

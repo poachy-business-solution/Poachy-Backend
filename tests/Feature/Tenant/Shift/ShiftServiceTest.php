@@ -372,6 +372,10 @@ class ShiftServiceTest extends TestCase
             $table->string('status')->default('scheduled');
             $table->decimal('opening_cash', 15, 2)->nullable();
             $table->decimal('closing_cash', 15, 2)->nullable();
+            $table->decimal('cash_banked', 15, 2)->nullable();
+            $table->string('opening_cash_source', 20)->nullable();
+            $table->boolean('started_automatically')->default(false);
+            $table->boolean('closed_automatically')->default(false);
             $table->string('cash_variance_reason')->nullable();
             $table->text('notes')->nullable();
             $table->text('issues_reported')->nullable();

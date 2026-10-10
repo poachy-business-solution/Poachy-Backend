@@ -29,6 +29,13 @@ Schedule::command('shifts:auto-mark-noshow')
     ->onOneServer()
     ->description('Auto-mark overdue shifts as no-show');
 
+// Automatic tills: close sessions left open past the shop's local midnight
+Schedule::command('tills:auto-close')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Close till sessions left open overnight');
+
 // Stock Level Checks - Daily at 2 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs

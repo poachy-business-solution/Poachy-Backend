@@ -29,7 +29,11 @@ class ShiftAssignment extends Model
         'actual_duration_minutes',
         'status',
         'opening_cash',
+        'opening_cash_source',
         'closing_cash',
+        'cash_banked',
+        'started_automatically',
+        'closed_automatically',
         'cash_variance_reason',
         'notes',
         'issues_reported',
@@ -45,12 +49,27 @@ class ShiftAssignment extends Model
         'status' => ShiftStatus::class,
         'opening_cash' => 'decimal:2',
         'closing_cash' => 'decimal:2',
+        'cash_banked' => 'decimal:2',
+        'started_automatically' => 'boolean',
+        'closed_automatically' => 'boolean',
         'approved_at' => 'datetime',
     ];
 
     protected $attributes = [
         'status' => 'scheduled',
     ];
+
+    /** Float typed in when the till was opened. */
+    public const FLOAT_COUNTED = 'counted';
+
+    /** Float carried from the last counted close (counted − banked). */
+    public const FLOAT_CARRIED_FORWARD = 'carried_forward';
+
+    /** Float carried from a close nobody counted — an estimate. */
+    public const FLOAT_ESTIMATED = 'estimated';
+
+    /** No count has ever been made: the float is unknown (never a fake 0). */
+    public const FLOAT_NOT_COUNTED = 'not_counted';
 
     /**
      * Boot method for auto-calculations
@@ -264,7 +283,7 @@ class ShiftAssignment extends Model
 
     public function getCashVarianceAttribute(): ?float
     {
-        if ($this->closing_cash === null) {
+        if ($this->closing_cash === null || ! $this->is_float_known) {
             return null;
         }
 
@@ -321,6 +340,16 @@ class ShiftAssignment extends Model
         return round($this->actual_duration_minutes / 60, 2);
     }
 
+    /**
+     * Whether the opening float is a real figure. Unknown floats leave the
+     * expected drawer as "sales cash only" and the variance blank, until the
+     * first count establishes it.
+     */
+    public function getIsFloatKnownAttribute(): bool
+    {
+        return $this->opening_cash !== null && $this->opening_cash_source !== self::FLOAT_NOT_COUNTED;
+    }
+
     public function getIsApprovedAttribute(): bool
     {
         return $this->approved_by !== null;
@@ -331,7 +360,7 @@ class ShiftAssignment extends Model
      */
     public function getExpectedCashAttribute(): ?float
     {
-        if ($this->opening_cash === null) {
+        if ($this->opening_cash === null && $this->opening_cash_source !== self::FLOAT_NOT_COUNTED) {
             return null;
         }
 

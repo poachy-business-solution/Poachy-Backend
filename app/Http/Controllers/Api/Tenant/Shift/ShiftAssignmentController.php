@@ -15,6 +15,7 @@ use App\Models\Tenant\Shift;
 use App\Models\Tenant\ShiftAssignment;
 use App\Services\Tenant\Sales\ShiftSalesSummaryService;
 use App\Services\Tenant\Shift\ShiftAssignmentService;
+use App\Services\Tenant\Shift\TillService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -1253,10 +1254,11 @@ class ShiftAssignmentController extends Controller
     {
         $assignment = $this->assignmentService->clockOut(
             $assignment,
-            $request->input('closing_cash'),
+            $request->filled('closing_cash') ? (float) $request->input('closing_cash') : null,
             $request->input('notes'),
             $request->input('issues_reported'),
-            $request->input('cash_variance_reason')
+            $request->input('cash_variance_reason'),
+            $request->filled('cash_banked') ? (float) $request->input('cash_banked') : null,
         );
 
         return ApiResponse::success(
@@ -2459,8 +2461,12 @@ class ShiftAssignmentController extends Controller
 
             'cash_tracking' => [
                 'opening_cash' => (float) $assignment->opening_cash,
+                'opening_cash_source' => $assignment->opening_cash_source,
+                'float_known' => $assignment->is_float_known || $assignment->opening_cash_source === null,
                 'expected_cash' => $expectedCash,
                 'variance_threshold' => config('shift.cash_variance_threshold', 100),
+                'count_required' => app(TillService::class)->cashCountRequired()
+                    && ! request()->user()?->hasAnyRole(['owner', 'manager', 'admin']),
             ],
 
             'sales_summary' => $summary ? [

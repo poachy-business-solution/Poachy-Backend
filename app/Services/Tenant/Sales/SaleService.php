@@ -4,7 +4,6 @@ namespace App\Services\Tenant\Sales;
 
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\PaymentStatus;
-use App\Enums\Tenant\ShiftStatus;
 use App\Events\Tenant\SaleCompleted;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
@@ -25,6 +24,7 @@ use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductSerialService;
+use App\Services\Tenant\Shift\TillService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -60,31 +60,27 @@ class SaleService
     }
 
     /**
-     * Get active shift assignment for a user at a specific store
+     * The till session a sale attaches to — started automatically if the
+     * seller has none open. Selling is never blocked on the till: if a session
+     * can't be started the sale is recorded without one.
      */
-    /**
-     * The till a sale rung at [$soldAt] belongs to: the user's till at the
-     * store that was open at that moment, even if it has closed since. Used
-     * for offline sales that sync after the fact.
-     */
-    public function getShiftForUserAt(int $userId, int $storeId, Carbon $soldAt): ?ShiftAssignment
+    public function tillSessionForSale(?int $userId, int $storeId, ?Carbon $soldAt): ?ShiftAssignment
     {
-        return ShiftAssignment::where('user_id', $userId)
-            ->where('store_id', $storeId)
-            ->whereIn('status', [ShiftStatus::IN_PROGRESS, ShiftStatus::COMPLETED])
-            ->where('actual_start', '<=', $soldAt)
-            ->where(fn ($query) => $query->whereNull('actual_end')->orWhere('actual_end', '>=', $soldAt))
-            ->orderByDesc('actual_start')
-            ->first();
-    }
+        if ($userId === null) {
+            return null;
+        }
 
-    public function getActiveShiftForUser(int $userId, int $storeId): ?ShiftAssignment
-    {
-        return ShiftAssignment::where('user_id', $userId)
-            ->where('store_id', $storeId)
-            ->where('status', ShiftStatus::IN_PROGRESS)
-            ->whereDate('shift_date', today())
-            ->first();
+        try {
+            return app(TillService::class)->sessionForSale($userId, $storeId, $soldAt);
+        } catch (\Throwable $e) {
+            Log::warning('Could not attach sale to a till session', [
+                'user_id' => $userId,
+                'store_id' => $storeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**
@@ -184,9 +180,7 @@ class SaleService
             // device clock that runs ahead of ours.
             $soldAt = isset($data['sold_at']) ? Carbon::parse($data['sold_at'])->min(now()) : null;
 
-            $activeShift = $soldAt
-                ? $this->getShiftForUserAt(Auth::id(), $data['store_id'], $soldAt)
-                : $this->getActiveShiftForUser(Auth::id(), $data['store_id']);
+            $activeShift = $this->tillSessionForSale(Auth::id(), (int) $data['store_id'], $soldAt);
 
             $actualLoyaltyPointsEarned = 0;
             if ($this->loyaltyService->isEnabled() && $customerId) {
