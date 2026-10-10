@@ -54,6 +54,8 @@ class StockReportServiceTest extends TestCase
         $this->assertSame('dead', $items[3]['status'], 'last sold in August');
         $this->assertEquals(1500.0, $items[3]['stock_value']);
         $this->assertSame('ok', $items[1]['status']);
+        $this->assertEquals(0.0, $items[1]['selling_price']);
+        $this->assertArrayHasKey('uuid', $items[1]);
         $this->assertEquals(20.0, $items[1]['days_left'], '40 on hand, 60 sold in 30 days');
         $this->assertSame(['products' => 4, 'out' => 1, 'low' => 1, 'dead' => 1, 'dead_stock_value' => 1500.0], array_intersect_key($report['summary'], array_flip(['products', 'out', 'low', 'dead', 'dead_stock_value'])));
         $this->assertSame([4, 2, 3, 1], array_column($report['items'], 'product_id'), 'out, low, dead, ok');

@@ -70,6 +70,7 @@ trait CreatesReportTables
         });
         $s->create('products', function (Blueprint $t) {
             $t->id();
+            $t->string('uuid')->nullable();
             $t->string('name');
             $t->unsignedBigInteger('category_id')->nullable();
             $t->decimal('base_selling_price', 15, 2)->default(0);
