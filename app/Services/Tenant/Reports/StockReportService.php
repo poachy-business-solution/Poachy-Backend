@@ -81,7 +81,7 @@ class StockReportService
 
         $products = Product::query()
             ->whereIn('id', $inventory->keys())
-            ->get(['id', 'uuid', 'name', 'reorder_level', 'requires_serial_tracking', 'base_selling_price'])
+            ->get(['id', 'uuid', 'name', 'reorder_level', 'requires_serial_tracking', 'requires_batch_tracking', 'base_selling_price', 'base_uom_id'])
             ->keyBy('id');
 
         $storeProducts = StoreProduct::query()
@@ -121,6 +121,8 @@ class StockReportService
             return [
                 'product_id' => (int) $productId,
                 'uuid' => $product?->uuid,
+                'base_uom_id' => $product?->base_uom_id,
+                'tracking' => $product?->requires_serial_tracking ? 'serial' : ($product?->requires_batch_tracking ? 'batch' : 'none'),
                 'name' => $product?->name ?? 'Unknown',
                 'selling_price' => round((float) ($storeProducts[$productId]->store_selling_price ?? $product?->base_selling_price ?? 0), 2),
                 'on_hand' => round($onHand, 4),

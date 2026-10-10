@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Product;
 
+use App\Enums\Tenant\SupplierType;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\StoreProduct;
@@ -14,6 +15,8 @@ use RuntimeException;
 
 class ProductStockReceivingService
 {
+    public const MARKET_SUPPLIER_NAME = 'Market (no supplier named)';
+
     public function __construct(
         private readonly PurchaseOrderService $purchaseOrderService,
         private readonly ProductBatchService $batchService,
@@ -34,9 +37,12 @@ class ProductStockReceivingService
         return DB::transaction(function () use ($product, $data) {
             $supplierId = $data['supplier_id'] ?? $product->supplier_id;
 
-            if (! $supplierId || ! Supplier::whereKey($supplierId)->exists()) {
-                throw new RuntimeException('Supplier is required to receive stock for this product.');
+            if ($supplierId && ! Supplier::whereKey($supplierId)->exists()) {
+                throw new RuntimeException('That supplier does not exist.');
             }
+
+            // Small shops often buy at the market with no named supplier.
+            $supplierId ??= $this->marketSupplier()->id;
 
             if ($product->requiresSerialTracking() && count($data['serial_numbers'] ?? []) !== (int) $data['quantity']) {
                 throw new RuntimeException('Serial number count must match quantity for serial-tracked products.');
@@ -92,5 +98,17 @@ class ProductStockReceivingService
                 'purchase_order' => $receipt['purchase_order'],
             ];
         });
+    }
+
+    /**
+     * Stands in for "bought at the market" when stock arrives with no named
+     * supplier, so the purchase record (and the stock's cost) still exists.
+     */
+    protected function marketSupplier(): Supplier
+    {
+        return Supplier::query()->firstOrCreate(
+            ['name' => self::MARKET_SUPPLIER_NAME],
+            ['supplier_type' => SupplierType::WHOLESALER->value, 'is_active' => true, 'notes' => 'Stock received without a named supplier.'],
+        );
     }
 }
