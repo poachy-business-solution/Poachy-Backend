@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\Tenant\Product\ProductScaleBarcodeFormatController;
 use App\Http\Controllers\Api\Tenant\Product\ProductUomController;
 use App\Http\Controllers\Api\Tenant\Product\ProductVariantController;
 use App\Http\Controllers\Api\Tenant\Reports\OwnerOverviewController;
+use App\Http\Controllers\Api\Tenant\Reports\ReportsController;
 use App\Http\Controllers\Api\Tenant\Reviews\ReviewController;
 use App\Http\Controllers\Api\Tenant\Sales\DailySalesReportController;
 use App\Http\Controllers\Api\Tenant\Sales\MarketplaceSaleController;
@@ -826,6 +827,9 @@ Route::prefix('v1/tenant')
             ->middleware(['permission:view-financial-reports,tenant']);
         Route::get('reports/owner-overview', [OwnerOverviewController::class, 'show'])
             ->middleware(['permission:view-financial-reports,tenant']);
+        Route::prefix('reports')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
+            Route::get('/staff', [ReportsController::class, 'staff']);
+        });
 
         Route::prefix('reports/daily-sales')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [DailySalesReportController::class, 'index']);

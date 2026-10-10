@@ -103,7 +103,7 @@ trait CreatesReportTables
             $t->unsignedBigInteger('store_id');
             $t->unsignedBigInteger('shift_assignment_id')->nullable();
             $t->unsignedBigInteger('customer_id')->nullable();
-            $t->unsignedBigInteger('created_by')->nullable();
+            $t->unsignedBigInteger('served_by')->nullable();
             $t->dateTime('sale_date');
             $t->decimal('subtotal', 15, 2);
             $t->decimal('tax_amount', 15, 2)->default(0);
