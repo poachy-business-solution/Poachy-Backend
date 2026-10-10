@@ -829,6 +829,8 @@ Route::prefix('v1/tenant')
             ->middleware(['permission:view-financial-reports,tenant']);
         Route::prefix('reports')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/staff', [ReportsController::class, 'staff']);
+            Route::get('/sales-by-hour', [ReportsController::class, 'salesByHour']);
+            Route::get('/stock', [ReportsController::class, 'stock']);
         });
 
         Route::prefix('reports/daily-sales')->middleware(['permission:view-financial-reports,tenant'])->group(function () {

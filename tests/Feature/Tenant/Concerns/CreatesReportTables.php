@@ -262,6 +262,7 @@ trait CreatesReportTables
             $t->integer('min_stock_level')->default(0);
             $t->boolean('is_available')->default(true);
             $t->timestamps();
+            $t->softDeletes();
         });
         $s->create('inventory', function (Blueprint $t) {
             $t->id();
@@ -272,6 +273,7 @@ trait CreatesReportTables
             $t->decimal('quantity_reserved', 15, 4)->default(0);
             $t->decimal('quantity_available', 15, 4)->default(0);
             $t->timestamps();
+            $t->softDeletes();
         });
         $s->create('inventory_movements', function (Blueprint $t) {
             $t->id();
