@@ -77,6 +77,8 @@ trait CreatesReportTables
             $t->integer('reorder_level')->default(0);
             $t->boolean('is_active')->default(true);
             $t->boolean('requires_serial_tracking')->default(false);
+            $t->boolean('requires_batch_tracking')->default(false);
+            $t->unsignedBigInteger('base_uom_id')->default(1);
             $t->timestamps();
             $t->softDeletes();
         });
