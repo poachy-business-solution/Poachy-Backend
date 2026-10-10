@@ -149,6 +149,10 @@ class TillService
             return ['amount' => null, 'source' => ShiftAssignment::FLOAT_NOT_COUNTED];
         }
 
+        if ($this->floatAlreadyTaken($storeId, $last)) {
+            return ['amount' => 0.0, 'source' => ShiftAssignment::FLOAT_CARRIED_FORWARD];
+        }
+
         $banked = (float) ($last->cash_banked ?? 0);
 
         if ($last->closing_cash !== null) {
@@ -166,6 +170,22 @@ class TillService
         }
 
         return ['amount' => null, 'source' => ShiftAssignment::FLOAT_NOT_COUNTED];
+    }
+
+    /**
+     * Whether a session still open at the branch started after the last close
+     * and so already holds that close's float: the same cash can't open two
+     * tills.
+     */
+    protected function floatAlreadyTaken(int $storeId, ShiftAssignment $lastClose): bool
+    {
+        return ShiftAssignment::query()
+            ->where('store_id', $storeId)
+            ->where('status', ShiftStatus::IN_PROGRESS)
+            ->where('id', '!=', $lastClose->id)
+            ->where(fn ($query) => $query->whereNull('actual_start')->orWhere('actual_start', '>=', $lastClose->actual_end))
+            ->whereNotNull('opening_cash')
+            ->exists();
     }
 
     /**

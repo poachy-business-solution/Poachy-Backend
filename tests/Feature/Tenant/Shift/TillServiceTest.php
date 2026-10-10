@@ -196,6 +196,26 @@ class TillServiceTest extends TestCase
         $this->assertTrue($next->is_float_known);
     }
 
+    public function test_a_second_till_open_at_the_same_time_does_not_take_the_float_again(): void
+    {
+        DB::connection('tenant')->table('users')->insert([
+            ['id' => 2, 'name' => 'Cashier Two', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'Owner', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $morning = $this->makeService()->open(1, 1, 2000.0)['assignment'];
+        $morning->update(['status' => ShiftStatus::COMPLETED, 'closing_cash' => 3000, 'actual_end' => now()]);
+
+        Carbon::setTestNow('2026-10-08 12:00:00');
+        $cashier = $this->makeService()->sessionForSale(2, 1);
+        Carbon::setTestNow('2026-10-08 12:30:00');
+        $owner = $this->makeService()->sessionForSale(3, 1);
+
+        $this->assertEquals(3000.0, (float) $cashier->opening_cash);
+        $this->assertEquals(0.0, (float) $owner->opening_cash);
+        $this->assertSame(ShiftAssignment::FLOAT_CARRIED_FORWARD, $owner->opening_cash_source);
+        $this->assertTrue($owner->is_float_known);
+    }
+
     public function test_an_uncounted_close_carries_its_expected_cash_as_an_estimate(): void
     {
         $morning = $this->makeService()->open(1, 1, 1000.0)['assignment'];
