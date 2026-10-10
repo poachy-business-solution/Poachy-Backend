@@ -106,7 +106,8 @@ class StockReportService
             $sold = (float) ($soldLast30[$productId] ?? 0);
             $perDay = $sold / 30;
             $daysLeft = $perDay > 0 ? round(max(0, $onHand) / $perDay, 1) : null;
-            $reorderAt = (float) ($minLevels[$productId] ?? $product?->reorder_level ?? 0);
+            $branchMinimum = (float) ($minLevels[$productId] ?? 0);
+            $reorderAt = $branchMinimum > 0 ? $branchMinimum : (float) ($product?->reorder_level ?? 0);
             $lastSold = $lastSoldAt[$productId] ?? null;
             $unitCost = $product ? $this->costs->unitCost($product, $storeId) : null;
 

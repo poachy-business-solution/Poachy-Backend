@@ -61,6 +61,20 @@ class StockReportServiceTest extends TestCase
         $this->assertSame([4, 2, 3, 1], array_column($report['items'], 'product_id'), 'out, low, dead, ok');
     }
 
+    public function test_a_branch_minimum_of_zero_falls_back_to_the_products_reorder_level(): void
+    {
+        DB::connection('tenant')->table('store_products')->insert([
+            ['store_id' => 1, 'product_id' => 2, 'min_stock_level' => 0],
+            ['store_id' => 1, 'product_id' => 3, 'min_stock_level' => 20],
+        ]);
+
+        $items = collect(app(StockReportService::class)->stockHealth(1)['items'])->keyBy('product_id');
+
+        $this->assertEquals(2.0, $items[2]['reorder_level']);
+        $this->assertEquals(20.0, $items[3]['reorder_level']);
+        $this->assertSame('low', $items[3]['status']);
+    }
+
     public function test_under_a_week_left_counts_as_low(): void
     {
         $this->reportSale('2026-10-05 08:00:00', [['product_id' => 1, 'quantity' => 300, 'unit_price' => 250, 'unit_cost' => 200]]);
