@@ -115,6 +115,15 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Self sign-up: per network and per phone (one shop per phone; stop SMS pumping).
+        // Private admin API: per acting admin (the network allowlist is checked first).
+        RateLimiter::for('internal-admin', function (Request $request) {
+            return Limit::perMinute(120)->by('internal-admin:'.$request->header('X-Admin-Id', $request->ip()));
+        });
+
+        RateLimiter::for('internal-admin-money', function (Request $request) {
+            return Limit::perMinute(20)->by('internal-admin-money:'.$request->header('X-Admin-Id', $request->ip()));
+        });
+
         RateLimiter::for('signup-start', function (Request $request) {
             return [
                 Limit::perMinute(5)->by('signup-ip:'.$request->ip()),

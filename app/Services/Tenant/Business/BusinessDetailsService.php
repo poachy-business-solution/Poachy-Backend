@@ -381,16 +381,16 @@ class BusinessDetailsService
                 return;
             }
 
-            // Initialize tenancy to query tenant database
+            // Initialize tenancy to query tenant database (always ended, even on failure)
             tenancy()->initialize($tenant);
 
-            // Get owner user from tenant database
-            $owner = TenantUser::whereHas('roles', function ($query) {
-                $query->where('name', 'owner');
-            })->first();
-
-            // End tenancy context
-            tenancy()->end();
+            try {
+                $owner = TenantUser::whereHas('roles', function ($query) {
+                    $query->where('name', 'owner');
+                })->first();
+            } finally {
+                tenancy()->end();
+            }
 
             if (! $owner) {
                 Log::warning('Owner not found for approved business', [
@@ -466,16 +466,16 @@ class BusinessDetailsService
                 return;
             }
 
-            // Initialize tenancy to query tenant database
+            // Initialize tenancy to query tenant database (always ended, even on failure)
             tenancy()->initialize($tenant);
 
-            // Get owner user from tenant database
-            $owner = TenantUser::whereHas('roles', function ($query) {
-                $query->where('name', 'owner');
-            })->first();
-
-            // End tenancy context
-            tenancy()->end();
+            try {
+                $owner = TenantUser::whereHas('roles', function ($query) {
+                    $query->where('name', 'owner');
+                })->first();
+            } finally {
+                tenancy()->end();
+            }
 
             if (! $owner) {
                 Log::warning('Owner not found for approved business', [

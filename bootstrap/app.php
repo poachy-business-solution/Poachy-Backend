@@ -4,6 +4,7 @@ use App\Exceptions\ExceptionHandler;
 use App\Http\Middleware\AddRequestId;
 use App\Http\Middleware\CheckTenantAccess;
 use App\Http\Middleware\EnforceBillingLimits;
+use App\Http\Middleware\InternalAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,6 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api')
                 ->middleware('api')
                 ->group(base_path('routes/central.php'));
+
+            // Private admin API for the poachy-admin server (never on the public load balancer).
+            Route::prefix('api/internal/admin')
+                ->middleware('api')
+                ->group(base_path('routes/internal.php'));
 
             // Register tenant routes with tenancy middleware
             Route::prefix('api')
@@ -50,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'tenant.access' => CheckTenantAccess::class,
             'billing.limits' => EnforceBillingLimits::class,
+            'internal.admin' => InternalAdmin::class,
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {

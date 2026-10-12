@@ -53,6 +53,52 @@ class SignupService
         return $signup->fresh();
     }
 
+    /**
+     * A shop opened by Poachy staff: same checks and provisioning as self sign-up, but phone and
+     * email are taken as checked by staff and the owner gets a temporary password by email
+     * (the app asks them to choose their own on first sign-in).
+     *
+     * @param  array{shop_name: string, owner_name: string, phone: string, email: string, town: string, workspace: string, branches?: int, business_category_id?: int|null}  $details
+     */
+    public function startByAdmin(array $details, string $adminId): SignupRequest
+    {
+        $phone = PhoneNumber::normalize($details['phone']);
+        $email = Str::lower(trim($details['email']));
+        $this->ensureNoExistingShop($phone, $email);
+
+        $check = $this->workspaceAvailability($details['workspace']);
+        if (! $check['available']) {
+            throw ValidationException::withMessages(['workspace' => [$check['reason']]]);
+        }
+
+        $signup = DB::connection('central')->transaction(function () use ($details, $phone, $email, $check, $adminId) {
+            $busy = SignupRequest::query()->where('workspace', $check['name'])
+                ->whereIn('status', [SignupRequest::PROVISIONING, SignupRequest::READY])->lockForUpdate()->exists();
+            if ($busy) {
+                throw ValidationException::withMessages(['workspace' => ['That name is taken.']]);
+            }
+
+            return SignupRequest::query()->create([
+                'shop_name' => trim($details['shop_name']),
+                'owner_name' => trim($details['owner_name']),
+                'phone' => $phone,
+                'email' => $email,
+                'town' => trim($details['town']),
+                'branches' => (int) ($details['branches'] ?? 1),
+                'business_category_id' => $details['business_category_id'] ?? null,
+                'workspace' => $check['name'],
+                'status' => SignupRequest::PROVISIONING,
+                'source' => SignupRequest::SOURCE_ADMIN,
+                'created_by_admin' => $adminId,
+                'expires_at' => now()->addDay(),
+            ]);
+        });
+
+        ProvisionSignupJob::dispatch($signup->id);
+
+        return $signup->fresh();
+    }
+
     /** Send fresh codes (also used for "resend"). */
     public function sendCodes(SignupRequest $signup): void
     {

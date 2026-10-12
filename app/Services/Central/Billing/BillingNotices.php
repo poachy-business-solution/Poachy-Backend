@@ -98,7 +98,7 @@ class BillingNotices
     }
 
     /** The welcome email for a newly opened shop. */
-    public function welcome(Tenant $tenant, string $email, string $ownerName, string $workspace): void
+    public function welcome(Tenant $tenant, string $email, string $ownerName, string $workspace, bool $byAdmin = false): void
     {
         $account = BillingAccount::query()->where('tenant_id', $tenant->id)->first();
         $trialEnds = $account?->trial_ends_at === null ? null : CarbonImmutable::parse($account->trial_ends_at)->setTimezone('Africa/Nairobi');
@@ -108,6 +108,7 @@ class BillingNotices
         $this->messenger->email($email, new BillingNoticeMail('welcome', $shop, $poa, null, [
             'ownerName' => $ownerName,
             'workspace' => $workspace,
+            'byAdmin' => $byAdmin,
             'trialEndsOn' => $trialEnds?->format('j F Y') ?? '—',
             'dayPrice' => (float) ($price?->first_branch_day ?? 100),
             'monthCap' => (float) ($price?->first_branch_cap ?? 2500),

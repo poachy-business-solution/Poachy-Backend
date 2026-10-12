@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Central;
 
+use App\Mail\Central\Signup\TemporaryPasswordMail;
 use App\Models\BusinessCategory;
 use App\Models\BusinessDetail;
 use App\Models\SignupRequest;
@@ -11,11 +12,13 @@ use App\Models\Tenant\User;
 use App\Services\Central\Admin\Tenant\TenantService;
 use App\Services\Central\Billing\BillingNotices;
 use App\Services\Central\Signup\SignupService;
+use App\Services\Shared\Messaging\Messenger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -72,15 +75,22 @@ class ProvisionSignupJob implements ShouldQueue
                 'onboarded_at' => now(),
             ]);
 
-            $tenant->run(function () use ($signup) {
+            // Shops opened by staff: a one-time temporary password, emailed to the owner and never
+            // stored in plain text; the app makes them choose their own on first sign-in.
+            $byAdmin = $signup->source === SignupRequest::SOURCE_ADMIN;
+            $temporaryPassword = $byAdmin ? Str::password(14, symbols: false) : null;
+
+            $tenant->run(function () use ($signup, $temporaryPassword) {
                 $owner = User::query()->create([
                     'name' => $signup->owner_name,
                     'email' => $signup->email,
                     'phone' => '+'.$signup->phone,
-                    'password' => $signup->password_hash, // already hashed; the cast does not re-hash
+                    'password' => $temporaryPassword ?? $signup->password_hash, // a hash is not re-hashed by the cast
                     'is_active' => true,
                 ]);
-                $owner->forceFill(['password_chosen_at' => now()])->save();
+                if ($temporaryPassword === null) {
+                    $owner->forceFill(['password_chosen_at' => now()])->save();
+                }
                 $owner->assignRole('owner');
 
                 Store::query()->create([
@@ -96,7 +106,7 @@ class ProvisionSignupJob implements ShouldQueue
 
             $signup->forceFill(['status' => SignupRequest::READY, 'tenant_id' => $tenant->id, 'password_hash' => null])->save();
 
-            $this->welcome($signup, $tenant->fresh());
+            $this->welcome($signup, $tenant->fresh(), $temporaryPassword);
         } catch (Throwable $e) {
             Log::error('Self sign-up provisioning failed', ['signup_id' => $signup->id, 'error' => $e->getMessage()]);
 
@@ -112,8 +122,12 @@ class ProvisionSignupJob implements ShouldQueue
         }
     }
 
-    private function welcome(SignupRequest $signup, Tenant $tenant): void
+    private function welcome(SignupRequest $signup, Tenant $tenant, ?string $temporaryPassword): void
     {
-        app(BillingNotices::class)->welcome($tenant, $signup->email, $signup->owner_name, $signup->workspace);
+        app(BillingNotices::class)->welcome($tenant, $signup->email, $signup->owner_name, $signup->workspace, $temporaryPassword !== null);
+
+        if ($temporaryPassword !== null) {
+            app(Messenger::class)->email($signup->email, new TemporaryPasswordMail($signup->owner_name, $signup->workspace, $signup->email, $temporaryPassword), (string) $tenant->id, 'signup_temporary_password');
+        }
     }
 }
