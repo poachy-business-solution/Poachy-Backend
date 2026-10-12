@@ -60,6 +60,14 @@ Schedule::command('billing:refresh-states')
     ->onOneServer()
     ->description('Re-evaluate billing states');
 
+// Billing: free-trial reminders 7, 3 and 1 days before the trial ends (each once), mid-morning.
+Schedule::command('billing:trial-reminders')
+    ->dailyAt('09:00')
+    ->timezone('Africa/Nairobi')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Free-trial ending reminders');
+
 // Stock Level Checks - Daily at 2 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs

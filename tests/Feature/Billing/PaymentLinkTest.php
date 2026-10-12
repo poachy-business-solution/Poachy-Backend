@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Billing;
 
-use App\Mail\Shared\PlainMessageMail;
+use App\Mail\Central\Billing\BillingNoticeMail;
 use App\Models\BillingAccount;
 use App\Models\BillingTopup;
 use App\Models\BusinessDetail;
@@ -159,7 +159,7 @@ class PaymentLinkTest extends TestCase
 
         app(BillingStateService::class)->evaluate($account, CarbonImmutable::parse('2026-10-12 10:00', 'Africa/Nairobi'));
 
-        Mail::assertQueued(PlainMessageMail::class, fn (PlainMessageMail $m) => str_starts_with((string) $m->buttonUrl, 'https://poachy.test/pay/') && $m->payUrl === $m->buttonUrl);
+        Mail::assertQueued(BillingNoticeMail::class, fn (BillingNoticeMail $m) => $m->kind === 'low_balance' && str_starts_with((string) $m->payUrl, 'https://poachy.test/pay/'));
         $this->assertSame(1, PaymentLink::query()->where('tenant_id', $this->tenant)->where('created_by', 'system:billing_low_balance')->count());
     }
 
@@ -171,6 +171,6 @@ class PaymentLinkTest extends TestCase
             ->expectsOutputToContain('https://poachy.test/pay/')->assertSuccessful();
 
         $this->assertSame('500.00', PaymentLink::query()->where('tenant_id', $this->tenant)->latest('id')->value('amount'));
-        Mail::assertQueued(PlainMessageMail::class, fn (PlainMessageMail $m) => $m->heading === 'Your Poachy payment link' && $m->hasTo('owner@link-test.example'));
+        Mail::assertQueued(BillingNoticeMail::class, fn (BillingNoticeMail $m) => $m->kind === 'payment_link' && $m->data['amount'] === 500.0 && $m->hasTo('owner@link-test.example'));
     }
 }

@@ -3,36 +3,38 @@
 namespace App\Services\Central\Billing;
 
 use App\Enums\Central\BillingStatus;
-use App\Mail\Shared\PlainMessageMail;
+use App\Mail\Central\Billing\BillingNoticeMail;
 use App\Models\BillingAccount;
+use App\Models\BillingPrice;
 use App\Models\BusinessDetail;
+use App\Models\MessageLog;
 use App\Models\Tenant;
 use App\Services\Shared\Messaging\Messenger;
 use Carbon\CarbonImmutable;
 
 /**
- * Email + SMS notices for billing state changes and low balance.
- * (Item 19 replaces the wording with dedicated templates and adds pay links.)
+ * Billing emails (and SMS for the urgent ones) to shops. Every email has the Paybill box and,
+ * except the welcome before any money is due, a fresh 7-day pay link.
  */
 class BillingNotices
 {
+    /** Trial reminders go out this many Nairobi days before the trial ends. */
+    public const TRIAL_REMINDER_DAYS = [7, 3, 1];
+
     public function __construct(private Messenger $messenger, private PaymentLinkService $links) {}
 
     public function statusChanged(BillingAccount $account, ?BillingStatus $from, BillingStatus $to): void
     {
         [$shop, $poa] = $this->shop($account->tenant_id);
+        $balance = ['balance' => (float) $account->balance];
 
         match ($to) {
-            BillingStatus::Grace => $this->send($account, 'billing_grace',
-                'Your Poachy balance has run out',
-                ["{$shop}'s Poachy balance is KSh ".number_format((float) $account->balance, 2).'.', 'Everything keeps working for one more day. After that, reports, receiving stock, transfers and settings pause until you top up — selling never stops.'],
-                "Poachy: {$shop}'s balance has run out. Top up today to keep full access: Paybill {$this->paybill()}, account {$poa}.", $poa),
-            BillingStatus::Limited => $this->send($account, 'billing_limited',
-                'Poachy is in limited mode',
-                ["{$shop} is now in limited mode because the Poachy balance is KSh ".number_format((float) $account->balance, 2).'.', 'You can still sell and sync. Reports, receiving stock, transfers and settings come back the moment you top up.'],
-                "Poachy: {$shop} is in limited mode. Selling still works. Top up to restore everything: Paybill {$this->paybill()}, account {$poa}.", $poa),
+            BillingStatus::Grace => $this->send($account, 'grace', $balance,
+                "Poachy: {$shop}'s balance has run out. Top up today to keep full access: Paybill {$this->paybill()}, account {$poa}."),
+            BillingStatus::Limited => $this->send($account, 'limited', $balance,
+                "Poachy: {$shop} is in limited mode. Selling still works. Top up to restore everything: Paybill {$this->paybill()}, account {$poa}."),
             BillingStatus::Active => in_array($from, [BillingStatus::Grace, BillingStatus::Limited], true)
-                ? $this->send($account, 'billing_restored', 'Poachy is fully back on', ["Thanks — {$shop}'s top-up arrived and everything is unlocked again."], null, null)
+                ? $this->send($account, 'restored', $balance, null, withLink: false)
                 : null,
             default => null,
         };
@@ -55,23 +57,95 @@ class BillingNotices
         [$shop, $poa] = $this->shop($account->tenant_id);
         $days = $daysCovered === 1 ? '1 more trading day' : "{$daysCovered} more trading days";
 
-        $this->send($account, 'billing_low_balance',
-            'Top up to keep Poachy running',
-            ["{$shop}'s Poachy balance is KSh ".number_format((float) $account->balance, 2)." — enough for about {$days}.", 'Top up any amount from KSh 10 by M-Pesa.'],
-            "Poachy: {$shop}'s balance covers about {$days}. Top up: Paybill {$this->paybill()}, account {$poa}.", $poa);
+        $this->send($account, 'low_balance', ['balance' => (float) $account->balance, 'daysCovered' => $daysCovered],
+            "Poachy: {$shop}'s balance covers about {$days}. Top up: Paybill {$this->paybill()}, account {$poa}.");
 
         $account->forceFill(['low_balance_notified_at' => $now])->save();
     }
 
     /**
-     * @param  array<int, string>  $paragraphs
+     * Trial reminders 7, 3 and 1 Nairobi days before the trial ends; each is sent once per shop.
+     * Returns the reminder sent (days left), or null.
      */
-    private function send(BillingAccount $account, string $template, string $heading, array $paragraphs, ?string $sms, ?string $poa): void
+    public function trialEnding(BillingAccount $account, CarbonImmutable $now): ?int
     {
-        // Every "please pay" notice carries its own 7-day pay link.
-        $payUrl = $poa === null ? null : $this->links->create($account->tenant_id, null, 'system:'.$template)['url'];
-        $mail = new PlainMessageMail($heading, $paragraphs, $payUrl ? 'Top up now' : null, $payUrl, paybillAccount: $poa, payUrl: $payUrl);
-        $sms = $sms !== null && $payUrl !== null ? "{$sms} Or pay here: {$payUrl}" : $sms;
+        if ($account->status !== BillingStatus::Trial || $account->trial_ends_at === null) {
+            return null;
+        }
+
+        $today = $now->setTimezone('Africa/Nairobi')->startOfDay();
+        $endsOn = CarbonImmutable::parse($account->trial_ends_at)->setTimezone('Africa/Nairobi')->startOfDay();
+        $daysLeft = (int) $today->diffInDays($endsOn, false);
+
+        if (! in_array($daysLeft, self::TRIAL_REMINDER_DAYS, true)) {
+            return null;
+        }
+
+        $template = "billing_trial_ending_{$daysLeft}";
+        if (MessageLog::query()->where('tenant_id', $account->tenant_id)->where('template', $template)->exists()) {
+            return null;
+        }
+
+        $price = BillingPrice::forDate($endsOn);
+        $this->send($account, 'trial_ending', [
+            'daysLeft' => $daysLeft,
+            'trialEndsOn' => $endsOn->format('l j F Y'),
+            'dayPrice' => (float) ($price?->first_branch_day ?? 100),
+            'monthCap' => (float) ($price?->first_branch_cap ?? 2500),
+        ], null, template: $template);
+
+        return $daysLeft;
+    }
+
+    /** The welcome email for a newly opened shop. */
+    public function welcome(Tenant $tenant, string $email, string $ownerName, string $workspace): void
+    {
+        $account = BillingAccount::query()->where('tenant_id', $tenant->id)->first();
+        $trialEnds = $account?->trial_ends_at === null ? null : CarbonImmutable::parse($account->trial_ends_at)->setTimezone('Africa/Nairobi');
+        $price = BillingPrice::forDate(now('Africa/Nairobi'));
+        [$shop, $poa] = $this->shop((string) $tenant->id);
+
+        $this->messenger->email($email, new BillingNoticeMail('welcome', $shop, $poa, null, [
+            'ownerName' => $ownerName,
+            'workspace' => $workspace,
+            'trialEndsOn' => $trialEnds?->format('j F Y') ?? '—',
+            'dayPrice' => (float) ($price?->first_branch_day ?? 100),
+            'monthCap' => (float) ($price?->first_branch_cap ?? 2500),
+        ]), (string) $tenant->id, 'signup_welcome');
+    }
+
+    /** Emails an existing pay link to the shop's business email. Returns the address, or null. */
+    public function paymentLink(string $tenantId, string $url, ?float $amount): ?string
+    {
+        $email = BusinessDetail::query()->where('tenant_id', $tenantId)->value('business_email');
+        if (! $email) {
+            return null;
+        }
+
+        [$shop, $poa] = $this->shop($tenantId);
+        $this->messenger->email($email, new BillingNoticeMail('payment_link', $shop, $poa, $url, [
+            'validDays' => PaymentLinkService::VALID_DAYS,
+            'amount' => $amount,
+        ]), $tenantId, 'billing_payment_link');
+
+        return $email;
+    }
+
+    /** A fresh pay link for an email (receipts, reminders). */
+    public function payLink(string $tenantId, string $reason): string
+    {
+        return $this->links->create($tenantId, null, 'system:'.$reason)['url'];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function send(BillingAccount $account, string $kind, array $data, ?string $sms, bool $withLink = true, ?string $template = null): void
+    {
+        [$shop, $poa] = $this->shop($account->tenant_id);
+        $template ??= 'billing_'.$kind;
+        $payUrl = $withLink ? $this->payLink($account->tenant_id, $template) : null;
+        $mail = new BillingNoticeMail($kind, $shop, $poa, $payUrl, $data);
 
         if ($sms === null) {
             $email = BusinessDetail::query()->where('tenant_id', $account->tenant_id)->value('business_email');
@@ -82,7 +156,7 @@ class BillingNotices
             return;
         }
 
-        $this->messenger->toShop($account->tenant_id, $mail, $template, $sms);
+        $this->messenger->toShop($account->tenant_id, $mail, $template, $payUrl === null ? $sms : "{$sms} Or pay here: {$payUrl}");
     }
 
     /**

@@ -4,7 +4,7 @@ namespace Tests\Feature\Billing;
 
 use App\Enums\Central\BillingStatus;
 use App\Http\Middleware\EnforceBillingLimits;
-use App\Mail\Shared\PlainMessageMail;
+use App\Mail\Central\Billing\BillingNoticeMail;
 use App\Models\BillingAccount;
 use App\Models\BillingDay;
 use App\Models\BusinessDetail;
@@ -87,7 +87,7 @@ class BillingStateTest extends TestCase
         $this->assertSame(BillingStatus::Grace, $account->status);
         $this->assertSame('2026-10-13 10:00', $account->grace_until->setTimezone('Africa/Nairobi')->format('Y-m-d H:i'));
         $this->assertSame(2, $this->notices('billing_grace')); // email + SMS
-        Mail::assertQueued(PlainMessageMail::class, fn ($m) => $m->heading === 'Your Poachy balance has run out');
+        Mail::assertQueued(BillingNoticeMail::class, fn ($m) => $m->kind === 'grace');
 
         $this->assertSame(BillingStatus::Grace, $this->evaluate($account, '2026-10-13 09:59')->status);
 
@@ -113,7 +113,7 @@ class BillingStateTest extends TestCase
         $this->assertSame('200.00', $account->balance); // the debt is settled first
         $this->assertNull($account->grace_until);
         $this->assertNull($account->limited_since);
-        Mail::assertQueued(PlainMessageMail::class, fn ($m) => $m->heading === 'Poachy is fully back on');
+        Mail::assertQueued(BillingNoticeMail::class, fn ($m) => $m->kind === 'restored');
     }
 
     public function test_a_top_up_that_does_not_clear_the_debt_keeps_the_shop_limited(): void
@@ -135,7 +135,7 @@ class BillingStateTest extends TestCase
         $this->evaluate($account, '2026-10-12 09:00');
         $this->evaluate($account, '2026-10-12 15:00');
         $this->assertSame(2, $this->notices('billing_low_balance'));
-        Mail::assertQueued(PlainMessageMail::class, fn ($m) => $m->heading === 'Top up to keep Poachy running' && str_contains($m->paragraphs[0], '2 more trading days'));
+        Mail::assertQueued(BillingNoticeMail::class, fn ($m) => $m->kind === 'low_balance' && $m->data['daysCovered'] === 2);
 
         $this->evaluate($account, '2026-10-13 09:00');
         $this->assertSame(4, $this->notices('billing_low_balance'));

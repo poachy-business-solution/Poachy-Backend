@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Central;
 
-use App\Mail\Shared\PlainMessageMail;
 use App\Models\BusinessCategory;
 use App\Models\BusinessDetail;
 use App\Models\SignupRequest;
@@ -10,8 +9,8 @@ use App\Models\Tenant;
 use App\Models\Tenant\Store;
 use App\Models\Tenant\User;
 use App\Services\Central\Admin\Tenant\TenantService;
+use App\Services\Central\Billing\BillingNotices;
 use App\Services\Central\Signup\SignupService;
-use App\Services\Shared\Messaging\Messenger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -38,7 +37,7 @@ class ProvisionSignupJob implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(TenantService $tenants, SignupService $signups, Messenger $messenger): void
+    public function handle(TenantService $tenants, SignupService $signups): void
     {
         $signup = SignupRequest::query()->find($this->signupId);
 
@@ -97,7 +96,7 @@ class ProvisionSignupJob implements ShouldQueue
 
             $signup->forceFill(['status' => SignupRequest::READY, 'tenant_id' => $tenant->id, 'password_hash' => null])->save();
 
-            $this->welcome($signup, $tenant->fresh(), $messenger);
+            $this->welcome($signup, $tenant->fresh());
         } catch (Throwable $e) {
             Log::error('Self sign-up provisioning failed', ['signup_id' => $signup->id, 'error' => $e->getMessage()]);
 
@@ -113,17 +112,8 @@ class ProvisionSignupJob implements ShouldQueue
         }
     }
 
-    /** Item 19 replaces this with the full welcome template. */
-    private function welcome(SignupRequest $signup, Tenant $tenant, Messenger $messenger): void
+    private function welcome(SignupRequest $signup, Tenant $tenant): void
     {
-        $messenger->email($signup->email, new PlainMessageMail(
-            "Welcome to Poachy, {$signup->owner_name}",
-            [
-                "Your shop {$signup->shop_name} is ready. Your workspace name is: {$signup->workspace}",
-                'Get the Poachy app, enter the workspace name, then sign in with this email and the password you chose.',
-                'Your free trial runs for 30 days. After that Poachy costs KSh 100 only on days you sell, never more than KSh 2,500 a month.',
-            ],
-            paybillAccount: (string) $tenant->mpesa_paybill_account,
-        ), (string) $tenant->id, 'signup_welcome');
+        app(BillingNotices::class)->welcome($tenant, $signup->email, $signup->owner_name, $signup->workspace);
     }
 }
