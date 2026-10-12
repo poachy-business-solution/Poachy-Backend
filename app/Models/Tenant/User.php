@@ -21,6 +21,7 @@ class User extends Authenticatable
         'phone',
         'is_active',
         'last_login_at',
+        'password_chosen_at',
     ];
 
     protected $hidden = [
@@ -35,6 +36,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'password_chosen_at' => 'datetime',
         ];
     }
 

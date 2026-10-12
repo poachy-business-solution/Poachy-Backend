@@ -21077,6 +21077,293 @@
                 }
             }
         },
+        "/api/v1/public/signup/start": {
+            "post": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Start a self sign-up: details + Turnstile; sends SMS and email codes",
+                "operationId": "publicSignupStart",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shop_name",
+                                    "owner_name",
+                                    "phone",
+                                    "email",
+                                    "town",
+                                    "turnstile_token"
+                                ],
+                                "properties": {
+                                    "shop_name": {
+                                        "type": "string",
+                                        "example": "Mama Njeri Shop"
+                                    },
+                                    "owner_name": {
+                                        "type": "string",
+                                        "example": "Njeri Kamau"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0712345678"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "njeri@example.com"
+                                    },
+                                    "town": {
+                                        "type": "string",
+                                        "example": "Thika"
+                                    },
+                                    "branches": {
+                                        "type": "integer",
+                                        "maximum": 50,
+                                        "minimum": 1,
+                                        "example": 1
+                                    },
+                                    "business_category_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "turnstile_token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "signup_id, expires_at, suggested_workspace, phone (masked)"
+                    },
+                    "422": {
+                        "description": "Invalid details, failed bot check, or this phone/email already has a shop"
+                    },
+                    "429": {
+                        "description": "Too many sign-ups from this network or phone"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/signup/resend": {
+            "post": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Send new phone + email codes (max 3 sends)",
+                "operationId": "publicSignupResend",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "signup_id"
+                                ],
+                                "properties": {
+                                    "signup_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Codes sent"
+                    },
+                    "404": {
+                        "description": "Unknown sign-up"
+                    },
+                    "422": {
+                        "description": "Too many sends, expired or already verified"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/signup/verify": {
+            "post": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Check the SMS and email codes",
+                "operationId": "publicSignupVerify",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "signup_id",
+                                    "phone_code",
+                                    "email_code"
+                                ],
+                                "properties": {
+                                    "signup_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "phone_code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "email_code": {
+                                        "type": "string",
+                                        "example": "654321"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verified; suggested_workspace"
+                    },
+                    "404": {
+                        "description": "Unknown sign-up"
+                    },
+                    "422": {
+                        "description": "Wrong or expired codes (5 attempts)"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/signup/workspace-available": {
+            "get": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Is a workspace name free?",
+                "operationId": "publicSignupWorkspaceAvailable",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "mama-njeri-shop"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "name, available, reason, suggestion"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/signup/complete": {
+            "post": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Choose the workspace and password, accept terms; queues the shop's creation",
+                "operationId": "publicSignupComplete",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "signup_id",
+                                    "workspace",
+                                    "password",
+                                    "password_confirmation",
+                                    "accept_terms"
+                                ],
+                                "properties": {
+                                    "signup_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "workspace": {
+                                        "type": "string",
+                                        "example": "mama-njeri-shop"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "accept_terms": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Provisioning; poll GET /signup/status/{signup_id}"
+                    },
+                    "404": {
+                        "description": "Unknown sign-up"
+                    },
+                    "422": {
+                        "description": "Not verified, name taken/invalid, weak password, terms not accepted"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/signup/status/{id}": {
+            "get": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Provisioning progress for the welcome page",
+                "operationId": "publicSignupStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "status pending|verified|provisioning|ready|failed; when ready: workspace, account_number"
+                    },
+                    "404": {
+                        "description": "Unknown sign-up"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/signup/business-types": {
+            "get": {
+                "tags": [
+                    "Public - Sign-up"
+                ],
+                "summary": "Shop types for the sign-up form",
+                "operationId": "publicSignupBusinessTypes",
+                "responses": {
+                    "200": {
+                        "description": "[{id, name, type}]"
+                    }
+                }
+            }
+        },
         "/api/v1/tenant/audit-logs": {
             "get": {
                 "tags": [
@@ -134613,6 +134900,10 @@
         {
             "name": "Public - Pay",
             "description": "Public - Pay"
+        },
+        {
+            "name": "Public - Sign-up",
+            "description": "Public - Sign-up"
         },
         {
             "name": "Audit Logs",

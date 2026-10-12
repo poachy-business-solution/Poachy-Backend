@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SaleDaysSyncController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use App\Http\Controllers\Api\Public\PayLinkController;
+use App\Http\Controllers\Api\Public\SignupController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,6 +48,17 @@ use Illuminate\Support\Facades\Route;
 
 // Public surface for the web app's server (no sign-in; strict rate limits).
 Route::prefix('v1/public')->group(function () {
+    // Self sign-up for shops (poachy.com/signup)
+    Route::prefix('signup')->group(function () {
+        Route::post('/start', [SignupController::class, 'start'])->middleware('throttle:signup-start');
+        Route::post('/resend', [SignupController::class, 'resend'])->middleware('throttle:signup-codes');
+        Route::post('/verify', [SignupController::class, 'verify'])->middleware('throttle:signup-codes');
+        Route::get('/workspace-available', [SignupController::class, 'workspaceAvailable'])->middleware('throttle:signup-read');
+        Route::post('/complete', [SignupController::class, 'complete'])->middleware('throttle:signup-codes');
+        Route::get('/status/{id}', [SignupController::class, 'status'])->middleware('throttle:signup-read');
+        Route::get('/business-types', [SignupController::class, 'businessTypes'])->middleware('throttle:signup-read');
+    });
+
     // Payment page links (poachy.com/pay/<token>) — the link is the credential.
     Route::prefix('pay/{token}')->where(['token' => '[A-Za-z0-9]{20,64}'])->group(function () {
         Route::get('/', [PayLinkController::class, 'show'])->middleware('throttle:pay-link-read');

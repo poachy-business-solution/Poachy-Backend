@@ -34,5 +34,6 @@
         <env name="CENTRAL_DB_DATABASE" value="poachy_central_test"/>
         <env name="MPESA_DRIVER" value="fake"/>
         <env name="PAYSTACK_DRIVER" value="fake"/>
+        <env name="TURNSTILE_DRIVER" value="fake"/>
     </php>
 </phpunit>
