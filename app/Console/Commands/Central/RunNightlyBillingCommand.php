@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Central;
 
+use App\Services\Central\Billing\BillingStateService;
 use App\Services\Central\Billing\NightlyBillingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
@@ -16,10 +17,13 @@ class RunNightlyBillingCommand extends Command
 
     protected $description = 'Charge every shop for the branch trading days not billed yet';
 
-    public function handle(NightlyBillingService $billing): int
+    public function handle(NightlyBillingService $billing, BillingStateService $states): int
     {
         $now = $this->option('as-of') ? CarbonImmutable::parse($this->option('as-of'), 'Africa/Nairobi') : null;
         $totals = $billing->run($now);
+
+        // Charges may have emptied a balance: move shops into grace / limited and notify.
+        $states->evaluateAll($now);
 
         $this->info(sprintf('Billed %d branch-day(s) across %d shop(s), KSh %s.', $totals['days_billed'], $totals['tenants'], number_format($totals['amount'], 2)));
 

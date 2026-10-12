@@ -22713,6 +22713,73 @@
                 ]
             }
         },
+        "/api/v1/tenant/billing": {
+            "get": {
+                "tags": [
+                    "Tenant - Billing"
+                ],
+                "summary": "Billing status: balance, state, this month, Paybill details",
+                "description": "Any signed-in user gets the state and how to pay; owners and managers also get the money figures.",
+                "operationId": "tenantBillingShow",
+                "responses": {
+                    "200": {
+                        "description": "status (trial|active|grace|limited), balance, days_covered, is_low, month{days_billed,amount}, paybill_number, account_number, prices"
+                    },
+                    "401": {
+                        "description": "Signed out"
+                    },
+                    "404": {
+                        "description": "The shop has no billing account"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/billing/ledger": {
+            "get": {
+                "tags": [
+                    "Tenant - Billing"
+                ],
+                "summary": "Billing statement, newest first (owner, manager)",
+                "operationId": "tenantBillingLedger",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data.data[] (type, amount, balance_after, description, reference, created_at) + data.pagination"
+                    },
+                    "403": {
+                        "description": "Cashiers cannot see the statement"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/billing/topups/stk": {
             "post": {
                 "tags": [

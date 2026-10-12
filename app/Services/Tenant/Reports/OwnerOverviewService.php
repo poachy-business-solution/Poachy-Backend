@@ -3,7 +3,6 @@
 namespace App\Services\Tenant\Reports;
 
 use App\Enums\Tenant\ExpenseStatus;
-use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\RecurrenceFrequency;
 use App\Enums\Tenant\RefundStatus;
 use App\Models\Tenant\Customer;

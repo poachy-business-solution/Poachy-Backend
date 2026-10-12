@@ -193,7 +193,7 @@ class NightlyBillingTest extends TestCase
 
     public function test_trial_days_cost_nothing_and_are_never_charged_later(): void
     {
-        $account = $this->account(['status' => 'trial', 'trial_ends_at' => CarbonImmutable::parse('2026-10-10 12:00', 'Africa/Nairobi')]);
+        $account = $this->account(['status' => 'trial', 'trial_ends_at' => CarbonImmutable::parse('2026-10-10 12:00', 'Africa/Nairobi')->utc()]);
         $this->sold(1, '2026-10-08');
         $this->sold(1, '2026-10-09');
         $this->sold(2, '2026-10-09', main: false);
