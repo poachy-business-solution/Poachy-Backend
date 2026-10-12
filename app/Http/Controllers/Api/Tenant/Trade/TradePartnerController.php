@@ -12,10 +12,12 @@ use App\Http\Resources\Tenant\Trade\TradeEventResource;
 use App\Http\Resources\Tenant\Trade\TradeLineResource;
 use App\Http\Resources\Tenant\Trade\TradePartnerResource;
 use App\Http\Responses\ApiResponse;
+use App\Models\Tenant\TradeLine;
 use App\Models\Tenant\TradePartner;
 use App\Services\Tenant\Trade\TradeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 /**
  * Neighbour shops: who owes whom, the goods still out, and the four trade
@@ -261,7 +263,7 @@ class TradePartnerController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, \App\Models\Tenant\TradeLine>  $lines
+     * @param  Collection<int, TradeLine>  $lines
      */
     protected function recorded(string $message, TradePartner $partner, $lines): JsonResponse
     {

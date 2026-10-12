@@ -31,7 +31,6 @@ namespace App\Http\Controllers;
  *     bearerFormat="JWT",
  *     description="Laravel Sanctum token authentication"
  * )
- *
  * @OA\SecurityScheme(
  *     securityScheme="internalAdmin",
  *     type="http",
@@ -43,7 +42,6 @@ namespace App\Http\Controllers;
  *     name="Internal - Admin",
  *     description="Private admin API for the poachy-admin server (never public). Every action is written to admin_audit_logs."
  * )
- *
  * @OA\Tag(
  *     name="Central - Admin - Auth",
  *     description="Admin authentication endpoints with 2FA"

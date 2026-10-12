@@ -38,6 +38,16 @@ return [
             'report' => false,
         ],
 
+        // Shop verification documents (ID, KRA PIN, permit, shop photo). Never public: staff open
+        // them through the private admin API. Point at an S3-compatible private bucket in production.
+        'verifications' => [
+            'driver' => env('VERIFICATION_DISK_DRIVER', 'local'),
+            'root' => storage_path('app/private/verifications'),
+            'serve' => false,
+            'throw' => true,
+            'visibility' => 'private',
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

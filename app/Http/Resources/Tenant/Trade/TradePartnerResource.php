@@ -4,6 +4,7 @@ namespace App\Http\Resources\Tenant\Trade;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 class TradePartnerResource extends JsonResource
 {
@@ -21,7 +22,7 @@ class TradePartnerResource extends JsonResource
             'balance' => $this->balance(),
             'open_lines' => TradeLineResource::collection($this->whenLoaded('openLines')),
             'last_trade_at' => $this->events_max_occurred_at
-                ? \Illuminate\Support\Carbon::parse($this->events_max_occurred_at)->toISOString()
+                ? Carbon::parse($this->events_max_occurred_at)->toISOString()
                 : null,
             'created_at' => $this->created_at?->toISOString(),
         ];

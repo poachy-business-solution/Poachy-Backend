@@ -21391,6 +21391,36 @@
             }
         },
         "/api/internal/admin/shops/{shop}/verification": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "A shop's verification checks (current ones) and whether it can be approved",
+                "operationId": "internalAdminVerificationShow",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "is_verified, checks[], missing[] (required checks not yet submitted)"
+                    },
+                    "404": {
+                        "description": "Unknown shop"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Internal - Admin"
@@ -21427,6 +21457,20 @@
                                     },
                                     "reason": {
                                         "type": "string"
+                                    },
+                                    "checks": {
+                                        "description": "reject: which checks to redo (default all pending)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "id",
+                                                "kra_pin",
+                                                "permit",
+                                                "location",
+                                                "photo"
+                                            ]
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -21435,14 +21479,14 @@
                     }
                 },
                 "responses": {
+                    "422": {
+                        "description": "Invalid, or (approve) required checks missing: errors.missing"
+                    },
                     "200": {
                         "description": "Decision applied"
                     },
                     "404": {
                         "description": "Unknown shop"
-                    },
-                    "422": {
-                        "description": "Invalid"
                     }
                 },
                 "security": [
@@ -21599,6 +21643,112 @@
                     },
                     "404": {
                         "description": "Unknown shop or no billing account"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/verification/checks": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Upload one verification check (replaces the previous one of that kind)",
+                "operationId": "internalAdminVerificationUpload",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "check"
+                                ],
+                                "properties": {
+                                    "check": {
+                                        "type": "string",
+                                        "enum": [
+                                            "id",
+                                            "kra_pin",
+                                            "permit",
+                                            "location",
+                                            "photo"
+                                        ]
+                                    },
+                                    "file": {
+                                        "description": "JPEG/PNG/WebP/PDF ≤ 8 MB",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "value": {
+                                        "description": "KRA PIN or lat,lng",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The new check"
+                    },
+                    "422": {
+                        "description": "Invalid"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/verification/checks/{id}/file": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Stream a verification file (audited)",
+                "operationId": "internalAdminVerificationFile",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The file"
+                    },
+                    "404": {
+                        "description": "No such file for this shop"
                     }
                 },
                 "security": [
