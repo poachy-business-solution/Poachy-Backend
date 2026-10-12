@@ -4,6 +4,8 @@ namespace Tests\Feature\Signup;
 
 use App\Enums\Central\BillingStatus;
 use App\Jobs\Central\ProvisionSignupJob;
+use App\Mail\Central\Billing\BillingNoticeMail;
+use App\Mail\Central\Signup\TemporaryPasswordMail;
 use App\Models\BillingAccount;
 use App\Models\BusinessDetail;
 use App\Models\Domain;
@@ -129,5 +131,32 @@ class ProvisionSignupJobTest extends TestCase
 
         $this->assertSame($tenantId, $signup->fresh()->tenant_id);
         $this->assertSame(1, Domain::query()->where('domain', "{$this->workspace}.signup-test.localhost")->count());
+    }
+
+    public function test_a_shop_opened_by_staff_gets_a_temporary_password_by_email(): void
+    {
+        $signup = $this->signup();
+        $signup->forceFill(['source' => SignupRequest::SOURCE_ADMIN, 'created_by_admin' => '7', 'password_hash' => null])->save();
+
+        ProvisionSignupJob::dispatchSync($signup->id);
+
+        $signup->refresh();
+        $this->assertSame(SignupRequest::READY, $signup->status, (string) $signup->failure_reason);
+
+        $password = null;
+        Mail::assertQueued(TemporaryPasswordMail::class, function (TemporaryPasswordMail $m) use ($signup, &$password) {
+            $password = $m->password;
+
+            return $m->hasTo($signup->email) && $m->workspace === $this->workspace && strlen($m->password) === 14;
+        });
+        Mail::assertQueued(BillingNoticeMail::class, fn (BillingNoticeMail $m) => $m->kind === 'welcome' && $m->data['byAdmin'] === true);
+
+        Tenant::query()->findOrFail($signup->tenant_id)->run(function () use ($signup, $password) {
+            $owner = User::query()->where('email', $signup->email)->firstOrFail();
+            $this->assertTrue(Hash::check($password, $owner->password));
+            $this->assertNull($owner->password_chosen_at);
+            // First sign-in must choose a new password.
+            $this->assertTrue(app(TenantAuthService::class)->initiateLogin($signup->email, $password)['requires_password_change']);
+        });
     }
 }

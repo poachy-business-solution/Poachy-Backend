@@ -10,7 +10,11 @@
 **Get started**
 
 1. Install the Poachy app on the phone or tablet you sell from.
+@if (! empty($data['byAdmin']))
+2. Enter the workspace name above, then sign in with this email and the temporary password we sent in a separate email. The app asks you to choose your own password.
+@else
 2. Enter the workspace name above, then sign in with this email and the password you chose.
+@endif
 3. Add your products (or scan their barcodes) and make your first sale.
 
 **Your free trial runs until {{ $data['trialEndsOn'] }}.** Nothing is charged until then, and no card is needed.

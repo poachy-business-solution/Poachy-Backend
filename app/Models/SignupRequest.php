@@ -46,12 +46,14 @@ class SignupRequest extends Model
 
     public const FAILED = 'failed';
 
+    public const SOURCE_ADMIN = 'admin';
+
     protected $connection = 'central';
 
     protected $fillable = [
         'shop_name', 'owner_name', 'phone', 'email', 'town', 'branches', 'business_category_id', 'workspace',
         'phone_code_hash', 'email_code_hash', 'codes_expire_at', 'code_attempts', 'code_sends', 'phone_verified_at',
-        'email_verified_at', 'password_hash', 'terms_accepted_at', 'status', 'tenant_id', 'failure_reason', 'ip', 'expires_at',
+        'email_verified_at', 'password_hash', 'terms_accepted_at', 'status', 'tenant_id', 'failure_reason', 'ip', 'expires_at', 'source', 'created_by_admin',
     ];
 
     protected $hidden = ['phone_code_hash', 'email_code_hash', 'password_hash'];

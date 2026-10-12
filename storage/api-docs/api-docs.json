@@ -20932,6 +20932,646 @@
                 ]
             }
         },
+        "/api/internal/admin/shops/{shop}/billing/credit": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Manual credit to a shop's Poachy balance",
+                "operationId": "internalAdminBillingCredit",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "minimum": 1
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ledger entry (same key → the same entry, 200)"
+                    },
+                    "404": {
+                        "description": "Unknown shop"
+                    },
+                    "422": {
+                        "description": "Invalid"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/billing/stk": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Send an M-Pesa top-up prompt to the shop",
+                "operationId": "internalAdminBillingStk",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "integer"
+                                    },
+                                    "phone": {
+                                        "description": "Defaults to the business phone",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Prompt sent; poll GET .../billing/topups/{id}"
+                    },
+                    "422": {
+                        "description": "Invalid or M-Pesa refused"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/billing/topups/{id}": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Status of a top-up prompt",
+                "operationId": "internalAdminBillingTopup",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "pending | processing | completed | failed"
+                    },
+                    "404": {
+                        "description": "Not this shop's"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/billing/link": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Make a 7-day pay link (and optionally email it to the shop)",
+                "operationId": "internalAdminBillingLink",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "amount": {
+                                        "type": "integer"
+                                    },
+                                    "email": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "url, expires_at, emailed_to"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/billing/prices": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Price history (newest first)",
+                "operationId": "internalAdminPrices",
+                "responses": {
+                    "200": {
+                        "description": "Price rows"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Schedule new prices from a future date",
+                "operationId": "internalAdminPriceStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "effective_from",
+                                    "first_branch_day",
+                                    "extra_branch_day",
+                                    "first_branch_cap",
+                                    "extra_branch_cap",
+                                    "trial_days",
+                                    "min_topup",
+                                    "low_balance_days",
+                                    "grace_days"
+                                ],
+                                "properties": {
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "first_branch_day": {
+                                        "type": "number"
+                                    },
+                                    "extra_branch_day": {
+                                        "type": "number"
+                                    },
+                                    "first_branch_cap": {
+                                        "type": "number"
+                                    },
+                                    "extra_branch_cap": {
+                                        "type": "number"
+                                    },
+                                    "trial_days": {
+                                        "type": "integer"
+                                    },
+                                    "min_topup": {
+                                        "type": "number"
+                                    },
+                                    "low_balance_days": {
+                                        "type": "integer"
+                                    },
+                                    "grace_days": {
+                                        "type": "integer"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "409": {
+                        "description": "A price already starts that day"
+                    },
+                    "422": {
+                        "description": "Past date or invalid"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Open a shop for an owner (same provisioning as self sign-up)",
+                "operationId": "internalAdminOnboardShop",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shop_name",
+                                    "owner_name",
+                                    "phone",
+                                    "email",
+                                    "town",
+                                    "workspace"
+                                ],
+                                "properties": {
+                                    "shop_name": {
+                                        "type": "string"
+                                    },
+                                    "owner_name": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0712345678"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "town": {
+                                        "type": "string"
+                                    },
+                                    "workspace": {
+                                        "type": "string",
+                                        "example": "mama-njeri"
+                                    },
+                                    "branches": {
+                                        "type": "integer"
+                                    },
+                                    "business_category_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Provisioning queued; poll GET /shops/onboarding/{id}"
+                    },
+                    "401": {
+                        "description": "Bad service token"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Caller not on the allowlist"
+                    },
+                    "422": {
+                        "description": "Invalid, or phone/email/workspace taken"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/onboarding/{id}": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Status of a shop being opened",
+                "operationId": "internalAdminOnboardStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "provisioning | ready | failed (+ tenant_id, failure_reason)"
+                    },
+                    "404": {
+                        "description": "Not a staff-opened shop"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/verification": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Verification decision (approve → verified badge; reject/revoke need a reason)",
+                "operationId": "internalAdminVerification",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "description": "Tenant id or POA account",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "decision"
+                                ],
+                                "properties": {
+                                    "decision": {
+                                        "type": "string",
+                                        "enum": [
+                                            "approve",
+                                            "reject",
+                                            "revoke"
+                                        ]
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Decision applied"
+                    },
+                    "404": {
+                        "description": "Unknown shop"
+                    },
+                    "422": {
+                        "description": "Invalid"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/suspend": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Suspend a shop (app and web access stop)",
+                "operationId": "internalAdminSuspend",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Suspended"
+                    },
+                    "404": {
+                        "description": "Unknown shop"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/restore": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Restore a suspended shop",
+                "operationId": "internalAdminRestore",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Active again"
+                    },
+                    "404": {
+                        "description": "Unknown shop"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/shops/{shop}/trial": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Extend (or reopen) the free trial by N days",
+                "operationId": "internalAdminExtendTrial",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "days",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "days": {
+                                        "type": "integer",
+                                        "maximum": 90,
+                                        "minimum": 1
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "New trial end"
+                    },
+                    "404": {
+                        "description": "Unknown shop or no billing account"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
         "/api/v1/public/pay/{token}": {
             "get": {
                 "tags": [
@@ -134765,10 +135405,19 @@
                 "description": "Laravel Sanctum token authentication. Enter your token in the format: Bearer {token}",
                 "name": "Authorization",
                 "in": "header"
+            },
+            "internalAdmin": {
+                "type": "http",
+                "description": "Private admin API only: service token (INTERNAL_ADMIN_TOKEN) from an allowlisted address, plus X-Admin-Id and X-Admin-Role (super|operations|finance|support) headers",
+                "scheme": "bearer"
             }
         }
     },
     "tags": [
+        {
+            "name": "Internal - Admin",
+            "description": "Private admin API for the poachy-admin server (never public). Every action is written to admin_audit_logs."
+        },
         {
             "name": "Central - Admin - Auth",
             "description": "Admin authentication endpoints with 2FA"
