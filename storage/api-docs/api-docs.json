@@ -21354,6 +21354,42 @@
                 ]
             }
         },
+        "/api/internal/admin/shops/{shop}/team": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "A shop's branches and staff (from its own database)",
+                "operationId": "internalAdminShopTeam",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "description": "Tenant id or POA account",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "branches[] (id, name, city, is_main, is_active), staff[] (id, name, email, phone, roles, is_active, last_login_at)"
+                    },
+                    "404": {
+                        "description": "Unknown shop"
+                    },
+                    "503": {
+                        "description": "The shop's database could not be read"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
         "/api/internal/admin/shops/{shop}/verification": {
             "post": {
                 "tags": [
