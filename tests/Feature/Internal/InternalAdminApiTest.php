@@ -14,13 +14,16 @@ use App\Models\BillingTopup;
 use App\Models\BusinessDetail;
 use App\Models\PaymentLink;
 use App\Models\SignupRequest;
+use App\Models\TenantVerification;
 use Carbon\CarbonImmutable;
 use Database\Seeders\BillingPriceSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -192,19 +195,76 @@ class InternalAdminApiTest extends TestCase
         $this->admin('POST', "/shops/{$this->poa}/trial", ['days' => 365, 'reason' => 'x'])->assertUnprocessable()->assertJsonValidationErrors(['days', 'reason']);
     }
 
-    public function test_verification_decisions(): void
+    private function upload(string $check, ?string $value = null, bool $file = true, string $role = 'operations'): TestResponse
     {
-        $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'reject'])->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $body = array_filter(['check' => $check, 'value' => $value], fn ($v) => $v !== null);
+        if ($file) {
+            $body['file'] = UploadedFile::fake()->image("{$check}.jpg", 400, 300);
+        }
 
+        return $this->withHeaders(['Authorization' => 'Bearer '.self::TOKEN, 'X-Admin-Id' => '42', 'X-Admin-Role' => $role, 'Accept' => 'application/json'])
+            ->post("/api/internal/admin/shops/{$this->poa}/verification/checks", $body);
+    }
+
+    public function test_verification_checks_are_uploaded_privately_and_required_before_approval(): void
+    {
+        Storage::fake('verifications');
+
+        $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'approve'])
+            ->assertUnprocessable()->assertJsonPath('errors.missing', ['id', 'kra_pin', 'location', 'photo']);
+
+        $this->upload('id', file: false)->assertUnprocessable()->assertJsonValidationErrors('file');
+        $this->upload('kra_pin', 'not-a-pin', file: false)->assertUnprocessable()->assertJsonValidationErrors('value');
+        $this->upload('location', '51.5,-0.12', file: false)->assertUnprocessable()->assertJsonValidationErrors('value'); // London
+        $this->upload('photo', role: 'support')->assertForbidden();
+        $this->withHeaders(['Authorization' => 'Bearer '.self::TOKEN, 'X-Admin-Id' => '42', 'X-Admin-Role' => 'operations', 'Accept' => 'application/json'])
+            ->post("/api/internal/admin/shops/{$this->poa}/verification/checks", ['check' => 'photo', 'file' => UploadedFile::fake()->create('evil.html', 10, 'text/html')])
+            ->assertUnprocessable()->assertJsonValidationErrors('file');
+
+        $id = $this->upload('id')->assertCreated()->assertJsonPath('data.has_file', true)->json('data.id');
+        $this->upload('id')->assertCreated(); // a new ID photo replaces the old one
+        $this->upload('kra_pin', 'a012345678z', file: false)->assertCreated()->assertJsonPath('data.value', 'A012345678Z');
+        $this->upload('location', ' -1.28333 , 36.81667 ', file: false)->assertCreated()->assertJsonPath('data.value', '-1.28333,36.81667');
+
+        $row = TenantVerification::query()->findOrFail($id);
+        $this->assertSame('replaced', $row->status);
+        Storage::disk('verifications')->assertExists($row->file_path);
+        $this->assertStringStartsWith($this->tenant.'/id-', $row->file_path);
+
+        $this->admin('GET', "/shops/{$this->poa}/verification", [], 'support')->assertOk()
+            ->assertJsonPath('data.missing', ['photo'])->assertJsonCount(3, 'data.checks');
+
+        // Files: streamed to operations/super only, never to support, and every view is audited.
+        $current = TenantVerification::query()->where('tenant_id', $this->tenant)->where('check', 'id')->where('status', 'pending')->firstOrFail();
+        $this->admin('GET', "/shops/{$this->poa}/verification/checks/{$current->id}/file", [], 'support')->assertForbidden();
+        $file = $this->admin('GET', "/shops/{$this->poa}/verification/checks/{$current->id}/file", [], 'operations')->assertOk();
+        $this->assertSame('image/jpeg', $file->headers->get('Content-Type'));
+        $this->assertStringContainsString('no-store', (string) $file->headers->get('Cache-Control'));
+        $this->assertSame(1, AdminAuditLog::query()->where('action', 'shop.verification.file_view')->count());
+        $other = TenantVerification::query()->create(['tenant_id' => 'someone-else', 'check' => 'id', 'file_path' => 'x/y.jpg', 'status' => 'pending']);
+        $this->admin('GET', "/shops/{$this->poa}/verification/checks/{$other->id}/file")->assertNotFound();
+
+        $this->upload('photo')->assertCreated();
+
+        // Reject only the photo: it must be redone; the rest stay pending.
+        $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'reject', 'reason' => 'The shop photo is unclear.', 'checks' => ['photo']], 'operations')->assertOk();
+        Mail::assertQueued(PlainMessageMail::class, fn (PlainMessageMail $m) => $m->hasTo('owner@iadmin-test.example')
+            && in_array('The shop photo is unclear.', $m->paragraphs, true) && in_array('To redo: Shop photo.', $m->paragraphs, true));
+        $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'approve'])->assertUnprocessable()->assertJsonPath('errors.missing', ['photo']);
+
+        $this->upload('photo')->assertCreated();
         $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'approve'], 'operations')->assertOk()->assertJsonPath('data.is_verified', true);
         $this->assertTrue((bool) BusinessDetail::query()->where('tenant_id', $this->tenant)->value('is_verified'));
+        $this->assertSame(['verified'], TenantVerification::query()->where('tenant_id', $this->tenant)->whereIn('status', TenantVerification::CURRENT)->distinct()->pluck('status')->all());
+        $this->assertSame('admin:42', TenantVerification::query()->where('tenant_id', $this->tenant)->where('status', 'verified')->value('reviewed_by'));
 
         $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'revoke', 'reason' => 'Permit expired'])->assertOk()->assertJsonPath('data.is_verified', false);
-        $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'reject', 'reason' => 'The shop photo is unclear.'])->assertOk();
-        Mail::assertQueued(PlainMessageMail::class, fn (PlainMessageMail $m) => $m->hasTo('owner@iadmin-test.example') && in_array('The shop photo is unclear.', $m->paragraphs, true));
+        $this->admin('POST', "/shops/{$this->poa}/verification", ['decision' => 'reject'])->assertUnprocessable()->assertJsonValidationErrors('reason');
 
-        $this->assertSame(['shop.verification.approve', 'shop.verification.revoke', 'shop.verification.reject'],
-            AdminAuditLog::query()->where('tenant_id', $this->tenant)->orderBy('id')->pluck('action')->all());
+        $this->assertSame(['shop.verification.reject', 'shop.verification.approve', 'shop.verification.revoke'],
+            AdminAuditLog::query()->where('tenant_id', $this->tenant)->where('action', 'like', 'shop.verification.%')
+                ->whereNotIn('action', ['shop.verification.upload', 'shop.verification.file_view'])->orderBy('id')->pluck('action')->all());
+        $this->assertSame(6, AdminAuditLog::query()->where('tenant_id', $this->tenant)->where('action', 'shop.verification.upload')->count());
     }
 
     public function test_prices_change_only_from_a_future_date(): void

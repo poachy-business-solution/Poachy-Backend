@@ -16,6 +16,7 @@ use App\Models\BusinessDetail;
 use App\Models\SignupRequest;
 use App\Models\Tenant\Store;
 use App\Models\Tenant\User;
+use App\Models\TenantVerification;
 use App\Services\Central\Admin\AdminAudit;
 use App\Services\Central\Billing\BillingStateService;
 use App\Services\Central\Signup\SignupService;
@@ -124,9 +125,12 @@ class ShopController extends Controller
      *
      *     @OA\Parameter(name="shop", in="path", required=true, description="Tenant id or POA account", @OA\Schema(type="string")),
      *
-     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"decision"}, @OA\Property(property="decision", type="string", enum={"approve","reject","revoke"}), @OA\Property(property="reason", type="string"))),
+     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"decision"}, @OA\Property(property="decision", type="string", enum={"approve","reject","revoke"}), @OA\Property(property="reason", type="string"),
      *
-     *     @OA\Response(response=200, description="Decision applied"), @OA\Response(response=404, description="Unknown shop"), @OA\Response(response=422, description="Invalid")
+     *         @OA\Property(property="checks", type="array", description="reject: which checks to redo (default all pending)", @OA\Items(type="string", enum={"id","kra_pin","permit","location","photo"})))),
+     *
+     *     @OA\Response(response=422, description="Invalid, or (approve) required checks missing: errors.missing"),
+     *     @OA\Response(response=200, description="Decision applied"), @OA\Response(response=404, description="Unknown shop")
      * )
      */
     public function verification(VerificationDecisionRequest $request, string $shop, Messenger $messenger): JsonResponse
@@ -136,11 +140,31 @@ class ShopController extends Controller
         $before = ['is_verified' => (bool) $detail->is_verified];
         $decision = $request->validated('decision');
         $reason = $request->validated('reason');
+        $checks = VerificationController::current((string) $tenant->id);
+        $admin = ActingAdmin::from($request);
+
+        if ($decision === 'approve' && ($missing = VerificationController::missing($checks)) !== []) {
+            $labels = array_map(fn (string $c) => TenantVerification::CHECKS[$c], $missing);
+
+            return ApiResponse::error('Missing checks: '.implode(', ', $labels).'.', ['missing' => $missing], 422);
+        }
+
+        // Record the decision on the checks themselves: approve verifies them all; reject marks the
+        // named checks (or every pending one) as rejected with the reason.
+        $review = ['reviewed_by' => $admin->tag(), 'reviewed_at' => now()];
+        if ($decision === 'approve') {
+            TenantVerification::query()->whereIn('id', $checks->pluck('id'))->update($review + ['status' => 'verified']);
+        } elseif ($decision === 'reject') {
+            $named = (array) $request->validated('checks', []);
+            $targets = $checks->filter(fn (TenantVerification $c) => $named !== [] ? in_array($c->check, $named, true) : $c->status === 'pending');
+            TenantVerification::query()->whereIn('id', $targets->pluck('id'))->update($review + ['status' => 'rejected', 'note' => $reason]);
+            $rejectedLabels = $targets->map(fn (TenantVerification $c) => TenantVerification::CHECKS[$c->check])->values()->all();
+        }
 
         match ($decision) {
             'approve' => $this->setVerified($detail, true, $messenger),
             'revoke' => $this->setVerified($detail, false, $messenger),
-            'reject' => $this->reject($detail, (string) $reason, $messenger),
+            'reject' => $this->reject($detail, (string) $reason, $messenger, $rejectedLabels ?? []),
         };
 
         $detail->refresh();
@@ -248,7 +272,8 @@ class ShopController extends Controller
         }
     }
 
-    private function reject(BusinessDetail $detail, string $reason, Messenger $messenger): void
+    /** @param array<int, string> $checks */
+    private function reject(BusinessDetail $detail, string $reason, Messenger $messenger, array $checks = []): void
     {
         if ($detail->is_verified) {
             $detail->unverify();
@@ -256,7 +281,12 @@ class ShopController extends Controller
         if ($detail->business_email) {
             $messenger->email($detail->business_email, new PlainMessageMail(
                 'We could not verify your shop yet',
-                ["We reviewed {$detail->business_name} but could not verify it yet:", $reason, 'You can keep selling as normal. Send us what is missing and we will look again.'],
+                array_values(array_filter([
+                    "We reviewed {$detail->business_name} but could not verify it yet:",
+                    $checks === [] ? null : 'To redo: '.implode(', ', $checks).'.',
+                    $reason,
+                    'You can keep selling as normal. Send us what is missing and we will look again.',
+                ])),
             ), $detail->tenant_id, 'verification_rejected');
         }
     }

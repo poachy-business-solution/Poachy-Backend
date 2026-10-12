@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Internal\Admin\BillingController;
 use App\Http\Controllers\Api\Internal\Admin\ShopController;
+use App\Http\Controllers\Api\Internal\Admin\VerificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,6 +18,9 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::get('/shops/onboarding/{id}', [ShopController::class, 'onboarding'])->middleware('internal.admin');
     Route::get('/shops/{shop}/team', [ShopController::class, 'team'])->middleware('internal.admin');
     Route::post('/shops/{shop}/verification', [ShopController::class, 'verification'])->middleware('internal.admin:super,operations');
+    Route::get('/shops/{shop}/verification', [VerificationController::class, 'show'])->middleware('internal.admin');
+    Route::post('/shops/{shop}/verification/checks', [VerificationController::class, 'store'])->middleware('internal.admin:super,operations');
+    Route::get('/shops/{shop}/verification/checks/{id}/file', [VerificationController::class, 'file'])->whereNumber('id')->middleware('internal.admin:super,operations');
     Route::post('/shops/{shop}/suspend', [ShopController::class, 'suspend'])->middleware('internal.admin:super,operations');
     Route::post('/shops/{shop}/restore', [ShopController::class, 'restore'])->middleware('internal.admin:super,operations');
     Route::post('/shops/{shop}/trial', [ShopController::class, 'extendTrial'])->middleware('internal.admin:super,operations,finance');

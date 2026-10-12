@@ -49,10 +49,12 @@ class SaleDaysSyncController extends Controller
      *     ),
      *
      *     @OA\Response(response=200, description="Stored", @OA\JsonContent(
+     *
      *         @OA\Property(property="success", type="boolean", example=true),
      *         @OA\Property(property="message", type="string", example="Sale days received"),
      *         @OA\Property(property="data", type="object", @OA\Property(property="accepted", type="integer", example=4))
      *     )),
+     *
      *     @OA\Response(response=403, description="Missing or wrong sync token"),
      *     @OA\Response(response=422, description="Unknown tenant, tenant/header mismatch, or a day outside the window"),
      *     @OA\Response(response=429, description="Too many reports")
