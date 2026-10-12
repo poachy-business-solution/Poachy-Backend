@@ -4,12 +4,22 @@ namespace App\Services\Shared\Mpesa;
 
 use App\Exceptions\MpesaException;
 use App\Helpers\PhoneNumber;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * M-Pesa facade used by the payment services: builds requests, parses Safaricom callbacks and
+ * hands the network calls to the configured {@see MpesaGateway} (Daraja or the local fake).
+ */
 class MpesaService
 {
+    public function __construct(private ?MpesaGateway $gateway = null) {}
+
+    /** The configured gateway driver. */
+    public function gateway(): MpesaGateway
+    {
+        return $this->gateway ??= app(MpesaGateway::class);
+    }
+
     /**
      * Return the active credential block (sandbox or production) from config.
      *
@@ -20,42 +30,6 @@ class MpesaService
         $env = config('mpesa.environment', 'sandbox');
 
         return config("mpesa.{$env}");
-    }
-
-    /**
-     * Fetch (and cache) an OAuth2 access token from Daraja.
-     * Tokens are valid for 60 minutes; we cache for 58 to refresh slightly early.
-     *
-     * @throws MpesaException
-     */
-    public function getAccessToken(): string
-    {
-        $env = config('mpesa.environment', 'sandbox');
-        $cacheKey = "mpesa_access_token_{$env}";
-        $credentials = $this->getActiveCredentials();
-
-        return Cache::remember($cacheKey, 3480, function () use ($credentials, $env) {
-            $response = Http::withBasicAuth(
-                $credentials['consumer_key'],
-                $credentials['consumer_secret'],
-            )->get($credentials['base_url'].'/oauth/v1/generate', [
-                'grant_type' => 'client_credentials',
-            ]);
-
-            if (! $response->successful() || ! $response->json('access_token')) {
-                Log::channel('mpesa')->error('Daraja OAuth token request failed', [
-                    'environment' => $env,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-
-                throw MpesaException::oauthFailed($response->body());
-            }
-
-            Log::channel('mpesa')->debug('Daraja OAuth token obtained', ['environment' => $env]);
-
-            return $response->json('access_token');
-        });
     }
 
     /**
@@ -73,11 +47,6 @@ class MpesaService
         string $transactionDesc,
         ?string $callbackUrl = null,
     ): array {
-        $credentials = $this->getActiveCredentials();
-        $shortcode = $credentials['shortcode'];
-        $passkey = $credentials['passkey'];
-        $timestamp = now()->format('YmdHis');
-        $password = base64_encode($shortcode.$passkey.$timestamp);
         $callbackUrl = $callbackUrl ?? config('mpesa.stk_callback_url');
         $phone = PhoneNumber::normalize($phoneNumber);
 
@@ -87,40 +56,10 @@ class MpesaService
             'ref' => $accountReference,
         ]);
 
-        $response = Http::withToken($this->getAccessToken())
-            ->post($credentials['base_url'].'/mpesa/stkpush/v1/processrequest', [
-                'BusinessShortCode' => $shortcode,
-                'Password' => $password,
-                'Timestamp' => $timestamp,
-                'TransactionType' => 'CustomerPayBillOnline',
-                'Amount' => (int) ceil($amount), // M-Pesa requires integer amounts
-                'PartyA' => $phone,
-                'PartyB' => $shortcode,
-                'PhoneNumber' => $phone,
-                'CallBackURL' => $callbackUrl,
-                'AccountReference' => substr($accountReference, 0, 12), // Daraja max 12 chars
-                'TransactionDesc' => substr($transactionDesc, 0, 13),  // Daraja max 13 chars
-            ]);
+        $result = $this->gateway()->stkPush($phone, $amount, $accountReference, $transactionDesc, $callbackUrl);
 
-        if (! $response->successful() || isset($response->json()['errorCode'])) {
-            $error = $response->json('errorMessage')
-                ?? $response->json('ResponseDescription')
-                ?? 'STK push failed';
-
-            Log::channel('mpesa')->error('STK push failed', [
-                'status' => $response->status(),
-                'response' => $response->json(),
-                'phone' => PhoneNumber::mask($phoneNumber),
-            ]);
-
-            throw MpesaException::stkPushFailed($error, [
-                'status' => $response->status(),
-                'response' => $response->json(),
-            ]);
-        }
-
-        $checkoutRequestId = $response->json('CheckoutRequestID');
-        $merchantRequestId = $response->json('MerchantRequestID');
+        $checkoutRequestId = $result['checkout_request_id'];
+        $merchantRequestId = $result['merchant_request_id'];
 
         Log::channel('mpesa')->info('STK push initiated successfully', [
             'checkout_request_id' => $checkoutRequestId,
@@ -149,8 +88,6 @@ class MpesaService
         string $confirmationUrl,
         string $responseType = 'Cancelled',
     ): array {
-        $credentials = $this->getActiveCredentials();
-
         Log::channel('mpesa')->info('Registering C2B URLs', [
             'validation_url' => $validationUrl,
             'confirmation_url' => $confirmationUrl,
@@ -158,36 +95,17 @@ class MpesaService
             'environment' => config('mpesa.environment'),
         ]);
 
-        $response = Http::withToken($this->getAccessToken())
-            ->post($credentials['base_url'].'/mpesa/c2b/v1/registerurl', [
-                'ShortCode' => $credentials['shortcode'],
-                'ResponseType' => $responseType,
-                'ConfirmationURL' => $confirmationUrl,
-                'ValidationURL' => $validationUrl,
-            ]);
-
-        if (! $response->successful() || isset($response->json()['errorCode'])) {
-            $error = $response->json('errorMessage')
-                ?? $response->json('ResponseDescription')
-                ?? 'C2B URL registration failed';
-
-            Log::channel('mpesa')->error('C2B URL registration failed', [
-                'status' => $response->status(),
-                'response' => $response->json(),
-            ]);
-
-            throw MpesaException::c2bRegistrationFailed($error);
-        }
+        $result = $this->gateway()->registerC2BUrls($validationUrl, $confirmationUrl, $responseType);
 
         Log::channel('mpesa')->info('C2B URLs registered successfully', [
-            'response' => $response->json(),
+            'response' => $result,
         ]);
 
-        return $response->json();
+        return $result;
     }
 
     /**
-     * Simulate a C2B payment in sandbox (does not work in production).
+     * Simulate a C2B payment (Daraja sandbox or the fake driver; not in production).
      * Useful for testing ValidationURL and ConfirmationURL handlers.
      *
      * @throws MpesaException
@@ -197,32 +115,7 @@ class MpesaService
         float $amount,
         string $billRefNumber,
     ): array {
-        if (config('mpesa.environment') !== 'sandbox') {
-            throw new MpesaException('C2B simulation is only available in sandbox mode.', 'SIMULATION_NOT_ALLOWED');
-        }
-
-        $credentials = $this->getActiveCredentials();
-        $phone = PhoneNumber::normalize($phoneNumber);
-
-        $response = Http::withToken($this->getAccessToken())
-            ->post($credentials['base_url'].'/mpesa/c2b/v1/simulate', [
-                'ShortCode' => $credentials['shortcode'],
-                'CommandID' => 'CustomerPayBillOnline',
-                'Amount' => (int) ceil($amount),
-                'Msisdn' => $phone,
-                'BillRefNumber' => $billRefNumber,
-            ]);
-
-        if (! $response->successful() || isset($response->json()['errorCode'])) {
-            $error = $response->json('errorMessage') ?? 'C2B simulation failed';
-
-            Log::channel('mpesa')->error('C2B simulation failed', [
-                'status' => $response->status(),
-                'response' => $response->json(),
-            ]);
-
-            throw new MpesaException($error, 'SIMULATION_FAILED');
-        }
+        $result = $this->gateway()->simulateC2B(PhoneNumber::normalize($phoneNumber), $amount, $billRefNumber);
 
         Log::channel('mpesa')->info('C2B simulation triggered', [
             'bill_ref_number' => $billRefNumber,
@@ -230,7 +123,7 @@ class MpesaService
             'phone' => PhoneNumber::mask($phoneNumber),
         ]);
 
-        return $response->json();
+        return $result;
     }
 
     /**

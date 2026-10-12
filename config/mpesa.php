@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Gateway driver
+    |--------------------------------------------------------------------------
+    |
+    | 'fake'   — never calls Safaricom; requests are recorded locally and callbacks
+    |            are delivered with `php artisan poachy:simulate-mpesa` (default).
+    | 'daraja' — the real Daraja API (needs the credentials below).
+    |
+    */
+    'driver' => env('MPESA_DRIVER', 'fake'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Sandbox Credentials
     |--------------------------------------------------------------------------
     |
@@ -29,6 +41,10 @@ return [
         'consumer_secret' => env('MPESA_SANDBOX_CONSUMER_SECRET', ''),
         'shortcode' => env('MPESA_SANDBOX_SHORTCODE', '174379'),
         'passkey' => env('MPESA_SANDBOX_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'),
+        // B2C payouts and reversals (initiator + encrypted security credential from the Daraja portal)
+        'initiator_name' => env('MPESA_SANDBOX_INITIATOR_NAME', ''),
+        'security_credential' => env('MPESA_SANDBOX_SECURITY_CREDENTIAL', ''),
+        'b2c_shortcode' => env('MPESA_SANDBOX_B2C_SHORTCODE', env('MPESA_SANDBOX_SHORTCODE', '')),
     ],
 
     /*
@@ -46,6 +62,10 @@ return [
         'consumer_secret' => env('MPESA_PRODUCTION_CONSUMER_SECRET', ''),
         'shortcode' => env('MPESA_PRODUCTION_SHORTCODE', ''),
         'passkey' => env('MPESA_PRODUCTION_PASSKEY', ''),
+        // B2C payouts and reversals (initiator + encrypted security credential from the Daraja portal)
+        'initiator_name' => env('MPESA_PRODUCTION_INITIATOR_NAME', ''),
+        'security_credential' => env('MPESA_PRODUCTION_SECURITY_CREDENTIAL', ''),
+        'b2c_shortcode' => env('MPESA_PRODUCTION_B2C_SHORTCODE', env('MPESA_PRODUCTION_SHORTCODE', '')),
     ],
 
     /*
@@ -69,6 +89,12 @@ return [
 
     // C2B (Paybill) — Safaricom calls us once a payment is confirmed and final
     'c2b_confirmation_url' => env('MPESA_C2B_CONFIRMATION_URL', ''),
+
+    // B2C payouts / reversals — Safaricom posts results and timeouts here
+    'b2c_result_url' => env('MPESA_B2C_RESULT_URL', ''),
+    'b2c_timeout_url' => env('MPESA_B2C_TIMEOUT_URL', ''),
+    'reversal_result_url' => env('MPESA_REVERSAL_RESULT_URL', ''),
+    'reversal_timeout_url' => env('MPESA_REVERSAL_TIMEOUT_URL', ''),
 
     /*
     |--------------------------------------------------------------------------

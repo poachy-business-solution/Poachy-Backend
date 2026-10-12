@@ -13,6 +13,12 @@ use App\Listeners\Central\EnqueueApprovedReviewSync;
 use App\Listeners\Central\Marketplace\TrackCartAnalytics;
 use App\Listeners\Central\Marketplace\TrackCheckoutAnalytics;
 use App\Listeners\Central\Marketplace\TrackPaymentAnalytics;
+use App\Services\Shared\Card\CardGateway;
+use App\Services\Shared\Card\Gateways\FakeCardGateway;
+use App\Services\Shared\Card\Gateways\PaystackCardGateway;
+use App\Services\Shared\Mpesa\Gateways\DarajaMpesaGateway;
+use App\Services\Shared\Mpesa\Gateways\FakeMpesaGateway;
+use App\Services\Shared\Mpesa\MpesaGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Http\Request;
@@ -27,7 +33,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Payment gateways: fake drivers unless real keys are deliberately switched on.
+        $this->app->bind(MpesaGateway::class, fn () => match (config('mpesa.driver')) {
+            'daraja' => new DarajaMpesaGateway,
+            default => new FakeMpesaGateway,
+        });
+
+        $this->app->bind(CardGateway::class, fn () => match (config('paystack.driver')) {
+            'paystack' => new PaystackCardGateway,
+            default => new FakeCardGateway,
+        });
     }
 
     /**
