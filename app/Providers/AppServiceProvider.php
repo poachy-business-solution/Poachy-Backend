@@ -100,6 +100,19 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(20)->by($request->ip());
         });
 
+        // Payment links (public): reads and status polls per link + caller, prompts strictly
+        // per link and per caller. The web app's server forwards the payer's IP.
+        RateLimiter::for('pay-link-read', function (Request $request) {
+            return Limit::perMinute(60)->by('pay-read:'.sha1((string) $request->route('token')).'|'.$request->ip());
+        });
+
+        RateLimiter::for('pay-link-stk', function (Request $request) {
+            return [
+                Limit::perMinute(3)->by('pay-stk-link:'.sha1((string) $request->route('token'))),
+                Limit::perHour(20)->by('pay-stk-ip:'.$request->ip()),
+            ];
+        });
+
         // Configure analytics rate limiter
         RateLimiter::for('analytics', function (Request $request) {
             return Limit::perMinute(60)->by($request->header('X-Session-Id') ?? $request->ip());
