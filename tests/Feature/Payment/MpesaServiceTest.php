@@ -3,6 +3,7 @@
 namespace Tests\Feature\Payment;
 
 use App\Exceptions\MpesaException;
+use App\Services\Shared\Mpesa\Gateways\DarajaMpesaGateway;
 use App\Services\Shared\Mpesa\MpesaService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -17,7 +18,7 @@ class MpesaServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new MpesaService;
+        $this->service = new MpesaService(new DarajaMpesaGateway);
 
         Config::set('mpesa.environment', 'sandbox');
         Config::set('mpesa.sandbox.base_url', 'https://sandbox.safaricom.co.ke');
