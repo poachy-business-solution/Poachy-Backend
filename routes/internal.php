@@ -30,6 +30,7 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::post('/shops/{shop}/billing/stk', [BillingController::class, 'stk'])->middleware(['internal.admin:super,finance,operations', 'throttle:internal-admin-money']);
     Route::get('/shops/{shop}/billing/topups/{id}', [BillingController::class, 'topup'])->whereNumber('id')->middleware('internal.admin');
     Route::post('/shops/{shop}/billing/link', [BillingController::class, 'link'])->middleware('internal.admin');
+    Route::post('/billing/unmatched/{id}/assign', [BillingController::class, 'assignPayment'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
     Route::get('/billing/prices', [BillingController::class, 'prices'])->middleware('internal.admin');
     Route::post('/billing/prices', [BillingController::class, 'storePrice'])->middleware('internal.admin:super,finance');
 });

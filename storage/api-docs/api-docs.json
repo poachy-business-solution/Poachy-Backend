@@ -21148,6 +21148,64 @@
                 ]
             }
         },
+        "/api/internal/admin/billing/unmatched/{id}/assign": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Credit an unmatched Paybill payment to the right shop (once per receipt)",
+                "operationId": "internalAdminAssignPayment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shop",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "shop": {
+                                        "description": "Tenant id or POA account",
+                                        "type": "string"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Credited (ledger entry)"
+                    },
+                    "404": {
+                        "description": "Unknown payment or shop"
+                    },
+                    "409": {
+                        "description": "Already assigned"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
         "/api/internal/admin/billing/prices": {
             "get": {
                 "tags": [
