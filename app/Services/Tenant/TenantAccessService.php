@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant;
 
+use App\Models\BillingAccount;
 use App\Models\BusinessDetail;
 use App\Models\BusinessSubscription;
 use Illuminate\Support\Facades\Cache;
@@ -71,7 +72,22 @@ class TenantAccessService
             ];
         }
 
-        // 4. Check subscription status
+        // 4. Shops on trading-day billing: always allowed in. Their billing state (trial /
+        //    active / grace / limited) is enforced per route by EnforceBillingLimits, so selling
+        //    and syncing never stop over a missed payment.
+        if (BillingAccount::query()->where('tenant_id', $tenantId)->exists()) {
+            return [
+                'allowed' => true,
+                'reason' => null,
+                'message' => 'Access granted',
+                'details' => [
+                    'business_name' => $businessDetail->business_name,
+                    'billing' => 'trading_days',
+                ],
+            ];
+        }
+
+        // 5. Older shops still on a plan subscription
         $subscriptionCheck = $this->checkSubscriptionStatus($tenantId);
 
         if (! $subscriptionCheck['valid']) {

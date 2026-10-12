@@ -32,11 +32,11 @@ class Messenger
      * Queue (or send) an email and log it. Only {@see PoachyMail}s are marked "sent" later;
      * other mailables stay "queued" in the log.
      */
-    public function email(string $to, Mailable $mail, ?string $tenantId = null): MessageLog
+    public function email(string $to, Mailable $mail, ?string $tenantId = null, ?string $template = null): MessageLog
     {
         $log = MessageLog::create([
             'channel' => 'email',
-            'template' => class_basename($mail),
+            'template' => $template ?? class_basename($mail),
             'recipient' => Str::lower(trim($to)),
             'subject' => $mail instanceof PoachyMail ? $mail->subjectForLog() : null,
             'tenant_id' => $tenantId,
@@ -86,6 +86,7 @@ class Messenger
 
     /**
      * Message a shop at its business email and/or phone (from its central business details).
+     * `$smsTemplate` also names the email in the send log (e.g. "billing_low_balance").
      *
      * @return array{email: MessageLog|null, sms: MessageLog|null}
      */
@@ -102,7 +103,7 @@ class Messenger
         }
 
         if ($mail !== null && filled($details->business_email)) {
-            $sent['email'] = $this->email($details->business_email, $mail, $tenantId);
+            $sent['email'] = $this->email($details->business_email, $mail, $tenantId, $smsTemplate);
         }
 
         if ($smsTemplate !== null && $smsText !== null && filled($details->business_phone)) {

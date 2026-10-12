@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\Tenant\Audit\AuditLogController;
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
+use App\Http\Controllers\Api\Tenant\Billing\BillingController;
 use App\Http\Controllers\Api\Tenant\Billing\BillingTopupController;
 use App\Http\Controllers\Api\Tenant\Budget\BudgetController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
@@ -110,7 +111,7 @@ Route::prefix('v1/tenant')->group(function () {
 
 // Protected tenant routes requires authentication & active subscription
 Route::prefix('v1/tenant')
-    ->middleware(['auth:tenant', 'tenant.access'])
+    ->middleware(['auth:tenant', 'tenant.access', 'billing.limits'])
     ->group(function () {
 
         Route::get('/catalog/sync', CatalogSyncController::class);
@@ -896,6 +897,8 @@ Route::prefix('v1/tenant')
         // Poachy balance top-ups (owner; used by the web business account, never the app).
         // Outside tenant.access on purpose: a shop in limited mode must still be able to pay.
         Route::prefix('billing')->group(function () {
+            Route::get('/', [BillingController::class, 'show']);
+            Route::get('/ledger', [BillingController::class, 'ledger']);
             Route::post('/topups/stk', [BillingTopupController::class, 'stk'])->middleware('throttle:5,1');
             Route::get('/topups/{id}', [BillingTopupController::class, 'show'])->whereNumber('id');
         });

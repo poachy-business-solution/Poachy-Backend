@@ -3,6 +3,7 @@
 use App\Exceptions\ExceptionHandler;
 use App\Http\Middleware\AddRequestId;
 use App\Http\Middleware\CheckTenantAccess;
+use App\Http\Middleware\EnforceBillingLimits;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -48,6 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'tenant.access' => CheckTenantAccess::class,
+            'billing.limits' => EnforceBillingLimits::class,
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {

@@ -53,6 +53,13 @@ Schedule::command('billing:run')
     ->onOneServer()
     ->description('Nightly trading-day billing');
 
+// Billing: grace → limited as time passes, low-balance notices (daytime only).
+Schedule::command('billing:refresh-states')
+    ->hourlyAt(5)
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Re-evaluate billing states');
+
 // Stock Level Checks - Daily at 2 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs
