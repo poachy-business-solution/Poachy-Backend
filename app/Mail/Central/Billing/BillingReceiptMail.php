@@ -17,6 +17,7 @@ class BillingReceiptMail extends PoachyMail
         public string $accountNumber,
         public string $paidAt,
         public string $method,
+        public ?string $payUrl = null,
     ) {
         $this->onQueue('default');
     }

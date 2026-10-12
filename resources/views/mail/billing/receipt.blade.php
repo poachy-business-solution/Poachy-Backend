@@ -17,5 +17,5 @@ Poachy charges only on the days a branch sells, and never more than the monthly 
 
 To top up again, pay any amount from KSh 10:
 
-<x-mail::paybill :account="$accountNumber" />
+<x-mail::paybill :account="$accountNumber" :pay-url="$payUrl" />
 </x-mail::message>

@@ -195,6 +195,7 @@ class BillingTopupService
                 accountNumber: (string) ($tenant?->mpesa_paybill_account ?? ''),
                 paidAt: now('Africa/Nairobi')->format('j M Y, H:i'),
                 method: $source === 'mpesa_stk' ? 'M-Pesa prompt' : 'M-Pesa Paybill',
+                payUrl: app(BillingNotices::class)->payLink($tenantId, 'billing_receipt'),
             ));
         } catch (\Throwable $e) {
             Log::error('Billing receipt email failed', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);

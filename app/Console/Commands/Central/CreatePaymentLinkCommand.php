@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands\Central;
 
-use App\Mail\Shared\PlainMessageMail;
-use App\Models\BusinessDetail;
 use App\Models\Tenant;
+use App\Services\Central\Billing\BillingNotices;
 use App\Services\Central\Billing\PaymentLinkService;
-use App\Services\Shared\Messaging\Messenger;
 use Illuminate\Console\Command;
 
 /**
@@ -19,7 +17,7 @@ class CreatePaymentLinkCommand extends Command
 
     protected $description = 'Create a payment page link for a shop';
 
-    public function handle(PaymentLinkService $links, Messenger $messenger): int
+    public function handle(PaymentLinkService $links, BillingNotices $notices): int
     {
         $tenant = Tenant::query()->whereKey($this->argument('tenant'))->orWhere('mpesa_paybill_account', strtoupper((string) $this->argument('tenant')))->first();
 
@@ -35,20 +33,12 @@ class CreatePaymentLinkCommand extends Command
         $this->info('Valid until '.$made['link']->expires_at->setTimezone('Africa/Nairobi')->format('j M Y H:i').' (Nairobi).');
 
         if ($this->option('email')) {
-            $email = BusinessDetail::query()->where('tenant_id', $tenant->id)->value('business_email');
-            if (! $email) {
+            $email = $notices->paymentLink((string) $tenant->id, $made['url'], $amount);
+            if ($email === null) {
                 $this->warn('The shop has no business email.');
 
                 return self::SUCCESS;
             }
-            $messenger->email($email, new PlainMessageMail(
-                'Your Poachy payment link',
-                ['Use this link to top up your Poachy balance by M-Pesa. It works for '.PaymentLinkService::VALID_DAYS.' days.'],
-                'Top up now',
-                $made['url'],
-                (string) $tenant->mpesa_paybill_account,
-                $made['url'],
-            ), (string) $tenant->id, 'billing_payment_link');
             $this->info("Emailed to {$email}.");
         }
 
