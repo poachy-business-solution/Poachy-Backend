@@ -18,6 +18,9 @@ class TenantAuthService
 
     private const REFRESH_TOKEN_TTL_DAYS = 30;
 
+    /** Token/device name for sessions held by the Poachy website's server. */
+    public const WEB_CLIENT = 'web';
+
     public function __construct(
         private readonly TenantOtpService $otpService
     ) {}
@@ -67,18 +70,25 @@ class TenantAuthService
      *
      * @throws ValidationException
      */
-    public function verifyOtpAndLogin(string $email, string $otp): array
+    public function verifyOtpAndLogin(string $email, string $otp, string $client = 'app'): array
     {
         // Verify OTP
         $user = $this->otpService->verify($email, $otp, 'login');
 
-        $user->tokens()->delete();
-        $this->revokeAllRefreshTokens($user);
+        // One session per kind of client: a new app sign-in ends the previous app session, a new
+        // web sign-in ends the previous web session; neither touches the other.
+        $isWeb = $client === self::WEB_CLIENT;
+        $user->tokens()
+            ->when($isWeb, fn ($q) => $q->where('name', 'tenant-token:'.self::WEB_CLIENT), fn ($q) => $q->where('name', '!=', 'tenant-token:'.self::WEB_CLIENT))
+            ->delete();
+        TenantRefreshToken::query()->where('user_id', $user->id)->whereNull('revoked_at')
+            ->when($isWeb, fn ($q) => $q->where('device_name', self::WEB_CLIENT), fn ($q) => $q->where(fn ($w) => $w->whereNull('device_name')->orWhere('device_name', '!=', self::WEB_CLIENT)))
+            ->update(['revoked_at' => now()]);
 
         // Update last login
         $user->updateLastLogin();
 
-        $tokenPair = $this->issueTokenPair($user);
+        $tokenPair = $this->issueTokenPair($user, $isWeb ? self::WEB_CLIENT : null);
 
         return [
             'user' => $user->load('roles'),

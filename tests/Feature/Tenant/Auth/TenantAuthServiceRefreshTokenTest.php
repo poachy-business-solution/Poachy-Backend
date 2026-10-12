@@ -121,6 +121,29 @@ class TenantAuthServiceRefreshTokenTest extends TestCase
         $this->assertSame(0, TenantRefreshToken::where('user_id', $user->id)->whereNull('revoked_at')->count());
     }
 
+    public function test_web_and_app_sign_ins_do_not_end_each_others_sessions(): void
+    {
+        $user = $this->makeTenantUserWithRole('owner', []);
+        $service = $this->makeServiceWithVerifiedUser($user);
+
+        $app = $service->verifyOtpAndLogin($user->email, '1234567');
+        $web = $service->verifyOtpAndLogin($user->email, '1234567', 'web');
+
+        $this->assertSame(['tenant-token', 'tenant-token:web'], $user->tokens()->orderBy('id')->pluck('name')->all());
+
+        // A second web sign-in replaces only the web session.
+        $web2 = $service->verifyOtpAndLogin($user->email, '1234567', 'web');
+        $this->assertNotNull($user->tokens()->find($this->accessTokenId($app['token'])));
+        $this->assertNull($user->tokens()->find($this->accessTokenId($web['token'])));
+        $this->assertSame(1, TenantRefreshToken::where('user_id', $user->id)->whereNull('revoked_at')->where('device_name', 'web')->count());
+
+        // A new app sign-in replaces only the app session.
+        $service->verifyOtpAndLogin($user->email, '1234567');
+        $this->assertNull($user->tokens()->find($this->accessTokenId($app['token'])));
+        $this->assertNotNull($user->tokens()->find($this->accessTokenId($web2['token'])));
+        $this->assertSame(2, TenantRefreshToken::where('user_id', $user->id)->whereNull('revoked_at')->count());
+    }
+
     protected function makeServiceWithVerifiedUser(TenantUser $user): TenantAuthService
     {
         $otpService = Mockery::mock(TenantOtpService::class);
