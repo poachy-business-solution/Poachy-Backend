@@ -45,6 +45,14 @@ Schedule::command('billing:report-sale-days')
     ->onOneServer()
     ->description('Report branch trading days to central');
 
+// Billing: charge yesterday's (and any late-reported) trading days at 01:00 Nairobi.
+Schedule::command('billing:run')
+    ->dailyAt('01:00')
+    ->timezone('Africa/Nairobi')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Nightly trading-day billing');
+
 // Stock Level Checks - Daily at 2 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs
