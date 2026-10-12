@@ -45,8 +45,9 @@ class TenantAuthService
             ]);
         }
 
-        // Check if first login (requires password change)
-        $requiresPasswordChange = is_null($user->last_login_at);
+        // First login with a password someone else set (admin-created staff) must be changed;
+        // owners who chose their own at sign-up (password_chosen_at) skip that.
+        $requiresPasswordChange = is_null($user->last_login_at) && is_null($user->password_chosen_at);
 
         // Generate and send OTP
         $this->otpService->generateAndSendOtp($user, 'login');

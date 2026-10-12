@@ -9,6 +9,7 @@ use App\Events\Central\Marketplace\PaymentAttempted;
 use App\Events\Central\Marketplace\PaymentCompleted;
 use App\Events\Central\Marketplace\PaymentFailed;
 use App\Events\Central\ProductReviewApproved;
+use App\Helpers\PhoneNumber;
 use App\Listeners\Central\EnqueueApprovedReviewSync;
 use App\Listeners\Central\Marketplace\TrackCartAnalytics;
 use App\Listeners\Central\Marketplace\TrackCheckoutAnalytics;
@@ -111,6 +112,23 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(3)->by('pay-stk-link:'.sha1((string) $request->route('token'))),
                 Limit::perHour(20)->by('pay-stk-ip:'.$request->ip()),
             ];
+        });
+
+        // Self sign-up: per network and per phone (one shop per phone; stop SMS pumping).
+        RateLimiter::for('signup-start', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by('signup-ip:'.$request->ip()),
+                Limit::perHour(20)->by('signup-ip-h:'.$request->ip()),
+                Limit::perHour(3)->by('signup-phone:'.(PhoneNumber::isValid((string) $request->input('phone')) ? PhoneNumber::normalize((string) $request->input('phone')) : (string) $request->input('phone'))),
+            ];
+        });
+
+        RateLimiter::for('signup-codes', function (Request $request) {
+            return Limit::perMinute(10)->by('signup-codes:'.$request->ip().'|'.$request->input('signup_id'));
+        });
+
+        RateLimiter::for('signup-read', function (Request $request) {
+            return Limit::perMinute(60)->by('signup-read:'.$request->ip());
         });
 
         // Configure analytics rate limiter
