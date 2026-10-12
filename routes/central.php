@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SaleDaysSyncController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
+use App\Http\Controllers\Api\Public\PayLinkController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,6 +44,16 @@ use Illuminate\Support\Facades\Route;
 | They DO NOT use tenant middleware.
 |
 */
+
+// Public surface for the web app's server (no sign-in; strict rate limits).
+Route::prefix('v1/public')->group(function () {
+    // Payment page links (poachy.com/pay/<token>) — the link is the credential.
+    Route::prefix('pay/{token}')->where(['token' => '[A-Za-z0-9]{20,64}'])->group(function () {
+        Route::get('/', [PayLinkController::class, 'show'])->middleware('throttle:pay-link-read');
+        Route::post('/stk', [PayLinkController::class, 'stk'])->middleware('throttle:pay-link-stk');
+        Route::get('/topups/{id}', [PayLinkController::class, 'topup'])->whereNumber('id')->middleware('throttle:pay-link-read');
+    });
+});
 
 // Public routes (no authentication required)
 Route::prefix('v1/central')->group(function () {

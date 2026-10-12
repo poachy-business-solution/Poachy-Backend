@@ -168,6 +168,10 @@ class BillingTopupService
         // The credit is idempotent on the receipt, so a repeated callback cannot double it.
         $entry = $this->creditFromMpesa($topup->tenant_id, (float) $topup->amount, (string) $parsed['provider_reference'], 'mpesa_stk', $topup->phone);
         $topup->update(['status' => BillingTopup::COMPLETED, 'mpesa_receipt' => $parsed['provider_reference'], 'billing_ledger_id' => $entry->id]);
+
+        if ($topup->payment_link_id !== null) {
+            app(PaymentLinkService::class)->markUsed($topup->payment_link_id);
+        }
         CentralPaymentLog::record('billing_topup', $topup->id, 'payment_completed', [
             'tenant_id' => $topup->tenant_id,
             'amount' => (float) $topup->amount,

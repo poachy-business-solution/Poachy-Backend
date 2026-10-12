@@ -20932,6 +20932,151 @@
                 ]
             }
         },
+        "/api/v1/public/pay/{token}": {
+            "get": {
+                "tags": [
+                    "Public - Pay"
+                ],
+                "summary": "Payment page data for a pay link",
+                "operationId": "publicPayLinkShow",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "shop_name, account_number, paybill_number, suggested_amount, min_amount, expires_at"
+                    },
+                    "404": {
+                        "description": "Unknown link"
+                    },
+                    "410": {
+                        "description": "Expired or already paid (errors.state = expired|used)"
+                    },
+                    "429": {
+                        "description": "Too many requests"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/pay/{token}/stk": {
+            "post": {
+                "tags": [
+                    "Public - Pay"
+                ],
+                "summary": "Send an M-Pesa prompt to pay through a pay link",
+                "operationId": "publicPayLinkStk",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0712345678"
+                                    },
+                                    "amount": {
+                                        "type": "integer",
+                                        "maximum": 150000,
+                                        "minimum": 10,
+                                        "example": 700
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Prompt sent; poll GET /pay/{token}/topups/{id}"
+                    },
+                    "200": {
+                        "description": "Same Idempotency-Key: the earlier prompt"
+                    },
+                    "404": {
+                        "description": "Unknown link"
+                    },
+                    "409": {
+                        "description": "A prompt for this link is still open (errors.retry_after seconds)"
+                    },
+                    "410": {
+                        "description": "Expired or already paid"
+                    },
+                    "422": {
+                        "description": "Invalid phone/amount, missing key, or M-Pesa refused"
+                    },
+                    "429": {
+                        "description": "Too many prompts"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/pay/{token}/topups/{id}": {
+            "get": {
+                "tags": [
+                    "Public - Pay"
+                ],
+                "summary": "Status of a prompt sent through a pay link",
+                "operationId": "publicPayLinkTopup",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "pending | processing | completed | failed"
+                    },
+                    "404": {
+                        "description": "Unknown link or not this link's prompt"
+                    }
+                }
+            }
+        },
         "/api/v1/tenant/audit-logs": {
             "get": {
                 "tags": [
@@ -134464,6 +134609,10 @@
         {
             "name": "Central - Sync",
             "description": "Central - Sync"
+        },
+        {
+            "name": "Public - Pay",
+            "description": "Public - Pay"
         },
         {
             "name": "Audit Logs",

@@ -16,7 +16,7 @@ use Carbon\CarbonImmutable;
  */
 class BillingNotices
 {
-    public function __construct(private Messenger $messenger) {}
+    public function __construct(private Messenger $messenger, private PaymentLinkService $links) {}
 
     public function statusChanged(BillingAccount $account, ?BillingStatus $from, BillingStatus $to): void
     {
@@ -68,7 +68,10 @@ class BillingNotices
      */
     private function send(BillingAccount $account, string $template, string $heading, array $paragraphs, ?string $sms, ?string $poa): void
     {
-        $mail = new PlainMessageMail($heading, $paragraphs, paybillAccount: $poa);
+        // Every "please pay" notice carries its own 7-day pay link.
+        $payUrl = $poa === null ? null : $this->links->create($account->tenant_id, null, 'system:'.$template)['url'];
+        $mail = new PlainMessageMail($heading, $paragraphs, $payUrl ? 'Top up now' : null, $payUrl, paybillAccount: $poa, payUrl: $payUrl);
+        $sms = $sms !== null && $payUrl !== null ? "{$sms} Or pay here: {$payUrl}" : $sms;
 
         if ($sms === null) {
             $email = BusinessDetail::query()->where('tenant_id', $account->tenant_id)->value('business_email');
