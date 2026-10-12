@@ -3,6 +3,7 @@
 namespace App\Observers\Central;
 
 use App\Models\Tenant;
+use App\Services\Central\Billing\BillingAccountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -37,6 +38,23 @@ class TenantObserver
         } catch (\Throwable $e) {
             Log::error('Failed to assign Paybill account number to tenant', [
                 'tenant_id' => $tenant->id ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Every new shop starts on a free trial of trading-day billing.
+     * Never blocks tenant creation: a failure is logged and the account can be opened later
+     * with `php artisan poachy:billing-open-accounts`.
+     */
+    public function created(Tenant $tenant): void
+    {
+        try {
+            app(BillingAccountService::class)->openTrial((string) $tenant->getKey());
+        } catch (\Throwable $e) {
+            Log::error('Failed to open trial billing account for tenant', [
+                'tenant_id' => $tenant->getKey(),
                 'error' => $e->getMessage(),
             ]);
         }
