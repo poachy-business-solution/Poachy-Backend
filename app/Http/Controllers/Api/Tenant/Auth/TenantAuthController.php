@@ -135,7 +135,8 @@ class TenantAuthController extends Controller
     {
         $result = $this->authService->verifyOtpAndLogin(
             $request->validated('email'),
-            $request->validated('otp_code')
+            $request->validated('otp_code'),
+            $request->validated('client', 'app'),
         );
 
         return ApiResponse::success(

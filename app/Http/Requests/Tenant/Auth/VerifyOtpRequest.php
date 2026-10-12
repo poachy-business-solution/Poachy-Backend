@@ -22,6 +22,9 @@ class VerifyOtpRequest extends FormRequest
         return [
             'email' => ['required', 'email'],
             'otp_code' => ['required', 'string', 'size:7'],
+            // "web" = the Poachy website (/business). Each sign-in replaces only sessions of its
+            // own kind, so signing in on the web does not sign the phone out (and vice versa).
+            'client' => ['sometimes', 'string', 'in:app,web'],
         ];
     }
 
