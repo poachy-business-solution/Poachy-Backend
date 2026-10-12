@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Database\Seeders\BillingPriceSeeder;
 use Database\Seeders\BusinessTypeSeeder;
 use Database\Seeders\CentralRolesPermissionsSeeder;
 use Database\Seeders\MarketplaceBrandSeeder;
@@ -63,6 +64,7 @@ class SetupCentralTestDatabase extends Command
 
         $this->info('Seeding reference data...');
         foreach ([
+            BillingPriceSeeder::class, // idempotent; first so a re-run reaches it
             BusinessTypeSeeder::class,
             SubscriptionPlanSeeder::class,
             CentralRolesPermissionsSeeder::class,
