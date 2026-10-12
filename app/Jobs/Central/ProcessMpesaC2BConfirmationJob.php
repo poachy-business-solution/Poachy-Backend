@@ -2,8 +2,10 @@
 
 namespace App\Jobs\Central;
 
+use App\Helpers\PhoneNumber;
 use App\Models\CentralPaymentLog;
 use App\Models\Tenant;
+use App\Models\UnmatchedMpesaPayment;
 use App\Services\Central\Billing\BillingTopupService;
 use App\Services\Central\Marketplace\MarketplacePaymentService;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
@@ -68,6 +70,12 @@ class ProcessMpesaC2BConfirmationJob implements ShouldQueue
             Log::channel('mpesa')->warning('C2B payment to an unknown shop account — left unmatched', [
                 'bill_ref_number' => $payload['bill_ref_number'],
                 'transaction_id' => $payload['transaction_id'],
+            ]);
+            UnmatchedMpesaPayment::query()->firstOrCreate(['transaction_id' => (string) $payload['transaction_id']], [
+                'amount' => (float) $payload['amount'],
+                'bill_ref_number' => mb_substr((string) $payload['bill_ref_number'], 0, 40),
+                'phone_masked' => filled($payload['phone'] ?? null) ? PhoneNumber::mask((string) $payload['phone']) : null,
+                'payer_name' => isset($payload['first_name']) ? mb_substr((string) $payload['first_name'], 0, 120) : null,
             ]);
             CentralPaymentLog::record('unmatched', 0, 'c2b_unmatched', [
                 'amount' => $payload['amount'],

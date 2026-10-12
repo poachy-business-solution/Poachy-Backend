@@ -7,6 +7,7 @@ use App\Events\Central\Billing\BillingBalanceCredited;
 use App\Exceptions\MpesaException;
 use App\Http\Controllers\Api\Internal\Admin\Concerns\ResolvesShop;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Internal\Admin\AssignPaymentRequest;
 use App\Http\Requests\Internal\Admin\BillingCreditRequest;
 use App\Http\Requests\Internal\Admin\BillingLinkRequest;
 use App\Http\Requests\Internal\Admin\BillingPriceRequest;
@@ -19,6 +20,7 @@ use App\Models\BillingLedgerEntry;
 use App\Models\BillingPrice;
 use App\Models\BillingTopup;
 use App\Models\BusinessDetail;
+use App\Models\UnmatchedMpesaPayment;
 use App\Services\Central\Admin\AdminAudit;
 use App\Services\Central\Billing\BillingLedgerService;
 use App\Services\Central\Billing\BillingNotices;
@@ -26,6 +28,7 @@ use App\Services\Central\Billing\BillingTopupService;
 use App\Services\Central\Billing\PaymentLinkService;
 use App\Support\ActingAdmin;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Private admin API: shop billing and prices. Every action is in the admin audit log; money
@@ -157,6 +160,51 @@ class BillingController extends Controller
             'expires_at' => $made['link']->expires_at->toIso8601String(),
             'emailed_to' => $emailedTo,
         ], 201);
+    }
+
+    /**
+     * @OA\Post(path="/api/internal/admin/billing/unmatched/{id}/assign", summary="Credit an unmatched Paybill payment to the right shop (once per receipt)",
+     *     operationId="internalAdminAssignPayment", tags={"Internal - Admin"}, security={{"internalAdmin": {}}},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"shop","reason"}, @OA\Property(property="shop", type="string", description="Tenant id or POA account"), @OA\Property(property="reason", type="string"))),
+     *
+     *     @OA\Response(response=200, description="Credited (ledger entry)"), @OA\Response(response=404, description="Unknown payment or shop"), @OA\Response(response=409, description="Already assigned")
+     * )
+     */
+    public function assignPayment(AssignPaymentRequest $request, int $id, BillingTopupService $topups): JsonResponse
+    {
+        $tenant = $this->shop((string) $request->validated('shop'));
+        $admin = ActingAdmin::from($request);
+
+        $result = DB::connection('central')->transaction(function () use ($id, $tenant, $topups, $admin) {
+            $payment = UnmatchedMpesaPayment::query()->lockForUpdate()->find($id);
+            if ($payment === null) {
+                return 'missing';
+            }
+            if ($payment->status !== 'open') {
+                return 'assigned';
+            }
+
+            $entry = $topups->creditFromMpesa((string) $tenant->id, $payment->amount, $payment->transaction_id, 'mpesa_c2b', payerName: $payment->payer_name);
+            $payment->update(['status' => 'assigned', 'assigned_tenant_id' => $tenant->id, 'billing_ledger_id' => $entry->id, 'assigned_by' => $admin->tag(), 'assigned_at' => now()]);
+
+            return [$payment, $entry];
+        });
+
+        if ($result === 'missing') {
+            return ApiResponse::notFound('Payment not found.');
+        }
+        if ($result === 'assigned') {
+            return ApiResponse::conflict('This payment has already been assigned.');
+        }
+
+        [$payment, $entry] = $result;
+        $this->audit->record($request, 'billing.unmatched.assign', (string) $tenant->id, 'unmatched_mpesa_payment', $payment->id, ['status' => 'open'],
+            ['status' => 'assigned', 'amount' => $payment->amount, 'receipt' => $payment->transaction_id, 'balance' => (float) $entry->balance_after], $request->validated('reason'));
+
+        return ApiResponse::success('Payment credited to '.$tenant->mpesa_paybill_account, new BillingLedgerEntryResource($entry));
     }
 
     /**

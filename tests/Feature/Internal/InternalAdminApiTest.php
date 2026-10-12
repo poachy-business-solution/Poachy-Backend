@@ -3,6 +3,7 @@
 namespace Tests\Feature\Internal;
 
 use App\Enums\Central\BillingStatus;
+use App\Jobs\Central\ProcessMpesaC2BConfirmationJob;
 use App\Jobs\Central\ProvisionSignupJob;
 use App\Mail\Central\Billing\BillingNoticeMail;
 use App\Mail\Shared\PlainMessageMail;
@@ -15,6 +16,10 @@ use App\Models\BusinessDetail;
 use App\Models\PaymentLink;
 use App\Models\SignupRequest;
 use App\Models\TenantVerification;
+use App\Models\UnmatchedMpesaPayment;
+use App\Services\Central\Billing\BillingTopupService;
+use App\Services\Central\Marketplace\MarketplacePaymentService;
+use App\Services\Central\Subscription\SubscriptionPaymentService;
 use Carbon\CarbonImmutable;
 use Database\Seeders\BillingPriceSeeder;
 use Illuminate\Http\UploadedFile;
@@ -265,6 +270,29 @@ class InternalAdminApiTest extends TestCase
             AdminAuditLog::query()->where('tenant_id', $this->tenant)->where('action', 'like', 'shop.verification.%')
                 ->whereNotIn('action', ['shop.verification.upload', 'shop.verification.file_view'])->orderBy('id')->pluck('action')->all());
         $this->assertSame(6, AdminAuditLog::query()->where('tenant_id', $this->tenant)->where('action', 'shop.verification.upload')->count());
+    }
+
+    public function test_unmatched_paybill_payments_are_kept_and_assigned_once(): void
+    {
+        $payload = ['transaction_id' => 'FKU'.strtoupper(Str::random(7)), 'amount' => 350.0, 'bill_ref_number' => 'POA99999',
+            'phone' => '254712345678', 'first_name' => 'Mary'];
+        (new ProcessMpesaC2BConfirmationJob($payload, 'billing'))->handle(app(SubscriptionPaymentService::class), app(MarketplacePaymentService::class), app(BillingTopupService::class));
+        (new ProcessMpesaC2BConfirmationJob($payload, 'billing'))->handle(app(SubscriptionPaymentService::class), app(MarketplacePaymentService::class), app(BillingTopupService::class));
+
+        $payment = UnmatchedMpesaPayment::query()->where('transaction_id', $payload['transaction_id'])->sole();
+        $this->assertSame(['open', 350.0, '2547****5678', 'Mary'], [$payment->status, $payment->amount, $payment->phone_masked, $payment->payer_name]);
+
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/assign", ['shop' => $this->poa, 'reason' => 'Customer typed POA99999'], 'operations')->assertForbidden();
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/assign", ['shop' => 'POA00000000', 'reason' => 'Typo'], 'finance')->assertNotFound();
+
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/assign", ['shop' => $this->poa, 'reason' => 'Customer typed POA99999'], 'finance')
+            ->assertOk()->assertJsonPath('data.amount', 350)->assertJsonPath('data.reference', $payload['transaction_id'])->assertJsonPath('data.balance_after', 300);
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/assign", ['shop' => $this->poa, 'reason' => 'again'], 'finance')->assertStatus(409);
+
+        $this->assertSame(['assigned', $this->tenant, 'admin:42'], [$payment->fresh()->status, $payment->fresh()->assigned_tenant_id, $payment->fresh()->assigned_by]);
+        $this->assertSame(1, BillingLedgerEntry::query()->where('reference', $payload['transaction_id'])->count());
+        $this->assertSame(300.0, (float) BillingAccount::query()->where('tenant_id', $this->tenant)->value('balance'));
+        $this->assertSame('Customer typed POA99999', $this->audit('billing.unmatched.assign')->reason);
     }
 
     public function test_prices_change_only_from_a_future_date(): void
