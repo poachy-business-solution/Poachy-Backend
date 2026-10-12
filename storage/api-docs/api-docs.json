@@ -22713,6 +22713,110 @@
                 ]
             }
         },
+        "/api/v1/tenant/billing/topups/stk": {
+            "post": {
+                "tags": [
+                    "Tenant - Billing"
+                ],
+                "summary": "Top up the Poachy balance by M-Pesa prompt (owner)",
+                "operationId": "tenantBillingTopupStk",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "integer",
+                                        "maximum": 150000,
+                                        "minimum": 10,
+                                        "example": 700
+                                    },
+                                    "phone": {
+                                        "description": "Defaults to the shop's business phone",
+                                        "type": "string",
+                                        "example": "0712345678",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Prompt sent; poll GET /billing/topups/{id}"
+                    },
+                    "200": {
+                        "description": "Same Idempotency-Key: the earlier top-up"
+                    },
+                    "403": {
+                        "description": "Not the owner"
+                    },
+                    "422": {
+                        "description": "Invalid amount/phone, missing key, or M-Pesa refused the prompt"
+                    },
+                    "429": {
+                        "description": "Too many prompts"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/billing/topups/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant - Billing"
+                ],
+                "summary": "Status of a top-up prompt (owner)",
+                "operationId": "tenantBillingTopupShow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "pending | processing | completed | failed"
+                    },
+                    "403": {
+                        "description": "Not the owner"
+                    },
+                    "404": {
+                        "description": "Not this shop's top-up"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/budgets": {
             "get": {
                 "tags": [
@@ -134301,6 +134405,10 @@
         {
             "name": "Tenant Authentication",
             "description": "Tenant Authentication"
+        },
+        {
+            "name": "Tenant - Billing",
+            "description": "Tenant - Billing"
         },
         {
             "name": "Tenant - Budget Management",

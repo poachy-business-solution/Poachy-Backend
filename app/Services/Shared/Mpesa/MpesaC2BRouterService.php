@@ -4,8 +4,8 @@ namespace App\Services\Shared\Mpesa;
 
 use App\Jobs\Central\ProcessMpesaC2BConfirmationJob;
 use App\Models\MarketplaceOrder;
-use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Services\Central\Billing\BillingTopupService;
 use Illuminate\Support\Facades\Log;
 
 class MpesaC2BRouterService
@@ -31,8 +31,8 @@ class MpesaC2BRouterService
             'amount' => $amount,
         ]);
 
-        return $this->isSubscriptionPayment($billRefNumber)
-            ? $this->validateSubscriptionPayment($billRefNumber, $amount)
+        return $this->isShopAccountPayment($billRefNumber)
+            ? $this->validateShopTopup($billRefNumber, $amount)
             : $this->validateMarketplacePayment($billRefNumber, $amount);
     }
 
@@ -45,7 +45,7 @@ class MpesaC2BRouterService
     public function handleConfirmation(array $parsedPayload): void
     {
         $billRefNumber = $parsedPayload['bill_ref_number'] ?? '';
-        $paymentType = $this->isSubscriptionPayment($billRefNumber) ? 'subscription' : 'marketplace';
+        $paymentType = $this->isShopAccountPayment($billRefNumber) ? 'billing' : 'marketplace';
 
         Log::channel('mpesa')->info('C2B confirmation received — dispatching job', [
             'bill_ref_number' => $billRefNumber,
@@ -58,10 +58,10 @@ class MpesaC2BRouterService
     }
 
     /**
-     * Determine if a BillRefNumber belongs to a subscription payment.
-     * Subscription account numbers start with the configured prefix (e.g. 'POA').
+     * Determine if a BillRefNumber is a shop's Poachy account (top-up of its prepaid balance).
+     * Shop account numbers start with the configured prefix (e.g. 'POA').
      */
-    private function isSubscriptionPayment(string $billRefNumber): bool
+    private function isShopAccountPayment(string $billRefNumber): bool
     {
         return str_starts_with(
             strtoupper($billRefNumber),
@@ -70,41 +70,39 @@ class MpesaC2BRouterService
     }
 
     /**
-     * Validate a subscription C2B payment.
-     * Checks: tenant account number exists + a plan matches the paid amount.
+     * Validate a Paybill top-up to a shop's Poachy account: the account must exist and the
+     * amount must be at least the minimum top-up (any amount above it is fine).
      *
      * @return array{ResultCode: string, ResultDesc: string}
      */
-    private function validateSubscriptionPayment(string $billRefNumber, float $amount): array
+    private function validateShopTopup(string $billRefNumber, float $amount): array
     {
         $tenant = Tenant::on('central')
-            ->where('mpesa_paybill_account', $billRefNumber)
+            ->where('mpesa_paybill_account', strtoupper(trim($billRefNumber)))
             ->first();
 
         if (! $tenant) {
-            Log::channel('mpesa')->warning('C2B validation rejected — unknown subscription account', [
+            Log::channel('mpesa')->warning('C2B validation rejected — unknown shop account', [
                 'bill_ref_number' => $billRefNumber,
             ]);
 
             return ['ResultCode' => 'C2B00011', 'ResultDesc' => 'Invalid Account Number'];
         }
 
-        $planExists = SubscriptionPlan::on('central')
-            ->where('is_active', true)
-            ->whereRaw('ABS(CAST(price AS DECIMAL(10,2)) - ?) <= ?', [$amount, self::AMOUNT_TOLERANCE])
-            ->exists();
+        $minimum = app(BillingTopupService::class)->minimumTopup();
 
-        if (! $planExists) {
-            Log::channel('mpesa')->warning('C2B validation rejected — no plan matches amount', [
+        if ($amount + self::AMOUNT_TOLERANCE < $minimum) {
+            Log::channel('mpesa')->warning('C2B validation rejected — below the minimum top-up', [
                 'bill_ref_number' => $billRefNumber,
                 'tenant_id' => $tenant->id,
                 'amount' => $amount,
+                'minimum' => $minimum,
             ]);
 
-            return ['ResultCode' => 'C2B00012', 'ResultDesc' => 'Invalid Amount — no matching subscription plan'];
+            return ['ResultCode' => 'C2B00013', 'ResultDesc' => 'Invalid Amount — minimum is KSh '.number_format($minimum)];
         }
 
-        Log::channel('mpesa')->info('C2B validation accepted — subscription', [
+        Log::channel('mpesa')->info('C2B validation accepted — shop top-up', [
             'bill_ref_number' => $billRefNumber,
             'tenant_id' => $tenant->id,
             'amount' => $amount,

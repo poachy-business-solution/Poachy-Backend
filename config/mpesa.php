@@ -84,6 +84,9 @@ return [
     // STK Push — subscription payments initiated from the app
     'subscription_stk_callback_url' => env('MPESA_SUBSCRIPTION_STK_CALLBACK_URL', ''),
 
+    // STK Push — Poachy balance top-ups (payment page, business account, admin)
+    'billing_stk_callback_url' => env('MPESA_BILLING_STK_CALLBACK_URL', ''),
+
     // C2B (Paybill) — Safaricom calls us to validate a payment before completing it
     'c2b_validation_url' => env('MPESA_C2B_VALIDATION_URL', ''),
 

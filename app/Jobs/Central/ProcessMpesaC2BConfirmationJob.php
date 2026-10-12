@@ -2,6 +2,9 @@
 
 namespace App\Jobs\Central;
 
+use App\Models\CentralPaymentLog;
+use App\Models\Tenant;
+use App\Services\Central\Billing\BillingTopupService;
 use App\Services\Central\Marketplace\MarketplacePaymentService;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
 use Illuminate\Bus\Queueable;
@@ -24,7 +27,7 @@ class ProcessMpesaC2BConfirmationJob implements ShouldQueue
 
     /**
      * @param  array<string, mixed>  $parsedPayload  Output of MpesaService::parseC2BPayload()
-     * @param  string  $paymentType  'subscription' or 'marketplace'
+     * @param  string  $paymentType  'billing' (shop top-up), 'marketplace', or legacy 'subscription'
      */
     public function __construct(
         public readonly array $parsedPayload,
@@ -34,6 +37,7 @@ class ProcessMpesaC2BConfirmationJob implements ShouldQueue
     public function handle(
         SubscriptionPaymentService $subscriptionService,
         MarketplacePaymentService $marketplaceService,
+        BillingTopupService $topups,
     ): void {
         Log::channel('mpesa')->info('Processing C2B confirmation job', [
             'payment_type' => $this->paymentType,
@@ -43,10 +47,46 @@ class ProcessMpesaC2BConfirmationJob implements ShouldQueue
         ]);
 
         match ($this->paymentType) {
+            'billing' => $this->creditShop($topups),
+            // Jobs queued before trading-day billing replaced plan payments.
             'subscription' => $subscriptionService->processC2BConfirmation($this->parsedPayload),
             'marketplace' => $marketplaceService->processC2BConfirmation($this->parsedPayload),
             default => throw new \UnexpectedValueException("Unknown payment type: {$this->paymentType}"),
         };
+    }
+
+    /**
+     * Credit a Paybill payment to the shop whose POA account it names. A payment to an unknown
+     * account (Safaricom skipped validation) is logged as unmatched for an admin to assign.
+     */
+    private function creditShop(BillingTopupService $topups): void
+    {
+        $payload = $this->parsedPayload;
+        $tenantId = Tenant::on('central')->where('mpesa_paybill_account', strtoupper(trim((string) $payload['bill_ref_number'])))->value('id');
+
+        if ($tenantId === null) {
+            Log::channel('mpesa')->warning('C2B payment to an unknown shop account — left unmatched', [
+                'bill_ref_number' => $payload['bill_ref_number'],
+                'transaction_id' => $payload['transaction_id'],
+            ]);
+            CentralPaymentLog::record('unmatched', 0, 'c2b_unmatched', [
+                'amount' => $payload['amount'],
+                'transaction_reference' => $payload['transaction_id'],
+                'provider_reference' => $payload['transaction_id'],
+                'raw_payload' => array_merge($payload, ['phone' => null]),
+            ]);
+
+            return;
+        }
+
+        $topups->creditFromMpesa(
+            tenantId: (string) $tenantId,
+            amount: (float) $payload['amount'],
+            receipt: (string) $payload['transaction_id'],
+            source: 'mpesa_c2b',
+            phone: $payload['phone'] ?? null,
+            payerName: $payload['first_name'] ?? null,
+        );
     }
 
     public function failed(\Throwable $exception): void

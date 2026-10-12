@@ -131,14 +131,12 @@ class C2BValidationTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('invalid', $response['ResultDesc']);
     }
 
-    public function test_rejects_subscription_when_no_plan_matches_amount(): void
+    public function test_shop_top_ups_accept_any_amount_from_the_minimum(): void
     {
-        $response = $this->router->handleValidation([
-            'bill_ref_number' => 'POA99001',
-            'amount' => 9999.00, // no plan at this price
-        ]);
-
-        $this->assertSame('C2B00012', $response['ResultCode']);
+        // Trading-day billing: a POA payment tops up the balance, so no plan price has to match.
+        $this->assertSame('0', $this->router->handleValidation(['bill_ref_number' => 'POA99001', 'amount' => 9999.00])['ResultCode']);
+        $this->assertSame('0', $this->router->handleValidation(['bill_ref_number' => 'POA99001', 'amount' => 10.00])['ResultCode']);
+        $this->assertSame('C2B00013', $this->router->handleValidation(['bill_ref_number' => 'POA99001', 'amount' => 9.00])['ResultCode']);
     }
 
     public function test_accepts_amount_within_tolerance(): void
