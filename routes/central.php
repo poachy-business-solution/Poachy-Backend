@@ -68,6 +68,7 @@ Route::prefix('v1/central')->group(function () {
         Route::post('/c2b/confirm', [MpesaC2BController::class, 'confirm']);
         Route::post('/stk/callback', [MpesaC2BController::class, 'stkCallback']);
         Route::post('/stk/subscription/callback', [MpesaC2BController::class, 'stkSubscriptionCallback']);
+        Route::post('/stk/billing/callback', [MpesaC2BController::class, 'stkBillingCallback']);
     });
 
     // Marketplace routes

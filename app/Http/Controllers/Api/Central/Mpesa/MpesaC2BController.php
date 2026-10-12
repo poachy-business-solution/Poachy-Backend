@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Central\Mpesa;
 
 use App\Http\Controllers\Controller;
+use App\Services\Central\Billing\BillingTopupService;
 use App\Services\Central\Marketplace\MarketplacePaymentService;
 use App\Services\Central\Subscription\SubscriptionPaymentService;
 use App\Services\Shared\Mpesa\MpesaC2BRouterService;
@@ -110,5 +111,22 @@ class MpesaC2BController extends Controller
 
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
         }
+    }
+
+    /**
+     * STK callback for Poachy balance top-ups. Always answers Success to Safaricom; the
+     * top-up service is idempotent on the checkout request and the receipt.
+     */
+    public function stkBillingCallback(Request $request): JsonResponse
+    {
+        try {
+            app(BillingTopupService::class)->handleStkCallback($this->mpesa->parseSTKCallbackPayload($request->all()));
+        } catch (\Throwable $e) {
+            Log::channel('mpesa')->error('Billing STK callback handler failed', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
     }
 }

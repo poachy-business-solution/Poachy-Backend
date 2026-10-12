@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\Tenant\Audit\AuditLogController;
 use App\Http\Controllers\Api\Tenant\Auth\TenantAuthController;
+use App\Http\Controllers\Api\Tenant\Billing\BillingTopupController;
 use App\Http\Controllers\Api\Tenant\Budget\BudgetController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
@@ -890,6 +891,13 @@ Route::prefix('v1/tenant')
         // Tenant Access Status (Check eligibility)
         Route::prefix('access')->group(function () {
             Route::get('/status', [TenantAccessController::class, 'checkStatus']);
+        });
+
+        // Poachy balance top-ups (owner; used by the web business account, never the app).
+        // Outside tenant.access on purpose: a shop in limited mode must still be able to pay.
+        Route::prefix('billing')->group(function () {
+            Route::post('/topups/stk', [BillingTopupController::class, 'stk'])->middleware('throttle:5,1');
+            Route::get('/topups/{id}', [BillingTopupController::class, 'show'])->whereNumber('id');
         });
 
         // Subscription Information & Payments
