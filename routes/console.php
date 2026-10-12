@@ -36,6 +36,15 @@ Schedule::command('tills:auto-close')
     ->onOneServer()
     ->description('Close till sessions left open overnight');
 
+// Billing: shops report which branches sold on which days. Hourly at :40 (Nairobi), so the
+// 00:40 run lands before the 01:00 billing job; late offline sales are caught by later runs.
+Schedule::command('billing:report-sale-days')
+    ->hourlyAt(40)
+    ->timezone('Africa/Nairobi')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Report branch trading days to central');
+
 // Stock Level Checks - Daily at 2 AM
 Schedule::call(function () {
     // Get all active tenants and dispatch jobs
