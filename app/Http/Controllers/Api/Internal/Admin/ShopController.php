@@ -14,6 +14,8 @@ use App\Mail\Shared\PlainMessageMail;
 use App\Models\BillingAccount;
 use App\Models\BusinessDetail;
 use App\Models\SignupRequest;
+use App\Models\Tenant\Store;
+use App\Models\Tenant\User;
 use App\Services\Central\Admin\AdminAudit;
 use App\Services\Central\Billing\BillingStateService;
 use App\Services\Central\Signup\SignupService;
@@ -80,6 +82,40 @@ class ShopController extends Controller
         $signup = SignupRequest::query()->where('source', SignupRequest::SOURCE_ADMIN)->find($id);
 
         return $signup === null ? ApiResponse::notFound('Not found.') : ApiResponse::success('Onboarding status', $this->onboardingData($signup));
+    }
+
+    /**
+     * @OA\Get(path="/api/internal/admin/shops/{shop}/team", summary="A shop's branches and staff (from its own database)", operationId="internalAdminShopTeam",
+     *     tags={"Internal - Admin"}, security={{"internalAdmin": {}}},
+     *
+     *     @OA\Parameter(name="shop", in="path", required=true, description="Tenant id or POA account", @OA\Schema(type="string")),
+     *
+     *     @OA\Response(response=200, description="branches[] (id, name, city, is_main, is_active), staff[] (id, name, email, phone, roles, is_active, last_login_at)"),
+     *     @OA\Response(response=404, description="Unknown shop"), @OA\Response(response=503, description="The shop's database could not be read")
+     * )
+     */
+    public function team(string $shop): JsonResponse
+    {
+        $tenant = $this->shop($shop);
+
+        try {
+            $data = $tenant->run(fn () => [
+                'branches' => Store::query()->orderByDesc('is_main_store')->orderBy('name')->get()->map(fn (Store $s) => [
+                    'id' => $s->id, 'name' => $s->name, 'city' => $s->city, 'is_main' => (bool) $s->is_main_store, 'is_active' => (bool) $s->is_active,
+                ])->all(),
+                'staff' => User::query()->with('roles:id,name')->orderBy('name')->get()->map(fn (User $u) => [
+                    'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone,
+                    'roles' => $u->roles->pluck('name')->all(), 'is_active' => (bool) $u->is_active,
+                    'last_login_at' => $u->last_login_at?->toIso8601String(),
+                ])->all(),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return ApiResponse::error("The shop's database could not be read.", null, 503);
+        }
+
+        return ApiResponse::success('Branches and staff', $data);
     }
 
     /**
