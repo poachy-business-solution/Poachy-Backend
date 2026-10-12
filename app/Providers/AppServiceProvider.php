@@ -19,6 +19,9 @@ use App\Services\Shared\Card\Gateways\PaystackCardGateway;
 use App\Services\Shared\Mpesa\Gateways\DarajaMpesaGateway;
 use App\Services\Shared\Mpesa\Gateways\FakeMpesaGateway;
 use App\Services\Shared\Mpesa\MpesaGateway;
+use App\Services\Shared\Sms\Gateways\AfricasTalkingSmsGateway;
+use App\Services\Shared\Sms\Gateways\LogSmsGateway;
+use App\Services\Shared\Sms\SmsGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Http\Request;
@@ -42,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CardGateway::class, fn () => match (config('paystack.driver')) {
             'paystack' => new PaystackCardGateway,
             default => new FakeCardGateway,
+        });
+
+        // SMS: written to storage/logs/sms.log unless a provider is configured.
+        $this->app->bind(SmsGateway::class, fn () => match (config('messaging.sms.driver')) {
+            'africastalking' => new AfricasTalkingSmsGateway,
+            default => new LogSmsGateway,
         });
     }
 

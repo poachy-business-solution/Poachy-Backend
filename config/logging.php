@@ -118,6 +118,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'sms' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/sms.log'),
+            'level' => 'info',
+            'replace_placeholders' => true,
+        ],
+
         'mpesa' => [
             'driver' => 'daily',
             'path' => storage_path('logs/mpesa/mpesa.log'),
