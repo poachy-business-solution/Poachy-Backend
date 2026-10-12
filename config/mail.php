@@ -115,4 +115,20 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown mail theme
+    |--------------------------------------------------------------------------
+    |
+    | Markdown mailables use the Poachy theme (resources/views/vendor/mail).
+    |
+    */
+
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'poachy'),
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];
