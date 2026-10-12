@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\Central\Mpesa\MpesaC2BController;
 use App\Http\Controllers\Api\Central\PublicWorkspaceController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
+use App\Http\Controllers\Api\Central\Sync\SaleDaysSyncController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use Illuminate\Support\Facades\Route;
 
@@ -293,6 +294,7 @@ Route::prefix('v1/central')->group(function () {
         Route::post('inbound/variant', [SyncController::class, 'receiveVariantSync']);
         Route::post('inbound/bundle', [SyncController::class, 'receiveBundleSync']);
         Route::post('inbound/inventory-count', [SyncController::class, 'receiveInventoryCountSync']);
+        Route::post('inbound/sale-days', [SaleDaysSyncController::class, 'store'])->middleware('throttle:120,1');
         Route::post('inbound/delivery-zone', [SyncController::class, 'receiveDeliveryZoneSync']);
         Route::post('inbound/marketplace-fulfillment', [SyncController::class, 'receiveMarketplaceFulfillmentSync']);
         Route::get('inbound/{syncId}/status', [SyncController::class, 'getSyncStatus']);

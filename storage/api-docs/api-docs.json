@@ -15,7 +15,7 @@
     },
     "servers": [
         {
-            "url": "http://poachy.test",
+            "url": "http://localhost",
             "description": "API Server"
         }
     ],
@@ -20815,6 +20815,123 @@
                 }
             }
         },
+        "/api/v1/central/sync/inbound/sale-days": {
+            "post": {
+                "tags": [
+                    "Central - Sync"
+                ],
+                "summary": "Report branch trading days (tenant → central)",
+                "description": "Server-to-server. A shop reports, per branch, the Africa/Nairobi days in the last 7 days + today on which it recorded sales. Upserted on (tenant, store, date); re-sent hourly. Bearer = the shared central API token; X-Tenant-ID must equal tenant_id.",
+                "operationId": "syncInboundSaleDays",
+                "parameters": [
+                    {
+                        "name": "X-Tenant-ID",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenant_id",
+                                    "days"
+                                ],
+                                "properties": {
+                                    "tenant_id": {
+                                        "type": "string",
+                                        "example": "da904b63-06a4-4519-9b33-b7aca5bf356d"
+                                    },
+                                    "days": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "store_id",
+                                                "date",
+                                                "sales_count",
+                                                "is_main_branch"
+                                            ],
+                                            "properties": {
+                                                "store_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2026-10-11"
+                                                },
+                                                "sales_count": {
+                                                    "type": "integer",
+                                                    "minimum": 1,
+                                                    "example": 12
+                                                },
+                                                "is_main_branch": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stored",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Sale days received"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "accepted": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    },
+                    "422": {
+                        "description": "Unknown tenant, tenant/header mismatch, or a day outside the window"
+                    },
+                    "429": {
+                        "description": "Too many reports"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/audit-logs": {
             "get": {
                 "tags": [
@@ -40640,6 +40757,193 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/drawer/expense-categories": {
+            "get": {
+                "tags": [
+                    "Drawer"
+                ],
+                "summary": "Expense types for the 3-tap expense picker",
+                "operationId": "drawerExpenseCategories",
+                "responses": {
+                    "200": {
+                        "description": "Active expense categories"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/drawer/expenses": {
+            "get": {
+                "tags": [
+                    "Drawer"
+                ],
+                "summary": "Expenses recorded at the counter",
+                "description": "Staff see the expenses they recorded; owners and managers see all. Filter by store, till session or local date range.",
+                "operationId": "drawerListExpenses",
+                "responses": {
+                    "200": {
+                        "description": "Paginated expenses"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Drawer"
+                ],
+                "summary": "Record an expense from the counter",
+                "description": "Three taps: what for (category), how much, paid from (till_cash | mpesa | own_pocket), optional receipt photo (multipart). Till-cash expenses attach to the recorder's till session and lower its expected cash. Staff expenses wait for approval; owners' and managers' are approved at once.",
+                "operationId": "drawerRecordExpense",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "store_id",
+                                    "category_id",
+                                    "amount",
+                                    "paid_from"
+                                ],
+                                "properties": {
+                                    "store_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "type": "number"
+                                    },
+                                    "paid_from": {
+                                        "type": "string",
+                                        "enum": [
+                                            "till_cash",
+                                            "mpesa",
+                                            "own_pocket"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "receipt": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Expense recorded"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/drawer/cash-movements": {
+            "get": {
+                "tags": [
+                    "Drawer"
+                ],
+                "summary": "Cash put into or taken out of drawers",
+                "description": "Staff see what they recorded; owners and managers see all.",
+                "operationId": "drawerListCashMovements",
+                "responses": {
+                    "200": {
+                        "description": "Paginated cash movements"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Drawer"
+                ],
+                "summary": "Record cash put into or taken out of the drawer",
+                "description": "reason: float_top_up / other_in (in), owner_drawing / supplier_payment / other_out (out). Attaches to the recorder's till session and changes its expected cash. Only owners and managers record owner_drawing.",
+                "operationId": "drawerRecordCashMovement",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "store_id",
+                                    "reason",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "store_id": {
+                                        "type": "integer"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "enum": [
+                                            "float_top_up",
+                                            "owner_drawing",
+                                            "supplier_payment",
+                                            "other_in",
+                                            "other_out"
+                                        ]
+                                    },
+                                    "amount": {
+                                        "type": "number"
+                                    },
+                                    "supplier_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Only owners and managers take cash home"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
                     }
                 ]
             }
@@ -103214,6 +103518,257 @@
                 ]
             }
         },
+        "/api/v1/tenant/reports/owner-overview": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Owner's numbers for a day or range",
+                "description": "Sales, cost of goods, expenses (recurring bills spread per day), profit (VAT left out), money in by method, comparison (a day: same weekday last week + yesterday; a range: the period before), where money went, owed both ways, break-even daily sales, top sellers and — for all branches — a per-branch comparison. Days are shop-local (tenant timezone).",
+                "operationId": "ownerOverview",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "description": "Omit for all branches",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "top",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Overview"
+                    },
+                    "403": {
+                        "description": "Owners and managers only"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reports/staff": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "How each person at the counter did",
+                "description": "Per person: sales, haggling uplift above the list price, lines sold below the list price (floor) and their cost, giveaways at list value, refunds paid out, and till sessions with over/short (counted sessions with a known float only).",
+                "operationId": "staffReport",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Staff report"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reports/sales-by-hour": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Sales per hour of the shop's day",
+                "operationId": "salesByHourReport",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "24 hourly buckets + busiest hour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reports/stock": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Stock health at a branch",
+                "description": "Each stocked product: on hand, reorder level, sold in the last 30 days, days of stock left, last sold, value at cost, and status out | low (at/under reorder level or under 7 days left) | dead (nothing sold for `days`, default 30) | ok. Summary counts and dead stock value. Uses the first day of from as 'as of' (default today).",
+                "operationId": "stockHealthReport",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock health"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reports/needs-you": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "What the owner should look at today",
+                "description": "Plain-words items, most urgent first: low_stock, till_short (counted tills short by at least the variance threshold, last two days), expenses_to_approve, shop_owes (the neighbour shop owing longest), customers_owe. Each: type, title, subtitle, count, amount, ids. Waiting-to-sync sales live on the device and are added by the app.",
+                "operationId": "needsYouReport",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "description": "Omit for all branches",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Needs-you items"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reports/owed": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Money owed both ways",
+                "description": "Owed to you: customers on credit and neighbour shops; you owe: neighbour shops and suppliers. Oldest first.",
+                "operationId": "owedReport",
+                "responses": {
+                    "200": {
+                        "description": "Owed both ways"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/reviews": {
             "get": {
                 "tags": [
@@ -105622,6 +106177,67 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/tenant/reports/owner-summary": {
+            "get": {
+                "tags": [
+                    "Daily Sales Reports"
+                ],
+                "summary": "The owner's day: takings net of refunds, money in by method, top sellers",
+                "description": "Computed live from sales, payments and refunds. Cash is net of change given. Pass the device's UTC offset so 'the day' is the shop's local day.",
+                "operationId": "ownerSummary",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-10-08"
+                        }
+                    },
+                    {
+                        "name": "utc_offset_minutes",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 180
+                        }
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "top",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Summary for the day"
+                    },
+                    "403": {
+                        "description": "Missing view-financial-reports"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/tenant/sales/{sale}/refundable-items": {
@@ -119988,6 +120604,243 @@
                 }
             }
         },
+        "/api/v1/tenant/tills/open": {
+            "post": {
+                "tags": [
+                    "Shift Assignments"
+                ],
+                "summary": "Open the caller's till at a store",
+                "description": "Starts a till session for the signed-in user without needing a pre-scheduled shift or a clock-in window. Uses today's scheduled assignment at the store when one exists. Idempotent: returns the open till if it is already open here. Close it with the shift-assignment clock-out endpoint.",
+                "operationId": "openTill",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "store_id"
+                                ],
+                                "properties": {
+                                    "store_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "opening_cash": {
+                                        "description": "Counted float. Omit to carry the float forward from the branch's last close.",
+                                        "type": "number",
+                                        "example": 2000,
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Till opened"
+                    },
+                    "200": {
+                        "description": "Till was already open at this store"
+                    },
+                    "422": {
+                        "description": "Validation error, till open at another store, or today's till already closed"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tills/current": {
+            "get": {
+                "tags": [
+                    "Shift Assignments"
+                ],
+                "summary": "The caller's open till at a store",
+                "description": "Returns the caller's till session open today at the store (or null — one starts automatically with the first sale), the live expected cash in the drawer, whether the float is known, and whether this person must count to close.",
+                "operationId": "currentTill",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current till (assignment may be null)"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tills/history": {
+            "get": {
+                "tags": [
+                    "Shift Assignments"
+                ],
+                "summary": "Past till sessions",
+                "description": "Closed and open till sessions, newest first. Staff see their own; owners and managers see everyone's and may filter by store and person.",
+                "operationId": "tillHistory",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated till sessions"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tills/settings": {
+            "get": {
+                "tags": [
+                    "Shift Assignments"
+                ],
+                "summary": "How tills close in this shop",
+                "operationId": "tillSettings",
+                "responses": {
+                    "200": {
+                        "description": "Till settings"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Shift Assignments"
+                ],
+                "summary": "Change how tills close (owner/manager)",
+                "description": "require_cash_count: staff must count the cash to close their till; when false closing can be skipped and owners still see the expected figure.",
+                "operationId": "updateTillSettings",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "require_cash_count"
+                                ],
+                                "properties": {
+                                    "require_cash_count": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "403": {
+                        "description": "Not an owner or manager"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tills/{assignment}/reopen": {
+            "post": {
+                "tags": [
+                    "Shift Assignments"
+                ],
+                "summary": "Reopen a till closed by mistake today (owner/manager)",
+                "operationId": "reopenTill",
+                "parameters": [
+                    {
+                        "name": "assignment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reopened"
+                    },
+                    "422": {
+                        "description": "Not closed, not today, or a newer till is open"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/stores": {
             "get": {
                 "tags": [
@@ -127533,6 +128386,317 @@
                 ]
             }
         },
+        "/api/v1/tenant/trade-partners": {
+            "get": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "Shops you trade with, with balances",
+                "description": "Each partner with they_owe / you_owe / net and goods still out. filter=owe_you|you_owe|all. Ordered oldest open line first, then by name. totals sums the lot.",
+                "operationId": "listTradePartners",
+                "parameters": [
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "owe_you",
+                                "you_owe"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Partners and totals"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "Add a shop you trade with",
+                "operationId": "createTradePartner",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/trade-partners/{id}": {
+            "get": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "One shop's account: balance, open lines, history",
+                "operationId": "showTradePartner",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Partner account"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "Edit a shop you trade with",
+                "operationId": "updateTradePartner",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/trade-partners/{id}/goods-out": {
+            "post": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "They took goods",
+                "description": "Stock leaves the branch; a line opens at the agreed price per item (my cost recorded).",
+                "operationId": "tradeGoodsOut",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Recorded"
+                    },
+                    "422": {
+                        "description": "Not enough stock / validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/trade-partners/{id}/goods-in": {
+            "post": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "I took goods",
+                "description": "Stock arrives at the branch with the agreed price as its cost; a line opens that I owe.",
+                "operationId": "tradeGoodsIn",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Recorded"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/trade-partners/{id}/returns": {
+            "post": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "Goods brought back (either way, partial ok)",
+                "operationId": "tradeReturns",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Recorded"
+                    },
+                    "422": {
+                        "description": "More than is out, or already paid for"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/trade-partners/{id}/payments": {
+            "post": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "Paid in money (either way)",
+                "description": "direction to_me (they paid me) or by_me (I paid them); cash or M-Pesa. Settles open lines oldest first; cash goes through the till drawer.",
+                "operationId": "tradePayments",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Recorded"
+                    },
+                    "422": {
+                        "description": "More than is owed"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/trade-partners/{id}/price-hint": {
+            "get": {
+                "tags": [
+                    "Trade Partners"
+                ],
+                "summary": "Suggested price: last agreed with this shop + my cost",
+                "operationId": "tradePriceHint",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price hint"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/units-of-measure": {
             "get": {
                 "tags": [
@@ -131506,6 +132670,91 @@
                     }
                 ]
             }
+        },
+        "/api/v1/tenant/users/{userId}/stores": {
+            "get": {
+                "tags": [
+                    "Tenant Users"
+                ],
+                "summary": "Branches a staff member works at",
+                "description": "assigned: branches explicitly assigned; workable: where they may actually sell, open a till or record money (every branch for owners/managers; the main branch for staff with no assignment).",
+                "operationId": "getUserStores",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Branch assignment"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tenant Users"
+                ],
+                "summary": "Set the branches a staff member works at (owner/manager)",
+                "description": "Replaces the assignment. An empty list sends a staff member back to the main branch only. Owners and managers always work at every branch.",
+                "operationId": "updateUserStores",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "store_ids"
+                                ],
+                                "properties": {
+                                    "store_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    },
+                    "422": {
+                        "description": "Unknown or closed branch"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -133042,6 +134291,10 @@
             "description": "Central - Public Workspace"
         },
         {
+            "name": "Central - Sync",
+            "description": "Central - Sync"
+        },
+        {
             "name": "Audit Logs",
             "description": "Audit Logs"
         },
@@ -133076,6 +134329,10 @@
         {
             "name": "Loyalty Transactions",
             "description": "Loyalty Transactions"
+        },
+        {
+            "name": "Drawer",
+            "description": "Drawer"
         },
         {
             "name": "Expense Management",
@@ -133170,8 +134427,16 @@
             "description": "Tenant Product Variants"
         },
         {
+            "name": "Reports",
+            "description": "Reports"
+        },
+        {
             "name": "Reports - Daily Sales",
             "description": "Reports - Daily Sales"
+        },
+        {
+            "name": "Daily Sales Reports",
+            "description": "Daily Sales Reports"
         },
         {
             "name": "Sales - Refunds",
@@ -133204,6 +134469,10 @@
         {
             "name": "Tenant - Shift Swaps",
             "description": "Tenant - Shift Swaps"
+        },
+        {
+            "name": "Shift Assignments",
+            "description": "Shift Assignments"
         },
         {
             "name": "Tenant Store Management",
@@ -133242,12 +134511,20 @@
             "description": "Tenant Access"
         },
         {
+            "name": "Trade Partners",
+            "description": "Trade Partners"
+        },
+        {
             "name": "Tenant UoM & UoM Conversions",
             "description": "Tenant UoM & UoM Conversions"
         },
         {
             "name": "Tenant User Management",
             "description": "Tenant User Management"
+        },
+        {
+            "name": "Tenant Users",
+            "description": "Tenant Users"
         }
     ],
     "security": [
