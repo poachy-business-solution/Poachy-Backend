@@ -472,7 +472,9 @@ class ProductObserver
         // Product type change
         if (isset($changes['product_type'])) {
             $oldType = $product->getOriginal('product_type');
+            $oldType = $oldType instanceof \BackedEnum ? $oldType->value : $oldType;
             $newType = $changes['product_type'];
+            $newType = $newType instanceof \BackedEnum ? $newType->value : $newType;
 
             return "{$user} changed product {$product->name} type from {$oldType} to {$newType}";
         }

@@ -19,7 +19,7 @@ use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 trait CreatesReportTables
 {
     private array $reportTables = [
-        'inventory_movements', 'inventory', 'store_products', 'product_batches', 'cash_movements',
+        'inventory_movements', 'inventory', 'store_products', 'product_variants', 'product_batches', 'cash_movements',
         'trade_lines', 'trade_partners', 'suppliers', 'customers', 'expenses', 'expense_categories',
         'sale_refund_items', 'sale_refunds', 'sale_payments', 'sale_items', 'sales', 'shift_assignments',
         'products', 'categories', 'stores', 'users', 'tenant_configurations',
@@ -253,6 +253,23 @@ trait CreatesReportTables
             $t->decimal('quantity_remaining_in_base_uom', 15, 4)->default(0);
             $t->decimal('cost_per_base_uom', 15, 4)->default(0);
             $t->boolean('is_expired')->default(false);
+            $t->timestamps();
+            $t->softDeletes();
+        });
+        $s->create('product_variants', function (Blueprint $t) {
+            $t->id();
+            $t->uuid('uuid')->nullable();
+            $t->unsignedBigInteger('product_id');
+            $t->string('variant_name');
+            $t->string('sku')->nullable();
+            $t->json('attributes')->nullable();
+            $t->unsignedBigInteger('uom_id')->nullable();
+            $t->decimal('uom_quantity', 12, 4)->default(1);
+            $t->decimal('quantity_in_base_uom', 12, 4)->default(1);
+            $t->decimal('variant_price', 15, 2)->nullable();
+            $t->decimal('cost_price', 15, 4)->nullable();
+            $t->decimal('reorder_level', 12, 4)->default(0);
+            $t->boolean('is_active')->default(true);
             $t->timestamps();
             $t->softDeletes();
         });

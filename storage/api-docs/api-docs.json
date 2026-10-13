@@ -99557,6 +99557,12 @@
                                         "type": "integer",
                                         "example": 1
                                     },
+                                    "variant_id": {
+                                        "description": "The colour/size being received (one of this product's variants); omit for a simple product",
+                                        "type": "integer",
+                                        "example": 12,
+                                        "nullable": true
+                                    },
                                     "quantity": {
                                         "description": "Quantity in the product base UOM",
                                         "type": "number",
@@ -103472,6 +103478,156 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/products/{uuid}/variants/bulk": {
+            "post": {
+                "tags": [
+                    "Tenant Product Variants"
+                ],
+                "summary": "Create every colour/size combination as variants in one request",
+                "description": "Options such as Colour: Black, Red and Size: 38, 39, 40 become one variant per combination (Black / 38, Black / 39, …), each with its own stock, optional own price, buying price and alert level. A simple product becomes variable. Combinations that already exist are left unchanged. Opening stock (per variant, or per combination under variants[]) is recorded at the given branch at the buying price. Requires manage-products.",
+                "operationId": "bulkStoreProductVariants",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "Product UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "options"
+                                ],
+                                "properties": {
+                                    "options": {
+                                        "description": "Option name + values, first option varies slowest",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "name",
+                                                "values"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Colour"
+                                                },
+                                                "values": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Black"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "maxItems": 3
+                                    },
+                                    "variant_price": {
+                                        "description": "Selling price for every combination (default: the product's base price)",
+                                        "type": "number",
+                                        "example": 2500,
+                                        "nullable": true
+                                    },
+                                    "cost_price": {
+                                        "description": "Buying price for every combination (default: the product's)",
+                                        "type": "number",
+                                        "example": 1600,
+                                        "nullable": true
+                                    },
+                                    "reorder_level": {
+                                        "description": "Alert level for every combination (default: the product's)",
+                                        "type": "number",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "store_id": {
+                                        "description": "Branch holding the opening stock",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "opening_stock": {
+                                        "description": "Opening stock for every combination",
+                                        "type": "number",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "variants": {
+                                        "description": "Per-combination overrides, matched by option values",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "attributes"
+                                            ],
+                                            "properties": {
+                                                "attributes": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "Colour": "Red",
+                                                        "Size": "39"
+                                                    }
+                                                },
+                                                "variant_price": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "cost_price": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "reorder_level": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "opening_stock": {
+                                                    "type": "number",
+                                                    "example": 5,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Variants created (every variant of the product, in option order)"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - manage-products required"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [

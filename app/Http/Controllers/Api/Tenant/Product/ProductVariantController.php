@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Tenant\Product;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tenant\Product\BulkStoreProductVariantsRequest;
 use App\Http\Requests\Tenant\Product\StoreProductVariantRequest;
 use App\Http\Requests\Tenant\Product\UpdateProductVariantRequest;
 use App\Http\Requests\Tenant\Product\UpdateVariantInventoryRequest;
@@ -419,6 +420,65 @@ class ProductVariantController extends Controller
         return ApiResponse::created(
             message: 'Product variant created successfully',
             data: new ProductVariantResource($variant)
+        );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/tenant/products/{uuid}/variants/bulk",
+     *     summary="Create every colour/size combination as variants in one request",
+     *     description="Options such as Colour: Black, Red and Size: 38, 39, 40 become one variant per combination (Black / 38, Black / 39, …), each with its own stock, optional own price, buying price and alert level. A simple product becomes variable. Combinations that already exist are left unchanged. Opening stock (per variant, or per combination under variants[]) is recorded at the given branch at the buying price. Requires manage-products.",
+     *     operationId="bulkStoreProductVariants",
+     *     tags={"Tenant Product Variants"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="Product UUID", @OA\Schema(type="string", format="uuid")),
+     *
+     *     @OA\RequestBody(required=true,
+     *
+     *         @OA\JsonContent(required={"options"},
+     *
+     *             @OA\Property(property="options", type="array", maxItems=3, description="Option name + values, first option varies slowest",
+     *
+     *                 @OA\Items(type="object", required={"name","values"},
+     *
+     *                     @OA\Property(property="name", type="string", example="Colour"),
+     *                     @OA\Property(property="values", type="array", @OA\Items(type="string", example="Black"))
+     *                 )),
+     *             @OA\Property(property="variant_price", type="number", nullable=true, example=2500, description="Selling price for every combination (default: the product's base price)"),
+     *             @OA\Property(property="cost_price", type="number", nullable=true, example=1600, description="Buying price for every combination (default: the product's)"),
+     *             @OA\Property(property="reorder_level", type="number", nullable=true, example=2, description="Alert level for every combination (default: the product's)"),
+     *             @OA\Property(property="store_id", type="integer", nullable=true, example=1, description="Branch holding the opening stock"),
+     *             @OA\Property(property="opening_stock", type="number", nullable=true, example=2, description="Opening stock for every combination"),
+     *             @OA\Property(property="variants", type="array", description="Per-combination overrides, matched by option values",
+     *
+     *                 @OA\Items(type="object", required={"attributes"},
+     *
+     *                     @OA\Property(property="attributes", type="object", example={"Colour": "Red", "Size": "39"}),
+     *                     @OA\Property(property="variant_price", type="number", nullable=true),
+     *                     @OA\Property(property="cost_price", type="number", nullable=true),
+     *                     @OA\Property(property="reorder_level", type="number", nullable=true),
+     *                     @OA\Property(property="opening_stock", type="number", nullable=true, example=5)
+     *                 ))
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=201, description="Variants created (every variant of the product, in option order)"),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - manage-products required"),
+     *     @OA\Response(response=404, description="Product not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function bulkStore(BulkStoreProductVariantsRequest $request, string $productUuid): JsonResponse
+    {
+        $product = $this->productService->getByUuid($productUuid);
+
+        $variants = $this->variantService->createFromOptions($product, $request->validated());
+
+        return ApiResponse::created(
+            message: "{$variants->count()} variant(s) ready",
+            data: ProductVariantResource::collection($variants)
         );
     }
 

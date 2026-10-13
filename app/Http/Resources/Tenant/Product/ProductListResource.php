@@ -25,6 +25,7 @@ class ProductListResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'sku' => $this->sku,
+            'product_type' => $this->product_type,
 
             // Category & Brand (minimal)
             'category' => [

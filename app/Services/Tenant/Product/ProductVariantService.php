@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Product;
 
+use App\Enums\Tenant\ProductType;
 use App\Models\Tenant\Inventory;
 use App\Models\Tenant\MarketplaceSaleItem;
 use App\Models\Tenant\Product;
@@ -10,6 +11,8 @@ use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\StockTransferItem;
+use App\Models\Tenant\StoreProduct;
+use App\Services\Tenant\Inventory\InventoryMovementService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -170,6 +173,118 @@ class ProductVariantService
 
             return $variant->load(['product', 'uom']);
         });
+    }
+
+    /**
+     * Options (Colour: black, red; Size: 38, 39) → one variant per combination, in one
+     * transaction. A simple product becomes variable. Combinations that already exist
+     * (same option values) are left alone, so the call can be repeated safely.
+     *
+     * @param  array{
+     *     options: list<array{name: string, values: list<string>}>,
+     *     variant_price?: float|null, cost_price?: float|null, reorder_level?: float|null,
+     *     store_id?: int|null, opening_stock?: float|null,
+     *     variants?: list<array{attributes: array<string, string>, variant_price?: float|null, cost_price?: float|null, reorder_level?: float|null, opening_stock?: float|null}>
+     * }  $data
+     * @return Collection<int, ProductVariant> every variant of the product, in option order
+     */
+    public function createFromOptions(Product $product, array $data): Collection
+    {
+        return DB::transaction(function () use ($product, $data) {
+            if (! $product->isVariable()) {
+                $product->forceFill(['product_type' => ProductType::VARIABLE])->save();
+            }
+
+            $overrides = collect($data['variants'] ?? [])->keyBy(fn (array $row) => $this->attributesKey($row['attributes']));
+            $existing = $product->variants()->get()->keyBy(fn (ProductVariant $variant) => $this->attributesKey($variant->attributes ?? ['name' => $variant->variant_name]));
+            $created = new Collection;
+
+            foreach ($this->combinations($data['options']) as $attributes) {
+                $key = $this->attributesKey($attributes);
+                $override = $overrides->get($key, []);
+
+                if ($existing->has($key)) {
+                    $created->push($existing->get($key));
+
+                    continue;
+                }
+
+                $variant = $this->create($product, [
+                    'variant_name' => implode(' / ', array_values($attributes)),
+                    'attributes' => $attributes,
+                    'uom_id' => $product->base_uom_id,
+                    'uom_quantity' => 1,
+                    'quantity_in_base_uom' => 1,
+                    'variant_price' => $override['variant_price'] ?? $data['variant_price'] ?? null,
+                    'cost_price' => $override['cost_price'] ?? $data['cost_price'] ?? $product->cost_price,
+                    'reorder_level' => $override['reorder_level'] ?? $data['reorder_level'] ?? $product->reorder_level ?? 0,
+                    'is_active' => true,
+                ]);
+
+                $openingStock = (float) ($override['opening_stock'] ?? $data['opening_stock'] ?? 0);
+                if (! empty($data['store_id'])) {
+                    StoreProduct::query()->firstOrCreate(
+                        ['store_id' => $data['store_id'], 'product_id' => $product->id, 'product_variant_id' => $variant->id],
+                        ['store_selling_price' => null, 'min_stock_level' => (int) $variant->reorder_level, 'is_available' => true],
+                    );
+                }
+                if ($openingStock > 0 && ! empty($data['store_id'])) {
+                    app(InventoryMovementService::class)->recordAdjustment([
+                        'store_id' => $data['store_id'],
+                        'product_id' => $product->id,
+                        'variant_id' => $variant->id,
+                        'uom_id' => $product->base_uom_id,
+                        'quantity' => $openingStock,
+                        'adjustment_type' => 'increase',
+                        'unit_cost' => $variant->cost_price,
+                        'reason' => 'Opening stock',
+                        'notes' => "Opening stock for {$product->name} ({$variant->variant_name})",
+                    ]);
+                }
+
+                $created->push($variant);
+            }
+
+            $this->clearVariantCache($product);
+
+            return $created->map(fn (ProductVariant $variant) => $variant->fresh(['product', 'uom']));
+        });
+    }
+
+    /**
+     * Every combination of the option values, first option varying slowest.
+     *
+     * @param  list<array{name: string, values: list<string>}>  $options
+     * @return list<array<string, string>>
+     */
+    protected function combinations(array $options): array
+    {
+        $combinations = [[]];
+        foreach ($options as $option) {
+            $next = [];
+            foreach ($combinations as $partial) {
+                foreach ($option['values'] as $value) {
+                    $next[] = $partial + [trim($option['name']) => trim($value)];
+                }
+            }
+            $combinations = $next;
+        }
+
+        return $combinations;
+    }
+
+    /**
+     * @param  array<string, string>  $attributes
+     */
+    protected function attributesKey(array $attributes): string
+    {
+        $normalised = [];
+        foreach ($attributes as $name => $value) {
+            $normalised[mb_strtolower(trim((string) $name))] = mb_strtolower(trim((string) $value));
+        }
+        ksort($normalised);
+
+        return json_encode($normalised);
     }
 
     /**
