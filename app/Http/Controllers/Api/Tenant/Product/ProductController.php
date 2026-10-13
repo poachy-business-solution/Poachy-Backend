@@ -2062,7 +2062,8 @@ class ProductController extends Controller
      *                 @OA\Items(type="string", example="SN-2026-0001")
      *             ),
      *
-     *             @OA\Property(property="notes", type="string", nullable=true, maxLength=500, example="Initial mobile stock receipt")
+     *             @OA\Property(property="notes", type="string", nullable=true, maxLength=500, example="Initial mobile stock receipt"),
+     *             @OA\Property(property="payment", type="string", enum={"cash", "mpesa", "credit"}, example="cash", description="How the delivery was paid. cash (default) or mpesa settles the purchase order at once (a supplier payment is recorded); credit leaves it owed and needs a named supplier (a market purchase cannot be on credit).")
      *         )
      *     ),
      *
@@ -2137,6 +2138,7 @@ class ProductController extends Controller
                 'batches' => ProductBatchResource::collection($result['batches']),
                 'serials' => ProductSerialResource::collection($result['serials']),
                 'purchase_order' => new PurchaseOrderResource($result['purchase_order']),
+                'payment' => $result['payment'],
             ]
         );
     }

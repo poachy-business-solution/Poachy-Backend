@@ -11,11 +11,13 @@ use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\PurchaseOrderItem;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\Supplier;
+use App\Models\Tenant\SupplierPayment;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Inventory\PurchaseOrderService;
 use App\Services\Tenant\Product\ProductStockReceivingService;
+use App\Services\Tenant\Supplier\SupplierPaymentService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
@@ -364,8 +366,18 @@ class PurchaseOrderReceivingTest extends TestCase
         return new ProductStockReceivingService(
             new PurchaseOrderService,
             new ProductBatchService,
-            new ProductCostService
+            new ProductCostService,
+            $this->paymentsMock()
         );
+    }
+
+    /** The one-shot receipt settles its purchase order; that service has its own tests. */
+    private function paymentsMock(): SupplierPaymentService
+    {
+        $payments = Mockery::mock(SupplierPaymentService::class);
+        $payments->shouldReceive('recordPayment')->andReturn(new SupplierPayment)->byDefault();
+
+        return $payments;
     }
 
     private function createPo(PurchaseOrderStatus $status = PurchaseOrderStatus::SENT): PurchaseOrder
