@@ -13,10 +13,14 @@ use App\Services\Central\Admin\Tenant\TenantService;
 use App\Services\Central\Billing\BillingNotices;
 use App\Services\Central\Signup\SignupService;
 use App\Services\Shared\Messaging\Messenger;
+use Database\Seeders\ProductCategorySeeder;
+use Database\Seeders\UnitsOfMeasureSeeder;
+use Database\Seeders\UomConversionsSeeder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -79,6 +83,14 @@ class ProvisionSignupJob implements ShouldQueue
             // stored in plain text; the app makes them choose their own on first sign-in.
             $byAdmin = $signup->source === SignupRequest::SOURCE_ADMIN;
             $temporaryPassword = $byAdmin ? Str::password(14, symbols: false) : null;
+
+            // The tenant database was seeded before its business details existed, so the catalogue
+            // template (product categories + units of measure for its type of shop) was skipped.
+            $tenant->run(function () {
+                foreach ([ProductCategorySeeder::class, UnitsOfMeasureSeeder::class, UomConversionsSeeder::class] as $seeder) {
+                    Artisan::call('db:seed', ['--class' => $seeder, '--force' => true]);
+                }
+            });
 
             $tenant->run(function () use ($signup, $temporaryPassword) {
                 $owner = User::query()->create([

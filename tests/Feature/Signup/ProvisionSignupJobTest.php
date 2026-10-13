@@ -17,6 +17,7 @@ use App\Models\Tenant\User;
 use App\Services\Tenant\Auth\TenantAuthService;
 use Database\Seeders\BillingPriceSeeder;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -93,6 +94,10 @@ class ProvisionSignupJobTest extends TestCase
             $this->assertTrue($owner->hasRole('owner'));
             $this->assertTrue(Hash::check('Secret123', $owner->password));
             $this->assertNotNull($owner->password_chosen_at);
+
+            // Ready to add products: categories and units for the shop's type were seeded.
+            $this->assertGreaterThan(0, DB::table('units_of_measure')->count());
+            $this->assertGreaterThan(0, DB::table('product_categories')->count());
 
             $store = Store::query()->where('is_main_store', true)->sole();
             $this->assertSame('Signup Test Duka', $store->name);
