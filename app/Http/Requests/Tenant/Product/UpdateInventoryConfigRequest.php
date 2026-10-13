@@ -25,6 +25,7 @@ class UpdateInventoryConfigRequest extends FormRequest
             ],
 
             'reorder_level' => 'sometimes|required|numeric|min:0|max:999999.9999',
+            'cost_price' => 'sometimes|nullable|numeric|min:0|max:9999999999.99',
             'shelf_life_days' => 'sometimes|nullable|integer|min:1|max:3650',
 
             'is_weighed' => 'sometimes|boolean',

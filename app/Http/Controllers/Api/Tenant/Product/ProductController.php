@@ -307,7 +307,9 @@ class ProductController extends Controller
      *                 @OA\Property(property="brand_id", type="integer", example=7, description="Product brand ID (optional)"),     *
      *                 @OA\Property(property="product_type", type="string", enum={"simple", "variable"}, example="simple", description="Product type. Defaults to simple when omitted."),
      *                 @OA\Property(property="base_selling_price", type="number", format="decimal", example=135999.00, description="Base selling price per base UOM"),
-     *                 @OA\Property(property="base_uom_id", type="integer", example=1, description="Base unit of measure ID"),     *
+     *                 @OA\Property(property="base_uom_id", type="integer", example=1, description="Base unit of measure ID"),
+     *                 @OA\Property(property="cost_price", type="number", example=1600, description="Buying price per base unit (optional; profit uses it until a delivery records its own)"),
+     *                 @OA\Property(property="reorder_level", type="number", example=5, description="Low-stock alert below this quantity (optional)"),     *
      *                 @OA\Property(property="primary_image", type="string", format="binary", description="Primary product image file"),
      *                 @OA\Property(
      *                     property="secondary_images[]",
@@ -932,6 +934,7 @@ class ProductController extends Controller
      *             @OA\Property(property="tax_rate_id", type="integer", example=1, description="Applicable tax rate ID"),
      *             @OA\Property(property="stock_status", type="string", enum={"in_stock", "out_of_stock", "discontinued"}, example="in_stock", description="Current stock status"),
      *             @OA\Property(property="reorder_level", type="number", format="decimal", example=10, description="Minimum stock level before reorder alert (in base UOM)"),
+     *             @OA\Property(property="cost_price", type="number", nullable=true, example=1700, description="Buying price per base unit"),
      *             @OA\Property(property="shelf_life_days", type="integer", example=365, description="Product shelf life in days"),
      *             @OA\Property(property="is_weighed", type="boolean", example=false, description="Whether product is sold by weight"),
      *             @OA\Property(property="requires_batch_tracking", type="boolean", example=true, description="Enable batch/lot number tracking"),

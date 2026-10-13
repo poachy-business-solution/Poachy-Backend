@@ -604,6 +604,7 @@ class SaleCalculationServiceTest extends TestCase
             $table->unsignedBigInteger('supplier_id')->nullable();
             $table->unsignedBigInteger('tax_rate_id')->nullable();
             $table->decimal('base_selling_price', 10, 2)->default(0);
+            $table->decimal('cost_price', 15, 4)->nullable();
             $table->decimal('online_price', 10, 2)->nullable();
             $table->decimal('reorder_level', 12, 4)->default(0);
             $table->integer('shelf_life_days')->nullable();
@@ -629,6 +630,7 @@ class SaleCalculationServiceTest extends TestCase
             $table->decimal('quantity_in_base_uom', 15, 4);
             $table->decimal('base_selling_price_adjustment', 15, 2)->default(0);
             $table->decimal('variant_price', 15, 2)->nullable();
+            $table->decimal('cost_price', 15, 4)->nullable();
             $table->string('stock_status')->default('in_stock');
             $table->decimal('reorder_level', 15, 4)->default(0);
             $table->integer('shelf_life_days')->nullable();

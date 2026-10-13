@@ -95628,6 +95628,16 @@
                                         "type": "integer",
                                         "example": 1
                                     },
+                                    "cost_price": {
+                                        "description": "Buying price per base unit (optional; profit uses it until a delivery records its own)",
+                                        "type": "number",
+                                        "example": 1600
+                                    },
+                                    "reorder_level": {
+                                        "description": "Low-stock alert below this quantity (optional)",
+                                        "type": "number",
+                                        "example": 5
+                                    },
                                     "primary_image": {
                                         "description": "Primary product image file",
                                         "type": "string",
@@ -97247,6 +97257,12 @@
                                         "type": "number",
                                         "format": "decimal",
                                         "example": 10
+                                    },
+                                    "cost_price": {
+                                        "description": "Buying price per base unit",
+                                        "type": "number",
+                                        "example": 1700,
+                                        "nullable": true
                                     },
                                     "shelf_life_days": {
                                         "description": "Product shelf life in days",

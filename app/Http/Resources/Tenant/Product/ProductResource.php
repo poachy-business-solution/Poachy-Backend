@@ -43,6 +43,8 @@ class ProductResource extends JsonResource
             // Pricing
             'base_selling_price' => $this->base_selling_price,
             'formatted_base_price' => 'KES '.number_format($this->base_selling_price, 2),
+            // Buying price: only for staff who manage products (never cashiers).
+            'cost_price' => $this->when($request->user()?->can('manage-products') ?? false, fn () => $this->cost_price === null ? null : (float) $this->cost_price),
 
             // Tax & UOM
             'tax_rate' => new TaxRateResource($this->whenLoaded('taxRate')),

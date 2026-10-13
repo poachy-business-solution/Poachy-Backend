@@ -22,6 +22,7 @@ class UpdateVariantInventoryRequest extends FormRequest
                 Rule::in(ProductStatus::values()), // in_stock, out_of_stock, discontinued
             ],
             'reorder_level' => 'sometimes|required|numeric|min:0|max:999999.9999',
+            'cost_price' => 'sometimes|nullable|numeric|min:0|max:9999999999.99',
             'shelf_life_days' => 'sometimes|nullable|integer|min:0|max:3650',
         ];
     }

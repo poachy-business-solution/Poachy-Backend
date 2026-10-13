@@ -34,6 +34,7 @@ class ProductVariant extends Model
         'online_price',
         'stock_status',
         'reorder_level',
+        'cost_price',
         'shelf_life_days',
         'is_active',
     ];
@@ -47,6 +48,7 @@ class ProductVariant extends Model
         'online_price' => 'decimal:2',
         'stock_status' => ProductStatus::class,
         'reorder_level' => 'decimal:4',
+        'cost_price' => 'decimal:4',
         'shelf_life_days' => 'integer',
         'is_active' => 'boolean',
     ];

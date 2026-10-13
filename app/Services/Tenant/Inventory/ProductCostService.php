@@ -7,6 +7,7 @@ use App\Models\Tenant\InventoryMovement;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductBatch;
 use App\Models\Tenant\ProductSerial;
+use App\Models\Tenant\ProductVariant;
 
 /**
  * What one base unit of a product cost the shop — the figure profit is
@@ -56,7 +57,17 @@ class ProductCostService
         }
 
         return $this->latestIncomingCost($product->id, $variantId, $storeId)
-            ?? $this->latestIncomingCost($product->id, $variantId);
+            ?? $this->latestIncomingCost($product->id, $variantId)
+            ?? $this->enteredBuyingPrice($product, $variantId);
+    }
+
+    /** The buying price typed in when the product (or its colour/size) was created. */
+    protected function enteredBuyingPrice(Product $product, ?int $variantId): ?float
+    {
+        $variantCost = $variantId === null ? null : ProductVariant::query()->whereKey($variantId)->value('cost_price');
+        $cost = $variantCost ?? $product->cost_price;
+
+        return $cost === null ? null : (float) $cost;
     }
 
     protected function latestIncomingCost(int $productId, ?int $variantId, ?int $storeId = null): ?float
