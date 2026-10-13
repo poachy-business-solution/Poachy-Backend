@@ -95,11 +95,10 @@ class SaleResource extends JsonResource
             'can_refund' => $this->canBeRefunded(),
             'is_walk_in' => $this->isWalkIn(),
 
+            // Profit: only for staff who may see sales reports (never cashiers), and only when asked.
             'profit_margin' => $this->when(
-                $request->input('include_profit', false),
-                function () {
-                    return $this->getProfitMargin();
-                }
+                SaleItemResource::mayShowCost($request) && $request->boolean('include_profit'),
+                fn () => $this->getProfitMargin()
             ),
 
             // 'receipt_url' => route('sales.receipt', ['sale' => $this->id]),

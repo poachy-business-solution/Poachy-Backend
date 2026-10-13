@@ -304,22 +304,27 @@ class Sale extends Model
     }
 
     /**
-     * Get sale profit margin
+     * What the sale made: revenue minus the cost of the lines whose buying price
+     * is known. Margin is profit as a share of what the customer paid. Lines
+     * with no known cost are counted so the figure can be shown as incomplete.
+     *
+     * @return array{total_cost: float, total_revenue: float, profit: float, margin_percentage: float, lines_without_cost: int, complete: bool}
      */
     public function getProfitMargin(): array
     {
-        $totalCost = $this->items->sum(function ($item) {
-            return $item->unit_cost * $item->quantity;
-        });
-
-        $profit = $this->total_amount - $totalCost;
-        $marginPercentage = $totalCost > 0 ? ($profit / $totalCost) * 100 : 0;
+        $costed = $this->items->filter(fn (SaleItem $item) => $item->cost_known);
+        $totalCost = (float) $costed->sum(fn (SaleItem $item) => (float) $item->unit_cost * (float) $item->quantity);
+        $revenue = (float) $this->total_amount;
+        $profit = $revenue - $totalCost;
+        $linesWithoutCost = $this->items->count() - $costed->count();
 
         return [
             'total_cost' => round($totalCost, 2),
-            'total_revenue' => round($this->total_amount, 2),
+            'total_revenue' => round($revenue, 2),
             'profit' => round($profit, 2),
-            'margin_percentage' => round($marginPercentage, 2),
+            'margin_percentage' => $revenue > 0 ? round(($profit / $revenue) * 100, 2) : 0.0,
+            'lines_without_cost' => $linesWithoutCost,
+            'complete' => $linesWithoutCost === 0,
         ];
     }
 

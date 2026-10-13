@@ -109805,6 +109805,26 @@
                         }
                     },
                     {
+                        "name": "include_profit",
+                        "in": "query",
+                        "description": "Add profit_margin to the sale and unit_cost / profit / cost_known to each item. Honoured only for staff with view-sales-reports (cashiers get the plain sale).",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "include_cost",
+                        "in": "query",
+                        "description": "Add unit_cost to each item (view-sales-reports only).",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": false
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "description": "Page number",
@@ -111211,6 +111231,26 @@
                         "schema": {
                             "type": "integer",
                             "example": 6
+                        }
+                    },
+                    {
+                        "name": "include_profit",
+                        "in": "query",
+                        "description": "Add profit_margin to the sale and unit_cost / profit / cost_known to each item. Honoured only for staff with view-sales-reports (cashiers get the plain sale).",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "include_cost",
+                        "in": "query",
+                        "description": "Add unit_cost to each item (view-sales-reports only).",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": false
                         }
                     }
                 ],

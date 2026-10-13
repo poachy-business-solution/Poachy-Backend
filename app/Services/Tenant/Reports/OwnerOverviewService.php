@@ -101,7 +101,7 @@ class OwnerOverviewService
             ->whereIn('sale_id', (clone $sales)->select('id'))
             ->whereNotNull('product_id')
             ->where('is_giveaway', false)
-            ->where('unit_cost', '<=', 0)
+            ->where(fn ($query) => $query->whereNull('unit_cost')->orWhere('unit_cost', '<=', 0))
             ->count();
 
         $netSales = $grossSales - $refunds;

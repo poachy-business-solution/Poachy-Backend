@@ -53,6 +53,8 @@ class ListSalesRequest extends FormRequest
                 'string',
                 'max:100',
             ],
+            'include_profit' => ['sometimes', 'boolean'],
+            'include_cost' => ['sometimes', 'boolean'],
             'per_page' => [
                 'nullable',
                 'integer',

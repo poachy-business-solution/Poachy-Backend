@@ -248,7 +248,7 @@ class OwnerSummaryServiceTest extends TestCase
             $table->decimal('list_unit_price', 15, 2)->nullable();
             $table->boolean('is_giveaway')->default(false);
             $table->string('price_override_reason')->nullable();
-            $table->decimal('unit_cost', 15, 2);
+            $table->decimal('unit_cost', 15, 2)->nullable();
             $table->decimal('discount_amount', 15, 2);
             $table->unsignedBigInteger('tax_rate_id')->nullable();
             $table->decimal('tax_amount', 15, 2);

@@ -229,7 +229,7 @@ class SaleCalculationService
             'quantity' => $quantity,
             'quantity_in_base_uom' => $quantity,
             'unit_price' => $unitPrice,
-            'unit_cost' => 0,
+            'unit_cost' => null,
             'tax_rate_id' => null,
             'tax_rate_percentage' => 0,
             'line_total_before_discount' => $quantity * $unitPrice,
@@ -358,8 +358,9 @@ class SaleCalculationService
         $unitPrice = $baseUnitPrice * $conversionToBase;
         $taxRate = $product->taxRate;
 
-        // Get unit cost for profit calculation
-        $unitCost = $this->getProductCost($product, $storeId, null) * $conversionToBase;
+        // Unit cost for profit — null when nobody has recorded a buying price yet.
+        $baseUnitCost = $this->getProductCost($product, $storeId, null);
+        $unitCost = $baseUnitCost === null ? null : $baseUnitCost * $conversionToBase;
 
         return [
             'product_id' => $productId,
@@ -437,12 +438,13 @@ class SaleCalculationService
         $uom = $bundle->baseUom;
         $taxRate = $bundle->taxRate;
 
-        // Calculate cost from bundle components
-        $unitCost = $bundle->items->sum(function ($item) use ($storeId) {
+        // Bundle cost = its components' costs; unknown if any component has no buying price.
+        $componentCosts = $bundle->items->map(function ($item) use ($storeId) {
             $componentCost = $this->getProductCost($item->product, $storeId, $item->product_variant_id);
 
-            return $componentCost * $item->quantity_in_base_uom;
+            return $componentCost === null ? null : $componentCost * $item->quantity_in_base_uom;
         });
+        $unitCost = $componentCosts->contains(null) ? null : (float) $componentCosts->sum();
 
         return [
             'product_id' => null,
@@ -467,12 +469,12 @@ class SaleCalculationService
     }
 
     /**
-     * Get product cost: serial cost, else batch average, else the latest cost
-     * stock arrived at — see ProductCostService.
+     * Get product cost: serial cost, else batch average, else the branch's moving
+     * average — see ProductCostService. Null when no buying price is known at all.
      */
-    protected function getProductCost(Product $product, int $storeId, ?int $variantId): float
+    protected function getProductCost(Product $product, int $storeId, ?int $variantId): ?float
     {
-        return app(ProductCostService::class)->unitCost($product, $storeId, $variantId) ?? 0;
+        return app(ProductCostService::class)->unitCost($product, $storeId, $variantId);
     }
 
     /**

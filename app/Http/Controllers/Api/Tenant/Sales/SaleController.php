@@ -1392,6 +1392,9 @@ class SaleController extends Controller
      *         @OA\Schema(type="integer", example=6)
      *     ),
      *
+     *     @OA\Parameter(name="include_profit", in="query", required=false, description="Add profit_margin to the sale and unit_cost / profit / cost_known to each item. Honoured only for staff with view-sales-reports (cashiers get the plain sale).", @OA\Schema(type="boolean", example=true)),
+     *     @OA\Parameter(name="include_cost", in="query", required=false, description="Add unit_cost to each item (view-sales-reports only).", @OA\Schema(type="boolean", example=false)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Sale retrieved successfully",
@@ -1788,6 +1791,8 @@ class SaleController extends Controller
      *         @OA\Schema(type="integer", minimum=1, maximum=100, default=15, example=15)
      *     ),
      *
+     *     @OA\Parameter(name="include_profit", in="query", required=false, description="Add profit_margin to the sale and unit_cost / profit / cost_known to each item. Honoured only for staff with view-sales-reports (cashiers get the plain sale).", @OA\Schema(type="boolean", example=true)),
+     *     @OA\Parameter(name="include_cost", in="query", required=false, description="Add unit_cost to each item (view-sales-reports only).", @OA\Schema(type="boolean", example=false)),
      *     @OA\Parameter(
      *         name="page",
      *         in="query",

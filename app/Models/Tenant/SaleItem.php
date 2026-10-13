@@ -113,33 +113,39 @@ class SaleItem extends Model
     }
 
     /**
-     * Get profit for this line item
+     * Whether what this line cost the shop is known. Open (unlisted) items and
+     * products sold before any buying price was recorded have no cost.
      */
-    public function getProfitAttribute(): float
+    public function getCostKnownAttribute(): bool
     {
-        // Open items have no known cost; count no margin rather than 100%.
-        if ($this->isOpenItem()) {
-            return 0;
-        }
-
-        $revenue = $this->subtotal; // After discount and tax
-        $cost = $this->unit_cost * $this->quantity;
-
-        return $revenue - $cost;
+        return $this->unit_cost !== null && ! $this->isOpenItem();
     }
 
     /**
-     * Get profit margin percentage
+     * Profit for this line (revenue after discount and tax minus cost), or null
+     * when the cost is unknown — never 100% by default.
      */
-    public function getProfitMarginAttribute(): float
+    public function getProfitAttribute(): ?float
     {
-        $cost = $this->unit_cost * $this->quantity;
-
-        if ($cost == 0) {
-            return 0;
+        if (! $this->cost_known) {
+            return null;
         }
 
-        return ($this->profit / $cost) * 100;
+        return (float) $this->subtotal - ((float) $this->unit_cost * (float) $this->quantity);
+    }
+
+    /**
+     * Profit as a share of what the customer paid for the line, in percent.
+     */
+    public function getProfitMarginAttribute(): ?float
+    {
+        $profit = $this->profit;
+
+        if ($profit === null || (float) $this->subtotal <= 0) {
+            return null;
+        }
+
+        return ($profit / (float) $this->subtotal) * 100;
     }
 
     /**

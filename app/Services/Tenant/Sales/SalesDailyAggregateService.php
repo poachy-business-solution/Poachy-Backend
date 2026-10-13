@@ -154,8 +154,8 @@ class SalesDailyAggregateService
         // Revenue = subtotal (final amount after discount + tax)
         $revenue = (float) $item->subtotal;
 
-        // Cost = COGS
-        $cost = (float) ($item->unit_cost * $item->quantity);
+        // Cost = COGS (a line with no known buying price counts as 0 here)
+        $cost = (float) (($item->unit_cost ?? 0) * $item->quantity);
 
         // Profit = Revenue - Cost
         $profit = $revenue - $cost;
