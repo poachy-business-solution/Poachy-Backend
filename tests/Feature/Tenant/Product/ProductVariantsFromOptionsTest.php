@@ -65,7 +65,7 @@ class ProductVariantsFromOptionsTest extends TestCase
                 $rows = collect($report['items'])->keyBy('variant_id');
                 $this->assertCount(6, $rows);
                 $this->assertSame('Block heels — Red / 39', $rows[$variants[4]['id']]['name']);
-                $this->assertEquals([5, 2600, 1600, 'dead'], [$rows[$variants[4]['id']]['on_hand'], $rows[$variants[4]['id']]['selling_price'], $rows[$variants[4]['id']]['unit_cost'], $rows[$variants[4]['id']]['status']], 'in stock, never sold → dead');
+                $this->assertEquals([5, 2600, 1600, 'new'], [$rows[$variants[4]['id']]['on_hand'], $rows[$variants[4]['id']]['selling_price'], $rows[$variants[4]['id']]['unit_cost'], $rows[$variants[4]['id']]['status']], 'in stock, arrived today, never sold → new (not "not selling")');
                 $this->assertSame('low', $rows[$variants[0]['id']]['status']);
                 $this->assertSame('out', $rows[$variants[5]['id']]['status']);
 
