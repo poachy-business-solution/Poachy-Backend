@@ -54,22 +54,26 @@ class NeedsYouService
             ? [$storeId]
             : Store::query()->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id)->all();
 
+        // One line per product, or per colour/size — every size that ran out counts.
         $low = collect($storeIds)
             ->flatMap(fn (int $id) => collect($this->stock->stockHealth($id)['items'])->whereIn('status', ['out', 'low']))
-            ->unique('product_id')
+            ->unique(fn (array $row) => $row['product_id'].':'.($row['variant_id'] ?? ''))
             ->values();
 
         if ($low->isEmpty()) {
             return null;
         }
 
+        $allOut = $low->every(fn (array $row) => $row['status'] === 'out');
+        $noun = $low->count() === 1 ? 'item' : 'items';
+
         return [
             'type' => 'low_stock',
-            'title' => $low->count().' '.($low->count() === 1 ? 'item' : 'items').' running low',
+            'title' => $low->count().' '.$noun.($allOut ? ' out of stock' : ' running low'),
             'subtitle' => $low->take(3)->pluck('name')->join(', ').($low->count() > 3 ? '…' : ''),
             'count' => $low->count(),
             'amount' => null,
-            'ids' => $low->pluck('product_id')->all(),
+            'ids' => $low->pluck('product_id')->unique()->values()->all(),
         ];
     }
 
