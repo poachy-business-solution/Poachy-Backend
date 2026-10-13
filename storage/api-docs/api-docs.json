@@ -51777,6 +51777,193 @@
                 ]
             }
         },
+        "/api/v1/tenant/recurring-expenses": {
+            "get": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Repeating costs, with the monthly total of the active ones",
+                "operationId": "tenantRecurringExpenses",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data.items[] (id, category, amount, frequency, start_date, end_date, next_date, status active|ended, per_month); data.monthly_total"
+                    },
+                    "403": {
+                        "description": "Not owner/manager"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Add a repeating cost",
+                "operationId": "tenantRecurringExpenseStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "store_id",
+                                    "category_id",
+                                    "amount",
+                                    "frequency",
+                                    "start_date"
+                                ],
+                                "properties": {
+                                    "store_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "type": "number"
+                                    },
+                                    "frequency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "daily",
+                                            "weekly",
+                                            "monthly"
+                                        ]
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The repeating cost"
+                    },
+                    "422": {
+                        "description": "Invalid"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/recurring-expenses/{id}": {
+            "patch": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Change the amount (from the next date) or the last date",
+                "operationId": "tenantRecurringExpenseUpdate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "amount": {
+                                        "type": "number"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "404": {
+                        "description": "Not a repeating cost"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/recurring-expenses/{id}/stop": {
+            "post": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Stop a repeating cost after today (past days stay in reports)",
+                "operationId": "tenantRecurringExpenseStop",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stopped"
+                    },
+                    "404": {
+                        "description": "Not a repeating cost"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/expiry-alerts": {
             "get": {
                 "tags": [
@@ -135853,6 +136040,10 @@
         {
             "name": "Tenant - Expenses - Recurring",
             "description": "Tenant - Expenses - Recurring"
+        },
+        {
+            "name": "Expenses",
+            "description": "Expenses"
         },
         {
             "name": "Expiry Alerts",

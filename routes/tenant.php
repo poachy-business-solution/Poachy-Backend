@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\Tenant\Customer\LoyaltyTransactionController;
 use App\Http\Controllers\Api\Tenant\Drawer\DrawerController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseCategoryController;
 use App\Http\Controllers\Api\Tenant\Expenses\ExpenseController;
+use App\Http\Controllers\Api\Tenant\Expenses\RecurringExpenseController;
 use App\Http\Controllers\Api\Tenant\Inventory\ExpiryAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryController;
 use App\Http\Controllers\Api\Tenant\Inventory\InventoryMovementController;
@@ -538,6 +539,14 @@ Route::prefix('v1/tenant')
         // Role Assignment (Owner only)
         Route::middleware(['role:owner,tenant'])->group(function () {
             Route::post('/users/{userId}/assign-role', [TenantUserController::class, 'assignRole']);
+        });
+
+        // Repeating costs (rent, salaries…): owners and managers
+        Route::prefix('recurring-expenses')->middleware(['permission:manage-expenses,tenant'])->group(function () {
+            Route::get('/', [RecurringExpenseController::class, 'index']);
+            Route::post('/', [RecurringExpenseController::class, 'store']);
+            Route::patch('/{id}', [RecurringExpenseController::class, 'update'])->whereNumber('id');
+            Route::post('/{id}/stop', [RecurringExpenseController::class, 'stop'])->whereNumber('id');
         });
 
         // Expense Categories
