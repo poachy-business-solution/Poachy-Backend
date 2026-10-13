@@ -139,7 +139,7 @@ trait CreatesReportTables
             $t->decimal('list_unit_price', 15, 2)->nullable();
             $t->boolean('is_giveaway')->default(false);
             $t->string('price_override_reason')->nullable();
-            $t->decimal('unit_cost', 15, 2);
+            $t->decimal('unit_cost', 15, 2)->nullable();
             $t->decimal('discount_amount', 15, 2)->default(0);
             $t->unsignedBigInteger('tax_rate_id')->nullable();
             $t->decimal('tax_amount', 15, 2)->default(0);

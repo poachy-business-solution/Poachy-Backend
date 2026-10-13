@@ -167,7 +167,8 @@ class InventoryMovementService
             // Recalculate quantity_available
             $updateData['quantity_available'] = max(0, $updateData['quantity_on_hand'] - $inventory->quantity_reserved);
 
-            if ($unitCostInBaseUom !== null && $quantityInBaseUom > 0 && in_array($movementType, self::COSTED_INCOMING_TYPES, true)) {
+            // A zero price means "no price given", not free goods — it never moves the average.
+            if ($unitCostInBaseUom > 0 && $quantityInBaseUom > 0 && in_array($movementType, self::COSTED_INCOMING_TYPES, true)) {
                 $updateData['average_cost'] = $this->movingAverageCost($inventory, $oldBalance, $quantityInBaseUom, $unitCostInBaseUom);
             }
 

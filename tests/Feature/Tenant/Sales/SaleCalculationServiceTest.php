@@ -72,13 +72,13 @@ class SaleCalculationServiceTest extends TestCase
         $this->assertEquals(40.0, $cost); // only the available one counts
     }
 
-    public function test_serial_tracked_product_cost_is_zero_when_no_serials_exist(): void
+    public function test_serial_tracked_product_cost_is_unknown_when_no_serials_exist(): void
     {
         $product = $this->createProduct(['requires_serial_tracking' => true]);
 
         $cost = $this->getProductCost($product, storeId: 1, variantId: null);
 
-        $this->assertEquals(0.0, $cost);
+        $this->assertNull($cost);
     }
 
     public function test_serial_tracked_product_never_reads_batch_cost(): void
@@ -106,13 +106,13 @@ class SaleCalculationServiceTest extends TestCase
         $this->assertEquals(15.0, $cost); // unchanged FIFO-average behavior
     }
 
-    public function test_untracked_product_cost_is_zero_with_no_batches(): void
+    public function test_untracked_product_cost_is_unknown_with_no_batches_or_buying_price(): void
     {
         $product = $this->createProduct();
 
         $cost = $this->getProductCost($product, storeId: 1, variantId: null);
 
-        $this->assertEquals(0.0, $cost);
+        $this->assertNull($cost);
     }
 
     // =========================================================================
@@ -265,7 +265,7 @@ class SaleCalculationServiceTest extends TestCase
         $this->assertNull($line['uom_id']);
         $this->assertSame('Loose sweets', $line['product_name']);
         $this->assertEquals(60.0, $line['line_total_after_discount']);
-        $this->assertEquals(0, $line['unit_cost']);
+        $this->assertNull($line['unit_cost'], 'an unlisted item has no known cost');
         $this->assertSame(0, $line['tax_rate_percentage']);
     }
 
@@ -391,7 +391,7 @@ class SaleCalculationServiceTest extends TestCase
         };
     }
 
-    private function getProductCost(Product $product, int $storeId, ?int $variantId): float
+    private function getProductCost(Product $product, int $storeId, ?int $variantId): ?float
     {
         $method = new ReflectionMethod(SaleCalculationService::class, 'getProductCost');
         $method->setAccessible(true);

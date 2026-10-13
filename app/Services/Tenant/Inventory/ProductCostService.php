@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Builder;
 class ProductCostService
 {
     /**
-     * Movements that bring stock in at a known price.
+     * Movements that bring stock in at a known price (a price of 0 counts as "not given").
      */
     public const INCOMING_TYPES = [
         InventoryMovementType::PURCHASE,
@@ -161,6 +161,6 @@ class ProductCostService
             ->where('product_variant_id', $variantId)
             ->whereIn('movement_type', self::INCOMING_TYPES)
             ->where('quantity_in_base_uom', '>', 0)
-            ->whereNotNull('unit_cost_in_base_uom');
+            ->where('unit_cost_in_base_uom', '>', 0);
     }
 }

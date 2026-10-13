@@ -67,9 +67,11 @@ class SaleItemResource extends JsonResource
             'list_unit_price' => $this->list_unit_price === null ? null : (float) $this->list_unit_price,
             'is_giveaway' => (bool) $this->is_giveaway,
             'price_override_reason' => $this->price_override_reason,
+            // Cost and profit: only for staff who may see sales reports (never cashiers), and only
+            // when asked for. unit_cost is null when no buying price is known.
             'unit_cost' => $this->when(
-                $request->input('include_cost', false),
-                (float) $this->unit_cost
+                self::mayShowCost($request) && ($request->boolean('include_cost') || $request->boolean('include_profit')),
+                fn () => $this->unit_cost === null ? null : (float) $this->unit_cost
             ),
 
             'line_total_before_tax' => (float) $this->line_total_before_tax,
@@ -80,9 +82,18 @@ class SaleItemResource extends JsonResource
             'effective_unit_price' => (float) $this->effective_unit_price,
 
             'profit' => $this->when(
-                $request->input('include_profit', false),
-                (float) $this->profit
+                self::mayShowCost($request) && $request->boolean('include_profit'),
+                fn () => $this->profit
+            ),
+            'cost_known' => $this->when(
+                self::mayShowCost($request) && $request->boolean('include_profit'),
+                fn () => $this->cost_known
             ),
         ];
+    }
+
+    public static function mayShowCost(Request $request): bool
+    {
+        return $request->user()?->can('view-sales-reports') ?? false;
     }
 }
