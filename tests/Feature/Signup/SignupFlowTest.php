@@ -50,6 +50,8 @@ class SignupFlowTest extends TestCase
         return $overrides + [
             'shop_name' => "Mama Njeri's Shop", 'owner_name' => 'Njeri Kamau', 'phone' => $this->phone,
             'email' => $this->email, 'town' => 'Thika', 'branches' => 1, 'turnstile_token' => 'ok',
+            'business_category_id' => DB::connection('central')->table('business_categories')->where('slug', 'grocery-store')->value('id')
+                ?? DB::connection('central')->table('business_categories')->value('id'),
         ];
     }
 
@@ -108,7 +110,7 @@ class SignupFlowTest extends TestCase
     {
         $this->start(['turnstile_token' => 'fail'])->assertUnprocessable()->assertJsonValidationErrors('turnstile_token');
         $this->start(['phone' => '+1 415 555 0100'])->assertUnprocessable()->assertJsonValidationErrors('phone');
-        $this->start(['email' => 'not-an-email', 'shop_name' => ''])->assertUnprocessable()->assertJsonValidationErrors(['email', 'shop_name']);
+        $this->start(['email' => 'not-an-email', 'shop_name' => '', 'business_category_id' => null])->assertUnprocessable()->assertJsonValidationErrors(['email', 'shop_name', 'business_category_id']);
         $this->start(['branches' => 0])->assertUnprocessable()->assertJsonValidationErrors('branches');
     }
 

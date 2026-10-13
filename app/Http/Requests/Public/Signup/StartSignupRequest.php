@@ -17,6 +17,17 @@ class StartSignupRequest extends FormRequest
     /**
      * @return array<string, mixed>
      */
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'business_category_id.required' => 'Choose the type of shop.',
+            'business_category_id.exists' => 'Choose the type of shop from the list.',
+        ];
+    }
+
     public function rules(): array
     {
         return [
@@ -26,7 +37,8 @@ class StartSignupRequest extends FormRequest
             'email' => ['required', 'string', 'email:rfc', 'max:191'],
             'town' => ['required', 'string', 'min:2', 'max:120'],
             'branches' => ['sometimes', 'integer', 'min:1', 'max:50'],
-            'business_category_id' => ['sometimes', 'nullable', 'integer', 'exists:central.business_categories,id'],
+            // The shop type picks the starter catalogue (categories, units) — a shoe shop must not get supermarket shelves.
+            'business_category_id' => ['required', 'integer', 'exists:central.business_categories,id'],
             'turnstile_token' => ['required', 'string', 'max:2048'],
         ];
     }
