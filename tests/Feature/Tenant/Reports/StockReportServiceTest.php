@@ -22,15 +22,19 @@ class StockReportServiceTest extends TestCase
             ['id' => 2, 'name' => 'Cooking oil 1L', 'reorder_level' => 2],
             ['id' => 3, 'name' => 'Torch', 'reorder_level' => 1],
             ['id' => 4, 'name' => 'Bread', 'reorder_level' => 0],
+            ['id' => 5, 'name' => 'Matches', 'reorder_level' => 2],
         ]);
         DB::connection('tenant')->table('inventory')->insert([
             ['store_id' => 1, 'product_id' => 1, 'quantity_on_hand' => 40],
             ['store_id' => 1, 'product_id' => 2, 'quantity_on_hand' => 2],
             ['store_id' => 1, 'product_id' => 3, 'quantity_on_hand' => 10],
             ['store_id' => 1, 'product_id' => 4, 'quantity_on_hand' => 0],
+            ['store_id' => 1, 'product_id' => 5, 'quantity_on_hand' => 8],
         ]);
         DB::connection('tenant')->table('inventory_movements')->insert([
-            'store_id' => 1, 'product_id' => 3, 'movement_type' => 'purchase', 'quantity_in_base_uom' => 10, 'unit_cost_in_base_uom' => 150,
+            ['store_id' => 1, 'product_id' => 3, 'movement_type' => 'purchase', 'quantity_in_base_uom' => 10, 'unit_cost_in_base_uom' => 150, 'created_at' => '2026-08-20 09:00:00'],
+            // Arrived last week, nothing sold yet: new, not "not selling".
+            ['store_id' => 1, 'product_id' => 5, 'movement_type' => 'purchase', 'quantity_in_base_uom' => 8, 'unit_cost_in_base_uom' => 90, 'created_at' => '2026-10-03 09:00:00'],
         ]);
     }
 
@@ -52,13 +56,14 @@ class StockReportServiceTest extends TestCase
         $this->assertSame('out', $items[4]['status']);
         $this->assertSame('low', $items[2]['status'], 'at its reorder level');
         $this->assertSame('dead', $items[3]['status'], 'last sold in August');
+        $this->assertSame('new', $items[5]['status'], 'received a week ago, never sold');
         $this->assertEquals(1500.0, $items[3]['stock_value']);
         $this->assertSame('ok', $items[1]['status']);
         $this->assertEquals(0.0, $items[1]['selling_price']);
         $this->assertArrayHasKey('uuid', $items[1]);
         $this->assertEquals(20.0, $items[1]['days_left'], '40 on hand, 60 sold in 30 days');
-        $this->assertSame(['products' => 4, 'out' => 1, 'low' => 1, 'dead' => 1, 'dead_stock_value' => 1500.0], array_intersect_key($report['summary'], array_flip(['products', 'out', 'low', 'dead', 'dead_stock_value'])));
-        $this->assertSame([4, 2, 3, 1], array_column($report['items'], 'product_id'), 'out, low, dead, ok');
+        $this->assertSame(['products' => 5, 'out' => 1, 'low' => 1, 'dead' => 1, 'dead_stock_value' => 1500.0], array_intersect_key($report['summary'], array_flip(['products', 'out', 'low', 'dead', 'dead_stock_value'])));
+        $this->assertSame([4, 2, 3, 5, 1], array_column($report['items'], 'product_id'), 'out, low, dead, new, ok');
     }
 
     public function test_a_branch_minimum_of_zero_falls_back_to_the_products_reorder_level(): void

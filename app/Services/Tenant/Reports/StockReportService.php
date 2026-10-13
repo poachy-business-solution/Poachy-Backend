@@ -3,6 +3,7 @@
 namespace App\Services\Tenant\Reports;
 
 use App\Models\Tenant\Inventory;
+use App\Models\Tenant\InventoryMovement;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\Sale;
@@ -64,7 +65,8 @@ class StockReportService
     /**
      * Every stocked product at the branch with its level, recent sales, days
      * of stock left and status: low (at or under its reorder level, or under
-     * a week left), dead (none sold in [$deadDays] days though in stock), ok.
+     * a week left), dead (none sold in [$deadDays] days though in stock for at
+     * least that long), new (in stock, arrived within the window, not sold yet), ok.
      *
      * @return array{store_id: int, as_of: string, dead_after_days: int, summary: array<string, float|int>, items: array<int, array<string, mixed>>}
      */
@@ -96,6 +98,15 @@ class StockReportService
             ->keyBy(fn (StoreProduct $row) => self::lineKey($row->product_id, $row->product_variant_id));
 
         $soldLast30 = $this->quantitySold($storeId, $windowStart);
+        // When each line first arrived: stock younger than the dead window is "new", not "not selling".
+        $firstReceivedAt = InventoryMovement::query()
+            ->where('store_id', $storeId)
+            ->whereIn('movement_type', ProductCostService::INCOMING_TYPES)
+            ->where('quantity_in_base_uom', '>', 0)
+            ->groupBy('product_id', 'product_variant_id')
+            ->selectRaw('product_id, product_variant_id, MIN(created_at) as first_received_at')
+            ->get()
+            ->mapWithKeys(fn ($row) => [self::lineKey($row->product_id, $row->product_variant_id) => $row->first_received_at]);
         $lastSoldAt = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.store_id', $storeId)
@@ -106,7 +117,7 @@ class StockReportService
             ->keyBy(fn ($row) => self::lineKey($row->product_id, $row->product_variant_id))
             ->map(fn ($row) => $row->last_sold_at);
 
-        $items = $inventory->map(function (Inventory $row, string $key) use ($products, $variants, $storeProducts, $soldLast30, $lastSoldAt, $deadStart, $storeId) {
+        $items = $inventory->map(function (Inventory $row, string $key) use ($products, $variants, $storeProducts, $soldLast30, $lastSoldAt, $firstReceivedAt, $deadStart, $storeId) {
             $productId = (int) $row->product_id;
             $variantId = $row->product_variant_id === null ? null : (int) $row->product_variant_id;
             $product = $products->get($productId);
@@ -119,13 +130,15 @@ class StockReportService
             $branchMinimum = (float) ($storeProduct->min_stock_level ?? 0);
             $reorderAt = $branchMinimum > 0 ? $branchMinimum : (float) ($variant?->reorder_level ?? $product?->reorder_level ?? 0);
             $lastSold = $lastSoldAt[$key] ?? null;
+            $firstReceived = $firstReceivedAt[$key] ?? null;
+            $recentlyReceived = $firstReceived !== null && CarbonImmutable::parse($firstReceived)->greaterThanOrEqualTo($deadStart);
             $unitCost = $product ? $this->costs->unitCost($product, $storeId, $variantId) : null;
             $name = $product?->name ?? 'Unknown';
 
             $status = match (true) {
                 $onHand <= 0 => 'out',
                 $onHand <= $reorderAt || ($daysLeft !== null && $daysLeft < 7) => 'low',
-                $lastSold === null || CarbonImmutable::parse($lastSold)->lessThan($deadStart) => 'dead',
+                $lastSold === null || CarbonImmutable::parse($lastSold)->lessThan($deadStart) => $recentlyReceived ? 'new' : 'dead',
                 default => 'ok',
             };
 
@@ -149,7 +162,7 @@ class StockReportService
             ];
         })->values();
 
-        $order = ['out' => 0, 'low' => 1, 'dead' => 2, 'ok' => 3];
+        $order = ['out' => 0, 'low' => 1, 'dead' => 2, 'new' => 3, 'ok' => 4];
 
         return [
             'store_id' => $storeId,
