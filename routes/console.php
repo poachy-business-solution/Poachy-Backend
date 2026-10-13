@@ -60,6 +60,14 @@ Schedule::command('billing:refresh-states')
     ->onOneServer()
     ->description('Re-evaluate billing states');
 
+// Expenses: record repeating costs (rent, salaries…) that fall due today, before shops open.
+Schedule::command('expenses:record-recurring')
+    ->dailyAt('05:00')
+    ->timezone('Africa/Nairobi')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Record repeating expenses that are due');
+
 // Billing: free-trial reminders 7, 3 and 1 days before the trial ends (each once), mid-morning.
 Schedule::command('billing:trial-reminders')
     ->dailyAt('09:00')

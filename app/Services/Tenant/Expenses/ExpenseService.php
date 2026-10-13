@@ -578,9 +578,9 @@ class ExpenseService
         return match ($frequency) {
             RecurrenceFrequency::DAILY => $date->addDays($interval),
             RecurrenceFrequency::WEEKLY => $date->addWeeks($interval),
-            RecurrenceFrequency::MONTHLY => $date->addMonths($interval),
-            RecurrenceFrequency::QUARTERLY => $date->addMonths($interval * 3),
-            RecurrenceFrequency::YEARLY => $date->addYears($interval),
+            RecurrenceFrequency::MONTHLY => $date->addMonthsNoOverflow($interval),
+            RecurrenceFrequency::QUARTERLY => $date->addMonthsNoOverflow($interval * 3),
+            RecurrenceFrequency::YEARLY => $date->addYearsNoOverflow($interval),
             default => throw new \Exception('Invalid recurrence frequency'),
         };
     }
