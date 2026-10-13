@@ -21302,6 +21302,58 @@
                 ]
             }
         },
+        "/api/internal/admin/emails/templates": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Transactional email templates",
+                "operationId": "internalAdminEmailTemplates",
+                "responses": {
+                    "200": {
+                        "description": "key, name, description per template"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/emails/templates/{key}/preview": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "One template rendered with sample data",
+                "operationId": "internalAdminEmailTemplatePreview",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "low_balance"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "subject and html; nothing is sent or logged"
+                    },
+                    "404": {
+                        "description": "Unknown template"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
         "/api/internal/admin/shops": {
             "post": {
                 "tags": [
