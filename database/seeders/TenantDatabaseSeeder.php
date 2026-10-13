@@ -22,6 +22,8 @@ class TenantDatabaseSeeder extends Seeder
             ProductBrandSeeder::class,
 
             TenantConfigurationSeeder::class,
+
+            ExpenseCategorySeeder::class,
         ];
 
         if ($hasBusinessSelection) {

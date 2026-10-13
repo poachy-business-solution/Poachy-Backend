@@ -12,10 +12,12 @@ use App\Models\Domain;
 use App\Models\MessageLog;
 use App\Models\SignupRequest;
 use App\Models\Tenant;
+use App\Models\Tenant\ExpenseCategory;
 use App\Models\Tenant\Store;
 use App\Models\Tenant\User;
 use App\Services\Tenant\Auth\TenantAuthService;
 use Database\Seeders\BillingPriceSeeder;
+use Database\Seeders\ExpenseCategorySeeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -98,6 +100,8 @@ class ProvisionSignupJobTest extends TestCase
             // Ready to add products: categories and units for the shop's type were seeded.
             $this->assertGreaterThan(0, DB::table('units_of_measure')->count());
             $this->assertGreaterThan(0, DB::table('product_categories')->count());
+            // …and can record expenses straight away.
+            $this->assertSame(array_keys(ExpenseCategorySeeder::DEFAULTS), ExpenseCategory::query()->orderBy('display_order')->pluck('name')->all());
 
             $store = Store::query()->where('is_main_store', true)->sole();
             $this->assertSame('Signup Test Duka', $store->name);
