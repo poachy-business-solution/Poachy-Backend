@@ -99612,6 +99612,16 @@
                                         "maxLength": 500,
                                         "example": "Initial mobile stock receipt",
                                         "nullable": true
+                                    },
+                                    "payment": {
+                                        "description": "How the delivery was paid. cash (default) or mpesa settles the purchase order at once (a supplier payment is recorded); credit leaves it owed and needs a named supplier (a market purchase cannot be on credit).",
+                                        "type": "string",
+                                        "enum": [
+                                            "cash",
+                                            "mpesa",
+                                            "credit"
+                                        ],
+                                        "example": "cash"
                                     }
                                 },
                                 "type": "object"

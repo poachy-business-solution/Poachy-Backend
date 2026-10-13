@@ -10,6 +10,7 @@ use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Inventory\PurchaseOrderService;
+use App\Services\Tenant\Supplier\SupplierPaymentService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -22,6 +23,7 @@ class ProductStockReceivingService
         private readonly PurchaseOrderService $purchaseOrderService,
         private readonly ProductBatchService $batchService,
         private readonly ProductCostService $costs,
+        private readonly SupplierPaymentService $supplierPayments,
     ) {}
 
     /**
@@ -30,11 +32,16 @@ class ProductStockReceivingService
      * A delivery with no price is costed at what the stock currently costs (average, last
      * receipt or entered buying price) so it never drags the average down to zero.
      *
+     * Most small-shop deliveries are paid on the spot, so the purchase order is settled at
+     * once (cash by default, or M-Pesa) and nothing shows as owed to the supplier. "credit"
+     * leaves it open — only for a named supplier; the market can't be owed.
+     *
      * @return array{
      *     store_product_created: bool,
      *     batches: Collection,
      *     serials: Collection,
-     *     purchase_order: PurchaseOrder
+     *     purchase_order: PurchaseOrder,
+     *     payment: array{status: string, method: string|null, amount: float}
      * }
      */
     public function receive(Product $product, array $data): array
@@ -52,7 +59,13 @@ class ProductStockReceivingService
             }
 
             // Small shops often buy at the market with no named supplier.
+            $marketPurchase = $supplierId === null;
             $supplierId ??= $this->marketSupplier()->id;
+            $payment = $data['payment'] ?? 'cash';
+
+            if ($payment === 'credit' && $marketPurchase) {
+                throw new RuntimeException('A market purchase has no supplier to owe — choose cash or M-Pesa, or name the supplier.');
+            }
 
             if ($product->requiresSerialTracking() && count($data['serial_numbers'] ?? []) !== (int) $data['quantity']) {
                 throw new RuntimeException('Serial number count must match quantity for serial-tracked products.');
@@ -102,13 +115,46 @@ class ProductStockReceivingService
                 ],
             ]);
 
+            $paid = $this->settle($receipt['purchase_order'], $payment);
+
             return [
                 'store_product_created' => $storeProduct->wasRecentlyCreated,
                 'batches' => $receipt['batches'],
                 'serials' => $receipt['serials'],
-                'purchase_order' => $receipt['purchase_order'],
+                'purchase_order' => $receipt['purchase_order']->fresh(),
+                'payment' => $paid,
             ];
         });
+    }
+
+    /**
+     * Pay the purchase order on the spot (unless on credit), so the supplier's balance
+     * and "you owe" stay at what is really owed.
+     *
+     * @return array{status: string, method: string|null, amount: float}
+     */
+    protected function settle(PurchaseOrder $purchaseOrder, string $payment): array
+    {
+        $total = (float) $purchaseOrder->total_amount;
+
+        if ($payment === 'credit') {
+            return ['status' => 'credit', 'method' => null, 'amount' => 0.0];
+        }
+
+        if ($total <= 0) {
+            return ['status' => 'paid', 'method' => $payment, 'amount' => 0.0];
+        }
+
+        $this->supplierPayments->recordPayment([
+            'supplier_id' => $purchaseOrder->supplier_id,
+            'purchase_order_id' => $purchaseOrder->id,
+            'payment_date' => now()->toDateString(),
+            'amount' => $total,
+            'payment_method' => $payment,
+            'notes' => 'Paid on delivery',
+        ]);
+
+        return ['status' => 'paid', 'method' => $payment, 'amount' => round($total, 2)];
     }
 
     /**

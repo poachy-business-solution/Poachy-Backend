@@ -24,6 +24,7 @@ class ReceiveProductStockRequest extends FormRequest
             'serial_numbers' => ['nullable', 'array'],
             'serial_numbers.*' => ['string', 'max:255', 'distinct'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'payment' => ['sometimes', 'string', 'in:cash,mpesa,credit'],
         ];
     }
 
@@ -33,6 +34,7 @@ class ReceiveProductStockRequest extends FormRequest
             'store_id.required' => 'Store is required.',
             'quantity.required' => 'Quantity is required.',
             'expiry_date.after' => 'Expiry date must be after manufacture date.',
+            'payment.in' => 'Payment must be cash, mpesa or credit.',
         ];
     }
 }
