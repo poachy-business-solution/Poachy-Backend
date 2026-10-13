@@ -6,6 +6,7 @@ use App\Enums\Tenant\ExpensePaidFrom;
 use App\Enums\Tenant\ExpenseStatus;
 use App\Enums\Tenant\RecurrenceFrequency;
 use App\Models\Tenant\Expense;
+use App\Models\Tenant\ExpenseCategory;
 use App\Models\Tenant\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,8 @@ class RecurringExpenseService
                 'store_id' => (int) $data['store_id'],
                 'category_id' => (int) $data['category_id'],
                 'amount' => $data['amount'],
-                'description' => filled($data['note'] ?? null) ? $data['note'] : null,
+                // No note → the category name, so the bill still has a description ('Rent').
+                'description' => filled($data['note'] ?? null) ? $data['note'] : (ExpenseCategory::query()->whereKey((int) $data['category_id'])->value('name') ?? 'Repeating cost'),
                 'expense_date' => $start->toDateString(),
                 'payment_method' => $paidFrom->paymentMethod(),
                 'paid_from' => $paidFrom,

@@ -83,6 +83,10 @@ class RecurringExpensesTest extends TestCase
                 $this->assertEqualsWithDelta(9131.25, $daily->json('data.per_month'), 0.01);
                 $this->assertSame(0, Expense::query()->where('parent_expense_id', $daily->json('data.id'))->count()); // starts tomorrow
 
+                // No note → the bill is described by its category, never a null description.
+                $noNote = $this->postJson($url('/api/v1/tenant/recurring-expenses'), ['amount' => 500, 'frequency' => 'weekly', 'note' => null] + $body)->assertCreated();
+                $this->assertSame('Rent', Expense::query()->findOrFail($noNote->json('data.id'))->description);
+
                 $this->postJson($url('/api/v1/tenant/recurring-expenses/999999/stop'))->assertNotFound();
             });
         } finally {
