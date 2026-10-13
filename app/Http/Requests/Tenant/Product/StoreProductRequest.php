@@ -44,6 +44,10 @@ class StoreProductRequest extends FormRequest
             // Pricing
             'base_selling_price' => 'required|numeric|min:0|max:9999999999.99',
             'base_uom_id' => 'required|integer|exists:units_of_measure,id',
+            // What the shop pays for one unit; profit uses it until a delivery records its own price.
+            'cost_price' => 'nullable|numeric|min:0|max:9999999999.99',
+            // Low-stock alert below this quantity (base unit).
+            'reorder_level' => 'nullable|numeric|min:0|max:999999.9999',
 
             // Flags
             'is_active' => 'nullable|boolean',

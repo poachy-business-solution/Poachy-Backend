@@ -45,6 +45,7 @@ class StoreProductVariantRequest extends FormRequest
                 Rule::in(ProductStatus::values()),
             ],
             'reorder_level' => 'nullable|numeric|min:0|max:999999.9999',
+            'cost_price' => 'nullable|numeric|min:0|max:9999999999.99',
             'shelf_life_days' => 'nullable|integer|min:1|max:3650',
 
             // Status

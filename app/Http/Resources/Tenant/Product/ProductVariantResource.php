@@ -60,6 +60,7 @@ class ProductVariantResource extends JsonResource
             'stock_status' => $this->stock_status?->value,
             'stock_status_label' => $this->stock_status?->label(),
             'reorder_level' => $this->reorder_level,
+            'cost_price' => $this->when($request->user()?->can('manage-products') ?? false, fn () => $this->cost_price === null ? null : (float) $this->cost_price),
             'shelf_life_days' => $this->shelf_life_days,
             'is_active' => $this->is_active,
 
