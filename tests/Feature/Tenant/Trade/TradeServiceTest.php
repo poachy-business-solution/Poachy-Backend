@@ -27,7 +27,7 @@ class TradeServiceTest extends TestCase
 {
     use InteractsWithTenantAuthorization;
 
-    private const TABLES = ['trade_events', 'trade_lines', 'trade_partners', 'cash_movements', 'suppliers', 'products', 'product_batches', 'inventory_movements'];
+    private const TABLES = ['trade_events', 'trade_lines', 'trade_partners', 'cash_movements', 'suppliers', 'products', 'product_batches', 'inventory', 'inventory_movements'];
 
     private User $owner;
 
@@ -242,6 +242,19 @@ class TradeServiceTest extends TestCase
             $table->decimal('quantity_remaining_in_base_uom', 15, 4)->default(0);
             $table->decimal('cost_per_base_uom', 15, 4)->default(0);
             $table->boolean('is_expired')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        $schema->create('inventory', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('quantity_on_hand', 15, 4)->default(0);
+            $table->decimal('quantity_reserved', 15, 4)->default(0);
+            $table->decimal('quantity_available', 15, 4)->default(0);
+            $table->decimal('quantity_damaged', 15, 4)->default(0);
+            $table->decimal('average_cost', 15, 4)->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

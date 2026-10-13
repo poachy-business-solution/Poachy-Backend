@@ -377,7 +377,7 @@ class SaleController extends Controller
             Log::error('Customer search failed', [
                 'phone' => $request->input('phone'),
                 'error' => $e->getMessage(),
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
             ]);
 
             return ApiResponse::serverError(
@@ -790,7 +790,7 @@ class SaleController extends Controller
             Log::error('Sale calculation failed', [
                 'request_data' => $request->validated(),
                 'error' => $e->getMessage(),
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
             ]);
 
             return ApiResponse::error(
@@ -1351,7 +1351,7 @@ class SaleController extends Controller
             // Business logic errors (validation, insufficient stock, etc.)
             Log::warning('Sale creation failed - business logic', [
                 'error' => $e->getMessage(),
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
             ]);
 
             return ApiResponse::error(
@@ -1365,7 +1365,7 @@ class SaleController extends Controller
                 'request_data' => $request->validated(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
             ]);
 
             return ApiResponse::serverError(
@@ -1662,7 +1662,7 @@ class SaleController extends Controller
             Log::error('Failed to retrieve sale', [
                 'sale_id' => $sale->id,
                 'error' => $e->getMessage(),
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
             ]);
 
             return ApiResponse::serverError(
@@ -2028,7 +2028,7 @@ class SaleController extends Controller
             Log::error('Failed to list sales', [
                 'filters' => $request->validated(),
                 'error' => $e->getMessage(),
-                'tenant_id' => tenant()->id,
+                'tenant_id' => tenant()?->id,
             ]);
 
             return ApiResponse::serverError(

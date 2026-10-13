@@ -8,6 +8,7 @@ use App\Models\Tenant\PurchaseOrder;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Inventory\PurchaseOrderService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,14 @@ class ProductStockReceivingService
     public function __construct(
         private readonly PurchaseOrderService $purchaseOrderService,
         private readonly ProductBatchService $batchService,
+        private readonly ProductCostService $costs,
     ) {}
 
     /**
      * Receive first/restock inventory for a product in one mobile-friendly call.
+     *
+     * A delivery with no price is costed at what the stock currently costs (average, last
+     * receipt or entered buying price) so it never drags the average down to zero.
      *
      * @return array{
      *     store_product_created: bool,
@@ -70,7 +75,7 @@ class ProductStockReceivingService
                     'product_id' => $product->id,
                     'uom_id' => $product->base_uom_id,
                     'quantity_ordered' => $data['quantity'],
-                    'unit_cost' => $data['unit_cost'] ?? 0,
+                    'unit_cost' => $data['unit_cost'] ?? $this->costs->unitCost($product, (int) $data['store_id']) ?? 0,
                     'tax_rate_id' => $product->tax_rate_id,
                     'notes' => $data['notes'] ?? null,
                 ]],

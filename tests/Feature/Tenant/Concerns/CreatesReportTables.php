@@ -273,6 +273,7 @@ trait CreatesReportTables
             $t->unsignedBigInteger('product_id');
             $t->unsignedBigInteger('product_variant_id')->nullable();
             $t->decimal('quantity_on_hand', 15, 4)->default(0);
+            $t->decimal('average_cost', 15, 4)->nullable();
             $t->decimal('quantity_reserved', 15, 4)->default(0);
             $t->decimal('quantity_available', 15, 4)->default(0);
             $t->timestamps();

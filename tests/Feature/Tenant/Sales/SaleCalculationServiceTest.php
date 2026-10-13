@@ -526,6 +526,7 @@ class SaleCalculationServiceTest extends TestCase
     private function dropTestTables(): void
     {
         foreach ([
+            'inventory',
             'inventory_movements',
             'product_serials',
             'product_batches',
@@ -688,6 +689,20 @@ class SaleCalculationServiceTest extends TestCase
             $table->boolean('is_available')->default(true);
             $table->integer('min_stock_level')->default(0);
             $table->timestamps();
+        });
+
+        Schema::connection($conn)->create('inventory', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('quantity_on_hand', 15, 4)->default(0);
+            $table->decimal('quantity_reserved', 15, 4)->default(0);
+            $table->decimal('quantity_available', 15, 4)->default(0);
+            $table->decimal('quantity_damaged', 15, 4)->default(0);
+            $table->decimal('average_cost', 15, 4)->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::connection($conn)->create('inventory_movements', function (Blueprint $table) {

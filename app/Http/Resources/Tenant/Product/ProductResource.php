@@ -11,6 +11,21 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
+    /**
+     * @var array{average_cost: float|null, entered_cost: float|null, recent: list<array<string, mixed>>}|null
+     */
+    public ?array $costSummary = null;
+
+    /**
+     * Attach what the stock cost (see ProductCostService::costSummary) — product detail only.
+     */
+    public function withCostSummary(array $summary): static
+    {
+        $this->costSummary = $summary;
+
+        return $this;
+    }
+
     use ResolvesTenantPublicAssetUrls;
 
     /**
@@ -45,6 +60,8 @@ class ProductResource extends JsonResource
             'formatted_base_price' => 'KES '.number_format($this->base_selling_price, 2),
             // Buying price: only for staff who manage products (never cashiers).
             'cost_price' => $this->when($request->user()?->can('manage-products') ?? false, fn () => $this->cost_price === null ? null : (float) $this->cost_price),
+            // Average cost + recent buying prices: product detail only, same audience as cost_price.
+            'cost_summary' => $this->when($this->costSummary !== null && ($request->user()?->can('manage-products') ?? false), $this->costSummary),
 
             // Tax & UOM
             'tax_rate' => new TaxRateResource($this->whenLoaded('taxRate')),

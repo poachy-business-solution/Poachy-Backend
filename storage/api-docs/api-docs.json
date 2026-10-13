@@ -96273,6 +96273,61 @@
                                                     "type": "string",
                                                     "example": "KES 135,999.00"
                                                 },
+                                                "cost_price": {
+                                                    "description": "Entered buying price per base unit (manage-products only)",
+                                                    "type": "number",
+                                                    "example": 1600,
+                                                    "nullable": true
+                                                },
+                                                "cost_summary": {
+                                                    "description": "What the stock cost — manage-products only",
+                                                    "properties": {
+                                                        "average_cost": {
+                                                            "description": "Moving weighted average cost of the stock on hand across branches (serial/batch stock carries its own cost)",
+                                                            "type": "number",
+                                                            "example": 1650,
+                                                            "nullable": true
+                                                        },
+                                                        "entered_cost": {
+                                                            "description": "Buying price typed in when the product was created",
+                                                            "type": "number",
+                                                            "example": 1600,
+                                                            "nullable": true
+                                                        },
+                                                        "recent": {
+                                                            "description": "Latest costed receipts, newest first (max 5)",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "date": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": "2026-10-14"
+                                                                    },
+                                                                    "quantity": {
+                                                                        "type": "number",
+                                                                        "example": 10
+                                                                    },
+                                                                    "unit_cost": {
+                                                                        "type": "number",
+                                                                        "example": 1700
+                                                                    },
+                                                                    "store_id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "store_name": {
+                                                                        "type": "string",
+                                                                        "example": "Main branch",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
                                                 "tax_rate": {
                                                     "properties": {
                                                         "id": {
@@ -99510,7 +99565,7 @@
                                         "example": 12
                                     },
                                     "unit_cost": {
-                                        "description": "Purchase cost per base UOM unit. Defaults to 0 when omitted.",
+                                        "description": "This delivery's buying price per base UOM unit. Omitted: the stock's current cost (average, last receipt or entered buying price) is used. Each costed receipt updates the branch's moving weighted average cost.",
                                         "type": "number",
                                         "format": "float",
                                         "minimum": 0,
