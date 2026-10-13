@@ -39,7 +39,8 @@ class ProductVariantsFromOptionsTest extends TestCase
 
                 $body = ['options' => [['name' => 'Colour', 'values' => ['Black', 'Red']], ['name' => 'Size', 'values' => ['38', '39', '40']]],
                     'store_id' => $store, 'opening_stock' => 2,
-                    'variants' => [['attributes' => ['Colour' => 'Red', 'Size' => '39'], 'opening_stock' => 5, 'variant_price' => 2600]]];
+                    'variants' => [['attributes' => ['Colour' => 'Red', 'Size' => '39'], 'opening_stock' => 5, 'variant_price' => 2600],
+                        ['attributes' => ['Colour' => 'Red', 'Size' => '40'], 'opening_stock' => 0]]];
                 $variants = $this->postJson($url("/api/v1/tenant/products/{$uuid}/variants/bulk"), $body)->assertCreated()->json('data');
 
                 $this->assertSame(['Black / 38', 'Black / 39', 'Black / 40', 'Red / 38', 'Red / 39', 'Red / 40'], array_column($variants, 'variant_name'));
@@ -51,6 +52,8 @@ class ProductVariantsFromOptionsTest extends TestCase
                 $onHand = fn (int $variantId) => Inventory::query()->where('store_id', $store)->where('product_variant_id', $variantId)->first();
                 $this->assertSame(['2.0000', '1600.0000'], [$onHand($variants[0]['id'])->quantity_on_hand, $onHand($variants[0]['id'])->average_cost]);
                 $this->assertSame('5.0000', $onHand($variants[4]['id'])->quantity_on_hand);
+                // No stock yet still gets a stock line, so the colour/size is listed as "out" and can be received.
+                $this->assertSame(['0.0000', null], [$onHand($variants[5]['id'])->quantity_on_hand, $onHand($variants[5]['id'])->average_cost]);
 
                 // Repeating the call adds nothing and changes nothing.
                 $again = $this->postJson($url("/api/v1/tenant/products/{$uuid}/variants/bulk"), $body)->assertCreated()->json('data');
@@ -64,6 +67,7 @@ class ProductVariantsFromOptionsTest extends TestCase
                 $this->assertSame('Block heels — Red / 39', $rows[$variants[4]['id']]['name']);
                 $this->assertEquals([5, 2600, 1600, 'dead'], [$rows[$variants[4]['id']]['on_hand'], $rows[$variants[4]['id']]['selling_price'], $rows[$variants[4]['id']]['unit_cost'], $rows[$variants[4]['id']]['status']], 'in stock, never sold → dead');
                 $this->assertSame('low', $rows[$variants[0]['id']]['status']);
+                $this->assertSame('out', $rows[$variants[5]['id']]['status']);
 
                 // Receive one colour/size at a new price: only its average moves.
                 $red38 = $variants[3]['id'];
