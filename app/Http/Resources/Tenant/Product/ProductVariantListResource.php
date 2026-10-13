@@ -32,7 +32,11 @@ class ProductVariantListResource extends JsonResource
             'quantity_in_base_uom' => $this->quantity_in_base_uom,
 
             // Pricing
+            'variant_price' => $this->variant_price === null ? null : (float) $this->variant_price,
             'computed_price' => $this->computed_price,
+            'reorder_level' => $this->reorder_level === null ? null : (float) $this->reorder_level,
+            // Buying price: only for staff who manage products (never cashiers).
+            'cost_price' => $this->when($request->user()?->can('manage-products') ?? false, fn () => $this->cost_price === null ? null : (float) $this->cost_price),
             'formatted_price' => 'KES '.number_format($this->computed_price, 2),
             'online_price' => $this->online_price,
             'formatted_online_price' => $this->online_price

@@ -204,6 +204,8 @@ class ProductVariantService
                 $override = $overrides->get($key, []);
 
                 if ($existing->has($key)) {
+                    // Already there: just make sure it has a stock line at the branch.
+                    $this->ensureStockLines($product, $existing->get($key), $data['store_id'] ?? null);
                     $created->push($existing->get($key));
 
                     continue;
@@ -222,12 +224,7 @@ class ProductVariantService
                 ]);
 
                 $openingStock = (float) ($override['opening_stock'] ?? $data['opening_stock'] ?? 0);
-                if (! empty($data['store_id'])) {
-                    StoreProduct::query()->firstOrCreate(
-                        ['store_id' => $data['store_id'], 'product_id' => $product->id, 'product_variant_id' => $variant->id],
-                        ['store_selling_price' => null, 'min_stock_level' => (int) $variant->reorder_level, 'is_available' => true],
-                    );
-                }
+                $this->ensureStockLines($product, $variant, $data['store_id'] ?? null);
                 if ($openingStock > 0 && ! empty($data['store_id'])) {
                     app(InventoryMovementService::class)->recordAdjustment([
                         'store_id' => $data['store_id'],
@@ -249,6 +246,26 @@ class ProductVariantService
 
             return $created->map(fn (ProductVariant $variant) => $variant->fresh(['product', 'uom']));
         });
+    }
+
+    /**
+     * A branch row and a stock line (even at zero) for the colour/size, so it is listed
+     * as "out" in the stock list and can be received — nothing is invisible.
+     */
+    protected function ensureStockLines(Product $product, ProductVariant $variant, ?int $storeId): void
+    {
+        if ($storeId === null) {
+            return;
+        }
+
+        StoreProduct::query()->firstOrCreate(
+            ['store_id' => $storeId, 'product_id' => $product->id, 'product_variant_id' => $variant->id],
+            ['store_selling_price' => null, 'min_stock_level' => (int) $variant->reorder_level, 'is_available' => true],
+        );
+        Inventory::query()->firstOrCreate(
+            ['store_id' => $storeId, 'product_id' => $product->id, 'product_variant_id' => $variant->id],
+            ['quantity_on_hand' => 0, 'quantity_reserved' => 0, 'quantity_available' => 0, 'quantity_damaged' => 0],
+        );
     }
 
     /**
