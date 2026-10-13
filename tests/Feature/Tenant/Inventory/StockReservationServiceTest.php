@@ -460,6 +460,7 @@ class StockReservationServiceTest extends TestCase
             $table->decimal('quantity_reserved', 15, 4)->default(0);
             $table->decimal('quantity_available', 15, 4)->default(0);
             $table->decimal('quantity_damaged', 15, 4)->default(0);
+            $table->decimal('average_cost', 15, 4)->nullable();
             $table->date('last_restock_date')->nullable();
             $table->date('last_stock_take_date')->nullable();
             $table->unsignedBigInteger('last_restocked_by')->nullable();

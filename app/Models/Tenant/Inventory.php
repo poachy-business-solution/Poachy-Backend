@@ -26,6 +26,7 @@ class Inventory extends Model
         'quantity_reserved',
         'quantity_available',
         'quantity_damaged',
+        'average_cost',
         'last_restock_date',
         'last_stock_take_date',
         'last_restocked_by',
@@ -36,6 +37,7 @@ class Inventory extends Model
         'quantity_reserved' => 'decimal:4',
         'quantity_available' => 'decimal:4',
         'quantity_damaged' => 'decimal:4',
+        'average_cost' => 'decimal:4',
         'last_restock_date' => 'date',
         'last_stock_take_date' => 'date',
     ];

@@ -17,9 +17,43 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryMovementService
 {
+    /**
+     * Movements that bring stock in at a price the shop paid — the only ones that move
+     * the average cost. Sales, damage and returns never change what the stock cost.
+     */
+    private const COSTED_INCOMING_TYPES = [
+        InventoryMovementType::PURCHASE,
+        InventoryMovementType::TRANSFER_IN,
+        InventoryMovementType::ADJUSTMENT,
+        InventoryMovementType::STOCK_TAKE,
+    ];
+
     public function __construct(
         private InventoryService $inventoryService
     ) {}
+
+    /**
+     * Moving weighted average: what was on hand (at the old average) plus this delivery (at
+     * its price), divided by the new total. Nothing on hand — or no cost known yet — means
+     * the delivery's price becomes the average.
+     *
+     * Stock that existed before averages were kept has no stored average; the latest costed
+     * receipt (else the entered buying price) stands in for it so the first restock at a new
+     * price is still blended rather than replacing the old cost outright.
+     */
+    protected function movingAverageCost(Inventory $inventory, float $onHandBefore, float $quantityIn, float $unitCost): float
+    {
+        $onHandBefore = max(0, $onHandBefore);
+        $previousAverage = $inventory->average_cost === null
+            ? app(ProductCostService::class)->costBeforeAveraging($inventory)
+            : (float) $inventory->average_cost;
+
+        if ($onHandBefore <= 0 || $previousAverage === null) {
+            return round($unitCost, 4);
+        }
+
+        return round((($onHandBefore * $previousAverage) + ($quantityIn * $unitCost)) / ($onHandBefore + $quantityIn), 4);
+    }
 
     /**
      * CORE METHOD: Record inventory movement atomically
@@ -132,6 +166,10 @@ class InventoryMovementService
 
             // Recalculate quantity_available
             $updateData['quantity_available'] = max(0, $updateData['quantity_on_hand'] - $inventory->quantity_reserved);
+
+            if ($unitCostInBaseUom !== null && $quantityInBaseUom > 0 && in_array($movementType, self::COSTED_INCOMING_TYPES, true)) {
+                $updateData['average_cost'] = $this->movingAverageCost($inventory, $oldBalance, $quantityInBaseUom, $unitCostInBaseUom);
+            }
 
             $inventory->update($updateData);
 

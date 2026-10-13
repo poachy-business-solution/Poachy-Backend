@@ -16,6 +16,7 @@ use App\Http\Resources\Tenant\Inventory\PurchaseOrderResource;
 use App\Http\Resources\Tenant\Product\ProductListResource;
 use App\Http\Resources\Tenant\Product\ProductResource;
 use App\Http\Responses\ApiResponse;
+use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Product\ProductService;
 use App\Services\Tenant\Product\ProductStockReceivingService;
 use Illuminate\Http\JsonResponse;
@@ -561,6 +562,22 @@ class ProductController extends Controller
      *                 @OA\Property(property="stock_status_label", type="string", example="In Stock"),
      *                 @OA\Property(property="base_selling_price", type="string", example="135999.00"),
      *                 @OA\Property(property="formatted_base_price", type="string", example="KES 135,999.00"),
+     *                 @OA\Property(property="cost_price", type="number", nullable=true, example=1600, description="Entered buying price per base unit (manage-products only)"),
+     *                 @OA\Property(property="cost_summary", type="object", description="What the stock cost — manage-products only",
+     *                     @OA\Property(property="average_cost", type="number", nullable=true, example=1650, description="Moving weighted average cost of the stock on hand across branches (serial/batch stock carries its own cost)"),
+     *                     @OA\Property(property="entered_cost", type="number", nullable=true, example=1600, description="Buying price typed in when the product was created"),
+     *                     @OA\Property(property="recent", type="array", description="Latest costed receipts, newest first (max 5)",
+     *
+     *                         @OA\Items(type="object",
+     *
+     *                             @OA\Property(property="date", type="string", format="date", example="2026-10-14"),
+     *                             @OA\Property(property="quantity", type="number", example=10),
+     *                             @OA\Property(property="unit_cost", type="number", example=1700),
+     *                             @OA\Property(property="store_id", type="integer", example=1),
+     *                             @OA\Property(property="store_name", type="string", nullable=true, example="Main branch")
+     *                         )
+     *                     )
+     *                 ),
      *                 @OA\Property(
      *                     property="tax_rate",
      *                     type="object",
@@ -651,13 +668,18 @@ class ProductController extends Controller
      *     )
      * )
      */
-    public function show(string $uuid): JsonResponse
+    public function show(string $uuid, ProductCostService $costs): JsonResponse
     {
         $product = $this->productService->getByUuid($uuid);
+        $resource = new ProductResource($product);
+
+        if (request()->user()?->can('manage-products')) {
+            $resource->withCostSummary($costs->costSummary($product));
+        }
 
         return ApiResponse::success(
             message: 'Product retrieved successfully',
-            data: new ProductResource($product)
+            data: $resource
         );
     }
 
@@ -2025,7 +2047,7 @@ class ProductController extends Controller
      *
      *             @OA\Property(property="store_id", type="integer", example=1, description="Store receiving the stock"),
      *             @OA\Property(property="quantity", type="number", format="float", minimum=0.0001, example=12, description="Quantity in the product base UOM"),
-     *             @OA\Property(property="unit_cost", type="number", format="float", nullable=true, minimum=0, example=80.50, description="Purchase cost per base UOM unit. Defaults to 0 when omitted."),
+     *             @OA\Property(property="unit_cost", type="number", format="float", nullable=true, minimum=0, example=80.50, description="This delivery's buying price per base UOM unit. Omitted: the stock's current cost (average, last receipt or entered buying price) is used. Each costed receipt updates the branch's moving weighted average cost."),
      *             @OA\Property(property="supplier_id", type="integer", nullable=true, example=3, description="Supplier to use for the generated purchase order. Defaults to the product supplier when omitted."),
      *             @OA\Property(property="manufacture_date", type="string", format="date", nullable=true, example="2026-08-01", description="Manufacture date for batch-tracked stock"),
      *             @OA\Property(property="expiry_date", type="string", format="date", nullable=true, example="2027-08-01", description="Expiry date for batch-tracked stock. Must be after manufacture_date when both are present."),

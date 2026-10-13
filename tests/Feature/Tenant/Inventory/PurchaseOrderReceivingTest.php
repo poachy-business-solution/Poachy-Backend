@@ -13,6 +13,7 @@ use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\Supplier;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\ProductBatchService;
+use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Inventory\PurchaseOrderService;
 use App\Services\Tenant\Product\ProductStockReceivingService;
 use Illuminate\Database\Eloquent\Model;
@@ -362,7 +363,8 @@ class PurchaseOrderReceivingTest extends TestCase
     {
         return new ProductStockReceivingService(
             new PurchaseOrderService,
-            new ProductBatchService
+            new ProductBatchService,
+            new ProductCostService
         );
     }
 
