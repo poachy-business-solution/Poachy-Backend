@@ -292,6 +292,7 @@ Route::prefix('v1/tenant')
             Route::prefix('{uuid}/variants')->group(function () {
                 Route::get('/', [ProductVariantController::class, 'index']);
                 Route::post('/', [ProductVariantController::class, 'store']);
+                Route::post('/bulk', [ProductVariantController::class, 'bulkStore']);
             });
 
             Route::get('/{uuid}/barcodes', [ProductBarcodeController::class, 'productIndex']);

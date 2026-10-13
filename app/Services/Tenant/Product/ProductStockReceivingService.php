@@ -41,6 +41,11 @@ class ProductStockReceivingService
     {
         return DB::transaction(function () use ($product, $data) {
             $supplierId = $data['supplier_id'] ?? $product->supplier_id;
+            $variantId = isset($data['variant_id']) ? (int) $data['variant_id'] : null;
+
+            if ($variantId !== null && ! $product->variants()->whereKey($variantId)->exists()) {
+                throw new RuntimeException('That colour/size does not belong to this product.');
+            }
 
             if ($supplierId && ! Supplier::whereKey($supplierId)->exists()) {
                 throw new RuntimeException('That supplier does not exist.');
@@ -57,7 +62,7 @@ class ProductStockReceivingService
                 [
                     'store_id' => $data['store_id'],
                     'product_id' => $product->id,
-                    'product_variant_id' => null,
+                    'product_variant_id' => $variantId,
                 ],
                 [
                     'store_selling_price' => null,
@@ -73,9 +78,10 @@ class ProductStockReceivingService
                 'notes' => $data['notes'] ?? "One-shot stock receipt for {$product->name}",
                 'items' => [[
                     'product_id' => $product->id,
+                    'variant_id' => $variantId,
                     'uom_id' => $product->base_uom_id,
                     'quantity_ordered' => $data['quantity'],
-                    'unit_cost' => $data['unit_cost'] ?? $this->costs->unitCost($product, (int) $data['store_id']) ?? 0,
+                    'unit_cost' => $data['unit_cost'] ?? $this->costs->unitCost($product, (int) $data['store_id'], $variantId) ?? 0,
                     'tax_rate_id' => $product->tax_rate_id,
                     'notes' => $data['notes'] ?? null,
                 ]],

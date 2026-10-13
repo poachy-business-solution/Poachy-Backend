@@ -674,7 +674,8 @@ class ProductController extends Controller
         $resource = new ProductResource($product);
 
         if (request()->user()?->can('manage-products')) {
-            $resource->withCostSummary($costs->costSummary($product));
+            $variantId = request()->integer('variant_id') ?: null;
+            $resource->withCostSummary($costs->costSummary($product, $variantId));
         }
 
         return ApiResponse::success(
@@ -2046,6 +2047,7 @@ class ProductController extends Controller
      *             required={"store_id", "quantity"},
      *
      *             @OA\Property(property="store_id", type="integer", example=1, description="Store receiving the stock"),
+     *             @OA\Property(property="variant_id", type="integer", nullable=true, example=12, description="The colour/size being received (one of this product's variants); omit for a simple product"),
      *             @OA\Property(property="quantity", type="number", format="float", minimum=0.0001, example=12, description="Quantity in the product base UOM"),
      *             @OA\Property(property="unit_cost", type="number", format="float", nullable=true, minimum=0, example=80.50, description="This delivery's buying price per base UOM unit. Omitted: the stock's current cost (average, last receipt or entered buying price) is used. Each costed receipt updates the branch's moving weighted average cost."),
      *             @OA\Property(property="supplier_id", type="integer", nullable=true, example=3, description="Supplier to use for the generated purchase order. Defaults to the product supplier when omitted."),

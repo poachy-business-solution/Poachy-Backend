@@ -15,6 +15,7 @@ class ReceiveProductStockRequest extends FormRequest
     {
         return [
             'store_id' => ['required', 'integer', 'exists:stores,id'],
+            'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'quantity' => ['required', 'numeric', 'min:0.0001'],
             'unit_cost' => ['nullable', 'numeric', 'min:0'],
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],

@@ -131,7 +131,7 @@ class SaleItem extends Model
             return null;
         }
 
-        return (float) $this->subtotal - ((float) $this->unit_cost * (float) $this->quantity);
+        return round((float) $this->subtotal - ((float) $this->unit_cost * (float) $this->quantity), 2);
     }
 
     /**

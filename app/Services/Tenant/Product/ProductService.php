@@ -340,6 +340,7 @@ class ProductService
                 'name',
                 'slug',
                 'sku',
+                'product_type',
                 'category_id',
                 'brand_id',
                 'base_selling_price',

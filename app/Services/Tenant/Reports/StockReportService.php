@@ -4,6 +4,7 @@ namespace App\Services\Tenant\Reports;
 
 use App\Models\Tenant\Inventory;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\Sale;
 use App\Models\Tenant\SaleItem;
 use App\Models\Tenant\StoreProduct;
@@ -73,43 +74,53 @@ class StockReportService
         [$windowStart] = $this->overviews->bounds($asOf->subDays(29), $asOf);
         [$deadStart] = $this->overviews->bounds($asOf->subDays($deadDays - 1), $asOf);
 
+        // One row per product, and one per colour/size for products that have them.
         $inventory = Inventory::query()
             ->where('store_id', $storeId)
-            ->whereNull('product_variant_id')
-            ->get(['product_id', 'quantity_on_hand'])
-            ->keyBy('product_id');
+            ->get(['product_id', 'product_variant_id', 'quantity_on_hand'])
+            ->keyBy(fn (Inventory $row) => self::lineKey($row->product_id, $row->product_variant_id));
 
         $products = Product::query()
-            ->whereIn('id', $inventory->keys())
+            ->whereIn('id', $inventory->pluck('product_id')->unique())
             ->get(['id', 'uuid', 'name', 'reorder_level', 'requires_serial_tracking', 'requires_batch_tracking', 'base_selling_price', 'base_uom_id'])
+            ->keyBy('id');
+
+        $variants = ProductVariant::query()
+            ->whereIn('id', $inventory->pluck('product_variant_id')->filter()->unique())
+            ->get(['id', 'product_id', 'variant_name', 'variant_price', 'reorder_level', 'is_active'])
             ->keyBy('id');
 
         $storeProducts = StoreProduct::query()
             ->where('store_id', $storeId)
-            ->whereNull('product_variant_id')
-            ->get(['product_id', 'min_stock_level', 'store_selling_price'])
-            ->keyBy('product_id');
-        $minLevels = $storeProducts->map(fn ($row) => $row->min_stock_level);
+            ->get(['product_id', 'product_variant_id', 'min_stock_level', 'store_selling_price'])
+            ->keyBy(fn (StoreProduct $row) => self::lineKey($row->product_id, $row->product_variant_id));
 
         $soldLast30 = $this->quantitySold($storeId, $windowStart);
         $lastSoldAt = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.store_id', $storeId)
             ->whereNotNull('sale_items.product_id')
-            ->groupBy('sale_items.product_id')
-            ->selectRaw('sale_items.product_id, MAX(sales.sale_date) as last_sold_at')
-            ->pluck('last_sold_at', 'product_id');
+            ->groupBy('sale_items.product_id', 'sale_items.product_variant_id')
+            ->selectRaw('sale_items.product_id, sale_items.product_variant_id, MAX(sales.sale_date) as last_sold_at')
+            ->get()
+            ->keyBy(fn ($row) => self::lineKey($row->product_id, $row->product_variant_id))
+            ->map(fn ($row) => $row->last_sold_at);
 
-        $items = $inventory->map(function ($row, $productId) use ($products, $minLevels, $storeProducts, $soldLast30, $lastSoldAt, $deadStart, $storeId) {
+        $items = $inventory->map(function (Inventory $row, string $key) use ($products, $variants, $storeProducts, $soldLast30, $lastSoldAt, $deadStart, $storeId) {
+            $productId = (int) $row->product_id;
+            $variantId = $row->product_variant_id === null ? null : (int) $row->product_variant_id;
             $product = $products->get($productId);
+            $variant = $variantId === null ? null : $variants->get($variantId);
+            $storeProduct = $storeProducts->get($key);
             $onHand = (float) $row->quantity_on_hand;
-            $sold = (float) ($soldLast30[$productId] ?? 0);
+            $sold = (float) ($soldLast30[$key] ?? 0);
             $perDay = $sold / 30;
             $daysLeft = $perDay > 0 ? round(max(0, $onHand) / $perDay, 1) : null;
-            $branchMinimum = (float) ($minLevels[$productId] ?? 0);
-            $reorderAt = $branchMinimum > 0 ? $branchMinimum : (float) ($product?->reorder_level ?? 0);
-            $lastSold = $lastSoldAt[$productId] ?? null;
-            $unitCost = $product ? $this->costs->unitCost($product, $storeId) : null;
+            $branchMinimum = (float) ($storeProduct->min_stock_level ?? 0);
+            $reorderAt = $branchMinimum > 0 ? $branchMinimum : (float) ($variant?->reorder_level ?? $product?->reorder_level ?? 0);
+            $lastSold = $lastSoldAt[$key] ?? null;
+            $unitCost = $product ? $this->costs->unitCost($product, $storeId, $variantId) : null;
+            $name = $product?->name ?? 'Unknown';
 
             $status = match (true) {
                 $onHand <= 0 => 'out',
@@ -119,12 +130,14 @@ class StockReportService
             };
 
             return [
-                'product_id' => (int) $productId,
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'variant_name' => $variant?->variant_name,
                 'uuid' => $product?->uuid,
                 'base_uom_id' => $product?->base_uom_id,
                 'tracking' => $product?->requires_serial_tracking ? 'serial' : ($product?->requires_batch_tracking ? 'batch' : 'none'),
-                'name' => $product?->name ?? 'Unknown',
-                'selling_price' => round((float) ($storeProducts[$productId]->store_selling_price ?? $product?->base_selling_price ?? 0), 2),
+                'name' => $variant ? "{$name} — {$variant->variant_name}" : $name,
+                'selling_price' => round((float) ($storeProduct->store_selling_price ?? $variant?->variant_price ?? $product?->base_selling_price ?? 0), 2),
                 'on_hand' => round($onHand, 4),
                 'reorder_level' => $reorderAt,
                 'sold_last_30_days' => round($sold, 4),
@@ -155,9 +168,9 @@ class StockReportService
     }
 
     /**
-     * Base-unit quantity sold per product at the branch since [$since].
+     * Base-unit quantity sold per product (and colour/size) at the branch since [$since].
      *
-     * @return Collection<int, float>
+     * @return Collection<string, float>
      */
     protected function quantitySold(int $storeId, CarbonImmutable $since): Collection
     {
@@ -166,9 +179,15 @@ class StockReportService
             ->where('sales.store_id', $storeId)
             ->where('sales.sale_date', '>=', $since)
             ->whereNotNull('sale_items.product_id')
-            ->groupBy('sale_items.product_id')
-            ->selectRaw('sale_items.product_id, SUM(sale_items.quantity_in_base_uom) as sold')
-            ->pluck('sold', 'product_id')
-            ->map(fn ($sold) => (float) $sold);
+            ->groupBy('sale_items.product_id', 'sale_items.product_variant_id')
+            ->selectRaw('sale_items.product_id, sale_items.product_variant_id, SUM(sale_items.quantity_in_base_uom) as sold')
+            ->get()
+            ->mapWithKeys(fn ($row) => [self::lineKey($row->product_id, $row->product_variant_id) => (float) $row->sold]);
+    }
+
+    /** "product" or "product:variant" — one stock line per colour/size. */
+    protected static function lineKey(int|string $productId, int|string|null $variantId): string
+    {
+        return $variantId === null ? (string) $productId : "{$productId}:{$variantId}";
     }
 }
