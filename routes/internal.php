@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Internal\Admin\BillingController;
+use App\Http\Controllers\Api\Internal\Admin\EmailTemplateController;
 use App\Http\Controllers\Api\Internal\Admin\ShopController;
 use App\Http\Controllers\Api\Internal\Admin\VerificationController;
 use Illuminate\Support\Facades\Route;
@@ -32,5 +33,9 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::post('/shops/{shop}/billing/link', [BillingController::class, 'link'])->middleware('internal.admin');
     Route::post('/billing/unmatched/{id}/assign', [BillingController::class, 'assignPayment'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
     Route::get('/billing/prices', [BillingController::class, 'prices'])->middleware('internal.admin');
+
+    // Housekeeping: the emails Poachy sends, rendered with sample data (read-only).
+    Route::get('/emails/templates', [EmailTemplateController::class, 'index'])->middleware('internal.admin:super,operations,support');
+    Route::get('/emails/templates/{key}/preview', [EmailTemplateController::class, 'preview'])->middleware('internal.admin:super,operations,support');
     Route::post('/billing/prices', [BillingController::class, 'storePrice'])->middleware('internal.admin:super,finance');
 });
