@@ -188,7 +188,7 @@ class MarketplacePaymentServiceTest extends TestCase
 
     public function test_initiate_payment_throws_for_unsupported_method(): void
     {
-        $order = $this->createOrder(paymentOverrides: ['payment_method' => 'card']);
+        $order = $this->createOrder(paymentOverrides: ['payment_method' => 'bank_transfer']);
 
         $this->expectException(\RuntimeException::class);
 
