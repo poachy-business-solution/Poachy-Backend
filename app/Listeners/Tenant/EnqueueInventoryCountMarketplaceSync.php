@@ -33,36 +33,41 @@ class EnqueueInventoryCountMarketplaceSync implements ShouldQueue
             $action = $event->action;
             $priority = $event->priority;
 
-            $idempotencyKey = $dto->generateIdempotencyKey($action);
+            $stateKey = $dto->generateIdempotencyKey($action);
 
-            // Check if already queued or recently completed (idempotency).
-            // We include 'completed' within the expiry window because the outbound job
-            // can finish (mark status=completed) before a duplicate listener execution runs,
-            // which would otherwise pass the in-flight check and hit a unique constraint.
-            $existingSync = SyncQueueOutbound::where('idempotency_key', $idempotencyKey)
-                ->where(function ($query) {
-                    $query->whereIn('status', ['pending', 'queued', 'processing'])
-                        ->orWhere(function ($q) {
-                            $q->where('status', 'completed')
-                                ->where('expires_at', '>', now());
-                        });
-                })
+            // Idempotency against the LATEST sync of this product/variant only. The state key is a
+            // content hash, so "available 1" after a hold and "available 1" after the release look the
+            // same — but if a different count went out in between, central is stale and must hear the
+            // repeat. The row key carries the previous entry's id so a repeat after an intervening
+            // state is a new unique key, while two concurrent identical events still collide (race safe).
+            $latest = SyncQueueOutbound::where('tenant_id', $dto->tenantId)
+                ->where('syncable_type', 'InventoryCount')
+                ->where('syncable_id', $dto->productId)
+                ->where('payload->variant_id', $dto->variantId)
+                ->orderByDesc('id')
                 ->first();
 
-            if ($existingSync) {
-                Log::info('InventoryCount sync skipped — already '.$existingSync->status.' for this payload', [
+            $latestIsSameState = $latest !== null
+                && str_starts_with($latest->idempotency_key, $stateKey)
+                && (in_array($latest->status, ['pending', 'queued', 'processing'], true)
+                    || ($latest->status === 'completed' && $latest->expires_at !== null && $latest->expires_at->isFuture()));
+
+            if ($latestIsSameState) {
+                Log::info('InventoryCount sync skipped — already '.$latest->status.' for this payload', [
                     'tenant_id' => $dto->tenantId,
                     'product_id' => $dto->productId,
                     'variant_id' => $dto->variantId,
-                    'idempotency_key' => $idempotencyKey,
-                    'existing_sync_id' => $existingSync->id,
-                    'existing_status' => $existingSync->status,
+                    'idempotency_key' => $latest->idempotency_key,
+                    'existing_sync_id' => $latest->id,
+                    'existing_status' => $latest->status,
                 ]);
 
                 DB::commit();
 
                 return;
             }
+
+            $idempotencyKey = $stateKey.':'.($latest?->id ?? 0);
 
             $syncQueue = SyncQueueOutbound::create([
                 'tenant_id' => $dto->tenantId,

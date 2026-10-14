@@ -306,20 +306,7 @@ class InventoryCountSyncTest extends TestCase
         $this->assertSame(1, SyncQueueOutbound::where('syncable_id', 1)->count());
     }
 
-    /**
-     * Confirmed real behavior, not a bug fixed here: the dedup query's design
-     * intends a completed-and-expired sync to be treated as stale, allowing a
-     * fresh row for the identical payload — but idempotency_key is a pure
-     * content hash (tenant+entity+action+payload), not time-based, and the old
-     * row is never deleted. The re-create attempt collides on the column's
-     * unique constraint, which the listener's UniqueConstraintViolationException
-     * catch swallows silently, so no new row is actually created. This means
-     * an identical payload can never be re-synced after its original row
-     * expires. Pre-existing in the reference delivery-zone implementation too
-     * (same catch, no time-based key component) — not something introduced by
-     * this pass, and out of scope to redesign here.
-     */
-    public function test_listener_silently_no_ops_when_identical_payload_recreated_after_expiry(): void
+    public function test_listener_resyncs_identical_payload_once_the_earlier_row_expired(): void
     {
         Queue::fake();
         $inventory = $this->seedInventory();
@@ -329,7 +316,33 @@ class InventoryCountSyncTest extends TestCase
 
         $this->makeListener()->handle($event);
 
-        $this->assertSame(1, SyncQueueOutbound::where('syncable_id', 1)->count());
+        $this->assertSame(2, SyncQueueOutbound::where('syncable_id', 1)->count());
+    }
+
+    /**
+     * Hold 1 of 1 (available 0), release it (available 1 again): the second "available 1" is the
+     * same content as the first sync, but central heard "0" in between — it must be sent again.
+     */
+    public function test_listener_resyncs_a_repeated_state_after_a_different_one_went_out(): void
+    {
+        Queue::fake();
+        $inventory = $this->seedInventory(available: 1, onHand: 1);
+        $this->makeListener()->handle(new InventoryCountMarketplaceSyncRequested($inventory, 'update', 3));
+        SyncQueueOutbound::where('syncable_id', 1)->update(['status' => 'completed', 'expires_at' => now()->addDay()]);
+
+        DB::connection('tenant')->table('inventory')->where('id', $inventory->id)->update(['quantity_available' => 0]);
+        $this->makeListener()->handle(new InventoryCountMarketplaceSyncRequested($inventory->fresh(), 'update', 3));
+        SyncQueueOutbound::where('syncable_id', 1)->update(['status' => 'completed', 'expires_at' => now()->addDay()]);
+
+        DB::connection('tenant')->table('inventory')->where('id', $inventory->id)->update(['quantity_available' => 1]);
+        $this->makeListener()->handle(new InventoryCountMarketplaceSyncRequested($inventory->fresh(), 'update', 3));
+
+        $this->assertSame(3, SyncQueueOutbound::where('syncable_id', 1)->count());
+        $this->assertSame(3, SyncQueueOutbound::where('syncable_id', 1)->distinct()->count('idempotency_key'));
+
+        // And an exact repeat of the latest state is still skipped.
+        $this->makeListener()->handle(new InventoryCountMarketplaceSyncRequested($inventory->fresh(), 'update', 3));
+        $this->assertSame(3, SyncQueueOutbound::where('syncable_id', 1)->count());
     }
 
     public function test_listener_creates_new_when_payload_differs(): void
