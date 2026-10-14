@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Internal\Admin\BillingController;
 use App\Http\Controllers\Api\Internal\Admin\EmailTemplateController;
+use App\Http\Controllers\Api\Internal\Admin\MarketplaceMappingController;
 use App\Http\Controllers\Api\Internal\Admin\ShopController;
 use App\Http\Controllers\Api\Internal\Admin\VerificationController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,10 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::post('/shops/{shop}/suspend', [ShopController::class, 'suspend'])->middleware('internal.admin:super,operations');
     Route::post('/shops/{shop}/restore', [ShopController::class, 'restore'])->middleware('internal.admin:super,operations');
     Route::post('/shops/{shop}/trial', [ShopController::class, 'extendTrial'])->middleware('internal.admin:super,operations,finance');
+
+    // Marketplace: group listings of the same item across shops (barcode does it; this is the manual override).
+    Route::post('/marketplace/products/{id}/item', [MarketplaceMappingController::class, 'map'])->whereNumber('id')->middleware('internal.admin:super,operations');
+    Route::delete('/marketplace/products/{id}/item', [MarketplaceMappingController::class, 'unmap'])->whereNumber('id')->middleware('internal.admin:super,operations');
 
     // Billing
     Route::post('/shops/{shop}/billing/credit', [BillingController::class, 'credit'])->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);

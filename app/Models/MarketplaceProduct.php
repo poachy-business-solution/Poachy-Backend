@@ -31,6 +31,8 @@ class MarketplaceProduct extends Model
         'description',
         'online_description',
         'sku',
+        'barcode',
+        'marketplace_item_id',
         'tenant_category_id',
         'tenant_category_name',
         'tenant_brand_id',
@@ -83,6 +85,11 @@ class MarketplaceProduct extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(MarketplaceItem::class, 'marketplace_item_id');
     }
 
     public function marketplaceCategory(): BelongsTo

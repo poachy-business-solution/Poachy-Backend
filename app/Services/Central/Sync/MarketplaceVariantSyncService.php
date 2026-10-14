@@ -5,6 +5,7 @@ namespace App\Services\Central\Sync;
 use App\DataTransferObjects\Sync\ProductVariantSyncDTO;
 use App\Models\MarketplaceProduct;
 use App\Models\SyncQueueInbound;
+use App\Services\Central\Marketplace\MarketplaceItemService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -79,6 +80,7 @@ class MarketplaceVariantSyncService
                 'description' => $this->buildVariantDescription($dto),
                 'online_description' => $dto->onlineDescription,
                 'sku' => $dto->sku,
+                'barcode' => $dto->barcode,
 
                 // Tenant Original Categorization
                 'tenant_category_id' => $dto->category->id,
@@ -119,6 +121,7 @@ class MarketplaceVariantSyncService
                 'last_synced_at' => now(),
                 'sync_status' => 'synced',
             ]);
+            app(MarketplaceItemService::class)->attachByBarcode($marketplaceProduct); // same item across shops
 
             DB::connection('central')->commit();
 
@@ -505,6 +508,7 @@ class MarketplaceVariantSyncService
 
             // Media
             'primary_image' => $dto->primaryImage,
+            'barcode' => $dto->barcode,
             'secondary_images' => $dto->secondaryImages,
 
             'is_featured' => $dto->isActive ? $dto->isFeatured : false,
@@ -526,6 +530,8 @@ class MarketplaceVariantSyncService
         }
 
         $marketplaceProduct->update($updateData);
+
+        app(MarketplaceItemService::class)->attachByBarcode($marketplaceProduct->fresh() ?? $marketplaceProduct);
 
         // Log what changed
         if (! empty($changedFields)) {

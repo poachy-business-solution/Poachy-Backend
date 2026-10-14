@@ -37,6 +37,7 @@ class InboundVariantSyncRequest extends FormRequest
             'payload.product_type' => 'required|string|in:variant',
             'payload.variant_name' => 'required|string|max:255',
             'payload.sku' => 'required|string|max:255',
+            'payload.barcode' => 'nullable|string|max:50',
             'payload.attributes' => 'nullable|array',
             'payload.online_price' => 'required|numeric|min:0',
             'payload.computed_online_price' => 'numeric|min:0',

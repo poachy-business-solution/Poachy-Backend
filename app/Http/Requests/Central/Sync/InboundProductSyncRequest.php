@@ -37,6 +37,7 @@ class InboundProductSyncRequest extends FormRequest
             'payload.name' => 'required|string|max:255',
             'payload.slug' => 'required|string|max:255',
             'payload.sku' => 'required|string|max:255',
+            'payload.barcode' => 'nullable|string|max:50',
             'payload.online_price' => 'required|numeric|min:0',
             'payload.tax_rate' => 'required|numeric|min:0|max:100',
 

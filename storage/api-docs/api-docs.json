@@ -21354,6 +21354,82 @@
                 ]
             }
         },
+        "/api/internal/admin/marketplace/products/{id}/item": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Map a listing to an item (existing id or a new name)",
+                "operationId": "internalAdminMarketplaceMap",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "item_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "item_name": {
+                                        "type": "string",
+                                        "example": "Mango Juice 1L",
+                                        "nullable": true
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "item{id,slug,name,offers_count}"
+                    },
+                    "404": {
+                        "description": "No such listing"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Take a listing out of its item",
+                "operationId": "internalAdminMarketplaceUnmap",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Unmapped"
+                    },
+                    "404": {
+                        "description": "No such listing"
+                    }
+                }
+            }
+        },
         "/api/internal/admin/shops": {
             "post": {
                 "tags": [
@@ -22046,6 +22122,172 @@
                     },
                     "404": {
                         "description": "No such shop or file, or not an image"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/market/home": {
+            "get": {
+                "tags": [
+                    "Public - Market"
+                ],
+                "summary": "Marketplace home: categories, featured shops, latest listings",
+                "operationId": "publicMarketHome",
+                "responses": {
+                    "200": {
+                        "description": "categories[] (slug, name, icon, products_count), featured_shops[], latest[] (product cards), sponsored[] (empty until adverts)"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/market/categories/{slug}": {
+            "get": {
+                "tags": [
+                    "Public - Market"
+                ],
+                "summary": "A category page: products of verified shops with filters",
+                "operationId": "publicMarketCategory",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "groceries"
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "in_stock",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "county",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "newest",
+                                "price_asc",
+                                "price_desc",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "category, children[], products[] + pagination, sponsored[]"
+                    },
+                    "404": {
+                        "description": "No such category"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/market/search": {
+            "get": {
+                "tags": [
+                    "Public - Market"
+                ],
+                "summary": "Search products and shops",
+                "operationId": "publicMarketSearch",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "mango"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "newest",
+                                "price_asc",
+                                "price_desc",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "query, products[] + pagination, shops[], sponsored[] (max 2 per page)"
+                    },
+                    "422": {
+                        "description": "Query shorter than 2 characters"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/market/products/{slug}": {
+            "get": {
+                "tags": [
+                    "Public - Market"
+                ],
+                "summary": "A product page with every verified shop's offer of the same item",
+                "operationId": "publicMarketProduct",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "mango-juice-1l"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "name, description, slug, item_slug, barcode, category, brand, images[], from_price, offers[] (price, stock, delivery, shop{slug,name,area,rating,is_verified,whatsapp_link,phone,return_policy,operating_hours}), related[]"
+                    },
+                    "404": {
+                        "description": "No such product, or its shop is not listed"
                     }
                 }
             }
@@ -136457,12 +136699,20 @@
             "description": "Central - Sync"
         },
         {
+            "name": "Internal admin - Marketplace",
+            "description": "Internal admin - Marketplace"
+        },
+        {
             "name": "Public - Pay",
             "description": "Public - Pay"
         },
         {
             "name": "Public - Shops",
             "description": "Public - Shops"
+        },
+        {
+            "name": "Public - Market",
+            "description": "Public - Market"
         },
         {
             "name": "Public - Sign-up",
