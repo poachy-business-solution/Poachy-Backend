@@ -78,6 +78,8 @@ Route::prefix('v1/public')->group(function () {
     // Shop pages (poachy.com/s/{slug}); only verified, active shops answer.
     Route::get('/shops/{slug}', [PublicShopController::class, 'show'])
         ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');
+    Route::get('/shops/{slug}/products', [PublicShopController::class, 'products'])
+        ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');
 
     Route::prefix('pay/{token}')->where(['token' => '[A-Za-z0-9]{20,64}'])->group(function () {
         Route::get('/', [PayLinkController::class, 'show'])->middleware('throttle:pay-link-read');

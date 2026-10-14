@@ -129,6 +129,13 @@ class PublicMarketTest extends TestCase
         $this->assertSame(2, $this->getJson("/api/v1/public/market/search?q={$barcode}")->json('data.pagination.total'), 'search by barcode');
         $this->getJson('/api/v1/public/market/search?q=m')->assertUnprocessable();
 
+        // A shop's own page lists only its listings; unverified shops have no page.
+        $nairobiSlug = BusinessDetail::on('central')->where('tenant_id', $this->tenants['nairobi'])->value('slug');
+        $shopPage = $this->getJson("/api/v1/public/shops/{$nairobiSlug}/products?sort=price_asc")->assertOk()->json('data');
+        $this->assertSame('Nairobi Duka '.$this->run, $shopPage['shop']['name']);
+        $this->assertEquals([180, 190], array_column($shopPage['products'], 'price'));
+        $this->getJson('/api/v1/public/shops/'.BusinessDetail::on('central')->where('tenant_id', $this->tenants['pending'])->value('slug').'/products')->assertNotFound();
+
         // Admin maps the loose listing into the item by hand; wrong role refused; audited.
         $headers = fn (string $role) => ['Authorization' => 'Bearer internal-test-token-0123456789abcdef0123456789', 'X-Admin-Id' => '42', 'X-Admin-Name' => 'Ops', 'X-Admin-Role' => $role, 'Accept' => 'application/json'];
         $this->postJson("/api/internal/admin/marketplace/products/{$loose->id}/item", ['item_id' => $nairobi->fresh()->marketplace_item_id], $headers('support'))->assertForbidden();

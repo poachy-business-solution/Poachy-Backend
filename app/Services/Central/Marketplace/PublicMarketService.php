@@ -115,6 +115,16 @@ class PublicMarketService
         ];
     }
 
+    /**
+     * One shop's listings for its page (poachy.com/s/{shop}).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function shopProducts(BusinessDetail $shop, array $filters): LengthAwarePaginator
+    {
+        return $this->paginate($this->listings()->where('tenant_id', $shop->tenant_id), $filters);
+    }
+
     /** Shops with at least one delivery zone can deliver; the rest are pickup only. */
     public function deliveringTenants(array $tenantIds): array
     {

@@ -22320,6 +22320,60 @@
                 }
             }
         },
+        "/api/v1/public/shops/{slug}/products": {
+            "get": {
+                "tags": [
+                    "Public - Shops"
+                ],
+                "summary": "A verified shop's online products (its page on the web)",
+                "operationId": "publicShopProducts",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "newest",
+                                "price_asc",
+                                "price_desc",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "in_stock",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "shop{slug,name}, products[] (cards) + pagination"
+                    },
+                    "404": {
+                        "description": "No such shop, or not verified / not active"
+                    }
+                }
+            }
+        },
         "/api/v1/public/signup/start": {
             "post": {
                 "tags": [
