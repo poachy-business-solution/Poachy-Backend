@@ -38,6 +38,19 @@ class CheckoutService
     }
 
     /**
+     * The orders a checkout key already produced (empty when the key is new).
+     *
+     * @return Collection<int, MarketplaceOrder>
+     */
+    public function ordersForIdempotencyKey(string $idempotencyKey): Collection
+    {
+        return MarketplaceOrder::on('central')
+            ->where('checkout_idempotency_key', $idempotencyKey)
+            ->with(['items', 'payments', 'delivery'])
+            ->get();
+    }
+
+    /**
      * Initiate checkout: validate cart, group by tenant, create orders.
      *
      * @return Collection<MarketplaceOrder>
@@ -274,6 +287,14 @@ class CheckoutService
     // Private helpers
     // =========================================================================
 
+    /** The `?ref=` a shop link carried (wa, ig, qr, poster…), kept for attribution; anything odd is dropped. */
+    private function cleanRef(?string $ref): ?string
+    {
+        $ref = strtolower(trim((string) $ref));
+
+        return preg_match('/^[a-z0-9_-]{1,20}$/', $ref) ? $ref : null;
+    }
+
     private function validateStockAvailability(ShoppingCart $cart): void
     {
         foreach ($cart->items as $item) {
@@ -348,6 +369,7 @@ class CheckoutService
             'reservation_expires_at' => now()->addMinutes(self::RESERVATION_EXPIRY_MINUTES),
             'payment_deadline_at' => now()->addMinutes(self::PAYMENT_DEADLINE_MINUTES),
             'customer_notes' => $checkoutData['customer_notes'] ?? null,
+            'ref' => $this->cleanRef($checkoutData['ref'] ?? null),
             'checkout_idempotency_key' => $idempotencyKey,
         ]);
 

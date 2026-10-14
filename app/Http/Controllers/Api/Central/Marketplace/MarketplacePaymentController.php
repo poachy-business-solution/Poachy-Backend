@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Central\Marketplace;
 
+use App\Exceptions\InvalidWebhookSignatureException;
 use App\Helpers\CustomerHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Marketplace\InitiatePaymentRequest;
@@ -417,6 +418,11 @@ class MarketplacePaymentController extends Controller
                 return ApiResponse::notFound('No payment found for this order');
             }
 
+            // Back from the card page: ask the gateway rather than wait for the webhook.
+            if (request()->boolean('verify')) {
+                $payment = $this->paymentService->verifyCardPayment($payment);
+            }
+
             return ApiResponse::success(
                 'Payment status retrieved',
                 new MarketplaceOrderPaymentResource($payment),
@@ -447,21 +453,25 @@ class MarketplacePaymentController extends Controller
     }
 
     /**
-     * Generic payment webhook (public — no auth).
+     * @OA\Post(
+     *     path="/api/v1/central/marketplace/payments/paystack/webhook",
+     *     summary="Paystack webhook (charge.success / charge.failed)",
+     *     description="Public. The X-Paystack-Signature header must be the HMAC-SHA512 of the raw body with our secret key; the transaction is then verified with Paystack before any value is given. Idempotent.",
+     *     operationId="paystackWebhook",
+     *     tags={"Central - Customer - Marketplace - Payments"},
+     *
+     *     @OA\Response(response=200, description="Received"),
+     *     @OA\Response(response=401, description="Bad signature")
+     * )
      */
-    public function webhook(Request $request): JsonResponse
+    public function paystackWebhook(Request $request): JsonResponse
     {
         try {
-            $payment = $this->paymentService->processPaymentWebhook($request->all());
-
-            return ApiResponse::success(
-                'Webhook processed',
-                new MarketplaceOrderPaymentResource($payment),
-            );
-        } catch (ModelNotFoundException) {
-            return ApiResponse::notFound('Payment not found');
-        } catch (\RuntimeException $e) {
-            return ApiResponse::error($e->getMessage(), null, 422);
+            $payment = $this->paymentService->handlePaystackWebhook($request->getContent(), $request->header('X-Paystack-Signature'));
+        } catch (InvalidWebhookSignatureException) {
+            return ApiResponse::unauthorized('Invalid signature');
         }
+
+        return ApiResponse::success('Webhook received', $payment ? new MarketplaceOrderPaymentResource($payment) : null);
     }
 }

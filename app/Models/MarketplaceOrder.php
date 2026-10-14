@@ -49,6 +49,7 @@ class MarketplaceOrder extends Model
         'cancelled_at',
         'cancelled_by',
         'checkout_idempotency_key',
+        'ref',
     ];
 
     protected function casts(): array
@@ -193,6 +194,16 @@ class MarketplaceOrder extends Model
     /**
      * Whether the order can accept payment (reservation confirmed and not terminal).
      */
+    /** Where the buyer came from, for the shop's attribution: own link, advert, or the marketplace. */
+    public function source(): string
+    {
+        if ($this->ref === null || $this->ref === '') {
+            return 'marketplace';
+        }
+
+        return str_starts_with($this->ref, 'ad') ? 'advert' : 'own_link';
+    }
+
     public function canAcceptPayment(): bool
     {
         return $this->reservation_status === ReservationStatus::Confirmed

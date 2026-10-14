@@ -9,15 +9,19 @@ use App\Enums\Central\ReservationStatus;
 use App\Events\Central\Marketplace\PaymentAttempted;
 use App\Events\Central\Marketplace\PaymentCompleted;
 use App\Events\Central\Marketplace\PaymentFailed;
+use App\Exceptions\CardPaymentException;
+use App\Exceptions\InvalidWebhookSignatureException;
 use App\Exceptions\MpesaException;
 use App\Jobs\Central\ProcessOrderCancellation;
 use App\Jobs\Central\ProcessPaymentConfirmation;
 use App\Models\CentralPaymentLog;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
+use App\Services\Shared\Card\CardGateway;
 use App\Services\Shared\Mpesa\MpesaService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MarketplacePaymentService
 {
@@ -25,8 +29,10 @@ class MarketplacePaymentService
         private readonly MpesaService $mpesaService,
         private readonly MarketplaceProductService $productService,
         private ?OrderNotificationService $notifications = null,
+        private ?CardGateway $cards = null,
     ) {
         $this->notifications ??= app(OrderNotificationService::class);
+        $this->cards ??= app(CardGateway::class);
     }
 
     // =========================================================================
@@ -64,8 +70,9 @@ class MarketplacePaymentService
             MarketplacePaymentMethod::Mpesa => $this->initiateMpesaSTKPayment($order, $payment, $paymentData),
             MarketplacePaymentMethod::MpesaPaybill => $this->initiateMpesaPaybillPayment($order, $payment),
             MarketplacePaymentMethod::CashOnDelivery => $this->initiateCashOnDeliveryPayment($order, $payment),
+            MarketplacePaymentMethod::Card => $this->initiateCardPayment($order, $payment),
             default => throw new \RuntimeException(
-                "Payment method '{$payment->payment_method->label()}' is not yet available. Please choose M-Pesa STK, M-Pesa Paybill, or Cash on Delivery."
+                "Payment method '{$payment->payment_method->label()}' is not yet available. Please choose M-Pesa, card, or M-Pesa Paybill."
             ),
         };
     }
@@ -195,6 +202,175 @@ class MarketplacePaymentService
                 'expires_at' => $order->payment_deadline_at?->toIso8601String(),
             ],
         ];
+    }
+
+    /**
+     * Card (Paystack): start a transaction and send the buyer to the gateway's page.
+     * Re-initiating while one is in flight returns the same page instead of a second transaction.
+     *
+     * @return array{payment: MarketplaceOrderPayment, message: string, instructions: array<string, mixed>}
+     *
+     * @throws CardPaymentException
+     */
+    private function initiateCardPayment(MarketplaceOrder $order, MarketplaceOrderPayment $payment): array
+    {
+        $meta = $payment->payment_metadata ?? [];
+
+        if ($payment->payment_status === MarketplacePaymentStatus::Processing && ! empty($meta['authorization_url'])) {
+            return [
+                'payment' => $payment,
+                'message' => 'Card payment already started. Finish it on the payment page.',
+                'instructions' => ['authorization_url' => $meta['authorization_url'], 'reference' => $payment->transaction_reference],
+            ];
+        }
+
+        $order->loadMissing('customer.user');
+        $email = $order->customer?->user?->email;
+
+        if (! $email) {
+            throw new \RuntimeException('An email address is needed for card payment. Add one to your account first.');
+        }
+
+        $reference = 'PCO-'.$order->order_number.'-'.$payment->id.'-'.strtoupper(Str::random(4));
+        $callbackUrl = $this->cardCallbackUrl($order);
+
+        try {
+            $result = $this->cards->initialize($email, (float) $payment->amount, $reference, $callbackUrl, [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_id' => $payment->id,
+                'customer_id' => $order->customer_id,
+            ]);
+        } catch (CardPaymentException $e) {
+            Log::error('Marketplace card initialize failed', ['order_id' => $order->id, 'payment_id' => $payment->id, 'error' => $e->getMessage()]);
+            throw $e;
+        }
+
+        $payment->update([
+            'payment_status' => MarketplacePaymentStatus::Processing,
+            'payment_provider' => 'paystack',
+            'transaction_reference' => $result['reference'],
+            'payment_metadata' => array_merge($meta, [
+                'authorization_url' => $result['authorization_url'],
+                'access_code' => $result['access_code'],
+                'card_initiated_at' => now()->toIso8601String(),
+            ]),
+            'initiated_at' => now(),
+        ]);
+
+        CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'card_initialized', [
+            'customer_id' => $order->customer_id,
+            'amount' => (float) $payment->amount,
+            'transaction_reference' => $result['reference'],
+        ]);
+
+        event(new PaymentAttempted(order: $order, payment: $payment->fresh(), paymentMethod: MarketplacePaymentMethod::Card->value));
+
+        return [
+            'payment' => $payment->fresh(),
+            'message' => 'Continue to the card payment page.',
+            'instructions' => ['authorization_url' => $result['authorization_url'], 'reference' => $result['reference']],
+        ];
+    }
+
+    /**
+     * Paystack webhook: the signature must be ours, and the gateway's own record (not the webhook
+     * body) decides whether value is given. Idempotent through processPaymentWebhook().
+     *
+     * @throws InvalidWebhookSignatureException
+     */
+    public function handlePaystackWebhook(string $rawBody, ?string $signature): ?MarketplaceOrderPayment
+    {
+        if (! $this->cards->verifyWebhookSignature($rawBody, $signature)) {
+            Log::warning('Paystack webhook with a bad signature ignored');
+            throw new InvalidWebhookSignatureException('Invalid webhook signature.');
+        }
+
+        $event = json_decode($rawBody, true);
+        $reference = (string) ($event['data']['reference'] ?? '');
+        $type = (string) ($event['event'] ?? '');
+
+        if ($reference === '' || ! in_array($type, ['charge.success', 'charge.failed'], true)) {
+            Log::info('Paystack webhook ignored', ['event' => $type]);
+
+            return null;
+        }
+
+        $payment = MarketplaceOrderPayment::on('central')->where('transaction_reference', $reference)->first();
+
+        if (! $payment) {
+            Log::warning('Paystack webhook for an unknown reference', ['reference' => $reference]);
+
+            return null;
+        }
+
+        return $this->settleCardPayment($payment);
+    }
+
+    /**
+     * The buyer is back from the card page (or the app polls): ask the gateway what happened.
+     * Only card payments still in flight are checked; anything else is returned as is.
+     */
+    public function verifyCardPayment(MarketplaceOrderPayment $payment): MarketplaceOrderPayment
+    {
+        if ($payment->payment_method !== MarketplacePaymentMethod::Card
+            || $payment->payment_status !== MarketplacePaymentStatus::Processing
+            || ! $payment->transaction_reference) {
+            return $payment;
+        }
+
+        return $this->settleCardPayment($payment);
+    }
+
+    /** Verify the reference with the gateway and give value, fail, or leave it pending. */
+    private function settleCardPayment(MarketplaceOrderPayment $payment): MarketplaceOrderPayment
+    {
+        try {
+            $tx = $this->cards->verify($payment->transaction_reference);
+        } catch (CardPaymentException $e) {
+            Log::error('Paystack verify failed', ['payment_id' => $payment->id, 'error' => $e->getMessage()]);
+
+            return $payment;
+        }
+
+        if ($tx['status'] === 'success') {
+            if (abs((float) $tx['amount'] - (float) $payment->amount) > 0.009) {
+                Log::error('Paystack amount mismatch — not giving value', ['payment_id' => $payment->id, 'expected' => (float) $payment->amount, 'paid' => $tx['amount']]);
+
+                return $this->processPaymentWebhook([
+                    'transaction_reference' => $payment->transaction_reference,
+                    'status' => 'failed',
+                    'failure_reason' => 'Amount paid does not match the order',
+                    'failure_code' => 'AMOUNT_MISMATCH',
+                ]);
+            }
+
+            return $this->processPaymentWebhook([
+                'transaction_reference' => $payment->transaction_reference,
+                'status' => 'success',
+                'provider_reference' => $tx['reference'],
+            ]);
+        }
+
+        if (in_array($tx['status'], ['failed', 'abandoned', 'reversed'], true)) {
+            return $this->processPaymentWebhook([
+                'transaction_reference' => $payment->transaction_reference,
+                'status' => 'failed',
+                'failure_reason' => $tx['gateway_response'] ?: 'Card payment '.$tx['status'],
+                'failure_code' => strtoupper($tx['status']),
+            ]);
+        }
+
+        return $payment->fresh();
+    }
+
+    /** Where the gateway sends the buyer afterwards: the order page on the web, which then verifies. */
+    private function cardCallbackUrl(MarketplaceOrder $order): string
+    {
+        $configured = (string) config('paystack.callback_url');
+        $base = $configured !== '' ? $configured : rtrim((string) config('app.frontend_url', config('app.url')), '/').'/account/orders/'.$order->order_number.'/paid';
+
+        return str_contains($base, '{order}') ? str_replace('{order}', $order->order_number, $base) : $base;
     }
 
     /**

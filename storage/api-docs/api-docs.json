@@ -12293,6 +12293,24 @@
                 ]
             }
         },
+        "/api/v1/central/marketplace/payments/paystack/webhook": {
+            "post": {
+                "tags": [
+                    "Central - Customer - Marketplace - Payments"
+                ],
+                "summary": "Paystack webhook (charge.success / charge.failed)",
+                "description": "Public. The X-Paystack-Signature header must be the HMAC-SHA512 of the raw body with our secret key; the transaction is then verified with Paystack before any value is given. Idempotent.",
+                "operationId": "paystackWebhook",
+                "responses": {
+                    "200": {
+                        "description": "Received"
+                    },
+                    "401": {
+                        "description": "Bad signature"
+                    }
+                }
+            }
+        },
         "/api/v1/central/marketplace/products": {
             "get": {
                 "tags": [
@@ -137042,6 +137060,10 @@
         {
             "name": "Central - Customer - Marketplace - Delivery",
             "description": "Central - Customer - Marketplace - Delivery"
+        },
+        {
+            "name": "Central - Customer - Marketplace - Payments",
+            "description": "Central - Customer - Marketplace - Payments"
         },
         {
             "name": "Central - Customer - Marketplace - Reservations",

@@ -121,8 +121,8 @@ Route::prefix('v1/central')->group(function () {
         Route::get('/products', [MarketplaceProductController::class, 'index']);
         Route::get('/products/{slug}', [MarketplaceProductController::class, 'show']);
 
-        // Payment webhooks / callbacks (public — no auth)
-        Route::post('/payments/webhook', [MarketplacePaymentController::class, 'webhook']);
+        // Payment webhooks (public — authenticated by the provider's signature, then verified with the provider)
+        Route::post('/payments/paystack/webhook', [MarketplacePaymentController::class, 'paystackWebhook'])->middleware('throttle:60,1');
 
         // Reviews (public — anyone can read approved reviews)
         Route::prefix('')->group(function () {

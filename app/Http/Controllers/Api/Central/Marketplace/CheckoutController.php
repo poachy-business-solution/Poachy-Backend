@@ -473,6 +473,14 @@ class CheckoutController extends Controller
         $userId = auth('central')->id();
         $sessionId = $request->header('X-Cart-Session-Id');
 
+        // A repeat of a finished checkout (same key) returns the same orders — before the cart
+        // is touched, since the original cart was converted and its session id is spent.
+        $existing = $this->checkoutService->ordersForIdempotencyKey($idempotencyKey);
+
+        if ($existing->isNotEmpty()) {
+            return ApiResponse::success('Checkout already completed — same orders returned', MarketplaceOrderResource::collection($existing));
+        }
+
         // Find the marketplace customer by user_id
         $customer = MarketplaceCustomer::on('central')
             ->where('user_id', $userId)

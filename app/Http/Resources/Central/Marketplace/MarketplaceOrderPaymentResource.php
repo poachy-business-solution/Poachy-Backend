@@ -23,6 +23,8 @@ class MarketplaceOrderPaymentResource extends JsonResource
             'completed_at' => $this->completed_at?->toIso8601String(),
             'failed_at' => $this->failed_at?->toIso8601String(),
             'failure_reason' => $this->failure_reason,
+            // Card: where the buyer finishes paying (while the payment is still in flight).
+            'authorization_url' => $this->payment_status->value === 'processing' ? ($this->payment_metadata['authorization_url'] ?? null) : null,
         ];
     }
 }
