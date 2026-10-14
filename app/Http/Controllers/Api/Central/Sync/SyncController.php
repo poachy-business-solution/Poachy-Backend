@@ -10,6 +10,7 @@ use App\Http\Requests\Central\Sync\InboundMarketplaceFulfillmentSyncRequest;
 use App\Http\Requests\Central\Sync\InboundOrderConfirmationRequest;
 use App\Http\Requests\Central\Sync\InboundOutboundSyncAckRequest;
 use App\Http\Requests\Central\Sync\InboundProductSyncRequest;
+use App\Http\Requests\Central\Sync\InboundReservationConfirmationRequest;
 use App\Http\Requests\Central\Sync\InboundVariantSyncRequest;
 use App\Http\Responses\ApiResponse;
 use App\Jobs\Central\ProcessInboundBundleSync;
@@ -20,8 +21,10 @@ use App\Jobs\Central\ProcessInboundProductSync;
 use App\Jobs\Central\ProcessInboundVariantSync;
 use App\Jobs\Central\ProcessTenantOrderConfirmation;
 use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceReservation;
 use App\Models\SyncQueueInbound;
 use App\Models\SyncQueueOutbound;
+use App\Services\Central\Marketplace\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -648,6 +651,40 @@ class SyncController extends Controller
             data: ['order_id' => $orderId, 'status' => $validated['status']],
             status: 202,
         );
+    }
+
+    /**
+     * Reserve & collect: a shop reports whether it holds the stock for a PCH- code.
+     */
+    public function receiveReservationConfirmation(InboundReservationConfirmationRequest $request, ReservationService $reservations): JsonResponse
+    {
+        $validated = $request->validated();
+        $reservation = MarketplaceReservation::on('central')->find($validated['reservation_id']);
+
+        if (! $reservation) {
+            return ApiResponse::notFound('Reservation not found');
+        }
+
+        if ($reservation->tenant_id !== $validated['tenant_id']) {
+            return ApiResponse::error('Tenant ID mismatch', null, 403);
+        }
+
+        $validated['status'] === 'held'
+            ? $reservations->markHeld($reservation)
+            : $reservations->markFailed($reservation, $validated['reason'] ?? null);
+
+        if (! empty($validated['outbound_sync_id'])) {
+            $this->closeOutboundSyncEntry(
+                outboundSyncId: $validated['outbound_sync_id'],
+                tenantId: $validated['tenant_id'],
+                status: $validated['status'] === 'held' ? 'completed' : 'failed',
+                reason: $validated['reason'] ?? null,
+            );
+        }
+
+        Log::info('Reservation confirmation received from tenant', ['reservation_id' => $reservation->id, 'tenant_id' => $validated['tenant_id'], 'status' => $validated['status']]);
+
+        return ApiResponse::success(message: 'Reservation confirmation received', data: ['reservation_id' => $reservation->id, 'status' => $reservation->fresh()->status->value], status: 202);
     }
 
     /**

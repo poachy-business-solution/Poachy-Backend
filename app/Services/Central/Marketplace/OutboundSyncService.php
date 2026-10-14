@@ -6,6 +6,7 @@ use App\Enums\Central\OutboundSyncAction;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderDelivery;
 use App\Models\MarketplaceOrderPayment;
+use App\Models\MarketplaceReservation;
 use App\Models\SyncQueueOutbound;
 use Illuminate\Support\Facades\Log;
 
@@ -117,6 +118,60 @@ class OutboundSyncService
     public function queueCancellationSync(MarketplaceOrder $order): SyncQueueOutbound
     {
         return $this->queueOrderSync($order, OutboundSyncAction::Cancel);
+    }
+
+    /**
+     * Queue a reserve & collect hold or release to the shop (tenant).
+     */
+    public function queueReservationSync(MarketplaceReservation $reservation, OutboundSyncAction $action, ?string $reason = null): SyncQueueOutbound
+    {
+        $idempotencyKey = $this->buildIdempotencyKey('reservation', $reservation->id, $action);
+
+        $existing = SyncQueueOutbound::on('central')
+            ->where('idempotency_key', $idempotencyKey)
+            ->whereNotIn('status', ['failed', 'completed'])
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $entry = SyncQueueOutbound::create([
+            'tenant_id' => $reservation->tenant_id,
+            'syncable_type' => 'marketplace_reservation',
+            'syncable_id' => $reservation->id,
+            'action' => $action->value,
+            'payload' => [
+                'reservation_id' => $reservation->id,
+                'code' => $reservation->code,
+                'tenant_product_id' => $reservation->tenant_product_id,
+                'tenant_variant_id' => $reservation->tenant_variant_id,
+                'tenant_bundle_id' => $reservation->tenant_bundle_id,
+                'product_name' => $reservation->product_name,
+                'quantity' => (float) $reservation->quantity,
+                'unit_price' => (float) $reservation->unit_price,
+                'hold_minutes' => MarketplaceReservation::HOLD_HOURS * 60,
+                'expires_at' => $reservation->expires_at->toIso8601String(),
+                'buyer' => ['name' => $reservation->buyer_name, 'phone' => $reservation->buyer_phone],
+                'reason' => $reason,
+            ],
+            'metadata' => ['code' => $reservation->code, 'customer_id' => $reservation->customer_id],
+            'priority' => $this->getPriorityForAction($action),
+            'status' => 'pending',
+            'max_retries' => self::DEFAULT_MAX_RETRIES,
+            'backoff_strategy' => 'exponential',
+            'expires_at' => now()->addHours(self::DEFAULT_EXPIRY_HOURS),
+            'idempotency_key' => $idempotencyKey,
+        ]);
+
+        Log::info('Reservation sync queued', [
+            'sync_id' => $entry->id,
+            'reservation_id' => $reservation->id,
+            'action' => $action->value,
+            'tenant_id' => $reservation->tenant_id,
+        ]);
+
+        return $entry;
     }
 
     /**
@@ -286,6 +341,8 @@ class OutboundSyncService
             OutboundSyncAction::ReserveInventory => 2,
             OutboundSyncAction::Cancel => 2,
             OutboundSyncAction::ReleaseReservation => 2,
+            OutboundSyncAction::ReservationHold => 2,
+            OutboundSyncAction::ReservationRelease => 2,
             OutboundSyncAction::Create => 3,
             OutboundSyncAction::Update => 5,
             OutboundSyncAction::DeliveryUpdate => 5,

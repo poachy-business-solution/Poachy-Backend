@@ -140,6 +140,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(600)->by('public-assets:'.$request->ip());
         });
 
+        RateLimiter::for('reservations', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user('central')?->id ?: $request->ip());
+        });
+
         RateLimiter::for('public-read', function (Request $request) {
             return Limit::perMinute(120)->by('public-read:'.$request->ip());
         });

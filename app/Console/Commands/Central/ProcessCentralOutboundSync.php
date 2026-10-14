@@ -5,6 +5,8 @@ namespace App\Console\Commands\Central;
 use App\Jobs\Tenant\ProcessInboundCancellationSync;
 use App\Jobs\Tenant\ProcessInboundOrderSync;
 use App\Jobs\Tenant\ProcessInboundPaymentSync;
+use App\Jobs\Tenant\ProcessInboundReservationHold;
+use App\Jobs\Tenant\ProcessInboundReservationRelease;
 use App\Models\SyncQueueOutbound;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
@@ -22,6 +24,8 @@ class ProcessCentralOutboundSync extends Command
         'payment_confirmed' => ProcessInboundPaymentSync::class,
         'cancel' => ProcessInboundCancellationSync::class,
         'release_reservation' => ProcessInboundCancellationSync::class,
+        'reservation_hold' => ProcessInboundReservationHold::class,
+        'reservation_release' => ProcessInboundReservationRelease::class,
     ];
 
     public function handle(): int

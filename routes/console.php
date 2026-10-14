@@ -119,6 +119,12 @@ Schedule::job(new ExpireCartsJob)->daily()
     ->onOneServer()
     ->name('expire-abandoned-carts');
 
+// Marketplace: reserve & collect holds past 24 h → expired, shops release the stock
+Schedule::command('marketplace:expire-reservations')->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('expire-marketplace-reservations');
+
 // Marketplace: Monitor reservation timeouts every 5 minutes
 Schedule::job(new MonitorReservationTimeouts)->everyFiveMinutes()
     ->withoutOverlapping()

@@ -12,6 +12,8 @@ enum OutboundSyncAction: string
     case Cancel = 'cancel';
     case ReserveInventory = 'reserve_inventory';
     case ReleaseReservation = 'release_reservation';
+    case ReservationHold = 'reservation_hold';       // reserve & collect: hold stock 24 h
+    case ReservationRelease = 'reservation_release'; // reserve & collect: cancelled / expired
 
     /**
      * Human-readable label for display.
@@ -27,6 +29,8 @@ enum OutboundSyncAction: string
             self::Cancel => 'Cancel',
             self::ReserveInventory => 'Reserve Inventory',
             self::ReleaseReservation => 'Release Reservation',
+            self::ReservationHold => 'Hold for reservation',
+            self::ReservationRelease => 'Release reservation hold',
         };
     }
 

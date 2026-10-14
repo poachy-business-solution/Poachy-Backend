@@ -138,6 +138,12 @@ class CreateSaleRequest extends FormRequest
                 'string',
                 'max:500',
             ],
+            'reservation_code' => [
+                'nullable',
+                'string',
+                'max:12',
+                'regex:/^PCH-[A-Za-z0-9]{4,5}$/i',
+            ],
             'notes' => [
                 'nullable',
                 'string',

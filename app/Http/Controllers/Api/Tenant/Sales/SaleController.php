@@ -893,6 +893,13 @@ class SaleController extends Controller
      *                     description="Optional coupon code - takes priority over promotions"
      *                 ),
      *                 @OA\Property(
+     *                     property="reservation_code",
+     *                     type="string",
+     *                     nullable=true,
+     *                     example="PCH-4K7Q",
+     *                     description="Reserve & collect: the buyer's code. The held stock becomes sellable for this sale and the reservation is linked (422 when the code is unknown, used, expired or the sale lacks the reserved item)."
+     *                 ),
+     *                 @OA\Property(
      *                     property="loyalty_points_to_redeem",
      *                     type="number",
      *                     format="float",

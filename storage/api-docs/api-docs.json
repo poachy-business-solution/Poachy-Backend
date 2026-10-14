@@ -13034,6 +13034,158 @@
                 "security": []
             }
         },
+        "/api/v1/central/marketplace/reservations": {
+            "get": {
+                "tags": [
+                    "Central - Customer - Marketplace - Reservations"
+                ],
+                "summary": "My reservations, newest first",
+                "operationId": "listReservations",
+                "responses": {
+                    "200": {
+                        "description": "reservations[] + pagination"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Central - Customer - Marketplace - Reservations"
+                ],
+                "summary": "Reserve an item at a shop (24 h hold, pay at the counter)",
+                "description": "Creates a PCH- code and asks the shop to hold the stock. Requires an Idempotency-Key header; the same key returns the same reservation. Limits: 10 per item, 5 open holds per buyer, one open hold per item.",
+                "operationId": "createReservation",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "product_slug": {
+                                        "type": "string",
+                                        "example": "mango-juice-1l-da904b63"
+                                    },
+                                    "product_id": {
+                                        "description": "Alternative to product_slug",
+                                        "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "example": 1
+                                    },
+                                    "ref": {
+                                        "description": "Link source for the shop's attribution",
+                                        "type": "string",
+                                        "example": "wa",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "code, status (pending until the shop confirms), product, shop, expires_at"
+                    },
+                    "400": {
+                        "description": "Missing Idempotency-Key"
+                    },
+                    "422": {
+                        "description": "Not available, out of stock, or too many open holds"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace/reservations/{code}": {
+            "get": {
+                "tags": [
+                    "Central - Customer - Marketplace - Reservations"
+                ],
+                "summary": "One of my reservations",
+                "operationId": "showReservation",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PCH-4K7Q"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The reservation"
+                    },
+                    "404": {
+                        "description": "Not yours or unknown"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace/reservations/{code}/cancel": {
+            "post": {
+                "tags": [
+                    "Central - Customer - Marketplace - Reservations"
+                ],
+                "summary": "Cancel my reservation (the shop releases the stock)",
+                "operationId": "cancelReservation",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    },
+                    "404": {
+                        "description": "Not yours or unknown"
+                    },
+                    "422": {
+                        "description": "Already collected, expired or cancelled"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/central/marketplace/merchants/{tenant_id}/reviews": {
             "get": {
                 "tags": [
@@ -72166,6 +72318,147 @@
                 ]
             }
         },
+        "/api/v1/tenant/reservations": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "This shop's reserve & collect holds (Marketplace tab)",
+                "operationId": "tenantReservationsIndex",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "active",
+                                "failed",
+                                "redeemed",
+                                "expired",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "reservations[] + pagination + counts{open,redeemed_today}"
+                    },
+                    "403": {
+                        "description": "Needs view-marketplace-sales"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reservations/{code}": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Look up a buyer's PCH- code on the Pay screen",
+                "description": "Returns the item to put in the cart and whether the code can be redeemed (`redeemable` + `blocker`).",
+                "operationId": "tenantReservationsShow",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PCH-4K7Q"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The reservation (even when not redeemable — see blocker)"
+                    },
+                    "404": {
+                        "description": "No such code at this shop"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/reservations/{code}/redeem": {
+            "post": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Redeem a PCH- code against the sale just recorded",
+                "description": "Links the sale to the reservation and releases the stock hold (the sale already took the stock). Redeeming the same code with the same sale again is a no-op.",
+                "operationId": "tenantReservationsRedeem",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sale_id"
+                                ],
+                                "properties": {
+                                    "sale_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Redeemed"
+                    },
+                    "404": {
+                        "description": "No such code at this shop"
+                    },
+                    "409": {
+                        "description": "Expired, already redeemed, cancelled, failed or still pending; or the sale is linked to another code"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/device-tokens": {
             "get": {
                 "tags": [
@@ -111045,6 +111338,12 @@
                                         "example": "SAVE10",
                                         "nullable": true
                                     },
+                                    "reservation_code": {
+                                        "description": "Reserve & collect: the buyer's code. The held stock becomes sellable for this sale and the reservation is linked (422 when the code is unknown, used, expired or the sale lacks the reserved item).",
+                                        "type": "string",
+                                        "example": "PCH-4K7Q",
+                                        "nullable": true
+                                    },
                                     "loyalty_points_to_redeem": {
                                         "description": "Points to redeem for discount (requires customer_id)",
                                         "type": "number",
@@ -136745,6 +137044,10 @@
             "description": "Central - Customer - Marketplace - Delivery"
         },
         {
+            "name": "Central - Customer - Marketplace - Reservations",
+            "description": "Central - Customer - Marketplace - Reservations"
+        },
+        {
             "name": "Central - Public Workspace",
             "description": "Central - Public Workspace"
         },
@@ -136871,6 +137174,10 @@
         {
             "name": "Tenant - Stock Transfers",
             "description": "Tenant - Stock Transfers"
+        },
+        {
+            "name": "Tenant - Marketplace",
+            "description": "Tenant - Marketplace"
         },
         {
             "name": "Tenant Notifications",

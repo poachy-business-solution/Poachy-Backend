@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\ProductSerialController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
+use App\Http\Controllers\Api\Tenant\Marketplace\ReservationController;
 use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
@@ -738,6 +739,15 @@ Route::prefix('v1/tenant')
             Route::get('/{refund}/receipt', [RefundController::class, 'generateReceipt']);
             Route::patch('/{refund}/cancel', [RefundController::class, 'cancel'])
                 ->middleware(['permission:process-refunds,tenant']);
+        });
+
+        // Reserve & collect: list for the Marketplace tab; lookup + redeem on the Pay screen
+        Route::prefix('reservations')->group(function () {
+            Route::get('/', [ReservationController::class, 'index'])->middleware(['permission:view-marketplace-sales,tenant']);
+            Route::middleware(['permission:create-sales,tenant'])->group(function () {
+                Route::get('/{code}', [ReservationController::class, 'show']);
+                Route::post('/{code}/redeem', [ReservationController::class, 'redeem']);
+            });
         });
 
         // Marketplace Sales — fulfillment tracking for orders synced from central

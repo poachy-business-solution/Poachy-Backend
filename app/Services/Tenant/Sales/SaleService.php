@@ -5,6 +5,8 @@ namespace App\Services\Tenant\Sales;
 use App\Enums\Tenant\PaymentMethod;
 use App\Enums\Tenant\PaymentStatus;
 use App\Events\Tenant\SaleCompleted;
+use App\Jobs\Tenant\ProcessInboundReservationHold;
+use App\Models\MarketplaceReservation;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Customer;
@@ -19,11 +21,13 @@ use App\Models\Tenant\SaleItemBatchDepletion;
 use App\Models\Tenant\SalePayment;
 use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\Store;
+use App\Services\Central\Marketplace\ReservationService;
 use App\Services\Tenant\Customer\CustomerService;
 use App\Services\Tenant\Inventory\InventoryMovementService;
 use App\Services\Tenant\Inventory\InventoryService;
 use App\Services\Tenant\Inventory\ProductBatchService;
 use App\Services\Tenant\Inventory\ProductSerialService;
+use App\Services\Tenant\Inventory\StockReservationService;
 use App\Services\Tenant\Shift\TillService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -50,6 +54,74 @@ class SaleService
      *
      * This is how POS cashiers identify customers
      */
+    /** A reserve & collect hold released inside the current sale transaction, linked once it commits. */
+    private ?MarketplaceReservation $reservationToRedeem = null;
+
+    /**
+     * Reserve & collect: when the sale carries a PCH- code, check the code belongs to this shop and
+     * can still be redeemed, check the sale actually contains the reserved item, then release the
+     * stock hold so the normal availability check sees the buyer's own units. Runs inside the sale
+     * transaction: if the sale fails, the hold is restored with it.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function claimReservation(array $data): ?MarketplaceReservation
+    {
+        $code = strtoupper(trim((string) ($data['reservation_code'] ?? '')));
+
+        if ($code === '') {
+            return null;
+        }
+
+        $reservation = MarketplaceReservation::on('central')->forTenant((string) tenant()->id)->where('code', $code)->first();
+
+        if (! $reservation) {
+            throw new \RuntimeException('No reservation with that code at this shop.');
+        }
+
+        if ($blocker = app(ReservationService::class)->redeemBlocker($reservation)) {
+            throw new \RuntimeException($blocker);
+        }
+
+        $covered = collect($data['items'])->contains(function (array $item) use ($reservation) {
+            if ($reservation->tenant_bundle_id) {
+                return (int) ($item['bundle_id'] ?? 0) === (int) $reservation->tenant_bundle_id;
+            }
+
+            return (int) ($item['product_id'] ?? 0) === (int) $reservation->tenant_product_id
+                && (int) ($item['variant_id'] ?? 0) === (int) ($reservation->tenant_variant_id ?? 0);
+        });
+
+        if (! $covered) {
+            throw new \RuntimeException("This sale does not include the reserved item ({$reservation->product_name}).");
+        }
+
+        app(StockReservationService::class)->releaseAllReservationsForReference(
+            ProcessInboundReservationHold::REFERENCE_TYPE,
+            $reservation->id,
+            "Redeemed on the POS ({$code})",
+        );
+
+        return $reservation;
+    }
+
+    /** After the sale committed: link it on the central reservation (the app may also call redeem later). */
+    protected function redeemClaimedReservation(Sale $sale): void
+    {
+        $reservation = $this->reservationToRedeem;
+        $this->reservationToRedeem = null;
+
+        if (! $reservation) {
+            return;
+        }
+
+        try {
+            app(ReservationService::class)->redeem($reservation, $sale->id, $sale->sale_number, $sale->served_by);
+        } catch (\Throwable $e) {
+            Log::error('Sale created but the reservation could not be marked redeemed', ['sale_id' => $sale->id, 'code' => $reservation->code, 'error' => $e->getMessage()]);
+        }
+    }
+
     public function resolveCustomerByPhone(string $phone): ?Customer
     {
         $normalizedPhone = $this->normalizePhoneNumber($phone);
@@ -125,7 +197,10 @@ class SaleService
             }
 
             try {
-                return $this->createSaleTransaction($data, $allowNegativeStock);
+                $sale = $this->createSaleTransaction($data, $allowNegativeStock);
+                $this->redeemClaimedReservation($sale);
+
+                return $sale;
             } catch (QueryException $e) {
                 $existingSale = $this->findSaleByIdempotencyKey($idempotencyKey);
 
@@ -144,6 +219,9 @@ class SaleService
     {
         return DB::transaction(function () use ($data, $allowNegativeStock) {
             $customerId = $data['customer_id'] ?? null;
+
+            // STEP 0: Reserve & collect — the buyer's own hold becomes sellable stock for this sale.
+            $this->reservationToRedeem = $this->claimReservation($data);
 
             // STEP 1: Validate inventory availability
             if (! $allowNegativeStock) {

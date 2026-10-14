@@ -6,6 +6,7 @@ use App\Jobs\Tenant\SendNotificationJob;
 use App\Models\Tenant\MarketplaceSale;
 use App\Models\Tenant\Store;
 use App\Models\Tenant\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,32 @@ class MarketplaceOrderStaffNotificationService
                 'notification_type' => 'marketplace_order_reserved',
                 'central_order_id' => $orderPayload['order_id'] ?? null,
                 'order_number' => $orderPayload['order_number'] ?? null,
+                'store_ids' => $storeIds,
+            ],
+        );
+    }
+
+    /**
+     * Reserve & collect: a buyer is coming to pay at the counter.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, int>  $storeIds
+     */
+    public function notifyNewReservation(array $payload, array $storeIds): void
+    {
+        $qty = (float) ($payload['quantity'] ?? 1);
+        $buyer = $payload['buyer']['name'] ?? 'A buyer';
+        $until = isset($payload['expires_at']) ? Carbon::parse($payload['expires_at'])->timezone(config('app.timezone'))->format('D j M, g:i a') : null;
+
+        $this->notifyRecipients(
+            recipients: $this->resolveRecipients($storeIds),
+            subject: 'Item reserved — '.($payload['code'] ?? ''),
+            body: sprintf('%s reserved %s%s. Held until %s. They pay at the counter with code %s.',
+                $buyer, $qty == 1 ? '' : rtrim(rtrim(number_format($qty, 2, '.', ''), '0'), '.').' x ', $payload['product_name'] ?? 'an item', $until ?? 'tomorrow', $payload['code'] ?? ''),
+            metadata: [
+                'notification_type' => 'marketplace_reservation_held',
+                'reservation_id' => $payload['reservation_id'] ?? null,
+                'code' => $payload['code'] ?? null,
                 'store_ids' => $storeIds,
             ],
         );

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\Central\Marketplace\MarketplaceDeliveryLocationCont
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplacePaymentController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceReservationController;
 use App\Http\Controllers\Api\Central\Marketplace\MerchantReviewController;
 use App\Http\Controllers\Api\Central\Marketplace\ProductReviewController;
 use App\Http\Controllers\Api\Central\Marketplace\ReviewModerationController;
@@ -250,6 +251,12 @@ Route::prefix('v1/central')
             // Delivery
             Route::get('/orders/{id}/delivery', [MarketplaceDeliveryController::class, 'status']);
 
+            // Reserve & collect
+            Route::post('/reservations', [MarketplaceReservationController::class, 'store'])->middleware('throttle:reservations');
+            Route::get('/reservations', [MarketplaceReservationController::class, 'index']);
+            Route::get('/reservations/{code}', [MarketplaceReservationController::class, 'show']);
+            Route::post('/reservations/{code}/cancel', [MarketplaceReservationController::class, 'cancel'])->middleware('throttle:reservations');
+
             // Product Reviews
             Route::post('/products/{productId}/reviews', [ProductReviewController::class, 'store']);
             Route::delete('/reviews/{id}', [ProductReviewController::class, 'destroy']);
@@ -346,6 +353,7 @@ Route::prefix('v1/central')->group(function () {
 
         // Inbound order sync (from tenants)
         Route::post('inbound/order-confirmation', [SyncController::class, 'receiveOrderConfirmation']);
+        Route::post('inbound/reservation-confirmation', [SyncController::class, 'receiveReservationConfirmation']);
 
         // Generic outbound sync acknowledgment (payment and cancellation flows)
         Route::post('inbound/outbound-sync-ack', [SyncController::class, 'acknowledgeOutboundSync']);
