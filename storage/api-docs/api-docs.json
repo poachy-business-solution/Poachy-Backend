@@ -22013,6 +22013,43 @@
                 }
             }
         },
+        "/api/v1/public/assets/{tenant}/{path}": {
+            "get": {
+                "tags": [
+                    "Public - Shops"
+                ],
+                "summary": "A shop's public image (product photo, logo)",
+                "operationId": "publicAssetShow",
+                "parameters": [
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "products/images/primary_product_1.png"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The image, cacheable for a day"
+                    },
+                    "404": {
+                        "description": "No such shop or file, or not an image"
+                    }
+                }
+            }
+        },
         "/api/v1/public/shops/{slug}": {
             "get": {
                 "tags": [

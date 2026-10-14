@@ -3,6 +3,7 @@
 namespace App\DataTransferObjects\Sync;
 
 use App\Models\Tenant\ProductVariant;
+use App\Support\TenantPublicAssets;
 use Illuminate\Support\Facades\Auth;
 
 class ProductVariantSyncDTO
@@ -102,8 +103,8 @@ class ProductVariantSyncDTO
             brand: $product->brand ? BrandDTO::fromModel($product->brand) : null,
             parentProductName: $product->name,
             parentProductSku: $product->sku,
-            primaryImage: $product->primary_image,
-            secondaryImages: $product->secondary_images ?? [],
+            primaryImage: TenantPublicAssets::url(tenant()->id, $product->primary_image),
+            secondaryImages: TenantPublicAssets::urls(tenant()->id, $product->secondary_images ?? []),
             inventory: new InventoryDTO(
                 availableQuantity: (float) $totalAvailable,
                 stockStatus: $stockStatus,

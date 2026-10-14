@@ -137,6 +137,13 @@ Schedule::command('sync:process-outbound')->everyMinute()
     ->onOneServer()
     ->name('process-central-outbound-sync');
 
+// Marketplace: re-queue tenant → marketplace sync entries that failed or got stuck.
+Schedule::command('sync:retry-tenant-outbound')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Retry failed or stuck tenant outbound sync');
+
 // Marketplace: Monitor stuck delivered outbound sync entries every 30 minutes
 Schedule::command('sync:monitor-delivered')
     ->everyThirtyMinutes()

@@ -38,12 +38,6 @@ class ProductSyncService
                     "Product '{$product->name}' must have a base UOM assigned before syncing."
                 );
             }
-
-            if (! $product->tax_rate_id) {
-                throw new \InvalidArgumentException(
-                    "Product '{$product->name}' must have a tax rate assigned before syncing."
-                );
-            }
         }
 
         try {
@@ -77,7 +71,6 @@ class ProductSyncService
             && $product->online_price > 0
             && $product->category_id
             && $product->base_uom_id
-            && $product->tax_rate_id
             && $product->is_active;
     }
 
@@ -102,10 +95,6 @@ class ProductSyncService
 
         if (! $product->base_uom_id) {
             $errors[] = 'Product must have a base unit of measure';
-        }
-
-        if (! $product->tax_rate_id) {
-            $errors[] = 'Product must have a tax rate assigned';
         }
 
         if (! $product->is_active) {

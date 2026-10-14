@@ -302,9 +302,8 @@ class VariantSyncTest extends TestCase
         $this->assertContains('Variant must have a valid online price', $errors);
         $this->assertContains('Parent product must be available online', $errors);
         $this->assertContains('Parent product must be assigned to a category', $errors);
-        $this->assertContains('Parent product must have a tax rate assigned', $errors);
         $this->assertContains('Parent product must have a base unit of measure', $errors);
-        $this->assertCount(6, $errors);
+        $this->assertCount(5, $errors);
     }
 
     public function test_variant_sync_service_get_sync_validation_errors_returns_empty_when_eligible(): void

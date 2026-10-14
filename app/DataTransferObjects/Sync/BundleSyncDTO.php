@@ -3,6 +3,7 @@
 namespace App\DataTransferObjects\Sync;
 
 use App\Models\Tenant\ProductBundle;
+use App\Support\TenantPublicAssets;
 use Illuminate\Support\Facades\Auth;
 
 class BundleSyncDTO
@@ -60,8 +61,8 @@ class BundleSyncDTO
 
         // Primary image from accessor, secondary from remaining images
         $images = $bundle->images ?? [];
-        $primaryImage = $bundle->primary_image;
-        $secondaryImages = array_slice($images, 1);
+        $primaryImage = TenantPublicAssets::url(tenant()->id, $bundle->primary_image);
+        $secondaryImages = TenantPublicAssets::urls(tenant()->id, array_slice($images, 1));
 
         return new self(
             tenantId: tenant()->id,

@@ -6,6 +6,7 @@ use App\Http\Resources\Tenant\Concerns\ResolvesTenantPublicAssetUrls;
 use App\Http\Resources\Tenant\Supplier\SupplierResource;
 use App\Http\Resources\Tenant\Tax\TaxRateResource;
 use App\Http\Resources\Tenant\Uom\UnitOfMeasureResource;
+use App\Support\ShopLinks;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -85,6 +86,8 @@ class ProductResource extends JsonResource
 
             // Online Marketplace
             'is_available_online' => $this->is_available_online,
+            'share_url' => ShopLinks::productUrl((string) tenant()?->id, $this->slug),
+            'shop_url' => ShopLinks::shopUrl((string) tenant()?->id),
             'online_price' => $this->online_price,
             'formatted_online_price' => $this->online_price
                 ? 'KES '.number_format($this->online_price, 2)

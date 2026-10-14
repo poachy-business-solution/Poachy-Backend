@@ -108,7 +108,7 @@ class SyncQueueOutbound extends Model
     public function scopeReadyForRetry($query)
     {
         return $query->where('status', 'failed')
-            ->where('retry_count', '<', 'max_retries')
+            ->whereColumn('retry_count', '<', 'max_retries')
             ->where(function ($q) {
                 $q->whereNull('next_retry_at')
                     ->orWhere('next_retry_at', '<=', now());

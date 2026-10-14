@@ -207,9 +207,8 @@ class ProductSyncTest extends TestCase
         $this->assertContains('Product must have a valid online price', $errors);
         $this->assertContains('Product must be assigned to a category', $errors);
         $this->assertContains('Product must have a base unit of measure', $errors);
-        $this->assertContains('Product must have a tax rate assigned', $errors);
         $this->assertContains('Product must be active', $errors);
-        $this->assertCount(6, $errors);
+        $this->assertCount(5, $errors);
     }
 
     public function test_product_sync_service_get_sync_validation_errors_returns_empty_when_eligible(): void

@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SaleDaysSyncController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use App\Http\Controllers\Api\Public\PayLinkController;
+use App\Http\Controllers\Api\Public\PublicAssetController;
 use App\Http\Controllers\Api\Public\PublicShopController;
 use App\Http\Controllers\Api\Public\SignupController;
 use Illuminate\Support\Facades\Route;
@@ -61,6 +62,10 @@ Route::prefix('v1/public')->group(function () {
     });
 
     // Payment page links (poachy.com/pay/<token>) — the link is the credential.
+    // Shop images (product photos, logos) served from the central host for the marketplace.
+    Route::get('/assets/{tenant}/{path}', [PublicAssetController::class, 'show'])
+        ->where(['tenant' => '[A-Za-z0-9\-]{1,64}', 'path' => '.+'])->middleware('throttle:public-assets');
+
     // Shop pages (poachy.com/s/{slug}); only verified, active shops answer.
     Route::get('/shops/{slug}', [PublicShopController::class, 'show'])
         ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');

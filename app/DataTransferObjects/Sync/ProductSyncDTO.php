@@ -3,6 +3,7 @@
 namespace App\DataTransferObjects\Sync;
 
 use App\Models\Tenant\Product;
+use App\Support\TenantPublicAssets;
 use Illuminate\Support\Facades\Auth;
 
 class ProductSyncDTO
@@ -71,8 +72,8 @@ class ProductSyncDTO
             baseUom: $product->baseUom ? UomDTO::fromModel($product->baseUom) : new UomDTO(code: 'N/A', name: 'N/A'),
             category: $product->category ? CategoryDTO::fromModel($product->category) : new CategoryDTO(id: 0, name: 'N/A', slug: 'n-a'),
             brand: $product->brand ? BrandDTO::fromModel($product->brand) : null,
-            primaryImage: $product->primary_image,
-            secondaryImages: $product->secondary_images ?? [],
+            primaryImage: TenantPublicAssets::url(tenant()->id, $product->primary_image),
+            secondaryImages: TenantPublicAssets::urls(tenant()->id, $product->secondary_images ?? []),
             inventory: InventoryDTO::fromProduct($product),
             isActive: (bool) $product->is_active,
             isFeatured: (bool) $product->is_featured,

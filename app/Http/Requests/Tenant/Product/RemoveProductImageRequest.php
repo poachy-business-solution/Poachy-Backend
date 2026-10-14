@@ -11,6 +11,28 @@ class RemoveProductImageRequest extends FormRequest
         return $this->user()?->can('manage-products') ?? false;
     }
 
+    /** The app sends the URLs it was given; the service matches stored paths. */
+    protected function prepareForValidation(): void
+    {
+        $images = $this->input('images');
+
+        if (is_array($images)) {
+            $this->merge(['images' => array_map(fn ($i) => is_string($i) ? self::toStoragePath($i) : $i, $images)]);
+        }
+    }
+
+    public static function toStoragePath(string $image): string
+    {
+        if (filter_var($image, FILTER_VALIDATE_URL)) {
+            $image = (string) parse_url($image, PHP_URL_PATH);
+            foreach (['#^/tenancy/assets/#', '#^/api/v1/public/assets/[^/]+/#', '#^/storage/#'] as $prefix) {
+                $image = preg_replace($prefix, '', $image, 1);
+            }
+        }
+
+        return ltrim($image, '/');
+    }
+
     public function rules(): array
     {
         return [
