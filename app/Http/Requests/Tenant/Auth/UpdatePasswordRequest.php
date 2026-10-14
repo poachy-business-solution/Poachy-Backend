@@ -26,10 +26,10 @@ class UpdatePasswordRequest extends FormRequest
                 'required',
                 'string',
                 'confirmed',
+                // Same rule as web sign-up: letters and numbers, 8+, not breached.
                 Password::min(8)
-                    ->mixedCase()
+                    ->letters()
                     ->numbers()
-                    ->symbols()
                     ->uncompromised(),
             ],
         ];

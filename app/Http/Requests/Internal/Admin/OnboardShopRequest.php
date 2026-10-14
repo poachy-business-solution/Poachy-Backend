@@ -21,7 +21,16 @@ class OnboardShopRequest extends InternalAdminRequest
             'town' => ['required', 'string', 'min:2', 'max:120'],
             'workspace' => ['required', 'string', 'max:40'],
             'branches' => ['nullable', 'integer', 'min:1', 'max:50'],
-            'business_category_id' => ['nullable', 'integer', 'exists:central.business_categories,id'],
+            'business_category_id' => ['required', 'integer', 'exists:central.business_categories,id'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'business_category_id.required' => 'Choose the type of shop.',
+            'business_category_id.exists' => 'Choose the type of shop from the list.',
         ];
     }
 }

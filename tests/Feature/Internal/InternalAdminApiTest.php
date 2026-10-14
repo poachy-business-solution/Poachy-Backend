@@ -317,9 +317,11 @@ class InternalAdminApiTest extends TestCase
         Queue::fake();
         $workspace = 'iadmin-'.Str::lower(Str::random(6));
         $body = ['shop_name' => 'Njeri Mini Mart', 'owner_name' => 'Njeri Wambui', 'phone' => '07'.random_int(10000000, 99999999),
-            'email' => "{$workspace}@example.com", 'town' => 'Nyeri', 'workspace' => $workspace];
+            'email' => "{$workspace}@example.com", 'town' => 'Nyeri', 'workspace' => $workspace,
+            'business_category_id' => DB::connection('central')->table('business_categories')->value('id')];
 
         $this->admin('POST', '/shops', $body, 'finance')->assertForbidden();
+        $this->admin('POST', '/shops', array_diff_key($body, ['business_category_id' => 1]))->assertUnprocessable()->assertJsonValidationErrors('business_category_id');
         $this->admin('POST', '/shops', ['phone' => '123'] + $body)->assertUnprocessable()->assertJsonValidationErrors('phone');
         $this->admin('POST', '/shops', ['phone' => '0712345678'] + $body)->assertUnprocessable(); // already a shop's phone
 
