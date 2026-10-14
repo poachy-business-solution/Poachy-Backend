@@ -128,6 +128,12 @@ class MarketplaceProduct extends Model
         return $query->where('is_active', true);
     }
 
+    /** Only products of shops that are verified and active appear on the marketplace. */
+    public function scopeFromListedShops($query)
+    {
+        return $query->whereHas('tenant.businessDetail', fn ($q) => $q->listed());
+    }
+
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);

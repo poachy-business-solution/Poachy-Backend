@@ -19,6 +19,7 @@ use App\Models\Tenant\User;
 use App\Models\TenantVerification;
 use App\Services\Central\Admin\AdminAudit;
 use App\Services\Central\Billing\BillingStateService;
+use App\Services\Central\Marketplace\MarketplaceProductService;
 use App\Services\Central\Signup\SignupService;
 use App\Services\Shared\Messaging\Messenger;
 use App\Services\Tenant\TenantAccessService;
@@ -262,6 +263,7 @@ class ShopController extends Controller
     {
         $verified ? $detail->verify() : $detail->unverify();
         app(TenantAccessService::class)->clearTenantAccessCache($detail->tenant_id);
+        app(MarketplaceProductService::class)->flushCache(); // listing follows the badge
 
         if ($detail->business_email) {
             $messenger->email($detail->business_email, new BusinessVerificationMail(

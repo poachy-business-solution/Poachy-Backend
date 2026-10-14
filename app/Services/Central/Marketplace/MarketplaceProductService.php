@@ -54,9 +54,20 @@ class MarketplaceProductService
                         'marketplaceBrand:id,name,slug,logo_url',
                     ])
                     ->active()
+                    ->fromListedShops()
                     ->where('slug', $slug)
                     ->first();
             });
+    }
+
+    /** Drop every cached listing, e.g. when a shop is verified, unverified or edits its page. */
+    public function flushCache(): void
+    {
+        try {
+            Cache::tags([self::CACHE_TAG])->flush();
+        } catch (\Throwable) {
+            // A cache store without tags only means stale listings until the TTL passes.
+        }
     }
 
     /**
@@ -119,7 +130,8 @@ class MarketplaceProductService
                 'marketplaceCategory:id,name,slug',
                 'marketplaceBrand:id,name,slug,logo_url',
             ])
-            ->active();
+            ->active()
+            ->fromListedShops();
 
         // ── Full-text search ────────────────────────────────────────────────
         if (! empty($filters['search'])) {

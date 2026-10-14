@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Tenant\Business\BusinessDetailsController;
 use App\Http\Controllers\Api\Tenant\Business\BusinessHelperController;
 use App\Http\Controllers\Api\Tenant\Business\DeliverySettingsController;
 use App\Http\Controllers\Api\Tenant\Business\DeliveryZoneController;
+use App\Http\Controllers\Api\Tenant\Business\ShopPageController;
 use App\Http\Controllers\Api\Tenant\Catalog\CatalogSyncController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerController;
 use App\Http\Controllers\Api\Tenant\Customer\CustomerCreditTransactionController;
@@ -940,6 +941,10 @@ Route::prefix('v1/tenant')
                 Route::patch('/delivery-info', [BusinessDetailsController::class, 'updateDeliveryInfo']);
                 Route::patch('/settings', [BusinessDetailsController::class, 'updateSettings']);
                 Route::patch('/social-media', [BusinessDetailsController::class, 'updateSocialMedia']);
+
+                // The shop's public page (marketplace): link, GPS pin, WhatsApp, return window.
+                Route::get('/shop-page', [ShopPageController::class, 'show']);
+                Route::patch('/shop-page', [ShopPageController::class, 'update']);
 
                 // Delivery Zones
                 Route::prefix('delivery-zones')->group(function () {

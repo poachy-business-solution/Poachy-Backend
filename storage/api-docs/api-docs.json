@@ -22013,6 +22013,34 @@
                 }
             }
         },
+        "/api/v1/public/shops/{slug}": {
+            "get": {
+                "tags": [
+                    "Public - Shops"
+                ],
+                "summary": "A verified shop's public profile",
+                "operationId": "publicShopShow",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "mama-njeri-shop"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "slug, name, description, category, logo_url, banner_url, area{city,county}, operating_hours, location{latitude,longitude}, directions_url, phone, whatsapp_link, return_window_days, return_policy, rating, rating_count, is_verified, online_products, tenant_id"
+                    },
+                    "404": {
+                        "description": "No such shop, or the shop is not verified or not active"
+                    }
+                }
+            }
+        },
         "/api/v1/public/signup/start": {
             "post": {
                 "tags": [
@@ -31538,6 +31566,91 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/business-details/shop-page": {
+            "get": {
+                "tags": [
+                    "Tenant - Business"
+                ],
+                "summary": "The shop's public page settings (owner)",
+                "operationId": "tenantShopPageShow",
+                "responses": {
+                    "200": {
+                        "description": "slug, public_url, is_verified, is_listed, name, logo_url, area, operating_hours, location, phone, whatsapp_number, whatsapp_link, return_window_days, return_policy"
+                    },
+                    "404": {
+                        "description": "Business details not yet submitted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Tenant - Business"
+                ],
+                "summary": "Edit the shop's public page (owner)",
+                "operationId": "tenantShopPageUpdate",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "slug": {
+                                        "description": "Lowercase letters, numbers, hyphens; unique",
+                                        "type": "string",
+                                        "example": "mama-njeri-shop"
+                                    },
+                                    "whatsapp_number": {
+                                        "type": "string",
+                                        "example": "0712345678",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "example": -1.2833,
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "example": 36.8167,
+                                        "nullable": true
+                                    },
+                                    "return_window_days": {
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            3,
+                                            7
+                                        ],
+                                        "example": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated shop page"
+                    },
+                    "403": {
+                        "description": "Only the owner edits the shop page"
+                    },
+                    "422": {
+                        "description": "Validation error (slug taken, bad number, half a GPS pin)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -136311,6 +136424,10 @@
             "description": "Public - Pay"
         },
         {
+            "name": "Public - Shops",
+            "description": "Public - Shops"
+        },
+        {
             "name": "Public - Sign-up",
             "description": "Public - Sign-up"
         },
@@ -136333,6 +136450,10 @@
         {
             "name": "Tenant Business Details",
             "description": "Tenant Business Details"
+        },
+        {
+            "name": "Tenant - Business",
+            "description": "Tenant - Business"
         },
         {
             "name": "Tenant Catalog",

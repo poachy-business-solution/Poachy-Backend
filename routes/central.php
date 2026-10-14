@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
 use App\Http\Controllers\Api\Central\Sync\SaleDaysSyncController;
 use App\Http\Controllers\Api\Central\Sync\SyncController;
 use App\Http\Controllers\Api\Public\PayLinkController;
+use App\Http\Controllers\Api\Public\PublicShopController;
 use App\Http\Controllers\Api\Public\SignupController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,6 +61,10 @@ Route::prefix('v1/public')->group(function () {
     });
 
     // Payment page links (poachy.com/pay/<token>) — the link is the credential.
+    // Shop pages (poachy.com/s/{slug}); only verified, active shops answer.
+    Route::get('/shops/{slug}', [PublicShopController::class, 'show'])
+        ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');
+
     Route::prefix('pay/{token}')->where(['token' => '[A-Za-z0-9]{20,64}'])->group(function () {
         Route::get('/', [PayLinkController::class, 'show'])->middleware('throttle:pay-link-read');
         Route::post('/stk', [PayLinkController::class, 'stk'])->middleware('throttle:pay-link-stk');

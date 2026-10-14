@@ -136,6 +136,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by('signup-codes:'.$request->ip().'|'.$request->input('signup_id'));
         });
 
+        RateLimiter::for('public-read', function (Request $request) {
+            return Limit::perMinute(120)->by('public-read:'.$request->ip());
+        });
+
         RateLimiter::for('signup-read', function (Request $request) {
             return Limit::perMinute(60)->by('signup-read:'.$request->ip());
         });
