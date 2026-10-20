@@ -54,6 +54,12 @@ Schedule::command('marketplace:payouts')
     ->onOneServer()
     ->description('Nightly marketplace payouts');
 
+Schedule::command('adverts:end-finished')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('End adverts whose paid days are over');
+
 Schedule::command('marketplace:return-timers')
     ->everyFifteenMinutes()
     ->withoutOverlapping()

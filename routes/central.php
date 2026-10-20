@@ -1,8 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\Central\Marketplace\MarketplaceReturnController;
-use App\Http\Controllers\Api\Central\Payouts\PayoutCallbackController;
-use App\Http\Controllers\Api\Central\Payouts\RefundCallbackController;
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
@@ -23,6 +20,7 @@ use App\Http\Controllers\Api\Central\Marketplace\MarketplaceOrderController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplacePaymentController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceProductController;
 use App\Http\Controllers\Api\Central\Marketplace\MarketplaceReservationController;
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceReturnController;
 use App\Http\Controllers\Api\Central\Marketplace\MerchantReviewController;
 use App\Http\Controllers\Api\Central\Marketplace\ProductReviewController;
 use App\Http\Controllers\Api\Central\Marketplace\ReviewModerationController;
@@ -31,6 +29,8 @@ use App\Http\Controllers\Api\Central\Marketplace\ShoppingCartController;
 use App\Http\Controllers\Api\Central\Marketplace\TenantProfileController;
 use App\Http\Controllers\Api\Central\Marketplace\WishlistController;
 use App\Http\Controllers\Api\Central\Mpesa\MpesaC2BController;
+use App\Http\Controllers\Api\Central\Payouts\PayoutCallbackController;
+use App\Http\Controllers\Api\Central\Payouts\RefundCallbackController;
 use App\Http\Controllers\Api\Central\PublicWorkspaceController;
 use App\Http\Controllers\Api\Central\SubscriptionPlanController;
 use App\Http\Controllers\Api\Central\Sync\MerchantReviewResponseController;
@@ -77,6 +77,8 @@ Route::prefix('v1/public')->group(function () {
         Route::get('/categories/{slug}', [PublicMarketController::class, 'category'])->where('slug', '[a-z0-9-]{1,80}');
         Route::get('/search', [PublicMarketController::class, 'search']);
         Route::get('/products/{slug}', [PublicMarketController::class, 'product'])->where('slug', '[a-z0-9-]{1,255}');
+        // A buyer followed a Sponsored link (counted per advert).
+        Route::post('/adverts/{id}/click', [PublicMarketController::class, 'advertClick'])->whereNumber('id');
     });
 
     // Shop pages (poachy.com/s/{slug}); only verified, active shops answer.

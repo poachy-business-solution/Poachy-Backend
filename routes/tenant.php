@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Marketplace\MarketplaceSummaryController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ReservationController;
+use App\Http\Controllers\Api\Tenant\Marketplace\ShopAdvertController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ShopPayoutController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ShopReturnController;
 use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
@@ -764,6 +765,11 @@ Route::prefix('v1/tenant')
                 Route::post('/{reference}/received', [ShopReturnController::class, 'received'])->where('reference', 'RET-[A-Z0-9]{6}');
                 Route::post('/{reference}/inspect', [ShopReturnController::class, 'inspect'])->where('reference', 'RET-[A-Z0-9]{6}');
             });
+        });
+        Route::prefix('marketplace/adverts')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
+            Route::get('/', [ShopAdvertController::class, 'index']);
+            Route::get('/{id}', [ShopAdvertController::class, 'show'])->whereNumber('id');
+            Route::post('/', [ShopAdvertController::class, 'store'])->middleware('throttle:10,1'); // owner (Form Request)
         });
         Route::prefix('marketplace/payouts')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [ShopPayoutController::class, 'index']);

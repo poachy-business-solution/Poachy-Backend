@@ -110,6 +110,7 @@ class ShopReturnController extends Controller
      *
      *     @OA\RequestBody(required=true, @OA\MediaType(mediaType="multipart/form-data", @OA\Schema(
      *         required={"decision"},
+     *
      *         @OA\Property(property="decision", type="string", enum={"accept", "partial", "reject"}),
      *         @OA\Property(property="refund_amount", type="number", description="For partial"),
      *         @OA\Property(property="reason", type="string", description="Required for partial and reject"),

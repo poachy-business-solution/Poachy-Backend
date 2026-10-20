@@ -30,6 +30,7 @@ class ShopPayoutController extends Controller
      *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", maximum=100)),
      *
      *     @OA\Response(response=200, description="Balance + payouts", @OA\JsonContent(
+     *
      *         @OA\Property(property="data", type="object",
      *             @OA\Property(property="balance", type="object",
      *                 @OA\Property(property="held", type="number"), @OA\Property(property="available", type="number"),

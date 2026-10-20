@@ -40,6 +40,8 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::post('/marketplace/payouts/{id}/mark-paid', [MarketplaceAdminController::class, 'markPayoutPaid'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
     Route::post('/shops/{shop}/payouts/hold', [MarketplaceAdminController::class, 'holdPayouts'])->middleware('internal.admin:super,finance,operations');
     Route::post('/shops/{shop}/payouts/release', [MarketplaceAdminController::class, 'releasePayouts'])->middleware('internal.admin:super,finance');
+    Route::post('/marketplace/adverts/{id}/stop', [MarketplaceAdminController::class, 'stopAdvert'])->whereNumber('id')->middleware(['internal.admin:super,operations', 'throttle:internal-admin-money']);
+    Route::patch('/marketplace/advert-types/{key}', [MarketplaceAdminController::class, 'updateAdvertType'])->where('key', '[a-z_]{3,30}')->middleware('internal.admin:super,finance');
     Route::post('/marketplace/reviews/{type}/{id}/moderate', [MarketplaceAdminController::class, 'moderateReview'])->where(['type' => 'product|merchant'])->whereNumber('id')->middleware('internal.admin:super,operations,support');
 
     // Billing

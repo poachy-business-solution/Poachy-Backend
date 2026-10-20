@@ -11,9 +11,12 @@ use App\Http\Resources\Public\MarketShopCardResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\BusinessDetail;
 use App\Models\MarketplaceCategory;
+use App\Services\Central\Marketplace\AdvertService;
 use App\Services\Central\Marketplace\PublicMarketService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 /** The public marketplace read API behind poachy.com/market. */
 class PublicMarketController extends Controller
@@ -41,7 +44,7 @@ class PublicMarketController extends Controller
             ])->values(),
             'featured_shops' => MarketShopCardResource::collection($home['featured_shops']),
             'latest' => MarketProductCardResource::collection($home['latest']),
-            'sponsored' => $home['sponsored'],
+            'sponsored' => MarketProductCardResource::collection($home['sponsored']),
         ]);
     }
 
@@ -73,9 +76,10 @@ class PublicMarketController extends Controller
         }
 
         $page = $this->market->category($category, $request->validated());
+        $sponsored = $this->market->sponsoredFor($category, null, $request->validated());
         $children = MarketplaceCategory::on('central')->where('is_active', true)->where('parent_id', $category->id)->orderBy('display_order')->get(['slug', 'name']);
 
-        return $this->listing('Category', $page, [
+        return $this->listing('Category', $page, $sponsored, [
             'category' => ['slug' => $category->slug, 'name' => $category->name, 'description' => $category->description, 'icon' => $category->icon,
                 'parent' => $category->parent_id ? MarketplaceCategory::on('central')->whereKey($category->parent_id)->first(['slug', 'name']) : null],
             'children' => $children,
@@ -102,8 +106,9 @@ class PublicMarketController extends Controller
         $request->validate(['q' => ['required', 'string', 'min:2', 'max:100']]);
         $term = (string) $request->validated('q');
         $page = $this->market->search($term, $request->validated());
+        $sponsored = $this->market->sponsoredFor(null, $term, $request->validated());
 
-        return $this->listing('Search results', $page, [
+        return $this->listing('Search results', $page, $sponsored, [
             'query' => $term,
             'shops' => MarketShopCardResource::collection($this->market->shopsMatching($term)),
         ]);
@@ -156,14 +161,33 @@ class PublicMarketController extends Controller
     }
 
     /** @param array<string, mixed> $extra */
-    private function listing(string $message, LengthAwarePaginator $page, array $extra): JsonResponse
+    /**
+     * @OA\Post(
+     *     path="/api/v1/public/market/adverts/{id}/click",
+     *     summary="Count a click on a Sponsored slot",
+     *     operationId="publicMarketAdvertClick",
+     *     tags={"Public - Marketplace"},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\Response(response=204, description="Counted (or ignored for an advert that is not running)")
+     * )
+     */
+    public function advertClick(int $id): Response
+    {
+        app(AdvertService::class)->recordClick($id);
+
+        return response()->noContent();
+    }
+
+    private function listing(string $message, LengthAwarePaginator $page, Collection $sponsored, array $extra): JsonResponse
     {
         BusinessHelper::warmCache(collect($page->items())->pluck('tenant_id')->unique()->all());
 
         return ApiResponse::success($message, $extra + [
             'products' => MarketProductCardResource::collection($page->items()),
             'pagination' => ['page' => $page->currentPage(), 'per_page' => $page->perPage(), 'total' => $page->total(), 'last_page' => $page->lastPage()],
-            'sponsored' => [],
+            'sponsored' => MarketProductCardResource::collection($sponsored),
         ]);
     }
 }

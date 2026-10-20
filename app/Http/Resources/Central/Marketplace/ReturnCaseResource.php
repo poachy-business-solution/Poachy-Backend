@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Central\Marketplace;
 
 use App\Models\MarketplaceRefund;
+use App\Models\MarketplaceReturnCase;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * A return case for the buyer (web) and the shop (app): same shape, evidence as counts (the shop
  * opens the buyer's photos through its own endpoint).
  *
- * @mixin \App\Models\MarketplaceReturnCase
+ * @mixin MarketplaceReturnCase
  */
 class ReturnCaseResource extends JsonResource
 {

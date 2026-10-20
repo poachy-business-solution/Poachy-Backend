@@ -22344,6 +22344,102 @@
                 }
             }
         },
+        "/api/internal/admin/marketplace/adverts/{id}/stop": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Stop an advert (moderation); unused days go back to the shop's balance (super, operations)",
+                "operationId": "internalAdminAdvertStop",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stopped (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "422": {
+                        "description": "Not running"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/marketplace/advert-types/{key}": {
+            "patch": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Change an advert type's price, length or availability; running adverts keep what they paid (super, finance)",
+                "operationId": "internalAdminAdvertTypeUpdate",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "days": {
+                                        "type": "integer"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    }
+                }
+            }
+        },
         "/api/internal/admin/marketplace/products/{id}/item": {
             "post": {
                 "tags": [
@@ -23278,6 +23374,30 @@
                     },
                     "404": {
                         "description": "No such product, or its shop is not listed"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/market/adverts/{id}/click": {
+            "post": {
+                "tags": [
+                    "Public - Marketplace"
+                ],
+                "summary": "Count a click on a Sponsored slot",
+                "operationId": "publicMarketAdvertClick",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Counted (or ignored for an advert that is not running)"
                     }
                 }
             }
@@ -73435,6 +73555,134 @@
                     },
                     "409": {
                         "description": "Expired, already redeemed, cancelled, failed or still pending; or the sale is linked to another code"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/adverts": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Advert types with prices, the shop's adverts with results, and the Poachy balance",
+                "operationId": "tenantAdverts",
+                "responses": {
+                    "200": {
+                        "description": "types[] (key, name, description, price, days, needs_product), adverts[] (status, dates, views, clicks, orders), balance"
+                    },
+                    "403": {
+                        "description": "No view-financial-reports"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Buy an advert (owner): from the Poachy balance, or by an M-Pesa prompt that buys it once paid",
+                "operationId": "tenantBuyAdvert",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "pay_with"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "product_boost",
+                                            "featured_shop",
+                                            "near_you",
+                                            "home_spot"
+                                        ]
+                                    },
+                                    "product_id": {
+                                        "description": "Marketplace product id (product_boost, home_spot)",
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "pay_with": {
+                                        "type": "string",
+                                        "enum": [
+                                            "balance",
+                                            "mpesa"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Advert (active when paid from the balance; pending_payment while the prompt is open)"
+                    },
+                    "403": {
+                        "description": "Not the owner"
+                    },
+                    "422": {
+                        "description": "Not enough balance, product not listed, shop not verified, or M-Pesa refused"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/adverts/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "One of the shop's adverts (poll after an M-Pesa prompt)",
+                "operationId": "tenantAdvert",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert"
+                    },
+                    "404": {
+                        "description": "Not this shop's advert"
                     }
                 },
                 "security": [
@@ -138681,6 +138929,10 @@
         {
             "name": "Public - Market",
             "description": "Public - Market"
+        },
+        {
+            "name": "Public - Marketplace",
+            "description": "Public - Marketplace"
         },
         {
             "name": "Public - Sign-up",

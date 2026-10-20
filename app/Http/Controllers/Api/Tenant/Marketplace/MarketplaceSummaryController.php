@@ -24,6 +24,7 @@ class MarketplaceSummaryController extends Controller
      *     @OA\Parameter(name="store_id", in="query", required=false, @OA\Schema(type="integer")),
      *
      *     @OA\Response(response=200, description="Summary", @OA\JsonContent(
+     *
      *         @OA\Property(property="success", type="boolean", example=true),
      *         @OA\Property(property="data", type="object",
      *             @OA\Property(property="orders", type="object",

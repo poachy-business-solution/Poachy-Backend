@@ -34,6 +34,7 @@ class MarketplaceSaleController extends Controller
      *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=100)),
      *
      *     @OA\Response(response=200, description="Sales", @OA\JsonContent(
+     *
      *         @OA\Property(property="data", type="object",
      *             @OA\Property(property="sales", type="array", @OA\Items(type="object",
      *                 @OA\Property(property="id", type="integer"), @OA\Property(property="sale_number", type="string"),
@@ -96,6 +97,7 @@ class MarketplaceSaleController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(required={"fulfillment_status"},
+     *
      *         @OA\Property(property="fulfillment_status", type="string", enum={"confirmed", "preparing", "ready", "delivered", "cancelled"}),
      *         @OA\Property(property="notes", type="string", nullable=true, maxLength=500),
      *         @OA\Property(property="courier_name", type="string", nullable=true), @OA\Property(property="courier_phone", type="string", nullable=true)

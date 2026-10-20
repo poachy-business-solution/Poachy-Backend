@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Tenant\Marketplace;
 
+use App\Models\MarketplacePayout;
 use App\Models\MarketplacePayoutLine;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -9,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * A payout as the shop sees it; with `lines` loaded it is the payout's statement.
  *
- * @mixin \App\Models\MarketplacePayout
+ * @mixin MarketplacePayout
  */
 class ShopPayoutResource extends JsonResource
 {

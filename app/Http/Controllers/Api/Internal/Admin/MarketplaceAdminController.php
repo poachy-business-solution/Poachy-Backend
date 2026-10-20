@@ -7,7 +7,10 @@ use App\Http\Requests\Internal\Admin\DecideReturnRequest;
 use App\Http\Requests\Internal\Admin\MarkPayoutPaidRequest;
 use App\Http\Requests\Internal\Admin\ModerateReviewAdminRequest;
 use App\Http\Requests\Internal\Admin\ReasonRequest;
+use App\Http\Requests\Internal\Admin\UpdateAdvertTypeRequest;
 use App\Http\Responses\ApiResponse;
+use App\Models\Advert;
+use App\Models\AdvertType;
 use App\Models\BusinessDetail;
 use App\Models\MarketplacePayout;
 use App\Models\MarketplaceRefund;
@@ -15,13 +18,13 @@ use App\Models\MarketplaceReturnCase;
 use App\Models\MerchantReview;
 use App\Models\ProductReview;
 use App\Services\Central\Admin\AdminAudit;
+use App\Services\Central\Marketplace\AdvertService;
 use App\Services\Central\Marketplace\ReviewModerationService;
 use App\Services\Central\Payouts\PayoutService;
 use App\Services\Central\Refunds\RefundService;
 use App\Services\Central\Refunds\ReturnCaseService;
 use App\Support\ActingAdmin;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -46,6 +49,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="reference", in="path", required=true, @OA\Schema(type="string")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="decision", type="string", enum={"refund_full","refund_partial","no_refund"}),
      *         @OA\Property(property="refund_amount", type="number", nullable=true),
      *         @OA\Property(property="note", type="string")
@@ -117,6 +121,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="reason", type="string")
      *     )),
      *
@@ -153,6 +158,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="reason", type="string")
      *     )),
      *
@@ -189,6 +195,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="mpesa_receipt", type="string"),
      *         @OA\Property(property="reason", type="string")
      *     )),
@@ -227,6 +234,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="shop", in="path", required=true, @OA\Schema(type="string")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="reason", type="string")
      *     )),
      *
@@ -251,6 +259,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="shop", in="path", required=true, @OA\Schema(type="string")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="reason", type="string")
      *     )),
      *
@@ -278,6 +287,7 @@ class MarketplaceAdminController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
      *         @OA\Property(property="action", type="string", enum={"approve","reject","dismiss_flags"}),
      *         @OA\Property(property="rejection_reason", type="string", nullable=true)
      *     )),
@@ -307,6 +317,67 @@ class MarketplaceAdminController extends Controller
         $this->audit->record($request, "marketplace.review.{$request->validated('action')}", $review->tenant_id ?? null, "{$type}_review", $review->id, $before, $after, $request->validated('rejection_reason'));
 
         return ApiResponse::success('Review moderated', $after);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/internal/admin/marketplace/adverts/{id}/stop",
+     *     summary="Stop an advert (moderation); unused days go back to the shop's balance (super, operations)",
+     *     operationId="internalAdminAdvertStop",
+     *     tags={"Internal admin - Marketplace"},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(@OA\Property(property="reason", type="string"))),
+     *
+     *     @OA\Response(response=200, description="Stopped (audited)"),
+     *     @OA\Response(response=403, description="Role not allowed"),
+     *     @OA\Response(response=422, description="Not running")
+     * )
+     */
+    public function stopAdvert(ReasonRequest $request, int $id, AdvertService $adverts): JsonResponse
+    {
+        $advert = Advert::query()->find($id);
+        if ($advert === null) {
+            return ApiResponse::notFound('Advert not found.');
+        }
+        $before = ['status' => $advert->status, 'ends_at' => $advert->ends_at];
+        $advert = $adverts->stop($advert, $request->validated('reason'), ActingAdmin::from($request)->tag());
+        $this->audit->record($request, 'marketplace.advert.stop', $advert->tenant_id, 'advert', $advert->id, $before, ['status' => $advert->status], $request->validated('reason'));
+
+        return ApiResponse::success('Advert stopped', ['status' => $advert->status]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/internal/admin/marketplace/advert-types/{key}",
+     *     summary="Change an advert type's price, length or availability; running adverts keep what they paid (super, finance)",
+     *     operationId="internalAdminAdvertTypeUpdate",
+     *     tags={"Internal admin - Marketplace"},
+     *
+     *     @OA\Parameter(name="key", in="path", required=true, @OA\Schema(type="string")),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *
+     *         @OA\Property(property="price", type="number"), @OA\Property(property="days", type="integer"),
+     *         @OA\Property(property="is_active", type="boolean"), @OA\Property(property="reason", type="string")
+     *     )),
+     *
+     *     @OA\Response(response=200, description="Updated (audited)"),
+     *     @OA\Response(response=403, description="Role not allowed")
+     * )
+     */
+    public function updateAdvertType(UpdateAdvertTypeRequest $request, string $key): JsonResponse
+    {
+        $type = AdvertType::query()->where('key', $key)->first();
+        if ($type === null) {
+            return ApiResponse::notFound('Advert type not found.');
+        }
+        $before = $type->only(['price', 'days', 'is_active']);
+        $type->update($request->safe()->only(['price', 'days', 'is_active']));
+        $this->audit->record($request, 'marketplace.advert_type.update', null, 'advert_type', $type->id, $before, $type->fresh()->only(['price', 'days', 'is_active']), $request->validated('reason'));
+
+        return ApiResponse::success('Advert price saved', $type->fresh()->only(['key', 'price', 'days', 'is_active']));
     }
 
     private function setHold(ReasonRequest $request, string $shop, bool $hold): JsonResponse

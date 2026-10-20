@@ -13,7 +13,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -122,7 +121,7 @@ class ReturnCaseService
             $this->refund($case->fresh(), $refund, 'return');
         } else {
             $this->tellBuyer($case, $decision === 'partial'
-                ? "The shop offers KSh ".number_format($refund, 2)." for return {$case->reference}: {$reason}. Not happy? Dispute it within 48 hours in your Poachy account."
+                ? 'The shop offers KSh '.number_format($refund, 2)." for return {$case->reference}: {$reason}. Not happy? Dispute it within 48 hours in your Poachy account."
                 : "The shop did not accept return {$case->reference}: {$reason}. Not happy? Dispute it within 48 hours in your Poachy account.");
         }
 

@@ -33,6 +33,7 @@ class MarketplaceReturnController extends Controller
      *
      *     @OA\RequestBody(required=true, @OA\MediaType(mediaType="multipart/form-data", @OA\Schema(
      *         required={"items", "reason_code"},
+     *
      *         @OA\Property(property="items", type="array", @OA\Items(type="object", @OA\Property(property="order_item_id", type="integer"), @OA\Property(property="quantity", type="number"))),
      *         @OA\Property(property="reason_code", type="string", enum={"changed_mind", "faulty", "wrong_item", "not_as_described", "damaged"}),
      *         @OA\Property(property="description", type="string", maxLength=1000),

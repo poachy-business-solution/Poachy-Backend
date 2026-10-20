@@ -14,6 +14,7 @@ use App\Models\BillingTopup;
 use App\Models\BusinessDetail;
 use App\Models\CentralPaymentLog;
 use App\Models\Tenant;
+use App\Services\Central\Marketplace\AdvertService;
 use App\Services\Shared\Messaging\Messenger;
 use App\Services\Shared\Mpesa\MpesaService;
 use Illuminate\Support\Facades\Log;
@@ -161,6 +162,7 @@ class BillingTopupService
                 'result_code' => $parsed['failure_code'],
                 'result_description' => $parsed['failure_reason'],
             ]);
+            app(AdvertService::class)->onTopupFinished($topup->fresh());
 
             return $topup->fresh();
         }
@@ -177,6 +179,8 @@ class BillingTopupService
             'amount' => (float) $topup->amount,
             'provider_reference' => $parsed['provider_reference'],
         ]);
+        // A prompt sent to pay for an advert buys it now that the money is on the balance.
+        app(AdvertService::class)->onTopupFinished($topup->fresh());
 
         return $topup->fresh();
     }

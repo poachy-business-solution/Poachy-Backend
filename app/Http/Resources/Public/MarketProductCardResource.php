@@ -30,7 +30,9 @@ class MarketProductCardResource extends JsonResource
             'rating' => (float) $this->average_rating,
             'rating_count' => (int) $this->rating_count,
             'shop' => ['name' => $shop['business_name'] ?? null, 'is_verified' => (bool) ($shop['is_verified'] ?? false), 'city' => $shop['city'] ?? null],
-            'sponsored' => false,
+            'sponsored' => $this->sponsored_advert_id !== null,
+            // Links from a sponsored slot carry ref=ad{advert_id} (click + order attribution).
+            'advert_id' => $this->sponsored_advert_id !== null ? (int) $this->sponsored_advert_id : null,
         ];
     }
 }

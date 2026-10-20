@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Read model for the public marketplace (poachy.com/market). Only active listings of
- * verified, active shops ever leave here. Sponsored slots stay empty until adverts (item 42).
+ * verified, active shops ever leave here. Sponsored slots come from running adverts (AdvertService).
  */
 class PublicMarketService
 {
@@ -38,20 +38,43 @@ class PublicMarketService
             ->each(fn (MarketplaceCategory $c) => $c->setAttribute('products_count', (int) ($rolled[$c->id] ?? 0)));
 
         $tenantIds = $this->listings()->distinct()->pluck('tenant_id');
-        $featured = BusinessDetail::on('central')->listed()->whereIn('tenant_id', $tenantIds)
-            ->orderByDesc('rating')->orderByDesc('rating_count')->orderBy('business_name')->limit(8)->get();
+        // Shops paying for "featured shop" lead (labelled Sponsored), then the best rated.
+        $sponsoredShops = $this->adverts()->sponsoredShops();
+        $featured = $sponsoredShops->concat(BusinessDetail::on('central')->listed()->whereIn('tenant_id', $tenantIds)
+            ->whereNotIn('tenant_id', $sponsoredShops->pluck('tenant_id'))
+            ->orderByDesc('rating')->orderByDesc('rating_count')->orderBy('business_name')->limit(8 - $sponsoredShops->count())->get());
 
         $latest = $this->listings()->with('item:id,slug')->latest('id')->limit(12)->get();
 
-        return ['categories' => $categories, 'featured_shops' => $featured, 'latest' => $latest, 'sponsored' => []];
+        return ['categories' => $categories, 'featured_shops' => $featured, 'latest' => $latest, 'sponsored' => $this->adverts()->sponsoredProducts('home')];
     }
 
     /** @param array<string, mixed> $filters */
     public function category(MarketplaceCategory $category, array $filters): LengthAwarePaginator
     {
-        $ids = MarketplaceCategory::on('central')->where('parent_id', $category->id)->pluck('id')->push($category->id);
+        return $this->paginate($this->listings()->whereIn('marketplace_category_id', $this->categoryIds($category)), $filters);
+    }
 
-        return $this->paginate($this->listings()->whereIn('marketplace_category_id', $ids), $filters);
+    /** @return array<int, int> */
+    public function categoryIds(MarketplaceCategory $category): array
+    {
+        return MarketplaceCategory::on('central')->where('parent_id', $category->id)->pluck('id')->push($category->id)->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * At most two Sponsored listings for a category or search page (product boosts; near-you
+     * when the buyer filters by the advertiser's county).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function sponsoredFor(?MarketplaceCategory $category, ?string $term, array $filters): Collection
+    {
+        return $this->adverts()->sponsoredProducts($category ? 'category' : 'search', $category ? $this->categoryIds($category) : null, $term, $filters['county'] ?? null);
+    }
+
+    private function adverts(): AdvertService
+    {
+        return app(AdvertService::class);
     }
 
     /** @param array<string, mixed> $filters */
@@ -72,10 +95,14 @@ class PublicMarketService
     {
         $term = trim($term);
 
-        return BusinessDetail::on('central')->listed()
+        $matching = BusinessDetail::on('central')->listed()
             ->whereIn('tenant_id', $this->listings()->distinct()->pluck('tenant_id'))
             ->where(fn ($q) => $q->where('business_name', 'like', "%{$term}%")->orWhere('city', 'like', "%{$term}%"))
             ->orderByDesc('rating')->limit($limit)->get();
+        // A featured shop that matches the search leads, labelled Sponsored.
+        $sponsored = $this->adverts()->sponsoredShops()->filter(fn (BusinessDetail $s) => $matching->contains('tenant_id', $s->tenant_id));
+
+        return $sponsored->concat($matching->whereNotIn('tenant_id', $sponsored->pluck('tenant_id')))->values();
     }
 
     /**
