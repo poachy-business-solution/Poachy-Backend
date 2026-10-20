@@ -34,6 +34,7 @@ class ShopPageResource extends JsonResource
             'whatsapp_link' => $this->whatsapp_link,
             'return_window_days' => (int) $this->return_window_days,
             'return_policy' => $this->return_policy_label,
+            'payout_phone' => $this->payout_phone,
         ];
     }
 }

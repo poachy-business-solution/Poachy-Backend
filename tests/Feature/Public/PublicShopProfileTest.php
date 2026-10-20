@@ -56,6 +56,11 @@ class PublicShopProfileTest extends TestCase
                 $this->assertStringEndsWith('/s/'.$slug, $r->json('data.public_url'));
                 $this->assertSame($tenant->id, BusinessDetail::on('central')->where('slug', $slug)->value('tenant_id'));
 
+                // The payout number: a Kenyan mobile, stored normalised; empty falls back to the business phone.
+                $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['payout_phone' => '12345'])->assertUnprocessable()->assertJsonValidationErrors('payout_phone');
+                $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['payout_phone' => '0711 222 333'])->assertOk()->assertJsonPath('data.payout_phone', '254711222333');
+                $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['payout_phone' => ''])->assertOk()->assertJsonPath('data.payout_phone', null);
+
                 // Another shop with the same name gets a numbered link, and nobody can claim this one.
                 $this->assertSame($slug.'-2', BusinessDetail::uniqueSlug($slug));
             });

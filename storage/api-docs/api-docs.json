@@ -32533,6 +32533,12 @@
                                             7
                                         ],
                                         "example": 3
+                                    },
+                                    "payout_phone": {
+                                        "description": "M-Pesa number for marketplace payouts; empty = business phone",
+                                        "type": "string",
+                                        "example": "0712345678",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"

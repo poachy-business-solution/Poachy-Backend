@@ -53,7 +53,8 @@ class ShopPageController extends Controller
      *         @OA\Property(property="whatsapp_number", type="string", nullable=true, example="0712345678"),
      *         @OA\Property(property="latitude", type="number", nullable=true, example=-1.2833),
      *         @OA\Property(property="longitude", type="number", nullable=true, example=36.8167),
-     *         @OA\Property(property="return_window_days", type="integer", enum={0,3,7}, example=3)
+     *         @OA\Property(property="return_window_days", type="integer", enum={0,3,7}, example=3),
+     *         @OA\Property(property="payout_phone", type="string", nullable=true, example="0712345678", description="M-Pesa number for marketplace payouts; empty = business phone")
      *     )),
      *
      *     @OA\Response(response=200, description="The updated shop page"),
@@ -70,6 +71,10 @@ class ShopPageController extends Controller
         }
 
         $data = $request->validated();
+
+        if (array_key_exists('payout_phone', $data)) {
+            $data['payout_phone'] = filled($data['payout_phone']) ? PhoneNumber::normalize($data['payout_phone']) : null;
+        }
 
         if (array_key_exists('whatsapp_number', $data)) {
             $data['whatsapp_number'] = filled($data['whatsapp_number']) ? PhoneNumber::normalize($data['whatsapp_number']) : null;

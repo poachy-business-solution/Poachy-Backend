@@ -31,6 +31,12 @@ class UpdateShopPageRequest extends FormRequest
             'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
             'return_window_days' => ['sometimes', 'integer', Rule::in(BusinessDetail::RETURN_WINDOWS)],
+            // Where Poachy sends marketplace payouts (M-Pesa B2C); empty = the business phone.
+            'payout_phone' => ['sometimes', 'nullable', 'string', 'max:20', function ($attr, $value, $fail) {
+                if ($value !== null && $value !== '' && (! is_string($value) || ! PhoneNumber::isValid($value))) {
+                    $fail('Enter a Kenyan M-Pesa number for payouts.');
+                }
+            }],
         ];
     }
 
