@@ -137160,6 +137160,36 @@
             }
         },
         "/api/v1/tenant/users/{userId}": {
+            "put": {
+                "tags": [
+                    "Tenant - Users"
+                ],
+                "summary": "Replace a staff member's details (same as PATCH)",
+                "operationId": "extraPutTenantUsersUserid",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
             "delete": {
                 "tags": [
                     "Tenant User Management"
@@ -137478,6 +137508,1063 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace-orders/{orderId}/delivery/location": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Rider location ping for a marketplace delivery (tenant → central)",
+                "operationId": "extraPostCentralMarketplaceOrdersOrderidDeliveryLocation",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/mpesa/c2b/validate/{token}": {
+            "post": {
+                "tags": [
+                    "M-Pesa Callbacks"
+                ],
+                "summary": "C2B validation (Safaricom → Poachy): accept or reject a Paybill payment before it completes",
+                "operationId": "extraPostCentralMpesaC2bValidateToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ResultCode 0 to accept, C2B00011/C2B00013 to reject"
+                    },
+                    "403": {
+                        "description": "Wrong secret, or caller not in MPESA_CALLBACK_IPS"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/mpesa/c2b/confirm/{token}": {
+            "post": {
+                "tags": [
+                    "M-Pesa Callbacks"
+                ],
+                "summary": "C2B confirmation (Safaricom → Poachy): a completed Paybill payment credits the POA account's balance (idempotent on TransID)",
+                "operationId": "extraPostCentralMpesaC2bConfirmToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ResultCode 0"
+                    },
+                    "403": {
+                        "description": "Wrong secret, or caller not in MPESA_CALLBACK_IPS"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/mpesa/stk/callback/{token}": {
+            "post": {
+                "tags": [
+                    "M-Pesa Callbacks"
+                ],
+                "summary": "STK result for a marketplace order payment",
+                "operationId": "extraPostCentralMpesaStkCallbackToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ResultCode 0"
+                    },
+                    "403": {
+                        "description": "Wrong secret, or caller not in MPESA_CALLBACK_IPS"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/mpesa/stk/subscription/callback/{token}": {
+            "post": {
+                "tags": [
+                    "M-Pesa Callbacks"
+                ],
+                "summary": "STK result for a subscription payment",
+                "operationId": "extraPostCentralMpesaStkSubscriptionCallbackToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ResultCode 0"
+                    },
+                    "403": {
+                        "description": "Wrong secret, or caller not in MPESA_CALLBACK_IPS"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/mpesa/stk/billing/callback/{token}": {
+            "post": {
+                "tags": [
+                    "M-Pesa Callbacks"
+                ],
+                "summary": "STK result for a Poachy balance top-up (and the advert it pays for)",
+                "operationId": "extraPostCentralMpesaStkBillingCallbackToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ResultCode 0"
+                    },
+                    "403": {
+                        "description": "Wrong secret, or caller not in MPESA_CALLBACK_IPS"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/reports/products/{productId}/referrers": {
+            "get": {
+                "tags": [
+                    "Central - Analytics"
+                ],
+                "summary": "Where a product's views came from (referrers)",
+                "operationId": "extraGetCentralReportsProductsProductidReferrers",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Referrers with counts"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/reports/search/refinements": {
+            "get": {
+                "tags": [
+                    "Central - Analytics"
+                ],
+                "summary": "Search refinements: what buyers searched next",
+                "operationId": "extraGetCentralReportsSearchRefinements",
+                "responses": {
+                    "200": {
+                        "description": "Refinement pairs with counts"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/product": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Product listing sync (tenant → central)",
+                "operationId": "extraPostCentralSyncInboundProduct",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back to the tenant"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/variant": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Variant listing sync (tenant → central)",
+                "operationId": "extraPostCentralSyncInboundVariant",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/bundle": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Bundle listing sync (tenant → central)",
+                "operationId": "extraPostCentralSyncInboundBundle",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/inventory-count": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Stock count sync (tenant → central)",
+                "operationId": "extraPostCentralSyncInboundInventoryCount",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/delivery-zone": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Delivery zone sync (tenant → central)",
+                "operationId": "extraPostCentralSyncInboundDeliveryZone",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/marketplace-fulfillment": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Online order fulfilment step (tenant → central): accepted / preparing / ready / handed over",
+                "operationId": "extraPostCentralSyncInboundMarketplaceFulfillment",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/order-confirmation": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "The shop confirmed (held stock for) an online order",
+                "operationId": "extraPostCentralSyncInboundOrderConfirmation",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/reservation-confirmation": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "The shop held (or could not hold) stock for a reserve & collect code",
+                "operationId": "extraPostCentralSyncInboundReservationConfirmation",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/outbound-sync-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Tenant acknowledges a central → tenant sync (payment, cancellation, reservation)",
+                "operationId": "extraPostCentralSyncInboundOutboundSyncAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/product-review-response": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "A shop's reply to a product review (tenant → central)",
+                "operationId": "extraPostCentralSyncInboundProductReviewResponse",
+                "responses": {
+                    "200": {
+                        "description": "Queued; ACK sent back"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/sync/inbound/{syncId}/status": {
+            "get": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Status of one inbound sync",
+                "operationId": "extraGetCentralSyncInboundSyncidStatus",
+                "parameters": [
+                    {
+                        "name": "syncId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sync status"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/tenants/{tenant_id}/unmapped-categories": {
+            "get": {
+                "tags": [
+                    "Central - Admin"
+                ],
+                "summary": "A shop's categories not yet mapped to marketplace categories",
+                "operationId": "extraGetCentralTenantsTenantIdUnmappedCategories",
+                "parameters": [
+                    {
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Unmapped categories"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/batches/cogs/calculate": {
+            "get": {
+                "tags": [
+                    "Tenant - Product Batches"
+                ],
+                "summary": "Cost of goods sold from batches (FIFO) for a product and quantity",
+                "operationId": "extraGetTenantBatchesCogsCalculate",
+                "responses": {
+                    "200": {
+                        "description": "COGS breakdown"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/batches/expired/mark": {
+            "post": {
+                "tags": [
+                    "Tenant - Product Batches"
+                ],
+                "summary": "Mark batches past their expiry date as expired",
+                "operationId": "extraPostTenantBatchesExpiredMark",
+                "responses": {
+                    "200": {
+                        "description": "Batches marked"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/batches/valuation/calculate": {
+            "get": {
+                "tags": [
+                    "Tenant - Product Batches"
+                ],
+                "summary": "Stock valuation from batches",
+                "operationId": "extraGetTenantBatchesValuationCalculate",
+                "responses": {
+                    "200": {
+                        "description": "Valuation"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/brands/{brand}/unfeature": {
+            "patch": {
+                "tags": [
+                    "Tenant - Brands"
+                ],
+                "summary": "Stop featuring a brand",
+                "operationId": "extraPatchTenantBrandsBrandUnfeature",
+                "parameters": [
+                    {
+                        "name": "brand",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brand"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/customer-groups/{customer_group}": {
+            "delete": {
+                "tags": [
+                    "Tenant - Customer Groups"
+                ],
+                "summary": "Delete a customer group",
+                "operationId": "extraDeleteTenantCustomerGroupsCustomerGroup",
+                "parameters": [
+                    {
+                        "name": "customer_group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/expenses/{expense}/update-recurrence": {
+            "patch": {
+                "tags": [
+                    "Tenant - Expenses"
+                ],
+                "summary": "Change how a recurring expense repeats",
+                "operationId": "extraPatchTenantExpensesExpenseUpdateRecurrence",
+                "parameters": [
+                    {
+                        "name": "expense",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Expense"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace-sales/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "One online order as the shop sees it (buyer, delivery, items, next steps)",
+                "operationId": "extraGetTenantMarketplaceSalesId",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Marketplace sale"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace-sales/{id}/location": {
+            "patch": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Rider's current location for a delivery order",
+                "operationId": "extraPatchTenantMarketplaceSalesIdLocation",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/promotions/{promotion}": {
+            "put": {
+                "tags": [
+                    "Tenant - Promotions"
+                ],
+                "summary": "Replace a promotion (same as PATCH)",
+                "operationId": "extraPutTenantPromotionsPromotion",
+                "parameters": [
+                    {
+                        "name": "promotion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promotion"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sales/{sale}/receipt": {
+            "get": {
+                "tags": [
+                    "Tenant - Sales"
+                ],
+                "summary": "Printable receipt for a sale",
+                "operationId": "extraGetTenantSalesSaleReceipt",
+                "parameters": [
+                    {
+                        "name": "sale",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Receipt"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/shifts/{shiftAssignment}/cash-reconciliation": {
+            "get": {
+                "tags": [
+                    "Tenant - Shifts"
+                ],
+                "summary": "Cash expected vs counted for a shift",
+                "operationId": "extraGetTenantShiftsShiftassignmentCashReconciliation",
+                "parameters": [
+                    {
+                        "name": "shiftAssignment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reconciliation"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/shifts/{shiftAssignment}/recalculate-summary": {
+            "post": {
+                "tags": [
+                    "Tenant - Shifts"
+                ],
+                "summary": "Rebuild a shift's sales summary",
+                "operationId": "extraPostTenantShiftsShiftassignmentRecalculateSummary",
+                "parameters": [
+                    {
+                        "name": "shiftAssignment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Summary"
+                    },
+                    "401": {
+                        "description": "Not signed in"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/approved-review": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "An approved buyer review for one of the shop's products (central → tenant)",
+                "operationId": "extraPostTenantSyncInboundApprovedReview",
+                "responses": {
+                    "200": {
+                        "description": "Stored"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/product-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central stored a product listing (ACK with central id)",
+                "operationId": "extraPostTenantSyncInboundProductAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/variant-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central stored a variant listing (ACK)",
+                "operationId": "extraPostTenantSyncInboundVariantAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/bundle-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central stored a bundle listing (ACK)",
+                "operationId": "extraPostTenantSyncInboundBundleAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/inventory-count-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central stored a stock count (ACK)",
+                "operationId": "extraPostTenantSyncInboundInventoryCountAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/delivery-zone-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central stored a delivery zone (ACK)",
+                "operationId": "extraPostTenantSyncInboundDeliveryZoneAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/marketplace-fulfillment-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central applied a fulfilment step (ACK)",
+                "operationId": "extraPostTenantSyncInboundMarketplaceFulfillmentAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/review-response-ack": {
+            "post": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "Central stored the shop's review reply (ACK)",
+                "operationId": "extraPostTenantSyncInboundReviewResponseAck",
+                "responses": {
+                    "200": {
+                        "description": "Recorded"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/sync/inbound/categories": {
+            "get": {
+                "tags": [
+                    "Internal - Sync"
+                ],
+                "summary": "The shop's categories, for central's category mapping (central → tenant)",
+                "operationId": "extraGetTenantSyncInboundCategories",
+                "responses": {
+                    "200": {
+                        "description": "Categories"
+                    },
+                    "403": {
+                        "description": "Missing or wrong sync token"
+                    }
+                },
+                "security": [
+                    {
+                        "syncToken": []
                     }
                 ]
             }
@@ -138893,6 +139980,11 @@
                 "type": "http",
                 "description": "Private admin API only: service token (INTERNAL_ADMIN_TOKEN) from an allowlisted address, plus X-Admin-Id and X-Admin-Role (super|operations|finance|support) headers",
                 "scheme": "bearer"
+            },
+            "syncToken": {
+                "type": "http",
+                "description": "Server to server only: CENTRAL_API_TOKEN (tenant → central) or TENANT_API_TOKEN (central → tenant)",
+                "scheme": "bearer"
             }
         }
     },
@@ -139008,6 +140100,14 @@
         {
             "name": "Tenant - Product Reviews",
             "description": "Tenant-side product review management endpoints. Merchants can view reviews synced from the central marketplace."
+        },
+        {
+            "name": "Internal - Sync",
+            "description": "Tenant ↔ central synchronisation (never called by the website or the app)"
+        },
+        {
+            "name": "M-Pesa Callbacks",
+            "description": "Safaricom posts results here; the last path segment is a secret derived from APP_KEY (App\\\\Support\\\\MpesaCallbacks), optionally limited to MPESA_CALLBACK_IPS"
         },
         {
             "name": "Central - Analytics - Abandoned Cart",
@@ -139324,6 +140424,34 @@
         {
             "name": "Tenant Users",
             "description": "Tenant Users"
+        },
+        {
+            "name": "Central - Analytics",
+            "description": "Central - Analytics"
+        },
+        {
+            "name": "Central - Admin",
+            "description": "Central - Admin"
+        },
+        {
+            "name": "Tenant - Brands",
+            "description": "Tenant - Brands"
+        },
+        {
+            "name": "Tenant - Customer Groups",
+            "description": "Tenant - Customer Groups"
+        },
+        {
+            "name": "Tenant - Sales",
+            "description": "Tenant - Sales"
+        },
+        {
+            "name": "Tenant - Shifts",
+            "description": "Tenant - Shifts"
+        },
+        {
+            "name": "Tenant - Users",
+            "description": "Tenant - Users"
         }
     ],
     "security": [
