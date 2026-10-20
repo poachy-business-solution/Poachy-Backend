@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\ProductSerialController;
 use App\Http\Controllers\Api\Tenant\Inventory\PurchaseOrderController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
+use App\Http\Controllers\Api\Tenant\Marketplace\MarketplaceSummaryController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ReservationController;
 use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
@@ -749,6 +750,10 @@ Route::prefix('v1/tenant')
                 Route::post('/{code}/redeem', [ReservationController::class, 'redeem']);
             });
         });
+
+        // The app's Marketplace tab (owners/managers)
+        Route::get('marketplace/summary', [MarketplaceSummaryController::class, 'show'])
+            ->middleware(['permission:view-marketplace-sales,tenant']);
 
         // Marketplace Sales — fulfillment tracking for orders synced from central
         Route::prefix('marketplace-sales')->middleware(['permission:view-marketplace-sales,tenant'])->group(function () {

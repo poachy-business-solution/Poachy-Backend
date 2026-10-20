@@ -50,6 +50,7 @@ class SalesRouteAuthorizationTest extends TestCase
         return [
             'marketplace sale index' => ['GET', 'api/v1/tenant/marketplace-sales'],
             'marketplace sale show' => ['GET', 'api/v1/tenant/marketplace-sales/{id}'],
+            'marketplace tab summary' => ['GET', 'api/v1/tenant/marketplace/summary'],
         ];
     }
 

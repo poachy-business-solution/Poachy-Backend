@@ -13,6 +13,7 @@ use App\Models\Tenant\Store;
 use App\Models\Tenant\Supplier;
 use App\Models\Tenant\TradeLine;
 use App\Models\Tenant\TradePartner;
+use App\Services\Tenant\Marketplace\MarketplaceSummaryService;
 use App\Services\Tenant\Shift\TillService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -26,6 +27,7 @@ class NeedsYouService
     public function __construct(
         protected StockReportService $stock,
         protected TillService $tillService,
+        protected MarketplaceSummaryService $marketplace,
     ) {}
 
     /**
@@ -37,6 +39,8 @@ class NeedsYouService
     public function items(?int $storeId = null): array
     {
         return array_values(array_filter([
+            // Online orders and reservations first: a buyer has paid or is on the way.
+            ...$this->marketplace->needsYou($storeId),
             $this->lowStock($storeId),
             $this->tillsShort($storeId),
             $this->expensesToApprove($storeId),

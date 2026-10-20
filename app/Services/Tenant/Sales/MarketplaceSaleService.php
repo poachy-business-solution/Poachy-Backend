@@ -5,19 +5,24 @@ namespace App\Services\Tenant\Sales;
 use App\DataTransferObjects\Sync\MarketplaceFulfillmentSyncDTO;
 use App\Enums\Tenant\MarketplaceFulfillmentStatus;
 use App\Events\Tenant\MarketplaceSaleFulfillmentSyncRequested;
+use App\Models\MarketplaceOrder;
 use App\Models\Tenant\MarketplaceSale;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MarketplaceSaleService
 {
+    /** @var array<int, string> */
+    private const RELATIONS = ['store', 'items.product:id,name', 'items.productVariant:id,variant_name'];
+
     /**
      * List marketplace sales for the tenant, optionally filtered by store/status.
      */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = MarketplaceSale::with(['store', 'items'])
+        $query = MarketplaceSale::with(self::RELATIONS)
             ->orderBy('created_at', 'desc');
 
         if (! empty($filters['store_id'])) {
@@ -28,12 +33,42 @@ class MarketplaceSaleService
             $query->where('fulfillment_status', $filters['fulfillment_status']);
         }
 
-        return $query->paginate($perPage);
+        // "open" = still to hand over (the Marketplace tab's default list)
+        if (! empty($filters['open'])) {
+            $query->whereNotIn('fulfillment_status', [MarketplaceFulfillmentStatus::DELIVERED, MarketplaceFulfillmentStatus::CANCELLED]);
+        }
+
+        $page = $query->paginate($perPage);
+        $this->attachCentralOrders($page->getCollection());
+
+        return $page;
     }
 
     public function getById(int $id): MarketplaceSale
     {
-        return MarketplaceSale::with(['store', 'items'])->findOrFail($id);
+        $sale = MarketplaceSale::with(self::RELATIONS)->findOrFail($id);
+        $this->attachCentralOrders(collect([$sale]));
+
+        return $sale;
+    }
+
+    /**
+     * The buyer, delivery address and fee live on the central order: load them for these sales in
+     * one query (this shop's orders only) as the `centralOrder` relation.
+     *
+     * @param  Collection<int, MarketplaceSale>  $sales
+     */
+    public function attachCentralOrders(Collection $sales): void
+    {
+        $ids = $sales->pluck('central_order_id')->filter()->unique()->values();
+        $orders = $ids->isEmpty() ? collect() : MarketplaceOrder::on('central')
+            ->with(['customer.user:id,name', 'deliveryAddress', 'delivery'])
+            ->where('tenant_id', (string) tenant()->id)
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        $sales->each(fn (MarketplaceSale $sale) => $sale->setRelation('centralOrder', $orders->get($sale->central_order_id)));
     }
 
     /**
@@ -77,7 +112,10 @@ class MarketplaceSaleService
 
             event(new MarketplaceSaleFulfillmentSyncRequested($dto));
 
-            return $sale->fresh(['store', 'items']);
+            $fresh = $sale->fresh(self::RELATIONS);
+            $this->attachCentralOrders(collect([$fresh]));
+
+            return $fresh;
         });
     }
 }

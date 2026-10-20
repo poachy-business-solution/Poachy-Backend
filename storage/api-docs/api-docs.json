@@ -72394,6 +72394,138 @@
                 ]
             }
         },
+        "/api/v1/tenant/marketplace/summary": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Marketplace tab: online orders, sales, reservations, earnings and alerts",
+                "description": "Owners and managers (view-marketplace-sales). Counts of online orders by step (to prepare, preparing, ready, overdue = not handed over 24 h after payment, delivered in 7 days), paid online sales today / 7 / 30 days, open reservations, earnings (fees, clawbacks and payouts are 0 until payouts are switched on) and the Needs-you alerts (online_overdue, online_orders, reservations_arriving).",
+                "operationId": "tenantMarketplaceSummary",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Summary",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "orders": {
+                                                    "properties": {
+                                                        "to_prepare": {
+                                                            "type": "integer"
+                                                        },
+                                                        "preparing": {
+                                                            "type": "integer"
+                                                        },
+                                                        "ready": {
+                                                            "type": "integer"
+                                                        },
+                                                        "overdue": {
+                                                            "type": "integer"
+                                                        },
+                                                        "delivered_7d": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "sales": {
+                                                    "type": "object"
+                                                },
+                                                "reservations": {
+                                                    "properties": {
+                                                        "open": {
+                                                            "type": "integer"
+                                                        },
+                                                        "expiring_today": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "earnings": {
+                                                    "properties": {
+                                                        "gross_30d": {
+                                                            "type": "number"
+                                                        },
+                                                        "fees_30d": {
+                                                            "type": "number"
+                                                        },
+                                                        "clawbacks_30d": {
+                                                            "type": "number"
+                                                        },
+                                                        "net_30d": {
+                                                            "type": "number"
+                                                        },
+                                                        "paid_out_30d": {
+                                                            "type": "number"
+                                                        },
+                                                        "payouts_enabled": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "needs_you": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "online_orders"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "subtitle": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Signed out"
+                    },
+                    "403": {
+                        "description": "Role without view-marketplace-sales (e.g. cashier)"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tenant/reservations": {
             "get": {
                 "tags": [
@@ -108955,6 +109087,258 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/tenant/marketplace-sales": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Online orders paid on the marketplace, for the app's Marketplace tab",
+                "description": "view-marketplace-sales (owners/managers). Each sale carries its items, the buyer (name, phone, note) and, for deliveries, the address and fee from the central order; next_statuses lists the staff's next steps (pending→confirmed→preparing→ready→delivered); is_overdue = not handed over 24 h after payment.",
+                "operationId": "tenantMarketplaceSalesIndex",
+                "parameters": [
+                    {
+                        "name": "open",
+                        "in": "query",
+                        "description": "1 = only orders not yet handed over",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "fulfillment_status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "confirmed",
+                                "preparing",
+                                "ready",
+                                "delivered",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "store_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sales",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "sales": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "sale_number": {
+                                                                "type": "string"
+                                                            },
+                                                            "fulfillment_type": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "pickup",
+                                                                    "delivery"
+                                                                ]
+                                                            },
+                                                            "fulfillment_status": {
+                                                                "properties": {
+                                                                    "value": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "next_statuses": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "is_overdue": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "name": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "quantity": {
+                                                                            "type": "number"
+                                                                        },
+                                                                        "subtotal": {
+                                                                            "type": "number"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "buyer": {
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "phone": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "notes": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            },
+                                                            "delivery": {
+                                                                "properties": {
+                                                                    "address": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "fee": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "instructions": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No view-marketplace-sales"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace-sales/{id}/fulfillment-status": {
+            "patch": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "Move an online order to its next step (synced to the buyer's order)",
+                "operationId": "tenantMarketplaceSaleFulfillment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fulfillment_status"
+                                ],
+                                "properties": {
+                                    "fulfillment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "confirmed",
+                                            "preparing",
+                                            "ready",
+                                            "delivered",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "nullable": true
+                                    },
+                                    "courier_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "courier_phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated sale"
+                    },
+                    "403": {
+                        "description": "No manage-marketplace-sales"
+                    },
+                    "422": {
+                        "description": "Not an allowed next step"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/tenant/reports/owner-summary": {

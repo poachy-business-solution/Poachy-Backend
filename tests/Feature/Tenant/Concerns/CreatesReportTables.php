@@ -19,7 +19,7 @@ use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 trait CreatesReportTables
 {
     private array $reportTables = [
-        'inventory_movements', 'inventory', 'store_products', 'product_variants', 'product_batches', 'cash_movements',
+        'marketplace_sales', 'inventory_movements', 'inventory', 'store_products', 'product_variants', 'product_batches', 'cash_movements',
         'trade_lines', 'trade_partners', 'suppliers', 'customers', 'expenses', 'expense_categories',
         'sale_refund_items', 'sale_refunds', 'sale_payments', 'sale_items', 'sales', 'shift_assignments',
         'products', 'categories', 'stores', 'users', 'tenant_configurations',
@@ -304,6 +304,28 @@ trait CreatesReportTables
             $t->string('movement_type');
             $t->decimal('quantity_in_base_uom', 15, 4);
             $t->decimal('unit_cost_in_base_uom', 15, 4)->nullable();
+            $t->timestamps();
+            $t->softDeletes();
+        });
+
+        $s->create('marketplace_sales', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('central_order_id')->nullable();
+            $t->string('sale_number')->unique();
+            $t->unsignedBigInteger('store_id');
+            $t->dateTime('sale_date');
+            $t->decimal('subtotal', 12, 2)->default(0);
+            $t->decimal('tax_amount', 12, 2)->default(0);
+            $t->decimal('discount_amount', 12, 2)->default(0);
+            $t->decimal('total_amount', 12, 2)->default(0);
+            $t->string('payment_status')->default('paid');
+            $t->decimal('amount_paid', 12, 2)->default(0);
+            $t->decimal('amount_due', 12, 2)->default(0);
+            $t->string('payment_method')->nullable();
+            $t->string('payment_reference')->nullable();
+            $t->string('fulfillment_type')->default('delivery');
+            $t->string('fulfillment_status')->default('pending');
+            $t->text('notes')->nullable();
             $t->timestamps();
             $t->softDeletes();
         });

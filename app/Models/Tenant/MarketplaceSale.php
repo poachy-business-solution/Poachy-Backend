@@ -17,6 +17,9 @@ class MarketplaceSale extends Model
 
     protected $table = 'marketplace_sales';
 
+    /** An online order not handed over this long after it was paid needs the owner. */
+    public const HANDOVER_DUE_HOURS = 24;
+
     protected $fillable = [
         'central_order_id',
         'sale_number',

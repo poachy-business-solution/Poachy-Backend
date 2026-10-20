@@ -4,7 +4,12 @@ namespace Tests\Feature\Tenant\Sales;
 
 use App\Enums\Tenant\MarketplaceFulfillmentStatus;
 use App\Events\Tenant\MarketplaceSaleFulfillmentSyncRequested;
+use App\Http\Resources\Tenant\Sales\MarketplaceSaleResource;
+use App\Models\CustomerAddress;
+use App\Models\MarketplaceCustomer;
+use App\Models\MarketplaceOrder;
 use App\Models\Tenant\MarketplaceSale;
+use App\Models\User;
 use App\Services\Tenant\Sales\MarketplaceSaleService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -136,6 +141,46 @@ class MarketplaceSaleServiceTest extends TestCase
         // MarketplaceSale itself has no courier columns — nothing to assert
         // persisted there; confirmed by the schema simply having none.
         $this->assertFalse(Schema::connection('tenant')->hasColumn('marketplace_sales', 'courier_name'));
+    }
+
+    public function test_the_list_carries_the_buyer_and_delivery_address_from_this_shops_central_order(): void
+    {
+        Config::set('database.connections.central.host', env('CENTRAL_DB_HOST', '127.0.0.1'));
+        Config::set('database.connections.central.database', env('CENTRAL_DB_DATABASE', 'poachy'));
+        DB::purge('central');
+        DB::connection('central')->statement('SET foreign_key_checks = 0');
+        $run = uniqid();
+        $user = User::on('central')->create(['name' => 'Wanjiru Buyer', 'email' => "tab-{$run}@example.com", 'password' => bcrypt('x'), 'user_type' => 'customer']);
+        $customer = MarketplaceCustomer::on('central')->create(['user_id' => $user->id, 'customer_number' => 'MKT-T-'.$run, 'phone' => '+254711'.random_int(100000, 999999), 'is_active' => true]);
+        $address = CustomerAddress::on('central')->create(['customer_id' => $customer->id, 'recipient_name' => 'Wanjiru', 'recipient_phone' => '0711000000', 'address_line' => 'Kimathi St 4', 'city' => 'Nairobi', 'county' => 'Nairobi', 'delivery_instructions' => 'Blue gate']);
+        $order = MarketplaceOrder::on('central')->create(['order_number' => 'ORD-'.$run, 'customer_id' => $customer->id, 'tenant_id' => 'test-tenant', 'merchant_name' => 'Test',
+            'subtotal' => 1000, 'tax_amount' => 160, 'discount_amount' => 0, 'delivery_fee' => 150, 'total_amount' => 1310, 'fulfillment_type' => 'delivery',
+            'delivery_address_id' => $address->id, 'order_status' => 'confirmed', 'customer_notes' => 'Call on arrival']);
+        $other = MarketplaceOrder::on('central')->create(['order_number' => 'ORD-X-'.$run, 'customer_id' => $customer->id, 'tenant_id' => 'another-shop', 'merchant_name' => 'Other',
+            'subtotal' => 1, 'tax_amount' => 0, 'discount_amount' => 0, 'delivery_fee' => 0, 'total_amount' => 1, 'fulfillment_type' => 'pickup', 'order_status' => 'confirmed']);
+
+        try {
+            $this->createSale(['central_order_id' => $order->id, 'fulfillment_status' => 'pending']);
+            $this->createSale(['central_order_id' => $other->id]); // another shop's order id never leaks its buyer
+
+            $rows = collect($this->service()->list(['open' => 1])->items())
+                ->map(fn ($sale) => (new MarketplaceSaleResource($sale))->resolve())->keyBy('central_order_id');
+
+            $mine = $rows[$order->id];
+            $this->assertSame(['name' => 'Wanjiru Buyer', 'phone' => $customer->phone, 'notes' => 'Call on arrival'], $mine['buyer']);
+            $this->assertSame('Kimathi St 4, Nairobi, Nairobi', $mine['delivery']['address']);
+            $this->assertSame('Blue gate', $mine['delivery']['instructions']);
+            $this->assertEquals(150, $mine['delivery']['fee']);
+            $this->assertSame(['confirmed'], $mine['next_statuses']->all());
+            $this->assertFalse($mine['is_overdue']);
+            $this->assertNull($rows[$other->id]['buyer']);
+        } finally {
+            MarketplaceOrder::on('central')->whereIn('id', [$order->id, $other->id])->forceDelete();
+            $address->forceDelete();
+            $customer->forceDelete();
+            $user->forceDelete();
+            DB::connection('central')->statement('SET foreign_key_checks = 1');
+        }
     }
 
     private function dropTestTables(): void
