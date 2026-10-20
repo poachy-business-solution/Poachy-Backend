@@ -29,6 +29,8 @@ class BusinessDetail extends Model
         'business_email',
         'business_phone',
         'payout_phone',
+        'payouts_held_at',
+        'payouts_hold_reason',
         'whatsapp_number',
         'contact_person',
         'address',

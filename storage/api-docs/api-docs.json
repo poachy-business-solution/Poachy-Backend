@@ -21924,6 +21924,426 @@
                 ]
             }
         },
+        "/api/internal/admin/marketplace/returns/{reference}/decide": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Poachy decides a disputed or escalated return; a refund goes out at once (super, operations)",
+                "description": "Poachy decides a disputed or escalated return.",
+                "operationId": "internalAdminReturnDecide",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "decision": {
+                                        "type": "string",
+                                        "enum": [
+                                            "refund_full",
+                                            "refund_partial",
+                                            "no_refund"
+                                        ]
+                                    },
+                                    "refund_amount": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/marketplace/returns/{reference}/photos/{who}/{index}": {
+            "get": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "A return evidence photo (buyer, shop or dispute) (super, operations, support)",
+                "description": "Evidence photos of a return: buyer, shop or dispute (0-based).",
+                "operationId": "internalAdminReturnPhoto",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "who",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "index",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/marketplace/refunds/{id}/retry": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Send a failed buyer refund again (super, finance)",
+                "operationId": "internalAdminRefundRetry",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/marketplace/payouts/{id}/retry": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Send a failed / checked payout again (super, finance)",
+                "operationId": "internalAdminPayoutRetry",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/marketplace/payouts/{id}/mark-paid": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Confirm from the M-Pesa statement that a payout went out (super, finance)",
+                "operationId": "internalAdminPayoutMarkPaid",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "mpesa_receipt": {
+                                        "type": "string"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/shops/{shop}/payouts/hold": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Hold a shop's marketplace payouts (super, finance, operations)",
+                "operationId": "internalAdminPayoutsHold",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/shops/{shop}/payouts/release": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Release a shop's held payouts (super, finance)",
+                "operationId": "internalAdminPayoutsRelease",
+                "parameters": [
+                    {
+                        "name": "shop",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
+        "/api/internal/admin/marketplace/reviews/{type}/{id}/moderate": {
+            "post": {
+                "tags": [
+                    "Internal admin - Marketplace"
+                ],
+                "summary": "Approve, reject or clear flags on a product or shop review (super, operations, support)",
+                "description": "approve | reject | dismiss_flags on a product or shop review.",
+                "operationId": "internalAdminReviewModerate",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "approve",
+                                            "reject",
+                                            "dismiss_flags"
+                                        ]
+                                    },
+                                    "rejection_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Invalid or not possible in this state"
+                    }
+                }
+            }
+        },
         "/api/internal/admin/marketplace/products/{id}/item": {
             "post": {
                 "tags": [

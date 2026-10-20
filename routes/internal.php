@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Internal\Admin\BillingController;
 use App\Http\Controllers\Api\Internal\Admin\EmailTemplateController;
+use App\Http\Controllers\Api\Internal\Admin\MarketplaceAdminController;
 use App\Http\Controllers\Api\Internal\Admin\MarketplaceMappingController;
 use App\Http\Controllers\Api\Internal\Admin\ShopController;
 use App\Http\Controllers\Api\Internal\Admin\VerificationController;
@@ -30,6 +31,16 @@ Route::middleware('throttle:internal-admin')->group(function () {
     // Marketplace: group listings of the same item across shops (barcode does it; this is the manual override).
     Route::post('/marketplace/products/{id}/item', [MarketplaceMappingController::class, 'map'])->whereNumber('id')->middleware('internal.admin:super,operations');
     Route::delete('/marketplace/products/{id}/item', [MarketplaceMappingController::class, 'unmap'])->whereNumber('id')->middleware('internal.admin:super,operations');
+
+    // Marketplace money and trust (item 41): disputes, refunds, payouts, reviews.
+    Route::post('/marketplace/returns/{reference}/decide', [MarketplaceAdminController::class, 'decideReturn'])->where('reference', 'RET-[A-Z0-9]{6}')->middleware(['internal.admin:super,operations', 'throttle:internal-admin-money']);
+    Route::get('/marketplace/returns/{reference}/photos/{who}/{index}', [MarketplaceAdminController::class, 'returnPhoto'])->where(['reference' => 'RET-[A-Z0-9]{6}', 'who' => 'buyer|shop|dispute', 'index' => '[0-3]'])->middleware('internal.admin:super,operations,support');
+    Route::post('/marketplace/refunds/{id}/retry', [MarketplaceAdminController::class, 'retryRefund'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
+    Route::post('/marketplace/payouts/{id}/retry', [MarketplaceAdminController::class, 'retryPayout'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
+    Route::post('/marketplace/payouts/{id}/mark-paid', [MarketplaceAdminController::class, 'markPayoutPaid'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
+    Route::post('/shops/{shop}/payouts/hold', [MarketplaceAdminController::class, 'holdPayouts'])->middleware('internal.admin:super,finance,operations');
+    Route::post('/shops/{shop}/payouts/release', [MarketplaceAdminController::class, 'releasePayouts'])->middleware('internal.admin:super,finance');
+    Route::post('/marketplace/reviews/{type}/{id}/moderate', [MarketplaceAdminController::class, 'moderateReview'])->where(['type' => 'product|merchant'])->whereNumber('id')->middleware('internal.admin:super,operations,support');
 
     // Billing
     Route::post('/shops/{shop}/billing/credit', [BillingController::class, 'credit'])->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);

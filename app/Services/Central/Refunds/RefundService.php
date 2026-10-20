@@ -31,7 +31,7 @@ class RefundService
         private readonly Messenger $messenger,
     ) {}
 
-    public function start(MarketplaceOrder $order, float $amount, string $kind, string $reason, ?MarketplaceReturnCase $case = null): ?MarketplaceRefund
+    public function start(MarketplaceOrder $order, float $amount, string $kind, string $reason, ?MarketplaceReturnCase $case = null, ?string $attempt = null): ?MarketplaceRefund
     {
         $amount = round($amount, 2);
         $payment = $order->payments()->whereIn('payment_status', [MarketplacePaymentStatus::Completed->value, MarketplacePaymentStatus::Refunded->value])->latest('id')->first();
@@ -39,7 +39,7 @@ class RefundService
             return null;
         }
 
-        $key = "{$kind}:{$order->id}:".($case?->id ?? 'order').':'.number_format($amount, 2, '.', '');
+        $key = "{$kind}:{$order->id}:".($case?->id ?? 'order').':'.number_format($amount, 2, '.', '').($attempt !== null ? ":{$attempt}" : '');
         $existing = MarketplaceRefund::query()->where('idempotency_key', $key)->first();
         if ($existing !== null) {
             return $existing;
@@ -107,6 +107,20 @@ class RefundService
             // Unknown outcome: never re-sent automatically.
             $refund->update(['failure_reason' => 'Safaricom timed out; check before sending again.']);
             $this->alertFinance($refund, 'timeout');
+        }
+
+        return $refund;
+    }
+
+    /** A person re-sends a refund the gateway refused (a new refund row; the failed one stays as history). */
+    public function retry(MarketplaceRefund $failed): MarketplaceRefund
+    {
+        if ($failed->status !== MarketplaceRefund::FAILED) {
+            throw new \RuntimeException("Refund #{$failed->id} is {$failed->status}; only failed refunds can be re-sent.");
+        }
+        $refund = $this->start($failed->order, (float) $failed->amount, $failed->kind, (string) $failed->reason, $failed->returnCase, "retry-{$failed->id}");
+        if ($refund === null) {
+            throw new \RuntimeException('Nothing left to refund on this payment.');
         }
 
         return $refund;

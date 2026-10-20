@@ -40,7 +40,13 @@ class PayoutService
         $summary = ['created' => 0, 'sent' => 0, 'retried' => 0, 'skipped' => []];
 
         $tenants = $retriesOnly ? collect() : MarketplacePayoutLine::query()->available($asOf)->distinct()->pluck('tenant_id');
+        $held = BusinessDetail::query()->whereIn('tenant_id', $tenants)->whereNotNull('payouts_held_at')->pluck('tenant_id')->all();
         foreach ($tenants as $tenantId) {
+            if (in_array($tenantId, $held, true)) {
+                $summary['skipped'][(string) $tenantId] = 'payouts on hold';
+
+                continue;
+            }
             if ($this->settleFromBalance((string) $tenantId, $asOf)) {
                 $summary['skipped'][(string) $tenantId] = 'refunds taken from the Poachy balance';
 
@@ -247,6 +253,33 @@ class PayoutService
 
         $payout->update(['status' => MarketplacePayout::NEEDS_CHECK, 'failure_reason' => 'Safaricom timed out; check the transfer before sending again.']);
         $this->alertFinance($payout, 'timeout');
+
+        return $payout->fresh();
+    }
+
+    /**
+     * A person re-sends a payout that failed, ran out of retries or was checked after a timeout.
+     */
+    public function retryByAdmin(MarketplacePayout $payout): MarketplacePayout
+    {
+        if (! in_array($payout->status, [MarketplacePayout::FAILED, MarketplacePayout::FAILED_FINAL, MarketplacePayout::NEEDS_CHECK], true)) {
+            throw new \RuntimeException("Payout {$payout->reference} is {$payout->status}; only failed or checked payouts can be re-sent.");
+        }
+        $payout->update(['attempts' => 0, 'next_attempt_at' => null]);
+        $this->send($payout->fresh());
+
+        return $payout->fresh();
+    }
+
+    /**
+     * A person confirmed in the M-Pesa statement that a payout did go out (after a timeout).
+     */
+    public function markPaidByAdmin(MarketplacePayout $payout, string $receipt): MarketplacePayout
+    {
+        if (! in_array($payout->status, [MarketplacePayout::NEEDS_CHECK, MarketplacePayout::PROCESSING, MarketplacePayout::FAILED_FINAL], true)) {
+            throw new \RuntimeException("Payout {$payout->reference} is {$payout->status}; it cannot be marked paid.");
+        }
+        $payout->update(['status' => MarketplacePayout::PAID, 'mpesa_receipt' => $receipt, 'paid_at' => now(), 'failure_reason' => null, 'next_attempt_at' => null]);
 
         return $payout->fresh();
     }
