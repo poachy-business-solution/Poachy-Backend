@@ -195,4 +195,10 @@ class MarketplaceProduct extends Model
             'rating_count' => $newCount,
         ]);
     }
+
+    /** The VAT rate charged on this listing: its tax rate only when the shop charges VAT (item 48). */
+    public function chargedTaxRate(): float
+    {
+        return BusinessDetail::chargesVat($this->tenant_id) ? (float) ($this->tax_rate ?? 0) : 0.0;
+    }
 }

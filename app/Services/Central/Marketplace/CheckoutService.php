@@ -268,7 +268,7 @@ class CheckoutService
         foreach ($items as $item) {
             $product = $item->marketplaceProduct;
             $lineSubtotal = (float) $item->quantity * (float) $item->unit_price;
-            $lineTax = $lineSubtotal * ((float) ($product->tax_rate ?? 0) / 100);
+            $lineTax = $lineSubtotal * ($product->chargedTaxRate() / 100);
             $subtotal += $lineSubtotal;
             $taxAmount += $lineTax;
         }
@@ -374,7 +374,7 @@ class CheckoutService
         foreach ($items as $item) {
             $product = $item->marketplaceProduct;
             $lineSubtotal = (float) $item->quantity * (float) $item->unit_price;
-            $lineTax = $lineSubtotal * ((float) ($product->tax_rate ?? 0) / 100);
+            $lineTax = $lineSubtotal * ($product->chargedTaxRate() / 100);
 
             MarketplaceOrderItem::create([
                 'order_id' => $order->id,
@@ -390,7 +390,7 @@ class CheckoutService
                 'quantity' => $item->quantity,
                 'quantity_in_base_uom' => $item->quantity,
                 'unit_price' => $item->unit_price,
-                'tax_rate' => $product->tax_rate ?? 0,
+                'tax_rate' => $product->chargedTaxRate(),
                 'tax_amount' => round($lineTax, 2),
                 'discount_amount' => 0,
                 'subtotal' => round($lineSubtotal + $lineTax, 2),

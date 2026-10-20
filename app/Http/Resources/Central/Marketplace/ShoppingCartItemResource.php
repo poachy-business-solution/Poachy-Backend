@@ -21,7 +21,7 @@ class ShoppingCartItemResource extends JsonResource
             'current_price' => (float) $this->current_price,
             'price_changed' => $this->isPriceChanged(),
             'line_total' => $this->getLineTotal(),
-            'tax_rate' => (float) ($this->marketplaceProduct?->tax_rate ?? 0),
+            'tax_rate' => $this->marketplaceProduct?->chargedTaxRate() ?? 0.0,
             'tax_amount' => $this->getLineTax(),
             'seller' => $this->when(
                 $this->relationLoaded('marketplaceProduct') && $this->marketplaceProduct,

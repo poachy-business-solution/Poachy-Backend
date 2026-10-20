@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Tenant\Marketplace;
 
+use App\Models\MarketplaceReturnCase;
 use App\Services\Tenant\Marketplace\MarketplaceSummaryService;
 use App\Services\Tenant\Reports\NeedsYouService;
 use Carbon\Carbon;
@@ -81,7 +82,7 @@ class MarketplaceSummaryServiceTest extends TestCase
 
     public function test_returns_to_check_are_an_alert(): void
     {
-        $make = fn (string $ref, string $status) => \App\Models\MarketplaceReturnCase::query()->create([
+        $make = fn (string $ref, string $status) => MarketplaceReturnCase::query()->create([
             'reference' => $ref, 'order_id' => 1, 'tenant_id' => 'test-tenant', 'customer_id' => 1, 'items' => [], 'reason_code' => 'faulty',
             'shop_at_fault' => true, 'requested_amount' => 100, 'status' => $status,
         ]);

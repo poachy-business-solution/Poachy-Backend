@@ -201,6 +201,15 @@ class CheckoutCardPaymentTest extends TestCase
     {
         $this->product->update(['tax_rate' => 16]);
         Sanctum::actingAs($this->user, ['*'], 'central');
+
+        // Item 48: no VAT until the shop switches "Charge VAT" on.
+        $plain = (string) Str::uuid();
+        $this->postJson('/api/v1/central/marketplace/cart/items', ['marketplace_product_id' => $this->product->id, 'quantity' => 2], ['X-Cart-Session-Id' => $plain])
+            ->assertSuccessful()->assertJsonPath('data.tax_rate', 0)->assertJsonPath('data.tax_amount', 0);
+        $this->getJson('/api/v1/central/marketplace/cart', ['X-Cart-Session-Id' => $plain])->assertOk()->assertJsonPath('data.total', 5000);
+        $this->deleteJson('/api/v1/central/marketplace/cart', [], ['X-Cart-Session-Id' => $plain])->assertSuccessful();
+
+        BusinessDetail::on('central')->where('tenant_id', $this->tenantId)->update(['charge_vat' => true]);
         $session = (string) Str::uuid();
         $this->postJson('/api/v1/central/marketplace/cart/items', ['marketplace_product_id' => $this->product->id, 'quantity' => 2], ['X-Cart-Session-Id' => $session])
             ->assertSuccessful()->assertJsonPath('data.tax_rate', 16)->assertJsonPath('data.tax_amount', 800);

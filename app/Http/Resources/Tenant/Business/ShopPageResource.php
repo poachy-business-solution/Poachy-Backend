@@ -35,6 +35,7 @@ class ShopPageResource extends JsonResource
             'return_window_days' => (int) $this->return_window_days,
             'return_policy' => $this->return_policy_label,
             'payout_phone' => $this->payout_phone,
+            'charge_vat' => (bool) $this->charge_vat,
         ];
     }
 }

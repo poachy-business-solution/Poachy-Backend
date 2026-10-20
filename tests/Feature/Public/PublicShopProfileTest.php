@@ -60,6 +60,10 @@ class PublicShopProfileTest extends TestCase
                 $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['payout_phone' => '12345'])->assertUnprocessable()->assertJsonValidationErrors('payout_phone');
                 $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['payout_phone' => '0711 222 333'])->assertOk()->assertJsonPath('data.payout_phone', '254711222333');
                 $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['payout_phone' => ''])->assertOk()->assertJsonPath('data.payout_phone', null);
+                // Item 48: VAT is off until the owner switches it on.
+                $this->getJson($url('/api/v1/tenant/business-details/shop-page'))->assertOk()->assertJsonPath('data.charge_vat', false);
+                $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['charge_vat' => true])->assertOk()->assertJsonPath('data.charge_vat', true);
+                $this->patchJson($url('/api/v1/tenant/business-details/shop-page'), ['charge_vat' => 'maybe'])->assertUnprocessable()->assertJsonValidationErrors('charge_vat');
 
                 // Another shop with the same name gets a numbered link, and nobody can claim this one.
                 $this->assertSame($slug.'-2', BusinessDetail::uniqueSlug($slug));

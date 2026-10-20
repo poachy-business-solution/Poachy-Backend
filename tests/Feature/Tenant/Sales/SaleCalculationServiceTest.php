@@ -119,6 +119,28 @@ class SaleCalculationServiceTest extends TestCase
     // Resolver tax defaults — products created before tax configuration exists
     // =========================================================================
 
+    public function test_vat_is_added_only_when_the_shop_charges_vat(): void
+    {
+        $vat = DB::connection('tenant')->table('tax_rates')->insertGetId(['tax_name' => 'VAT', 'rate' => 16, 'effective_from' => '2026-01-01', 'created_at' => now(), 'updated_at' => now()]);
+        $product = $this->createProduct(['base_selling_price' => 100.0, 'tax_rate_id' => $vat]);
+
+        // Item 48: off by default — the product's 16% is not added.
+        $line = $this->resolveProductItem(storeId: 1, productId: $product->id, quantity: 1.0);
+        $this->assertSame([null, 0], [$line['tax_rate_id'], $line['tax_rate_percentage']]);
+
+        DB::connection('central')->table('tenants')->insertOrIgnore(['id' => 'test-tenant', 'created_at' => now(), 'updated_at' => now()]);
+        DB::connection('central')->table('business_details')->insert(['tenant_id' => 'test-tenant', 'business_name' => 'VAT Duka', 'business_type_id' => 1,
+            'business_category_id' => 1, 'business_phone' => '+254700000001', 'charge_vat' => true, 'created_at' => now(), 'updated_at' => now()]);
+        try {
+            $line = $this->resolveProductItem(storeId: 1, productId: $product->id, quantity: 1.0);
+            $this->assertSame($vat, $line['tax_rate_id']);
+            $this->assertEquals(16, $line['tax_rate_percentage']);
+        } finally {
+            DB::connection('central')->table('business_details')->where('tenant_id', 'test-tenant')->delete();
+            DB::connection('central')->table('tenants')->where('id', 'test-tenant')->delete();
+        }
+    }
+
     public function test_resolve_product_item_treats_missing_tax_rate_as_zero_percent(): void
     {
         $product = $this->createProduct([
@@ -538,6 +560,7 @@ class SaleCalculationServiceTest extends TestCase
             'products',
             'units_of_measure',
             'stores',
+            'tax_rates',
         ] as $table) {
             Schema::connection('tenant')->dropIfExists($table);
         }
@@ -546,6 +569,17 @@ class SaleCalculationServiceTest extends TestCase
     private function createMinimalSchema(): void
     {
         $conn = 'tenant';
+
+        Schema::connection($conn)->create('tax_rates', function (Blueprint $table) {
+            $table->id();
+            $table->string('tax_name', 50);
+            $table->decimal('rate', 5, 2);
+            $table->date('effective_from');
+            $table->date('effective_until')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_default')->default(false);
+            $table->timestamps();
+        });
 
         Schema::connection($conn)->create('stores', function (Blueprint $table) {
             $table->id();

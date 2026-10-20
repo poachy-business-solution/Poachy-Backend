@@ -6,10 +6,13 @@ use App\Enums\Tenant\ExpenseStatus;
 use App\Events\Tenant\ShiftStarted;
 use App\Http\Requests\Tenant\Drawer\RecordCashMovementRequest;
 use App\Models\Tenant\CashMovement;
+use App\Models\Tenant\Expense;
 use App\Models\Tenant\ExpenseCategory;
+use App\Models\Tenant\ShiftAssignment;
 use App\Models\Tenant\User;
 use App\Services\Tenant\Drawer\DrawerService;
 use App\Services\Tenant\Expenses\ExpenseService;
+use App\Services\Tenant\Shift\TillService;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
@@ -153,7 +156,7 @@ class DrawerServiceTest extends TestCase
         Storage::disk('public')->assertExists($expense->receipt_path);
     }
 
-    private function recordExpense(User $user, float $amount, string $paidFrom): \App\Models\Tenant\Expense
+    private function recordExpense(User $user, float $amount, string $paidFrom): Expense
     {
         Auth::setUser($user);
 
@@ -165,9 +168,9 @@ class DrawerServiceTest extends TestCase
     /**
      * A cash sale on the user's (automatically started) till.
      */
-    private function sellCash(User $user, float $amount): \App\Models\Tenant\ShiftAssignment
+    private function sellCash(User $user, float $amount): ShiftAssignment
     {
-        $session = app(\App\Services\Tenant\Shift\TillService::class)->sessionForSale($user->id, 1);
+        $session = app(TillService::class)->sessionForSale($user->id, 1);
         $saleId = DB::connection('tenant')->table('sales')->insertGetId([
             'shift_assignment_id' => $session->id, 'total_amount' => $amount, 'amount_paid' => $amount, 'created_at' => now(), 'updated_at' => now(),
         ]);

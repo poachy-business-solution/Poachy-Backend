@@ -41,6 +41,7 @@ class BusinessDetail extends Model
         'operating_hours',
         'delivery_info',
         'return_window_days',
+        'charge_vat',
         'rating',
         'rating_count',
         'is_verified',
@@ -63,6 +64,7 @@ class BusinessDetail extends Model
         'latitude' => 'float',
         'longitude' => 'float',
         'return_window_days' => 'integer',
+        'charge_vat' => 'boolean',
         'is_verified' => 'boolean',
         'verified_at' => 'datetime',
         'onboarded_at' => 'datetime',
@@ -221,5 +223,19 @@ class BusinessDetail extends Model
         }
 
         return $query;
+    }
+
+    /**
+     * Whether this shop adds VAT on top of its prices (item 48: off unless the shop switches it
+     * on). Used by the till and by marketplace checkout.
+     */
+    public static function chargesVat(?string $tenantId): bool
+    {
+        if ($tenantId === null || $tenantId === '') {
+            return false;
+        }
+
+        // Not cached: queue workers live long and the owner can switch it at any time.
+        return (bool) static::on('central')->where('tenant_id', $tenantId)->value('charge_vat');
     }
 }

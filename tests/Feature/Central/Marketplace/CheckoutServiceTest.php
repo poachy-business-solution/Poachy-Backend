@@ -254,8 +254,8 @@ class CheckoutServiceTest extends TestCase
         $order = $orders->first();
         $this->assertSame(OrderStatus::Pending, $order->order_status);
         $this->assertEquals(1000, (float) $order->subtotal);
-        $this->assertEquals(160, (float) $order->tax_amount);
-        $this->assertEquals(1160, (float) $order->total_amount);
+        $this->assertEquals(0, (float) $order->tax_amount); // no VAT unless the shop charges it (item 48)
+        $this->assertEquals(1000, (float) $order->total_amount);
         $this->assertEquals(0, (float) $order->delivery_fee);
         $this->assertNull($order->delivery);
         $this->assertSame(1, $order->payments()->count());
@@ -370,7 +370,7 @@ class CheckoutServiceTest extends TestCase
     // calculateOrderTotals()
     // =========================================================================
 
-    public function test_calculate_order_totals_sums_subtotal_and_tax(): void
+    public function test_calculate_order_totals_adds_no_vat_unless_the_shop_charges_it(): void
     {
         $cart = $this->createCart();
         $product = $this->createProduct(['online_price' => 250, 'tax_rate' => 16]);
@@ -379,8 +379,8 @@ class CheckoutServiceTest extends TestCase
         $totals = $this->service->calculateOrderTotals(collect([$item]));
 
         $this->assertEquals(750, $totals['subtotal']);
-        $this->assertEquals(120, $totals['tax_amount']);
-        $this->assertEquals(870, $totals['total_amount']);
+        $this->assertEquals(0, $totals['tax_amount']);
+        $this->assertEquals(750, $totals['total_amount']);
     }
 
     // =========================================================================

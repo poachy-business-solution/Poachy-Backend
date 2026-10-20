@@ -69,7 +69,7 @@ class ShoppingCartItem extends Model
      */
     public function getLineTax(): float
     {
-        return round($this->getLineTotal() * ((float) ($this->marketplaceProduct?->tax_rate ?? 0) / 100), 2);
+        return round($this->getLineTotal() * (($this->marketplaceProduct?->chargedTaxRate() ?? 0.0) / 100), 2);
     }
 
     /**

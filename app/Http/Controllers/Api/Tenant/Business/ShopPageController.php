@@ -54,7 +54,8 @@ class ShopPageController extends Controller
      *         @OA\Property(property="latitude", type="number", nullable=true, example=-1.2833),
      *         @OA\Property(property="longitude", type="number", nullable=true, example=36.8167),
      *         @OA\Property(property="return_window_days", type="integer", enum={0,3,7}, example=3),
-     *         @OA\Property(property="payout_phone", type="string", nullable=true, example="0712345678", description="M-Pesa number for marketplace payouts; empty = business phone")
+     *         @OA\Property(property="payout_phone", type="string", nullable=true, example="0712345678", description="M-Pesa number for marketplace payouts; empty = business phone"),
+     *         @OA\Property(property="charge_vat", type="boolean", example=false, description="Add VAT on top of prices at the till and online (off by default)")
      *     )),
      *
      *     @OA\Response(response=200, description="The updated shop page"),

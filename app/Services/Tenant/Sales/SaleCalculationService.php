@@ -3,6 +3,7 @@
 namespace App\Services\Tenant\Sales;
 
 use App\Exceptions\Tenant\PriceOverrideNotAllowedException;
+use App\Models\BusinessDetail;
 use App\Models\MarketplaceReservation;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
@@ -36,6 +37,14 @@ class SaleCalculationService
         protected CouponService $couponService,
         protected LoyaltyService $loyaltyService
     ) {}
+
+    /**
+     * Item 48: VAT is added only when the shop has switched "Charge VAT" on (off by default).
+     */
+    protected function chargesVat(): bool
+    {
+        return BusinessDetail::chargesVat(tenant()?->id === null ? null : (string) tenant()->id);
+    }
 
     /**
      * Calculate complete sale totals
@@ -418,8 +427,8 @@ class SaleCalculationService
             'quantity_in_base_uom' => $quantityInBaseUom,
             'unit_price' => $unitPrice,
             'unit_cost' => $unitCost,
-            'tax_rate_id' => $taxRate?->id,
-            'tax_rate_percentage' => $taxRate?->rate ?? 0,
+            'tax_rate_id' => $this->chargesVat() ? $taxRate?->id : null,
+            'tax_rate_percentage' => $this->chargesVat() ? ($taxRate?->rate ?? 0) : 0,
             'line_total_before_discount' => $quantity * $unitPrice,
             'promotion_discount' => 0,
             'line_total_after_discount' => $quantity * $unitPrice,
@@ -460,8 +469,8 @@ class SaleCalculationService
             'quantity_in_base_uom' => $quantityInBaseUom,
             'unit_price' => $unitPrice,
             'unit_cost' => $unitCost,
-            'tax_rate_id' => $taxRate?->id,
-            'tax_rate_percentage' => $taxRate?->rate ?? 0,
+            'tax_rate_id' => $this->chargesVat() ? $taxRate?->id : null,
+            'tax_rate_percentage' => $this->chargesVat() ? ($taxRate?->rate ?? 0) : 0,
             'line_total_before_discount' => $quantity * $unitPrice,
             'promotion_discount' => 0,
             'line_total_after_discount' => $quantity * $unitPrice,
@@ -502,8 +511,8 @@ class SaleCalculationService
             'quantity_in_base_uom' => $quantity,
             'unit_price' => $unitPrice,
             'unit_cost' => $unitCost,
-            'tax_rate_id' => $taxRate?->id,
-            'tax_rate_percentage' => $taxRate?->rate ?? 0,
+            'tax_rate_id' => $this->chargesVat() ? $taxRate?->id : null,
+            'tax_rate_percentage' => $this->chargesVat() ? ($taxRate?->rate ?? 0) : 0,
             'line_total_before_discount' => $quantity * $unitPrice,
             'promotion_discount' => 0,
             'line_total_after_discount' => $quantity * $unitPrice,

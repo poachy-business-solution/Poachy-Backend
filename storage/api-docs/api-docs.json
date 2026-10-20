@@ -33210,6 +33210,11 @@
                                         "type": "string",
                                         "example": "0712345678",
                                         "nullable": true
+                                    },
+                                    "charge_vat": {
+                                        "description": "Add VAT on top of prices at the till and online (off by default)",
+                                        "type": "boolean",
+                                        "example": false
                                     }
                                 },
                                 "type": "object"
