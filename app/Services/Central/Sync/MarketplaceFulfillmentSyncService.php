@@ -44,6 +44,16 @@ class MarketplaceFulfillmentSyncService
 
         $tenantStatus = TenantFulfillmentStatus::from($dto->fulfillmentStatus);
 
+        // Syncs are processed in parallel: a step can arrive after a later one (staff tapping
+        // Ready then Collected within a second). A late, older step changes nothing.
+        if ($this->isStale($order, $tenantStatus)) {
+            Log::info('Marketplace fulfillment sync: older step arrived late, ignored', [
+                'order_id' => $order->id, 'order_status' => $order->order_status->value, 'fulfillment_status' => $tenantStatus->value,
+            ]);
+
+            return $order;
+        }
+
         $this->applyOrderStatus($order, $tenantStatus);
 
         $order->items()->update(['fulfillment_status' => OrderFulfillmentStatus::from($tenantStatus->value)]);
@@ -87,16 +97,61 @@ class MarketplaceFulfillmentSyncService
             return;
         }
 
-        try {
-            $this->orderService->updateOrderStatus($order, $target);
-        } catch (\RuntimeException $e) {
-            Log::warning('Marketplace fulfillment sync: order status transition rejected, treating as no-op', [
-                'order_id' => $order->id,
-                'from' => $order->order_status->value,
-                'to' => $target->value,
-                'error' => $e->getMessage(),
-            ]);
+        // Walk the forward path one step at a time, so a step that arrives before the one it
+        // follows (e.g. Delivered before Ready) still lands: Processing → Ready → Completed.
+        $path = $this->forwardPath($order);
+        $from = array_search($order->order_status, $path, true);
+        $to = array_search($target, $path, true);
+        $steps = $from !== false && $to !== false && $to > $from ? array_slice($path, $from + 1, $to - $from) : [$target];
+
+        foreach ($steps as $step) {
+            try {
+                $order = $this->orderService->updateOrderStatus($order, $step);
+            } catch (\RuntimeException $e) {
+                Log::warning('Marketplace fulfillment sync: order status transition rejected, treating as no-op', [
+                    'order_id' => $order->id,
+                    'from' => $order->order_status->value,
+                    'to' => $step->value,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return;
+            }
         }
+    }
+
+    /**
+     * The order statuses a paid order moves through, in order.
+     *
+     * @return array<int, OrderStatus>
+     */
+    private function forwardPath(MarketplaceOrder $order): array
+    {
+        return [
+            OrderStatus::Pending,
+            OrderStatus::Confirmed,
+            OrderStatus::Processing,
+            $order->fulfillment_type === FulfillmentType::Pickup ? OrderStatus::ReadyForPickup : OrderStatus::OutForDelivery,
+            OrderStatus::Completed,
+        ];
+    }
+
+    /** True when the order is already past the step this sync reports (it arrived late). */
+    private function isStale(MarketplaceOrder $order, TenantFulfillmentStatus $tenantStatus): bool
+    {
+        if ($tenantStatus === TenantFulfillmentStatus::CANCELLED || $tenantStatus === TenantFulfillmentStatus::PENDING) {
+            return false;
+        }
+        $path = $this->forwardPath($order);
+        $current = array_search($order->order_status, $path, true);
+        $reported = array_search(match ($tenantStatus) {
+            TenantFulfillmentStatus::CONFIRMED => OrderStatus::Confirmed,
+            TenantFulfillmentStatus::PREPARING => OrderStatus::Processing,
+            TenantFulfillmentStatus::READY => $path[3],
+            default => OrderStatus::Completed,
+        }, $path, true);
+
+        return $current !== false && $reported !== false && $reported < $current;
     }
 
     private function applyDeliveryTracking(MarketplaceOrder $order, TenantFulfillmentStatus $tenantStatus, MarketplaceFulfillmentSyncDTO $dto): void

@@ -124,6 +124,20 @@ class MarketplaceFulfillmentReviewIntegrationTest extends TestCase
         return new MerchantReviewService(new MerchantReviewRepository, new ReviewContentChecker);
     }
 
+    public function test_steps_arriving_out_of_order_still_complete_the_order_and_never_move_it_back(): void
+    {
+        $order = $this->createOrder(['order_status' => OrderStatus::Processing]);
+        $sync = $this->makeSyncService();
+
+        // "Collected" processed before "Ready for pickup" (parallel queue workers).
+        $sync->apply($this->makeDto($order, 'delivered'));
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->order_status);
+
+        $sync->apply($this->makeDto($order, 'ready'));
+        $sync->apply($this->makeDto($order, 'preparing'));
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->order_status);
+    }
+
     public function test_review_is_rejected_before_order_reaches_completed_via_sync(): void
     {
         $order = $this->createOrder();
