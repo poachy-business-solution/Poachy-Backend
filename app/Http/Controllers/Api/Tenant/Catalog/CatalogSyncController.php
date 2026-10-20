@@ -71,6 +71,7 @@ class CatalogSyncController extends Controller
      *                     @OA\Property(property="promotions", type="integer", example=2),
      *                     @OA\Property(property="coupons", type="integer", example=4)
      *                 ),
+     *                 @OA\Property(property="charge_vat", type="boolean", example=false, description="Whether offline pricing adds VAT (the shop's Charge VAT setting)"),
      *                 @OA\Property(property="entities", type="object",
      *                     @OA\Property(property="categories", type="array", @OA\Items(type="object",
      *                         @OA\Property(property="id", type="integer", example=1),

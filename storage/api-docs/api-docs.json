@@ -33366,6 +33366,11 @@
                                                     },
                                                     "type": "object"
                                                 },
+                                                "charge_vat": {
+                                                    "description": "Whether offline pricing adds VAT (the shop's Charge VAT setting)",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
                                                 "entities": {
                                                     "properties": {
                                                         "categories": {

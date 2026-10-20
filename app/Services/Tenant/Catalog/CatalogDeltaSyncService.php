@@ -2,6 +2,7 @@
 
 namespace App\Services\Tenant\Catalog;
 
+use App\Models\BusinessDetail;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\Customer;
 use App\Models\Tenant\Product;
@@ -61,6 +62,8 @@ class CatalogDeltaSyncService
             'include_deleted' => $includeDeleted,
             'entity_counts' => $entityCounts,
             'entities' => $entities,
+            // Item 48: offline pricing adds VAT only when the shop charges it.
+            'charge_vat' => BusinessDetail::chargesVat((string) tenant()?->id),
         ];
     }
 
