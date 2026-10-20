@@ -85,10 +85,12 @@ Checks (sandbox first, small amounts in production):
 4. Refund: cancel a paid order → reversal / B2C result marks the refund completed.
 Watch `storage/logs/mpesa.log` and the admin's Payouts / Refunds monitors.
 
-Payout settings (confirm with finance): `PAYOUT_HOLD_HOURS` (24), `PAYOUT_MIN_AMOUNT` (10),
-`PAYOUT_FEE_MPESA_PERCENT` (0.55), `PAYOUT_FEE_CARD_PERCENT` (2.9), `PAYOUT_TRANSFER_FEE` (0) —
-**the fee defaults are placeholders: set them to the real Daraja/Paystack tariffs**.
-`PAYOUT_ALERT_EMAIL` gets failed-payout alerts.
+Payout fees, hold, minimum payout and the marketplace commission are set by finance in the
+admin (**Marketplace → Payout fees** and **Commission**), from a date on. The launch values
+(M-Pesa 0.55%, card 2.9%, KSh 0 per transfer, 24 h hold, KSh 10 minimum, 0% commission) are
+placeholders: schedule the real Daraja / Paystack tariffs there before going live. The
+`PAYOUT_*` env variables are only the fallback when no setting exists. `PAYOUT_ALERT_EMAIL`
+gets failed-payout alerts.
 
 ## 5. Paystack (fake → test → live)
 
@@ -105,7 +107,13 @@ secret key; every webhook is re-verified with Paystack before an order is marked
 
 Checks: card checkout with a Paystack test card → order paid; cancel → card refund processed.
 
-## 6. Production-only settings (not providers, but needed live)
+## 6. VAT
+
+No VAT is added by default. A VAT-registered shop switches **Charge VAT** on (app → More → Shop
+settings, or web → Business → Shop page); from then on its till and online orders add each
+product's VAT rate on top of the price.
+
+## 7. Production-only settings (not providers, but needed live)
 
 | Variable | Where | Value |
 | --- | --- | --- |
