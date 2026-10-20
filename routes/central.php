@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Central\Payouts\PayoutCallbackController;
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
@@ -114,6 +115,10 @@ Route::prefix('v1/central')->group(function () {
         Route::post('/stk/callback', [MpesaC2BController::class, 'stkCallback']);
         Route::post('/stk/subscription/callback', [MpesaC2BController::class, 'stkSubscriptionCallback']);
         Route::post('/stk/billing/callback', [MpesaC2BController::class, 'stkBillingCallback']);
+
+        // Marketplace payout (B2C) results; the last segment is a secret derived from the app key.
+        Route::post('/b2c/payout/result/{token}', [PayoutCallbackController::class, 'result'])->middleware('throttle:60,1');
+        Route::post('/b2c/payout/timeout/{token}', [PayoutCallbackController::class, 'timeout'])->middleware('throttle:60,1');
     });
 
     // Marketplace routes

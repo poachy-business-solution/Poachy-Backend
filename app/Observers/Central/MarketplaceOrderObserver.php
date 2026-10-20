@@ -2,8 +2,10 @@
 
 namespace App\Observers\Central;
 
+use App\Enums\Central\OrderStatus;
 use App\Jobs\Central\UpdateTenantOrderMetricsJob;
 use App\Models\MarketplaceOrder;
+use App\Services\Central\Payouts\PayoutLedgerService;
 use Illuminate\Support\Facades\Log;
 
 class MarketplaceOrderObserver
@@ -24,6 +26,11 @@ class MarketplaceOrderObserver
         // Only recalculate metrics if order_status changed
         if ($order->wasChanged('order_status')) {
             $this->dispatchMetricsJob($order);
+
+            // Handover (collected or delivered): the shop has earned this order's payout.
+            if ($order->order_status === OrderStatus::Completed) {
+                app(PayoutLedgerService::class)->recordHandover($order);
+            }
         }
 
         Log::info('MarketplaceOrder updated', [

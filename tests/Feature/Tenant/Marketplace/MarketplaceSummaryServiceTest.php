@@ -55,8 +55,9 @@ class MarketplaceSummaryServiceTest extends TestCase
         $this->assertSame(['to_prepare' => 2, 'preparing' => 1, 'ready' => 1, 'overdue' => 1, 'delivered_7d' => 1], $summary['orders']);
         $this->assertSame(['count' => 2, 'amount' => 800.0], $summary['sales']['today']);
         $this->assertSame(['count' => 5, 'amount' => 2700.0], $summary['sales']['last_7_days']);
-        $this->assertSame(2700.0, $summary['earnings']['gross_30d']);
-        $this->assertFalse($summary['earnings']['payouts_enabled']);
+        // Earnings come from the payout ledger (handovers), not from sales: none handed over here.
+        $this->assertSame(0.0, $summary['earnings']['gross_30d']);
+        $this->assertTrue($summary['earnings']['payouts_enabled']);
 
         $alerts = collect($summary['needs_you'])->keyBy('type');
         $this->assertSame('1 online order not handed over', $alerts['online_overdue']['title']);

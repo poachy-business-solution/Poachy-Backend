@@ -45,6 +45,21 @@ Schedule::command('billing:report-sale-days')
     ->onOneServer()
     ->description('Report branch trading days to central');
 
+// Marketplace: pay shops for orders handed over 24 h+ ago (one B2C per shop) at 02:00 Nairobi;
+// hourly for failed payouts whose retry is due.
+Schedule::command('marketplace:payouts')
+    ->dailyAt('02:00')
+    ->timezone('Africa/Nairobi')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Nightly marketplace payouts');
+
+Schedule::command('marketplace:payouts --retries-only')
+    ->hourlyAt(20)
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Re-send failed marketplace payouts that are due');
+
 // Billing: charge yesterday's (and any late-reported) trading days at 01:00 Nairobi.
 Schedule::command('billing:run')
     ->dailyAt('01:00')

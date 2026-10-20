@@ -28,6 +28,7 @@ class BusinessDetail extends Model
         'business_category_id',
         'business_email',
         'business_phone',
+        'payout_phone',
         'whatsapp_number',
         'contact_person',
         'address',

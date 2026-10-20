@@ -16,7 +16,7 @@ class MarketplaceSummaryController extends Controller
      * @OA\Get(
      *     path="/api/v1/tenant/marketplace/summary",
      *     summary="Marketplace tab: online orders, sales, reservations, earnings and alerts",
-     *     description="Owners and managers (view-marketplace-sales). Counts of online orders by step (to prepare, preparing, ready, overdue = not handed over 24 h after payment, delivered in 7 days), paid online sales today / 7 / 30 days, open reservations, earnings (fees, clawbacks and payouts are 0 until payouts are switched on) and the Needs-you alerts (online_overdue, online_orders, reservations_arriving).",
+     *     description="Owners and managers (view-marketplace-sales). Counts of online orders by step (to prepare, preparing, ready, overdue = not handed over 24 h after payment, delivered in 7 days), paid online sales today / 7 / 30 days, open reservations, earnings from the payout ledger for the last 30 days (sold = handed over, fees, commission, clawbacks, net, paid out) plus held / available balances and the Needs-you alerts (online_overdue, online_orders, reservations_arriving).",
      *     operationId="tenantMarketplaceSummary",
      *     tags={"Tenant - Marketplace"},
      *     security={{"sanctum": {}}},
@@ -35,7 +35,8 @@ class MarketplaceSummaryController extends Controller
      *             @OA\Property(property="earnings", type="object",
      *                 @OA\Property(property="gross_30d", type="number"), @OA\Property(property="fees_30d", type="number"),
      *                 @OA\Property(property="clawbacks_30d", type="number"), @OA\Property(property="net_30d", type="number"),
-     *                 @OA\Property(property="paid_out_30d", type="number"), @OA\Property(property="payouts_enabled", type="boolean")),
+     *                 @OA\Property(property="paid_out_30d", type="number"), @OA\Property(property="commission_30d", type="number"),
+     *                 @OA\Property(property="held", type="number"), @OA\Property(property="available", type="number"), @OA\Property(property="payouts_enabled", type="boolean")),
      *             @OA\Property(property="needs_you", type="array", @OA\Items(type="object",
      *                 @OA\Property(property="type", type="string", example="online_orders"), @OA\Property(property="title", type="string"),
      *                 @OA\Property(property="subtitle", type="string"), @OA\Property(property="count", type="integer")))

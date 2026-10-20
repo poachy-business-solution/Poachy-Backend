@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\StockAlertController;
 use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Marketplace\MarketplaceSummaryController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ReservationController;
+use App\Http\Controllers\Api\Tenant\Marketplace\ShopPayoutController;
 use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
@@ -754,6 +755,10 @@ Route::prefix('v1/tenant')
         // The app's Marketplace tab (owners/managers)
         Route::get('marketplace/summary', [MarketplaceSummaryController::class, 'show'])
             ->middleware(['permission:view-marketplace-sales,tenant']);
+        Route::prefix('marketplace/payouts')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
+            Route::get('/', [ShopPayoutController::class, 'index']);
+            Route::get('/{id}', [ShopPayoutController::class, 'show'])->whereNumber('id');
+        });
 
         // Marketplace Sales — fulfillment tracking for orders synced from central
         Route::prefix('marketplace-sales')->middleware(['permission:view-marketplace-sales,tenant'])->group(function () {

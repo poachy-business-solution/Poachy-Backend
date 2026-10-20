@@ -6,6 +6,7 @@ use App\Enums\Tenant\MarketplaceFulfillmentStatus;
 use App\Enums\Tenant\PaymentStatus;
 use App\Models\MarketplaceReservation;
 use App\Models\Tenant\MarketplaceSale;
+use App\Services\Central\Payouts\PayoutStatementService;
 use App\Services\Tenant\Shift\TillService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +24,7 @@ class MarketplaceSummaryService
      *     orders: array{to_prepare: int, preparing: int, ready: int, overdue: int, delivered_7d: int},
      *     sales: array{today: array{count: int, amount: float}, last_7_days: array{count: int, amount: float}, last_30_days: array{count: int, amount: float}},
      *     reservations: array{open: int, expiring_today: int},
-     *     earnings: array{gross_30d: float, fees_30d: float, clawbacks_30d: float, net_30d: float, paid_out_30d: float, payouts_enabled: bool},
+     *     earnings: array{gross_30d: float, fees_30d: float, commission_30d: float, clawbacks_30d: float, net_30d: float, paid_out_30d: float, held: float, available: float, payouts_enabled: bool},
      *     needs_you: array<int, array{type: string, title: string, subtitle: string, count: int, amount: float|null, ids: array<int, int>}>
      * }
      */
@@ -64,16 +65,8 @@ class MarketplaceSummaryService
                 'open' => (clone $openReservations)->count(),
                 'expiring_today' => (clone $openReservations)->where('expires_at', '<', $todayStart->addDay())->count(),
             ],
-            // Fees, payouts and clawbacks come from the payout records (item 37); until then the
-            // shop sees what it sold and that nothing has been paid out yet.
-            'earnings' => [
-                'gross_30d' => $last30['amount'],
-                'fees_30d' => 0.0,
-                'clawbacks_30d' => 0.0,
-                'net_30d' => $last30['amount'],
-                'paid_out_30d' => 0.0,
-                'payouts_enabled' => false,
-            ],
+            // From the payout ledger: what was handed over, fees, clawbacks, paid out, still to come.
+            'earnings' => app(PayoutStatementService::class)->earnings($tenantId),
             'needs_you' => $this->needsYou($storeId),
         ];
     }
