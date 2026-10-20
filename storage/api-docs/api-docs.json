@@ -2914,9 +2914,15 @@
                                     "email",
                                     "password",
                                     "password_confirmation",
-                                    "phone"
+                                    "phone",
+                                    "turnstile_token"
                                 ],
                                 "properties": {
+                                    "turnstile_token": {
+                                        "description": "Cloudflare Turnstile token from the sign-up page (bot protection)",
+                                        "type": "string",
+                                        "maxLength": 2048
+                                    },
                                     "name": {
                                         "description": "Full name of the customer",
                                         "type": "string",

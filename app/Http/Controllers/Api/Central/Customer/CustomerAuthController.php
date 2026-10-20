@@ -37,8 +37,9 @@ class CustomerAuthController extends Controller
      *         description="Customer registration data",
      *
      *         @OA\JsonContent(
-     *             required={"name", "email", "password", "password_confirmation", "phone"},
+     *             required={"name", "email", "password", "password_confirmation", "phone", "turnstile_token"},
      *
+     *             @OA\Property(property="turnstile_token", type="string", description="Cloudflare Turnstile token from the sign-up page (bot protection)", maxLength=2048),
      *             @OA\Property(
      *                 property="name",
      *                 type="string",
@@ -187,7 +188,7 @@ class CustomerAuthController extends Controller
      */
     public function register(RegisterCustomerRequest $request): JsonResponse
     {
-        $customer = $this->authService->register($request->validated());
+        $customer = $this->authService->register($request->safe()->except('turnstile_token'));
 
         return ApiResponse::created(
             'Registration successful.',

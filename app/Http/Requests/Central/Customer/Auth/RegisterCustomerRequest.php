@@ -5,6 +5,7 @@ namespace App\Http\Requests\Central\Customer\Auth;
 use App\Enums\Central\Gender;
 use App\Helpers\PhoneNumberNormalizer;
 use App\Models\MarketplaceCustomer;
+use App\Services\Shared\Turnstile\TurnstileVerifier;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -26,6 +27,8 @@ class RegisterCustomerRequest extends FormRequest
             'gender' => ['nullable', 'string', 'in:'.implode(',', Gender::values())],
             'accepts_marketing' => ['nullable', 'boolean'],
             'accepts_sms' => ['nullable', 'boolean'],
+            // Bot protection (Cloudflare Turnstile); the web sign-up page sends the widget's token.
+            'turnstile_token' => ['required', 'string', 'max:2048'],
         ];
     }
 
@@ -42,6 +45,12 @@ class RegisterCustomerRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            if (! app(TurnstileVerifier::class)->passes((string) $this->input('turnstile_token'), $this->ip())) {
+                $validator->errors()->add('turnstile_token', 'Please confirm you are not a robot and try again.');
+
+                return;
+            }
+
             $phone = $this->input('phone');
 
             if ($phone && ! MarketplaceCustomer::on('central')
