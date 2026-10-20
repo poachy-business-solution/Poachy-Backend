@@ -79,6 +79,25 @@ class MarketplaceSummaryServiceTest extends TestCase
         $this->assertSame(['online_orders', 'customers_owe'], $types);
     }
 
+    public function test_returns_to_check_are_an_alert(): void
+    {
+        $make = fn (string $ref, string $status) => \App\Models\MarketplaceReturnCase::query()->create([
+            'reference' => $ref, 'order_id' => 1, 'tenant_id' => 'test-tenant', 'customer_id' => 1, 'items' => [], 'reason_code' => 'faulty',
+            'shop_at_fault' => true, 'requested_amount' => 100, 'status' => $status,
+        ]);
+        $a = $make('RET-'.strtoupper(substr(uniqid(), -6)), 'received');
+        $b = $make('RET-'.strtoupper(substr(uniqid(), -6)), 'requested');
+
+        try {
+            $alert = collect(app(MarketplaceSummaryService::class)->needsYou(1))->firstWhere('type', 'returns_to_check');
+            $this->assertSame('1 return to check within 48 hours', $alert['title']);
+            $this->assertStringEndsWith('· 1 coming back', $alert['subtitle']);
+        } finally {
+            $a->delete();
+            $b->delete();
+        }
+    }
+
     public function test_a_quiet_marketplace_has_no_alerts(): void
     {
         $this->online('MKT-5', 'delivered', '2026-10-05 10:00:00', 700);

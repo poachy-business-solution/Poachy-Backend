@@ -5,6 +5,7 @@ namespace App\Services\Tenant\Marketplace;
 use App\Enums\Tenant\MarketplaceFulfillmentStatus;
 use App\Enums\Tenant\PaymentStatus;
 use App\Models\MarketplaceReservation;
+use App\Models\MarketplaceReturnCase;
 use App\Models\Tenant\MarketplaceSale;
 use App\Services\Central\Payouts\PayoutStatementService;
 use App\Services\Tenant\Shift\TillService;
@@ -81,6 +82,7 @@ class MarketplaceSummaryService
         return array_values(array_filter([
             $this->overdueItem($storeId),
             $this->newOrdersItem($storeId),
+            $this->returnsItem(),
             $this->reservationsItem(),
         ]));
     }
@@ -135,6 +137,37 @@ class MarketplaceSummaryService
             'count' => $new->count(),
             'amount' => round((float) $new->sum('total_amount'), 2),
             'ids' => $new->pluck('id')->all(),
+        ];
+    }
+
+    /**
+     * Returns the shop has to receive or check (the 48 h inspection clock runs once received).
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function returnsItem(): ?array
+    {
+        $tenantId = tenant()?->id;
+        if ($tenantId === null) {
+            return null;
+        }
+        $cases = MarketplaceReturnCase::query()->where('tenant_id', (string) $tenantId)
+            ->whereIn('status', [MarketplaceReturnCase::REQUESTED, MarketplaceReturnCase::RECEIVED])->get(['id', 'reference', 'status']);
+        if ($cases->isEmpty()) {
+            return null;
+        }
+        $toCheck = $cases->where('status', MarketplaceReturnCase::RECEIVED)->count();
+        $coming = $cases->count() - $toCheck;
+
+        return [
+            'type' => 'returns_to_check',
+            'title' => $toCheck > 0
+                ? $toCheck.' '.($toCheck === 1 ? 'return' : 'returns').' to check within 48 hours'
+                : $coming.' '.($coming === 1 ? 'return' : 'returns').' coming back',
+            'subtitle' => $cases->take(2)->pluck('reference')->join(', ').($toCheck > 0 && $coming > 0 ? " · {$coming} coming back" : ''),
+            'count' => $cases->count(),
+            'amount' => null,
+            'ids' => $cases->pluck('id')->all(),
         ];
     }
 
