@@ -20,7 +20,7 @@ class ProductReviewResource extends JsonResource
             'status' => $this->status->value,
             'helpful_count' => $this->helpful_count,
             'not_helpful_count' => $this->not_helpful_count,
-            'merchant_name' => BusinessHelper::getBusinessName($this->order->tenant_id),
+            'merchant_name' => BusinessHelper::getBusinessName($this->order?->tenant_id ?? $this->product?->tenant_id),
             'merchant_response' => $this->merchant_response,
             'merchant_responded_at' => $this->merchant_responded_at?->toISOString(),
 

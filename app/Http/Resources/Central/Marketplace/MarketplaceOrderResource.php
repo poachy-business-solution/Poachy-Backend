@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Central\Marketplace;
 
 use App\Helpers\BusinessHelper;
+use App\Services\Central\Marketplace\ReviewEligibility;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,6 +30,7 @@ class MarketplaceOrderResource extends JsonResource
             'payment_deadline_at' => $this->payment_deadline_at?->toIso8601String(),
             'can_be_cancelled' => $this->canBeCancelled(),
             'can_accept_payment' => $this->canAcceptPayment(),
+            'review' => ReviewEligibility::forOrder($this->resource),
             'items' => MarketplaceOrderItemResource::collection(
                 $this->whenLoaded('items')
             ),

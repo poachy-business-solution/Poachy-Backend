@@ -15,7 +15,8 @@ class StoreProductReviewRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['nullable', 'integer', 'exists:central.marketplace_orders,id'],
+            'order_id' => ['required_without:reservation_code', 'nullable', 'integer', 'exists:central.marketplace_orders,id'],
+            'reservation_code' => ['required_without:order_id', 'nullable', 'string', 'regex:/^PCH-[A-Za-z0-9]{4,5}$/i'],
             'rating' => ['required', 'numeric', new ValidRatingIncrement],
             'title' => ['nullable', 'string', 'max:150'],
             'review_text' => ['required', 'string', 'min:10', 'max:2000'],
@@ -27,6 +28,8 @@ class StoreProductReviewRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'order_id.required_without' => 'Only buyers who received this product can review it.',
+            'reservation_code.required_without' => 'Only buyers who received this product can review it.',
             'rating.required' => 'A rating is required.',
             'review_text.required' => 'Review text is required.',
             'review_text.min' => 'Review text must be at least 10 characters.',

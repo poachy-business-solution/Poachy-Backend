@@ -3,6 +3,7 @@
 namespace App\Services\Central\Marketplace;
 
 use App\Enums\Central\OrderStatus;
+use App\Enums\Central\ReviewStatus;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
 use App\Models\MerchantReview;
@@ -33,14 +34,34 @@ class MerchantReviewService
         $reviewText = $data['review_text'];
         $initialStatus = $this->contentChecker->determineInitialStatus($reviewText);
 
-        return DB::connection('central')->transaction(function () use ($customer, $order, $data, $initialStatus) {
+        return $this->create($customer, $order->tenant_id, $order->id, null, $data, $initialStatus);
+    }
+
+    /** A shop review from a reserve & collect code redeemed at the counter. */
+    public function storeReviewForReservation(MarketplaceCustomer $customer, string $code, array $data): MerchantReview
+    {
+        $this->enforceRateLimit($customer->id);
+        $reservation = ProductReviewService::redeemedReservation($customer, $code);
+
+        if (MerchantReview::query()->where('reservation_id', $reservation->id)->exists()) {
+            throw new \InvalidArgumentException('A merchant review has already been submitted for this reservation.');
+        }
+
+        return $this->create($customer, $reservation->tenant_id, null, $reservation->id, $data, $this->contentChecker->determineInitialStatus($data['review_text']));
+    }
+
+    /** @param array<string, mixed> $data */
+    private function create(MarketplaceCustomer $customer, string $tenantId, ?int $orderId, ?int $reservationId, array $data, ReviewStatus $initialStatus): MerchantReview
+    {
+        return DB::connection('central')->transaction(function () use ($customer, $tenantId, $orderId, $reservationId, $data, $initialStatus) {
             return MerchantReview::create([
-                'tenant_id' => $order->tenant_id,
+                'tenant_id' => $tenantId,
                 'customer_id' => $customer->id,
-                'order_id' => $order->id,
+                'order_id' => $orderId,
+                'reservation_id' => $reservationId,
                 'overall_rating' => $data['overall_rating'],
-                'product_quality_rating' => $data['product_quality_rating'],
-                'delivery_rating' => $data['delivery_rating'],
+                'product_quality_rating' => $data['product_quality_rating'] ?? null,
+                'delivery_rating' => $data['delivery_rating'] ?? null,
                 'service_rating' => $data['service_rating'] ?? null,
                 'review_text' => $data['review_text'],
                 'status' => $initialStatus,

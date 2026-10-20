@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\Central\Sync\SyncController;
 use App\Http\Controllers\Api\Public\PayLinkController;
 use App\Http\Controllers\Api\Public\PublicAssetController;
 use App\Http\Controllers\Api\Public\PublicMarketController;
+use App\Http\Controllers\Api\Public\PublicReviewController;
 use App\Http\Controllers\Api\Public\PublicShopController;
 use App\Http\Controllers\Api\Public\SignupController;
 use Illuminate\Support\Facades\Route;
@@ -79,12 +80,15 @@ Route::prefix('v1/public')->group(function () {
         Route::get('/products/{slug}', [PublicMarketController::class, 'product'])->where('slug', '[a-z0-9-]{1,255}');
         // A buyer followed a Sponsored link (counted per advert).
         Route::post('/adverts/{id}/click', [PublicMarketController::class, 'advertClick'])->whereNumber('id');
+        Route::get('/products/{slug}/reviews', [PublicReviewController::class, 'product'])->where('slug', '[a-z0-9-]{1,255}');
     });
 
     // Shop pages (poachy.com/s/{slug}); only verified, active shops answer.
     Route::get('/shops/{slug}', [PublicShopController::class, 'show'])
         ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');
     Route::get('/shops/{slug}/products', [PublicShopController::class, 'products'])
+        ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');
+    Route::get('/shops/{slug}/reviews', [PublicReviewController::class, 'shop'])
         ->where('slug', '[a-z0-9-]{3,60}')->middleware('throttle:public-read');
 
     Route::prefix('pay/{token}')->where(['token' => '[A-Za-z0-9]{20,64}'])->group(function () {
@@ -282,6 +286,7 @@ Route::prefix('v1/central')
 
             // Merchant Reviews
             Route::post('/orders/{orderId}/merchant-review', [MerchantReviewController::class, 'store']);
+            Route::post('/reservations/{code}/merchant-review', [MerchantReviewController::class, 'storeForReservation'])->where('code', 'PCH-[A-Za-z0-9]{4,5}');
 
             // Review Votes
             Route::post('/reviews/{reviewType}/{id}/vote', [ReviewVoteController::class, 'store']);

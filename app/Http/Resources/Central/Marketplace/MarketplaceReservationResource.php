@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Central\Marketplace;
 
 use App\Models\MarketplaceReservation;
+use App\Services\Central\Marketplace\ReviewEligibility;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -45,6 +46,7 @@ class MarketplaceReservationResource extends JsonResource
             'redeemed_at' => $this->redeemed_at?->toIso8601String(),
             'failed_reason' => $this->failed_reason,
             'can_cancel' => $this->status->isOpen(),
+            'review' => ReviewEligibility::forReservation($this->resource),
             'created_at' => $this->created_at->toIso8601String(),
         ];
     }

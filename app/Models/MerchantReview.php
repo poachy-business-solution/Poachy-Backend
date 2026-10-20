@@ -24,6 +24,7 @@ class MerchantReview extends Model
         'tenant_id',
         'customer_id',
         'order_id',
+        'reservation_id',
         'overall_rating',
         'product_quality_rating',
         'delivery_rating',

@@ -24,6 +24,7 @@ class ProductReview extends Model
         'marketplace_product_id',
         'customer_id',
         'order_id',
+        'reservation_id',
         'rating',
         'title',
         'review_text',

@@ -162,16 +162,15 @@ class ProductReviewServiceTest extends TestCase
     // storeReview()
     // =========================================================================
 
-    public function test_store_review_without_order_creates_unverified_pending_review(): void
+    public function test_store_review_without_an_order_or_reservation_is_refused(): void
     {
-        $review = $this->makeService()->storeReview($this->customer, $this->product->id, [
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only buyers who received this product can review it.');
+
+        $this->makeService()->storeReview($this->customer, $this->product->id, [
             'rating' => 5,
             'review_text' => 'Great product, works as expected.',
         ]);
-
-        $this->assertFalse($review->is_verified_purchase);
-        $this->assertSame(ReviewStatus::Pending, $review->status);
-        $this->assertNull($review->order_id);
     }
 
     public function test_store_review_with_valid_order_marks_verified_purchase(): void
@@ -269,7 +268,7 @@ class ProductReviewServiceTest extends TestCase
     public function test_store_review_flags_content_with_urls(): void
     {
         $review = $this->makeService()->storeReview($this->customer, $this->product->id, [
-            'rating' => 5, 'review_text' => 'Visit https://spam.example.com for a discount!',
+            'order_id' => $this->createCompletedOrderWithProduct()->id, 'rating' => 5, 'review_text' => 'Visit https://spam.example.com for a discount!',
         ]);
 
         $this->assertSame(ReviewStatus::Flagged, $review->status);
@@ -278,7 +277,7 @@ class ProductReviewServiceTest extends TestCase
     public function test_store_review_stores_uploaded_images(): void
     {
         $review = $this->makeService()->storeReview($this->customer, $this->product->id, [
-            'rating' => 5, 'review_text' => 'Photos attached of the product.',
+            'order_id' => $this->createCompletedOrderWithProduct()->id, 'rating' => 5, 'review_text' => 'Photos attached of the product.',
         ], [UploadedFile::fake()->image('review1.jpg')]);
 
         $this->assertCount(1, $review->review_images);

@@ -13883,6 +13883,69 @@
                 ]
             }
         },
+        "/api/v1/central/marketplace/reservations/{code}/merchant-review": {
+            "post": {
+                "tags": [
+                    "Central - Merchant Reviews"
+                ],
+                "summary": "Review the shop after collecting a reserve & collect code",
+                "operationId": "storeReservationMerchantReview",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PCH-7KQ2"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "overall_rating",
+                                    "review_text"
+                                ],
+                                "properties": {
+                                    "overall_rating": {
+                                        "type": "number",
+                                        "example": 4.5
+                                    },
+                                    "service_rating": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "review_text": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Submitted, pending moderation"
+                    },
+                    "422": {
+                        "description": "Not the buyer's reservation, not collected yet, older than 30 days, or already reviewed"
+                    },
+                    "429": {
+                        "description": "Too many reviews"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/central/marketplace/products/{id}/reviews": {
             "get": {
                 "tags": [
@@ -23398,6 +23461,74 @@
                 "responses": {
                     "204": {
                         "description": "Counted (or ignored for an advert that is not running)"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/market/products/{slug}/reviews": {
+            "get": {
+                "tags": [
+                    "Public - Market"
+                ],
+                "summary": "Approved reviews of a product (every verified shop's listing of the same item)",
+                "operationId": "publicMarketProductReviews",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "summary{average,count,stars{1..5}}, reviews[] (rating, title, text, name, verified, shop, shop_response, created_at) + pagination"
+                    },
+                    "404": {
+                        "description": "No such product"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/shops/{slug}/reviews": {
+            "get": {
+                "tags": [
+                    "Public - Shops"
+                ],
+                "summary": "Approved reviews of a shop",
+                "operationId": "publicShopReviews",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "summary{average,count,stars{1..5}}, reviews[] (rating, text, name, verified, shop_response, created_at) + pagination"
+                    },
+                    "404": {
+                        "description": "No such listed shop"
                     }
                 }
             }
@@ -138897,6 +139028,10 @@
         {
             "name": "Central - Marketplace - Returns",
             "description": "Central - Marketplace - Returns"
+        },
+        {
+            "name": "Central - Merchant Reviews",
+            "description": "Central - Merchant Reviews"
         },
         {
             "name": "Central - Marketplace - Payouts",

@@ -2,10 +2,12 @@
 
 namespace App\Services\Central\Marketplace;
 
+use App\Enums\Central\MarketplaceReservationStatus;
 use App\Enums\Central\OrderStatus;
 use App\Enums\Central\ReviewStatus;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
+use App\Models\MarketplaceReservation;
 use App\Models\ProductReview;
 use App\Repositories\Central\ProductReviewRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -25,29 +27,38 @@ class ProductReviewService
         $this->enforceRateLimit($customer->id);
 
         $orderId = $data['order_id'] ?? null;
-        $isVerifiedPurchase = false;
+        $reservationId = null;
 
+        // Only verified buyers review: a completed order, or a reserve & collect code redeemed at the counter.
         if ($orderId) {
-            $order = $this->resolveAndValidateOrder($customer, $orderId, $productId);
-            $isVerifiedPurchase = true;
+            $this->resolveAndValidateOrder($customer, (int) $orderId, $productId);
+        } elseif (! empty($data['reservation_code'])) {
+            $reservationId = self::redeemedReservation($customer, (string) $data['reservation_code'], $productId)->id;
+        } else {
+            throw new \InvalidArgumentException('Only buyers who received this product can review it.');
         }
 
-        if ($this->repository->existsForCustomerProductOrder($customer->id, $productId, $orderId)) {
+        $exists = $reservationId !== null
+            ? ProductReview::query()->where('customer_id', $customer->id)->where('marketplace_product_id', $productId)->where('reservation_id', $reservationId)->exists()
+            : $this->repository->existsForCustomerProductOrder($customer->id, $productId, (int) $orderId);
+        if ($exists) {
             throw new \InvalidArgumentException(
                 'You have already submitted a review for this product on this order.'
             );
         }
+        $isVerifiedPurchase = true;
 
         $reviewText = $data['review_text'];
         $initialStatus = $this->contentChecker->determineInitialStatus($reviewText);
 
         $imagePaths = $this->uploadImages($imageFiles, $productId);
 
-        return DB::connection('central')->transaction(function () use ($customer, $productId, $orderId, $data, $isVerifiedPurchase, $initialStatus, $imagePaths) {
+        return DB::connection('central')->transaction(function () use ($customer, $productId, $orderId, $reservationId, $data, $isVerifiedPurchase, $initialStatus, $imagePaths) {
             return ProductReview::create([
                 'marketplace_product_id' => $productId,
                 'customer_id' => $customer->id,
                 'order_id' => $orderId,
+                'reservation_id' => $reservationId,
                 'rating' => $data['rating'],
                 'title' => $data['title'] ?? null,
                 'review_text' => $data['review_text'],
@@ -140,6 +151,30 @@ class ProductReviewService
     /**
      * Validates that the order is eligible for a verified product review.
      */
+    /**
+     * The buyer's reservation, collected at the counter within the last 30 days (and, when given,
+     * for this product).
+     */
+    public static function redeemedReservation(MarketplaceCustomer $customer, string $code, ?int $productId = null): MarketplaceReservation
+    {
+        $reservation = MarketplaceReservation::query()->where('code', strtoupper($code))->where('customer_id', $customer->id)->first();
+
+        if (! $reservation) {
+            throw new \InvalidArgumentException('The specified reservation does not belong to your account.');
+        }
+        if ($reservation->status !== MarketplaceReservationStatus::Redeemed) {
+            throw new \InvalidArgumentException('Reviews can only be submitted once you have collected the reservation.');
+        }
+        if ($productId !== null && (int) $reservation->marketplace_product_id !== $productId) {
+            throw new \InvalidArgumentException('This product was not part of the specified reservation.');
+        }
+        if (($reservation->redeemed_at ?? $reservation->updated_at)->diffInDays(now()) > 30) {
+            throw new \RuntimeException('The 30-day review window for this reservation has expired.', 422);
+        }
+
+        return $reservation;
+    }
+
     protected function resolveAndValidateOrder(MarketplaceCustomer $customer, int $orderId, int $productId): MarketplaceOrder
     {
         $order = MarketplaceOrder::on('central')

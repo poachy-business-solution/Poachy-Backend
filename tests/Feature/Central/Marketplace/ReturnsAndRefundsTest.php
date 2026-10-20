@@ -14,6 +14,7 @@ use App\Models\MarketplaceRefund;
 use App\Models\MarketplaceReturnCase;
 use App\Models\MessageLog;
 use App\Models\User;
+use App\Services\Central\Payouts\PayoutLedgerService;
 use App\Services\Central\Payouts\PayoutService;
 use App\Services\Central\Refunds\RefundService;
 use App\Services\Central\Refunds\ReturnCaseService;
@@ -337,7 +338,7 @@ class ReturnsAndRefundsTest extends TestCase
         BillingAccount::query()->create(['tenant_id' => $this->tenantId, 'balance' => 1000, 'status' => 'active']);
         $order = $this->order('card');
         MarketplacePayoutLine::query()->where('order_id', $order->id)->update(['payout_id' => null, 'net' => 0, 'gross' => 0]); // already paid out elsewhere
-        app(\App\Services\Central\Payouts\PayoutLedgerService::class)->recordClawback($order, 300, 'refund');
+        app(PayoutLedgerService::class)->recordClawback($order, 300, 'refund');
 
         $this->assertSame(0, app(PayoutService::class)->runBatch(now()->addDay())['created']);
         $this->assertSame('1000.00', BillingAccount::query()->where('tenant_id', $this->tenantId)->value('balance'));

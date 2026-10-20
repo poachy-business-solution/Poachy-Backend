@@ -11,6 +11,7 @@ use App\Models\MarketplacePayout;
 use App\Models\MarketplacePayoutLine;
 use App\Models\MessageLog;
 use App\Models\User;
+use App\Services\Central\Payouts\PayoutLedgerService;
 use App\Services\Central\Payouts\PayoutService;
 use App\Services\Central\Payouts\PayoutStatementService;
 use App\Services\Shared\Mpesa\Gateways\FakeMpesaGateway;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -119,7 +121,7 @@ class MarketplacePayoutTest extends TestCase
         return ['Result' => $result];
     }
 
-    private function b2cCallback(string $kind, array $payload, ?string $token = null): \Illuminate\Testing\TestResponse
+    private function b2cCallback(string $kind, array $payload, ?string $token = null): TestResponse
     {
         return $this->postJson("/api/v1/central/mpesa/b2c/payout/{$kind}/".($token ?? $this->payouts()->callbackToken()), $payload);
     }
@@ -247,7 +249,7 @@ class MarketplacePayoutTest extends TestCase
     {
         BusinessDetail::on('central')->where('tenant_id', $this->tenantId)->update(['payout_phone' => '0711000222']);
         $order = $this->handedOver(1000);
-        app(\App\Services\Central\Payouts\PayoutLedgerService::class)->recordClawback($order, 300, 'returned');
+        app(PayoutLedgerService::class)->recordClawback($order, 300, 'returned');
 
         $this->payouts()->runBatch(now()->addHours(25));
         $payout = MarketplacePayout::query()->where('tenant_id', $this->tenantId)->sole();

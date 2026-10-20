@@ -328,4 +328,39 @@ class MerchantReviewController extends Controller
             return ApiResponse::serverError('Failed to submit review: '.$e->getMessage());
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/central/marketplace/reservations/{code}/merchant-review",
+     *     summary="Review the shop after collecting a reserve & collect code",
+     *     operationId="storeReservationMerchantReview",
+     *     tags={"Central - Merchant Reviews"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\Parameter(name="code", in="path", required=true, @OA\Schema(type="string", example="PCH-7KQ2")),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"overall_rating","review_text"},
+     *
+     *         @OA\Property(property="overall_rating", type="number", example=4.5),
+     *         @OA\Property(property="service_rating", type="number", nullable=true),
+     *         @OA\Property(property="review_text", type="string")
+     *     )),
+     *
+     *     @OA\Response(response=201, description="Submitted, pending moderation"),
+     *     @OA\Response(response=422, description="Not the buyer's reservation, not collected yet, older than 30 days, or already reviewed"),
+     *     @OA\Response(response=429, description="Too many reviews")
+     * )
+     */
+    public function storeForReservation(StoreMerchantReviewRequest $request, string $code): JsonResponse
+    {
+        try {
+            $review = $this->reviewService->storeReviewForReservation(CustomerHelper::getAuthenticatedCustomerOrFail(), $code, $request->validated());
+
+            return ApiResponse::created('Your merchant review has been submitted and is pending moderation.', new MerchantReviewResource($review));
+        } catch (\RuntimeException $e) {
+            return $e->getCode() === 429 ? ApiResponse::rateLimited($e->getMessage()) : ApiResponse::error($e->getMessage(), null, 422);
+        } catch (\InvalidArgumentException $e) {
+            return ApiResponse::error($e->getMessage(), null, 422);
+        }
+    }
 }
