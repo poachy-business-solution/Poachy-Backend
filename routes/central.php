@@ -118,11 +118,14 @@ Route::prefix('v1/central')->group(function () {
 
     // M-Pesa callbacks (public — no auth, Safaricom calls these)
     Route::prefix('mpesa')->group(function () {
-        Route::post('/c2b/validate', [MpesaC2BController::class, 'validate']);
-        Route::post('/c2b/confirm', [MpesaC2BController::class, 'confirm']);
-        Route::post('/stk/callback', [MpesaC2BController::class, 'stkCallback']);
-        Route::post('/stk/subscription/callback', [MpesaC2BController::class, 'stkSubscriptionCallback']);
-        Route::post('/stk/billing/callback', [MpesaC2BController::class, 'stkBillingCallback']);
+        // Every URL given to Safaricom ends in a secret (App\Support\MpesaCallbacks); Daraja does not sign callbacks.
+        Route::middleware(['mpesa.callback', 'throttle:120,1'])->where(['token' => '[a-f0-9]{40}'])->group(function () {
+            Route::post('/c2b/validate/{token}', [MpesaC2BController::class, 'validate']);
+            Route::post('/c2b/confirm/{token}', [MpesaC2BController::class, 'confirm']);
+            Route::post('/stk/callback/{token}', [MpesaC2BController::class, 'stkCallback']);
+            Route::post('/stk/subscription/callback/{token}', [MpesaC2BController::class, 'stkSubscriptionCallback']);
+            Route::post('/stk/billing/callback/{token}', [MpesaC2BController::class, 'stkBillingCallback']);
+        });
 
         // Marketplace payout (B2C) results; the last segment is a secret derived from the app key.
         Route::post('/b2c/payout/result/{token}', [PayoutCallbackController::class, 'result'])->middleware('throttle:60,1');

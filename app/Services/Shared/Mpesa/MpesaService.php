@@ -4,6 +4,7 @@ namespace App\Services\Shared\Mpesa;
 
 use App\Exceptions\MpesaException;
 use App\Helpers\PhoneNumber;
+use App\Support\MpesaCallbacks;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -47,7 +48,7 @@ class MpesaService
         string $transactionDesc,
         ?string $callbackUrl = null,
     ): array {
-        $callbackUrl = $callbackUrl ?? config('mpesa.stk_callback_url');
+        $callbackUrl = $callbackUrl ?? MpesaCallbacks::url('stk');
         $phone = PhoneNumber::normalize($phoneNumber);
 
         Log::channel('mpesa')->info('Initiating STK push', [

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Exceptions\MpesaException;
 use App\Services\Shared\Mpesa\MpesaService;
+use App\Support\MpesaCallbacks;
 use Illuminate\Console\Command;
 
 class MpesaRegisterC2BCommand extends Command
@@ -16,13 +17,14 @@ class MpesaRegisterC2BCommand extends Command
     public function handle(MpesaService $mpesa): int
     {
         $env = config('mpesa.environment', 'sandbox');
-        $validationUrl = config('mpesa.c2b_validation_url');
-        $confirmationUrl = config('mpesa.c2b_confirmation_url');
+        // The registered URLs end in the callback secret (App\Support\MpesaCallbacks); shown masked.
+        $validationUrl = config('mpesa.c2b_validation_url') ? MpesaCallbacks::url('c2b_validation') : '';
+        $confirmationUrl = config('mpesa.c2b_confirmation_url') ? MpesaCallbacks::url('c2b_confirmation') : '';
         $responseType = $this->option('response-type');
 
         $this->info("Registering C2B URLs ({$env})...");
-        $this->line("  Validation URL:   {$validationUrl}");
-        $this->line("  Confirmation URL: {$confirmationUrl}");
+        $this->line('  Validation URL:   '.($validationUrl ? MpesaCallbacks::masked('c2b_validation') : ''));
+        $this->line('  Confirmation URL: '.($confirmationUrl ? MpesaCallbacks::masked('c2b_confirmation') : ''));
         $this->line("  Response Type:    {$responseType}");
 
         if (! $validationUrl || ! $confirmationUrl) {

@@ -87,6 +87,10 @@ return [
     // STK Push — Poachy balance top-ups (payment page, business account, admin)
     'billing_stk_callback_url' => env('MPESA_BILLING_STK_CALLBACK_URL', ''),
 
+    // Callers allowed to post STK/C2B callbacks (comma-separated IPs/CIDRs, Safaricom's published list).
+    // Empty = any caller; the secret path segment (App\Support\MpesaCallbacks) is always required.
+    'callback_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('MPESA_CALLBACK_IPS', ''))))),
+
     // C2B (Paybill) — Safaricom calls us to validate a payment before completing it
     'c2b_validation_url' => env('MPESA_C2B_VALIDATION_URL', ''),
 

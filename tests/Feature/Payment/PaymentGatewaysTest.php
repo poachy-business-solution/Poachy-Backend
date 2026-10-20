@@ -37,7 +37,7 @@ class PaymentGatewaysTest extends TestCase
         Config::set('mpesa.sandbox.shortcode', '174379');
 
         foreach (['stk-test', 'c2b-validate-test', 'c2b-confirm-test', 'b2c-result-test', 'paystack-test'] as $path) {
-            Route::post("/_test/{$path}", function (Request $request) use ($path) {
+            Route::post("/_test/{$path}/{secret?}", function (Request $request) use ($path) { // C2B URLs end in the callback secret
                 $this->received[] = [
                     'path' => $path,
                     'body' => $request->json()->all(),

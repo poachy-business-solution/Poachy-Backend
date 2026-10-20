@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Console\Commands\Concerns\DeliversLocalCallbacks;
 use App\Helpers\PhoneNumber;
 use App\Services\Shared\Mpesa\Gateways\FakeMpesaGateway;
+use App\Support\MpesaCallbacks;
 use Illuminate\Console\Command;
 
 /**
@@ -119,7 +120,7 @@ class SimulateMpesaCommand extends Command
         ];
 
         if (! $this->option('skip-validation')) {
-            $validation = $this->deliverCallback($this->urlOr(config('mpesa.c2b_validation_url'), '/api/v1/central/mpesa/c2b/validate'), $payload);
+            $validation = $this->deliverCallback(MpesaCallbacks::url('c2b_validation'), $payload);
             $resultCode = (string) ($validation['body']['ResultCode'] ?? '');
             $this->line("Validation: HTTP {$validation['status']} · ResultCode {$resultCode} · ".($validation['body']['ResultDesc'] ?? ''));
 
@@ -131,7 +132,7 @@ class SimulateMpesaCommand extends Command
         }
 
         $payload['OrgAccountBalance'] = '0.00';
-        $confirmation = $this->deliverCallback($this->urlOr(config('mpesa.c2b_confirmation_url'), '/api/v1/central/mpesa/c2b/confirm'), $payload);
+        $confirmation = $this->deliverCallback(MpesaCallbacks::url('c2b_confirmation'), $payload);
         $this->info("Confirmation {$payload['TransID']}: HTTP {$confirmation['status']}");
 
         return $confirmation['status'] < 400 ? self::SUCCESS : self::FAILURE;

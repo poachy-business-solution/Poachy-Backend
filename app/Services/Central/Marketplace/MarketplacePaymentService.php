@@ -19,6 +19,7 @@ use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
 use App\Services\Shared\Card\CardGateway;
 use App\Services\Shared\Mpesa\MpesaService;
+use App\Support\MpesaCallbacks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -118,7 +119,7 @@ class MarketplacePaymentService
                 amount: (float) $payment->amount,
                 accountReference: $order->order_number,
                 transactionDesc: 'Marketplace order payment',
-                callbackUrl: config('mpesa.stk_callback_url'),
+                callbackUrl: MpesaCallbacks::url('stk'),
             );
         } catch (MpesaException $e) {
             Log::channel('mpesa')->error('Marketplace STK push failed', [

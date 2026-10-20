@@ -14,6 +14,7 @@ use App\Models\Tenant;
 use App\Services\Central\Notification\SystemNotificationService;
 use App\Services\Shared\Mpesa\MpesaService;
 use App\Services\Tenant\TenantAccessService;
+use App\Support\MpesaCallbacks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -91,7 +92,7 @@ class SubscriptionPaymentService
                 amount: (float) $plan->price,
                 accountReference: config('mpesa.account_prefix').'SUB',
                 transactionDesc: $plan->name,
-                callbackUrl: config('mpesa.subscription_stk_callback_url'),
+                callbackUrl: MpesaCallbacks::url('stk_subscription'),
             );
 
             $payment->update([

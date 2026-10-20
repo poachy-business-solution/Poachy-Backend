@@ -13,6 +13,7 @@ use App\Models\BusinessDetail;
 use App\Models\CentralPaymentLog;
 use App\Services\Central\Billing\BillingTopupService;
 use App\Services\Shared\Mpesa\Gateways\FakeMpesaGateway;
+use App\Support\MpesaCallbacks;
 use Database\Seeders\BillingPriceSeeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -75,23 +76,23 @@ class BillingTopupTest extends TestCase
     public function test_validation_accepts_any_amount_from_the_minimum_for_a_known_account(): void
     {
         foreach ([10, 137, 2500.5] as $amount) {
-            $this->postJson('/api/v1/central/mpesa/c2b/validate', $this->c2b($this->account, $amount))->assertJson(['ResultCode' => '0']);
+            $this->postJson('/api/v1/central/mpesa/c2b/validate/'.MpesaCallbacks::token(), $this->c2b($this->account, $amount))->assertJson(['ResultCode' => '0']);
         }
-        $this->postJson('/api/v1/central/mpesa/c2b/validate', $this->c2b(strtolower($this->account), 50))->assertJson(['ResultCode' => '0']);
+        $this->postJson('/api/v1/central/mpesa/c2b/validate/'.MpesaCallbacks::token(), $this->c2b(strtolower($this->account), 50))->assertJson(['ResultCode' => '0']);
     }
 
     public function test_validation_rejects_below_the_minimum_and_unknown_accounts(): void
     {
-        $this->postJson('/api/v1/central/mpesa/c2b/validate', $this->c2b($this->account, 9))->assertJson(['ResultCode' => 'C2B00013']);
-        $this->postJson('/api/v1/central/mpesa/c2b/validate', $this->c2b('POA00000000', 500))->assertJson(['ResultCode' => 'C2B00011']);
+        $this->postJson('/api/v1/central/mpesa/c2b/validate/'.MpesaCallbacks::token(), $this->c2b($this->account, 9))->assertJson(['ResultCode' => 'C2B00013']);
+        $this->postJson('/api/v1/central/mpesa/c2b/validate/'.MpesaCallbacks::token(), $this->c2b('POA00000000', 500))->assertJson(['ResultCode' => 'C2B00011']);
     }
 
     public function test_confirmation_credits_the_balance_once_and_emails_a_receipt(): void
     {
         Event::fake([BillingBalanceCredited::class]);
 
-        $this->postJson('/api/v1/central/mpesa/c2b/confirm', $this->c2b($this->account, 700))->assertJson(['ResultCode' => 0]);
-        $this->postJson('/api/v1/central/mpesa/c2b/confirm', $this->c2b($this->account, 700))->assertJson(['ResultCode' => 0]); // Safaricom retry
+        $this->postJson('/api/v1/central/mpesa/c2b/confirm/'.MpesaCallbacks::token(), $this->c2b($this->account, 700))->assertJson(['ResultCode' => 0]);
+        $this->postJson('/api/v1/central/mpesa/c2b/confirm/'.MpesaCallbacks::token(), $this->c2b($this->account, 700))->assertJson(['ResultCode' => 0]); // Safaricom retry
 
         $this->assertSame('500.00', $this->balance());
         $line = BillingLedgerEntry::query()->where('tenant_id', $this->tenant)->sole();
@@ -106,7 +107,7 @@ class BillingTopupTest extends TestCase
 
     public function test_a_payment_to_an_unknown_account_is_kept_as_unmatched(): void
     {
-        $this->postJson('/api/v1/central/mpesa/c2b/confirm', $this->c2b('POA00000000', 300, 'FKUNMATCH1'))->assertJson(['ResultCode' => 0]);
+        $this->postJson('/api/v1/central/mpesa/c2b/confirm/'.MpesaCallbacks::token(), $this->c2b('POA00000000', 300, 'FKUNMATCH1'))->assertJson(['ResultCode' => 0]);
 
         $this->assertTrue(CentralPaymentLog::query()->where('event', 'c2b_unmatched')->where('transaction_reference', 'FKUNMATCH1')->exists());
         $this->assertSame('-200.00', $this->balance());
@@ -171,7 +172,7 @@ class BillingTopupTest extends TestCase
     {
         BillingAccount::query()->where('tenant_id', $this->tenant)->delete();
 
-        $this->postJson('/api/v1/central/mpesa/c2b/confirm', $this->c2b($this->account, 50, 'FKFIRST01'));
+        $this->postJson('/api/v1/central/mpesa/c2b/confirm/'.MpesaCallbacks::token(), $this->c2b($this->account, 50, 'FKFIRST01'));
 
         $this->assertSame('50.00', $this->balance());
     }

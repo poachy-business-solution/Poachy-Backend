@@ -5,6 +5,8 @@ use App\Http\Middleware\AddRequestId;
 use App\Http\Middleware\CheckTenantAccess;
 use App\Http\Middleware\EnforceBillingLimits;
 use App\Http\Middleware\InternalAdmin;
+use App\Http\Middleware\TrustWebServerClientIp;
+use App\Http\Middleware\VerifyMpesaCallback;
 use App\Http\Middleware\VerifySyncToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -42,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend([
+            TrustWebServerClientIp::class, // before any per-IP limit
             AddRequestId::class,
         ]);
 
@@ -59,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'billing.limits' => EnforceBillingLimits::class,
             'internal.admin' => InternalAdmin::class,
             'sync.token' => VerifySyncToken::class,
+            'mpesa.callback' => VerifyMpesaCallback::class,
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {

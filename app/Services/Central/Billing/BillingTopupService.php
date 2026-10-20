@@ -17,6 +17,7 @@ use App\Models\Tenant;
 use App\Services\Central\Marketplace\AdvertService;
 use App\Services\Shared\Messaging\Messenger;
 use App\Services\Shared\Mpesa\MpesaService;
+use App\Support\MpesaCallbacks;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -113,7 +114,7 @@ class BillingTopupService
                 amount: (float) $topup->amount,
                 accountReference: (string) $tenant->mpesa_paybill_account,
                 transactionDesc: 'Poachy topup',
-                callbackUrl: config('mpesa.billing_stk_callback_url') ?: rtrim((string) config('app.url'), '/').'/api/v1/central/mpesa/stk/billing/callback',
+                callbackUrl: MpesaCallbacks::url('stk_billing'),
             );
         } catch (MpesaException $e) {
             $topup->update(['status' => BillingTopup::FAILED, 'failure_reason' => $e->getMessage()]);

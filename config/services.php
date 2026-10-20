@@ -28,6 +28,11 @@ return [
         'token' => env('TENANT_API_TOKEN'),
     ],
 
+    // poachy-web's server: its forwarded visitor IP is trusted only with this key (TrustWebServerClientIp).
+    'web' => [
+        'server_key' => env('POACHY_WEB_SERVER_KEY'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
