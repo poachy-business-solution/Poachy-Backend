@@ -76,6 +76,12 @@ class CalculateSaleRequest extends FormRequest
                 'nullable',
                 'boolean',
             ],
+            'reservation_code' => [
+                'nullable',
+                'string',
+                'max:12',
+                'regex:/^PCH-[A-Za-z0-9]{4,5}$/i',
+            ],
             'items.*.price_override_reason' => [
                 'nullable',
                 'string',

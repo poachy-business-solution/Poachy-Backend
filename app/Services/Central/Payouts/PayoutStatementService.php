@@ -15,15 +15,20 @@ use Illuminate\Support\Facades\DB;
 class PayoutStatementService
 {
     /**
-     * @return array{held: float, available: float, next_payout_at: string, payout_phone: string|null}
+     * Refunds taken back (clawbacks) can outweigh what is due: then nothing goes out tonight and
+     * `owed` says how much comes off the next sales instead of a negative "available".
+     *
+     * @return array{held: float, available: float, owed: float, next_payout_at: string, payout_phone: string|null}
      */
     public function balance(string $tenantId, ?string $payoutPhone): array
     {
         $now = now();
+        $due = round((float) MarketplacePayoutLine::query()->where('tenant_id', $tenantId)->available($now)->sum('net'), 2);
 
         return [
             'held' => round((float) MarketplacePayoutLine::query()->where('tenant_id', $tenantId)->held($now)->sum('net'), 2),
-            'available' => round((float) MarketplacePayoutLine::query()->where('tenant_id', $tenantId)->available($now)->sum('net'), 2),
+            'available' => max(0.0, $due),
+            'owed' => max(0.0, -$due),
             'next_payout_at' => $this->nextRun($now)->toIso8601String(),
             'payout_phone' => $payoutPhone ? $this->mask($payoutPhone) : null,
         ];
@@ -42,7 +47,7 @@ class PayoutStatementService
     /**
      * Last 30 days, by handover / payout date.
      *
-     * @return array{gross_30d: float, fees_30d: float, commission_30d: float, clawbacks_30d: float, net_30d: float, paid_out_30d: float, held: float, available: float, payouts_enabled: bool}
+     * @return array{gross_30d: float, fees_30d: float, commission_30d: float, clawbacks_30d: float, net_30d: float, paid_out_30d: float, held: float, available: float, owed: float, payouts_enabled: bool}
      */
     public function earnings(string $tenantId): array
     {
@@ -62,6 +67,7 @@ class PayoutStatementService
             'paid_out_30d' => round($paidOut, 2),
             'held' => $balance['held'],
             'available' => $balance['available'],
+            'owed' => $balance['owed'],
             'payouts_enabled' => true,
         ];
     }

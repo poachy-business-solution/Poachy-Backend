@@ -148,8 +148,8 @@ class ReservationRedeemTest extends TestCase
                 // the sale takes it, the reservation is linked. Wrong or used codes are 422 with a reason.
                 $viaSale = MarketplaceReservation::on('central')->create([
                     'code' => MarketplaceReservation::generateCode(), 'tenant_id' => $tenant->id, 'customer_id' => $buyer->id, 'marketplace_product_id' => $fresh->marketplace_product_id, 'tenant_product_id' => $product->id,
-                    'product_name' => 'Block heels', 'quantity' => 3, 'unit_price' => 2500, 'status' => MarketplaceReservationStatus::Pending, 'expires_at' => now()->addDay(), 'idempotency_key' => (string) Str::uuid(),
-                ]);
+                    'product_name' => 'Block heels', 'quantity' => 3, 'unit_price' => 2300, 'status' => MarketplaceReservationStatus::Pending, 'expires_at' => now()->addDay(), 'idempotency_key' => (string) Str::uuid(),
+                ]); // reserved online at 2,300 — below the shelf price of 2,500
                 (new ProcessInboundReservationHold(['reservation_id' => $viaSale->id, 'code' => $viaSale->code, 'quantity' => 3.0] + $payload))->handle(app(StockReservationService::class), app(MarketplaceOrderStaffNotificationService::class));
                 $viaSale->forceFill(['status' => MarketplaceReservationStatus::Active, 'held_at' => now()])->save();
                 $this->assertEquals(0, $inventory->fresh()->quantity_available); // all three held
@@ -160,7 +160,11 @@ class ReservationRedeemTest extends TestCase
                 $this->postJson($url('/api/v1/tenant/sales'), $saleBody + ['idempotency_key' => (string) Str::uuid(), 'reservation_code' => $reservation->code])->assertStatus(422)->assertJsonPath('message', fn ($m) => str_starts_with($m, 'Already redeemed on sale'));
                 $this->postJson($url('/api/v1/tenant/sales'), ['store_id' => $store->id, 'items' => [['product_id' => $product->id + 100000, 'uom_id' => $uom->id, 'quantity' => 1]], 'payments' => [['method' => 'cash', 'amount' => 1]], 'idempotency_key' => (string) Str::uuid(), 'reservation_code' => $viaSale->code])->assertStatus(422);
                 $this->assertEquals(0, $inventory->fresh()->quantity_available); // failed attempts kept the hold
+                // The till is charged the reserved price (read on the server), even below the shelf price for a cashier.
+                $this->postJson($url('/api/v1/tenant/sales/calculate'), ['store_id' => $store->id, 'items' => $saleBody['items']])->assertOk()->assertJsonPath('data.summary.base_subtotal', 7500);
+                $this->postJson($url('/api/v1/tenant/sales/calculate'), ['store_id' => $store->id, 'items' => $saleBody['items'], 'reservation_code' => $viaSale->code])->assertOk()->assertJsonPath('data.summary.base_subtotal', 6900);
                 $saleId = $this->postJson($url('/api/v1/tenant/sales'), $saleBody + ['idempotency_key' => (string) Str::uuid(), 'reservation_code' => strtolower($viaSale->code)])->assertCreated()->json('data.sale.id');
+                $this->assertEquals(6900, Sale::query()->find($saleId)->subtotal);
                 $linked = $viaSale->fresh();
                 $this->assertSame(MarketplaceReservationStatus::Redeemed, $linked->status);
                 $this->assertSame($saleId, $linked->sale_id);

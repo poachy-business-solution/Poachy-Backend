@@ -3,6 +3,7 @@
 namespace App\Services\Tenant\Sales;
 
 use App\Exceptions\Tenant\PriceOverrideNotAllowedException;
+use App\Models\MarketplaceReservation;
 use App\Models\Tenant\Coupon;
 use App\Models\Tenant\CouponUsage;
 use App\Models\Tenant\Product;
@@ -11,6 +12,7 @@ use App\Models\Tenant\ProductUom;
 use App\Models\Tenant\ProductVariant;
 use App\Models\Tenant\StoreProduct;
 use App\Models\Tenant\TenantConfiguration;
+use App\Services\Central\Marketplace\ReservationService;
 use App\Services\Tenant\Inventory\ProductCostService;
 use App\Services\Tenant\Offers\CouponService;
 use App\Services\Tenant\Offers\PromotionService;
@@ -48,6 +50,9 @@ class SaleCalculationService
 
         // Step 1: Resolve prices and calculate base line items
         $lineItems = $this->resolveLineItems($storeId, $items);
+        if (! empty($data['reservation_code'])) {
+            $lineItems = $this->applyReservationPrice($lineItems, (string) $data['reservation_code']);
+        }
         $this->assertPriceOverridesAllowed($lineItems, Auth::user());
 
         // Step 2: Check coupon/promotion stacking configuration
@@ -172,6 +177,45 @@ class SaleCalculationService
         }
 
         return $this->applyNegotiatedPrice($this->resolveCatalogueItem($storeId, $item), $item);
+    }
+
+    /**
+     * Reserve & collect: the reserved line is charged what the buyer was shown when reserving —
+     * the reservation's own price, read here on the server, never one sent by the till. The code
+     * must belong to this shop, still be open, and match an item in the sale.
+     *
+     * @param  array<int, array<string, mixed>>  $lineItems
+     * @return array<int, array<string, mixed>>
+     */
+    protected function applyReservationPrice(array $lineItems, string $code): array
+    {
+        $reservation = MarketplaceReservation::on('central')->forTenant((string) tenant()->id)->where('code', strtoupper(trim($code)))->first();
+        if (! $reservation) {
+            throw new \RuntimeException('No reservation with that code at this shop.');
+        }
+        if ($blocker = app(ReservationService::class)->redeemBlocker($reservation)) {
+            throw new \RuntimeException($blocker);
+        }
+
+        foreach ($lineItems as $i => $line) {
+            $sameItem = $reservation->tenant_bundle_id
+                ? (int) ($line['bundle_id'] ?? 0) === (int) $reservation->tenant_bundle_id
+                : (int) ($line['product_id'] ?? 0) === (int) $reservation->tenant_product_id && (int) ($line['variant_id'] ?? 0) === (int) ($reservation->tenant_variant_id ?? 0);
+            if (! $sameItem || ($line['is_giveaway'] ?? false)) {
+                continue;
+            }
+            $line['unit_price'] = (float) $reservation->unit_price;
+            $line['is_price_negotiated'] = true; // no promotions on top of the reserved price
+            $line['is_reservation_price'] = true;
+            $line['price_override_reason'] = "Reserved online ({$reservation->code})";
+            $line['line_total_before_discount'] = $line['quantity'] * $line['unit_price'];
+            $line['line_total_after_discount'] = $line['line_total_before_discount'];
+            $lineItems[$i] = $line;
+
+            return $lineItems;
+        }
+
+        throw new \RuntimeException("This sale does not include the reserved item ({$reservation->product_name}).");
     }
 
     /**
@@ -307,7 +351,7 @@ class SaleCalculationService
                 );
             }
 
-            if (($item['list_unit_price'] ?? null) !== null && $item['unit_price'] < (float) $item['list_unit_price']) {
+            if (! ($item['is_reservation_price'] ?? false) && ($item['list_unit_price'] ?? null) !== null && $item['unit_price'] < (float) $item['list_unit_price']) {
                 throw new PriceOverrideNotAllowedException(sprintf(
                     'Cannot sell %s below the floor of KES %s. You entered KES %s.',
                     $item['product_name'],

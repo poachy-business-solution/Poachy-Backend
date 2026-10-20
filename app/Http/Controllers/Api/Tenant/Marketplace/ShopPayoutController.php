@@ -33,7 +33,7 @@ class ShopPayoutController extends Controller
      *
      *         @OA\Property(property="data", type="object",
      *             @OA\Property(property="balance", type="object",
-     *                 @OA\Property(property="held", type="number"), @OA\Property(property="available", type="number"),
+     *                 @OA\Property(property="held", type="number"), @OA\Property(property="available", type="number"), @OA\Property(property="owed", type="number", description="Refunds taken back that exceed what is due; comes off the next sales"),
      *                 @OA\Property(property="next_payout_at", type="string", format="date-time"), @OA\Property(property="payout_phone", type="string", nullable=true)),
      *             @OA\Property(property="payouts", type="array", @OA\Items(type="object",
      *                 @OA\Property(property="id", type="integer"), @OA\Property(property="reference", type="string"), @OA\Property(property="amount", type="number"),

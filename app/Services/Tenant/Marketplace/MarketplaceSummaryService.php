@@ -25,7 +25,7 @@ class MarketplaceSummaryService
      *     orders: array{to_prepare: int, preparing: int, ready: int, overdue: int, delivered_7d: int},
      *     sales: array{today: array{count: int, amount: float}, last_7_days: array{count: int, amount: float}, last_30_days: array{count: int, amount: float}},
      *     reservations: array{open: int, expiring_today: int},
-     *     earnings: array{gross_30d: float, fees_30d: float, commission_30d: float, clawbacks_30d: float, net_30d: float, paid_out_30d: float, held: float, available: float, payouts_enabled: bool},
+     *     earnings: array{gross_30d: float, fees_30d: float, commission_30d: float, clawbacks_30d: float, net_30d: float, paid_out_30d: float, held: float, available: float, owed: float, payouts_enabled: bool},
      *     needs_you: array<int, array{type: string, title: string, subtitle: string, count: int, amount: float|null, ids: array<int, int>}>
      * }
      */

@@ -73867,6 +73867,10 @@
                                                         "available": {
                                                             "type": "number"
                                                         },
+                                                        "owed": {
+                                                            "description": "Refunds taken back that exceed what is due; comes off the next sales",
+                                                            "type": "number"
+                                                        },
                                                         "next_payout_at": {
                                                             "type": "string",
                                                             "format": "date-time"

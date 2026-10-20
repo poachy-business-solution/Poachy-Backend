@@ -257,4 +257,15 @@ class MarketplacePayoutTest extends TestCase
         $this->assertSame(['694.00', '254711000222'], [$payout->amount, $payout->phone]);
         $this->assertSame(300.0, app(PayoutStatementService::class)->earnings($this->tenantId)['clawbacks_30d']);
     }
+
+    public function test_refunds_taken_back_beyond_what_is_due_show_as_owed_never_a_negative_payout(): void
+    {
+        $order = $this->handedOver(1000); // 994.50, still held for 24 h
+        app(PayoutLedgerService::class)->recordClawback($order, 1500, 'returned');
+
+        $balance = app(PayoutStatementService::class)->balance($this->tenantId, null);
+        $this->assertSame([994.5, 0.0, 1500.0], [$balance['held'], $balance['available'], $balance['owed']]);
+        $this->assertSame(1500.0, app(PayoutStatementService::class)->earnings($this->tenantId)['owed']);
+        $this->assertSame(0, $this->payouts()->runBatch(now())['created']);
+    }
 }
