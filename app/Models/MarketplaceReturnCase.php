@@ -74,7 +74,7 @@ class MarketplaceReturnCase extends Model
     protected $connection = 'central';
 
     protected $fillable = [
-        'reference', 'order_id', 'tenant_id', 'customer_id', 'items', 'reason_code', 'description', 'buyer_evidence', 'shop_at_fault',
+        'reference', 'order_id', 'tenant_id', 'customer_id', 'items', 'reason_code', 'description', 'buyer_evidence', 'shop_at_fault', 'perishable',
         'requested_amount', 'status', 'shop_decision', 'refund_amount', 'shop_reason', 'shop_evidence', 'received_at', 'inspection_due_at',
         'inspected_at', 'restocked_at', 'dispute_until', 'disputed_at', 'dispute_reason', 'dispute_evidence', 'escalated_at',
         'admin_decision', 'admin_note', 'decided_by', 'decided_at', 'closed_at',
@@ -84,7 +84,7 @@ class MarketplaceReturnCase extends Model
     {
         return [
             'items' => 'array', 'buyer_evidence' => 'array', 'shop_evidence' => 'array', 'dispute_evidence' => 'array',
-            'shop_at_fault' => 'boolean', 'requested_amount' => 'decimal:2', 'refund_amount' => 'decimal:2',
+            'shop_at_fault' => 'boolean', 'perishable' => 'boolean', 'requested_amount' => 'decimal:2', 'refund_amount' => 'decimal:2',
             'received_at' => 'datetime', 'inspection_due_at' => 'datetime', 'inspected_at' => 'datetime', 'restocked_at' => 'datetime',
             'dispute_until' => 'datetime', 'disputed_at' => 'datetime', 'escalated_at' => 'datetime', 'decided_at' => 'datetime', 'closed_at' => 'datetime',
         ];

@@ -40,15 +40,17 @@ class ReturnCaseService
         $order->loadMissing('items');
 
         $lines = [];
+        $perishable = false;
         foreach ($items as $wanted) {
             $item = $order->items->firstWhere('id', (int) $wanted['order_item_id']);
             $quantity = (float) $wanted['quantity'];
             if ($item === null || $quantity <= 0 || $quantity > (float) $item->quantity) {
                 throw ValidationException::withMessages(['items' => 'Choose items and quantities from this order.']);
             }
-            if ($this->neverReturnable((int) $item->marketplace_product_id)) {
-                throw ValidationException::withMessages(['items' => "{$item->product_name} can't be returned (food, hygiene goods and airtime never are)."]);
+            if ($this->matches((int) $item->marketplace_product_id, 'non_returnable_keywords')) {
+                throw ValidationException::withMessages(['items' => "{$item->product_name} can't be returned (hygiene goods, cosmetics and airtime never are)."]);
             }
+            $perishable = $perishable || $this->matches((int) $item->marketplace_product_id, 'perishable_keywords');
             // An order line's subtotal already includes its VAT (checkout adds it on top).
             $unit = round((float) $item->subtotal / max((float) $item->quantity, 0.0001), 2);
             $lines[] = ['order_item_id' => $item->id, 'name' => $item->product_name, 'quantity' => $quantity, 'unit_amount' => $unit, 'amount' => round($unit * $quantity, 2)];
@@ -57,14 +59,18 @@ class ReturnCaseService
             throw ValidationException::withMessages(['items' => 'Choose at least one item.']);
         }
 
+        if ($perishable) {
+            $this->assertPerishableReturnable($order, $reasonCode, $photos);
+        }
+
         $shopAtFault = $reasonCode !== 'changed_mind';
         $amount = $this->requestedAmount($order, $lines, $shopAtFault);
 
-        return DB::connection('central')->transaction(function () use ($order, $lines, $reasonCode, $description, $photos, $shopAtFault, $amount) {
+        return DB::connection('central')->transaction(function () use ($order, $lines, $reasonCode, $description, $photos, $shopAtFault, $amount, $perishable) {
             $case = MarketplaceReturnCase::query()->create([
                 'reference' => 'RET-'.Str::upper(Str::random(6)),
                 'order_id' => $order->id, 'tenant_id' => $order->tenant_id, 'customer_id' => $order->customer_id,
-                'items' => $lines, 'reason_code' => $reasonCode, 'description' => $description,
+                'items' => $lines, 'reason_code' => $reasonCode, 'description' => $description, 'perishable' => $perishable,
                 'shop_at_fault' => $shopAtFault, 'requested_amount' => $amount, 'status' => MarketplaceReturnCase::REQUESTED,
             ]);
             $case->update(['buyer_evidence' => $this->store($case, 'buyer', $photos)]);
@@ -200,8 +206,20 @@ class ReturnCaseService
         $cutoff = $now->copy()->subDays((int) config('returns.bring_back_days', 7));
         $done['expired'] = MarketplaceReturnCase::query()->where('status', MarketplaceReturnCase::REQUESTED)->where('created_at', '<', $cutoff)
             ->update(['status' => MarketplaceReturnCase::EXPIRED, 'closed_at' => $now]);
+        // Perishables not brought back in time lapse much sooner: food kept at home can't be checked.
+        $done['expired'] += MarketplaceReturnCase::query()->where('status', MarketplaceReturnCase::REQUESTED)->where('perishable', true)
+            ->where('created_at', '<', $now->copy()->subHours((int) config('returns.perishable_bring_back_hours', 24)))
+            ->update(['status' => MarketplaceReturnCase::EXPIRED, 'closed_at' => $now]);
 
         return $done;
+    }
+
+    /**
+     * Accepted items go back on sale — except perishables, which are written off (item 51).
+     */
+    public function shouldRestock(MarketplaceReturnCase $case, string $decision): bool
+    {
+        return $decision !== 'reject' && $case->restocked_at === null && ! $case->perishable;
     }
 
     /**
@@ -247,11 +265,33 @@ class ReturnCaseService
         return round(max(0, $items - $fee), 2);
     }
 
-    private function neverReturnable(int $marketplaceProductId): bool
+    /**
+     * A perishable return: asked within `perishable_hours` of handover, for a fault on arrival (the
+     * shop can't resell food that was taken home), with a photo of how it arrived.
+     *
+     * @param  array<int, UploadedFile>  $photos
+     */
+    private function assertPerishableReturnable(MarketplaceOrder $order, string $reasonCode, array $photos): void
+    {
+        $hours = (int) config('returns.perishable_hours', 24);
+        $handedOver = MarketplacePayoutLine::query()->where('order_id', $order->id)->where('type', MarketplacePayoutLine::SALE)->value('handed_over_at');
+        $since = $handedOver ? Carbon::parse($handedOver) : $order->updated_at;
+        if ($since->copy()->addHours($hours)->isPast()) {
+            throw ValidationException::withMessages(['order' => "Fresh food and drinks can be returned within {$hours} hours of collection or delivery; that time has passed."]);
+        }
+        if ($reasonCode === 'changed_mind') {
+            throw ValidationException::withMessages(['reason_code' => 'Fresh food and drinks come back only if something was wrong when they arrived (wrong, damaged, spoiled or not as described).']);
+        }
+        if ($photos === []) {
+            throw ValidationException::withMessages(['photos' => 'Add a photo showing how the item arrived.']);
+        }
+    }
+
+    private function matches(int $marketplaceProductId, string $list): bool
     {
         $product = MarketplaceProduct::on('central')->with('marketplaceCategory:id,name')->find($marketplaceProductId);
         $names = mb_strtolower(trim(($product?->marketplaceCategory?->name ?? '').' '.($product?->tenant_category_name ?? '')));
-        foreach ((array) config('returns.non_returnable_keywords', []) as $keyword) {
+        foreach ((array) config("returns.{$list}", []) as $keyword) {
             if ($names !== '' && str_contains($names, (string) $keyword)) {
                 return true;
             }

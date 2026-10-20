@@ -271,9 +271,14 @@ class ReturnsAndRefundsTest extends TestCase
 
     public function test_what_cannot_be_returned(): void
     {
+        $toothpaste = MarketplaceProduct::on('central')->create([
+            'tenant_id' => $this->tenantId, 'tenant_product_id' => random_int(1000, 9999), 'name' => 'Toothpaste', 'slug' => 'toothpaste-'.$this->run, 'sku' => 'S-'.uniqid(),
+            'online_price' => 1000, 'base_uom_code' => 'pcs', 'base_uom_name' => 'Piece', 'tax_rate' => 0, 'available_quantity' => 5, 'stock_status' => 'in_stock', 'is_active' => true,
+            'tenant_category_name' => 'Personal care',
+        ]);
         $cases = [
             'not handed over yet' => fn () => $this->order(handedOver: false),
-            'a beverage' => fn () => $this->order(product: $this->juice),
+            'personal care, never returnable' => fn () => $this->order(product: $toothpaste),
         ];
         foreach ($cases as $why => $make) {
             $order = $make();
@@ -289,6 +294,48 @@ class ReturnsAndRefundsTest extends TestCase
         $this->returns()->open($order, $this->itemsOf($order, 1), 'faulty', null);
         $this->expectException(ValidationException::class); // one open return per order
         $this->returns()->open($order, $this->itemsOf($order, 1), 'faulty', null);
+    }
+
+    public function test_perishables_come_back_only_soon_with_a_photo_and_for_a_fault_on_arrival(): void
+    {
+        $photo = fn () => [UploadedFile::fake()->image('spoiled.jpg')];
+
+        foreach ([
+            'changed mind' => fn ($o) => $this->returns()->open($o, $this->itemsOf($o), 'changed_mind', null, $photo()),
+            'no photo of how it arrived' => fn ($o) => $this->returns()->open($o, $this->itemsOf($o), 'damaged', null),
+        ] as $why => $attempt) {
+            $order = $this->order(product: $this->juice);
+            try {
+                $attempt($order);
+                $this->fail("Should refuse: {$why}");
+            } catch (ValidationException $e) {
+                $this->assertNotEmpty($e->errors(), $why);
+            }
+        }
+
+        // Spoiled on arrival, reported the same day with a photo: accepted as a perishable case.
+        $order = $this->order(product: $this->juice);
+        $case = $this->returns()->open($order, $this->itemsOf($order), 'damaged', 'Smelled off when opened', $photo());
+        $this->assertTrue($case->perishable);
+        $this->assertSame('requested', $case->status);
+        $this->assertFalse($this->returns()->shouldRestock($case, 'accept')); // written off, never back on sale
+        $this->assertTrue($this->returns()->shouldRestock(new MarketplaceReturnCase(['perishable' => false]), 'accept'));
+        $this->assertFalse($this->returns()->shouldRestock(new MarketplaceReturnCase(['perishable' => false]), 'reject'));
+
+        // Kept at home past a day: too late to ask.
+        $late = $this->order(product: $this->juice);
+        Carbon::setTestNow(now()->addHours(25));
+        try {
+            $this->returns()->open($late, $this->itemsOf($late), 'damaged', null, $photo());
+            $this->fail('Should refuse after 24 hours');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('24 hours', (string) collect($e->errors())->flatten()->first());
+        }
+
+        // Asked but never brought back within a day: the request lapses (shoes would wait 7 days).
+        $shoes = $this->returns()->open($o = $this->order(), $this->itemsOf($o), 'faulty', null);
+        $this->returns()->runTimers(now()->addHour());
+        $this->assertSame(['expired', 'requested'], [$case->fresh()->status, $shoes->fresh()->status]);
     }
 
     public function test_the_shops_window_closes_and_no_window_means_no_returns(): void

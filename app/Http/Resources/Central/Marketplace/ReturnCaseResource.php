@@ -28,6 +28,10 @@ class ReturnCaseResource extends JsonResource
             'shop' => $this->order?->merchant_name,
             'status' => $this->status,
             'items' => $this->items,
+            'perishable' => (bool) $this->perishable,
+            'bring_back_by' => $this->status === 'requested'
+                ? $this->created_at?->copy()->{$this->perishable ? 'addHours' : 'addDays'}($this->perishable ? (int) config('returns.perishable_bring_back_hours', 24) : (int) config('returns.bring_back_days', 7))->toIso8601String()
+                : null,
             'reason_code' => $this->reason_code,
             'description' => $this->description,
             'shop_at_fault' => $this->shop_at_fault,

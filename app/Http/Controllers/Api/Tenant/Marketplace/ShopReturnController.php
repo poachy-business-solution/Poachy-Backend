@@ -129,7 +129,7 @@ class ShopReturnController extends Controller
         $amount = $request->validated('refund_amount');
         $case = $this->returns->inspect($case, $decision, $amount === null ? null : (float) $amount, $request->validated('reason'), $request->file('photos', []));
 
-        if ($decision !== 'reject' && $case->restocked_at === null) {
+        if ($this->returns->shouldRestock($case, $decision)) {
             $this->restock($case);
             $case->update(['restocked_at' => now()]);
         }
