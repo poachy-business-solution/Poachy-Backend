@@ -197,6 +197,22 @@ class CheckoutCardPaymentTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('ref');
     }
 
+    public function test_the_cart_shows_the_vat_checkout_will_charge(): void
+    {
+        $this->product->update(['tax_rate' => 16]);
+        Sanctum::actingAs($this->user, ['*'], 'central');
+        $session = (string) Str::uuid();
+        $this->postJson('/api/v1/central/marketplace/cart/items', ['marketplace_product_id' => $this->product->id, 'quantity' => 2], ['X-Cart-Session-Id' => $session])
+            ->assertSuccessful()->assertJsonPath('data.tax_rate', 16)->assertJsonPath('data.tax_amount', 800);
+        $this->getJson('/api/v1/central/marketplace/cart', ['X-Cart-Session-Id' => $session])->assertOk()
+            ->assertJsonPath('data.subtotal', 5000)->assertJsonPath('data.tax_amount', 800)->assertJsonPath('data.total', 5800)
+            ->assertJsonPath('data.tenant_groups.0.tax_amount', 800);
+
+        $orders = $this->postJson('/api/v1/central/marketplace/checkout', ['fulfillment_type' => 'pickup', 'payment_method' => 'mpesa'], ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => (string) Str::uuid()])
+            ->assertCreated()->json('data');
+        $this->assertEquals(5800, $orders[0]['total_amount']);
+    }
+
     public function test_checkout_keys_addresses_and_delivery_fees_are_scoped_to_the_buyer(): void
     {
         $address = CustomerAddress::on('central')->create(['customer_id' => $this->customer->id, 'recipient_name' => 'Card Buyer', 'recipient_phone' => '0722000111',

@@ -65,6 +65,14 @@ class ShoppingCartItem extends Model
     }
 
     /**
+     * VAT on the line, added on top of the price exactly as checkout and the POS do.
+     */
+    public function getLineTax(): float
+    {
+        return round($this->getLineTotal() * ((float) ($this->marketplaceProduct?->tax_rate ?? 0) / 100), 2);
+    }
+
+    /**
      * Whether the price has changed since the item was added to the cart.
      */
     public function isPriceChanged(): bool

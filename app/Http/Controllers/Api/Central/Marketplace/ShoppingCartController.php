@@ -51,6 +51,8 @@ class ShoppingCartController extends Controller
      *                 @OA\Property(property="status", type="string", example="active"),
      *                 @OA\Property(property="item_count", type="integer", example=1),
      *                 @OA\Property(property="subtotal", type="number", format="float", example=90000),
+     *                 @OA\Property(property="tax_amount", type="number", format="float", description="VAT added on top of the prices (as checkout charges it)", example=14400),
+     *                 @OA\Property(property="total", type="number", format="float", description="subtotal + tax_amount (before delivery)", example=104400),
      *                 @OA\Property(
      *                     property="tenant_groups",
      *                     type="array",
@@ -77,6 +79,8 @@ class ShoppingCartController extends Controller
      *                                 @OA\Property(property="current_price", type="number", format="float", example=90000),
      *                                 @OA\Property(property="price_changed", type="boolean", example=false),
      *                                 @OA\Property(property="line_total", type="number", format="float", example=90000),
+     *                                 @OA\Property(property="tax_rate", type="number", format="float", example=16),
+     *                                 @OA\Property(property="tax_amount", type="number", format="float", example=14400),
      *                                 @OA\Property(
      *                                     property="seller",
      *                                     type="object",
@@ -100,7 +104,8 @@ class ShoppingCartController extends Controller
      *                                 @OA\Property(property="added_at", type="string", format="date-time", example="2026-02-16T17:42:48.000000Z")
      *                             )
      *                         ),
-     *                         @OA\Property(property="subtotal", type="number", format="float", example=90000)
+     *                         @OA\Property(property="subtotal", type="number", format="float", example=90000),
+     *                         @OA\Property(property="tax_amount", type="number", format="float", example=14400)
      *                     )
      *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-02-16T20:34:48+03:00"),
@@ -190,6 +195,8 @@ class ShoppingCartController extends Controller
      *                 @OA\Property(property="current_price", type="number", format="float", example=90000),
      *                 @OA\Property(property="price_changed", type="boolean", example=false),
      *                 @OA\Property(property="line_total", type="number", format="float", example=180000),
+     *                 @OA\Property(property="tax_rate", type="number", format="float", example=16),
+     *                 @OA\Property(property="tax_amount", type="number", format="float", example=14400),
      *                 @OA\Property(
      *                     property="seller",
      *                     type="object",
@@ -333,6 +340,8 @@ class ShoppingCartController extends Controller
      *                 @OA\Property(property="current_price", type="number", format="float", example=90000),
      *                 @OA\Property(property="price_changed", type="boolean", example=false),
      *                 @OA\Property(property="line_total", type="number", format="float", example=90000),
+     *                 @OA\Property(property="tax_rate", type="number", format="float", example=16),
+     *                 @OA\Property(property="tax_amount", type="number", format="float", example=14400),
      *                 @OA\Property(
      *                     property="seller",
      *                     type="object",

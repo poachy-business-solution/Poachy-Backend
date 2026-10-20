@@ -136,6 +136,14 @@ class ShoppingCart extends Model
         return $this->items->sum(fn (ShoppingCartItem $item) => $item->getLineTotal());
     }
 
+    /**
+     * VAT for the whole cart (each line's tax, as checkout charges it).
+     */
+    public function getTaxAmount(): float
+    {
+        return round($this->items->sum(fn (ShoppingCartItem $item) => $item->getLineTax()), 2);
+    }
+
     public function getItemCount(): int
     {
         return $this->items->count();

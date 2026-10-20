@@ -16818,6 +16818,18 @@
                                                     "format": "float",
                                                     "example": 90000
                                                 },
+                                                "tax_amount": {
+                                                    "description": "VAT added on top of the prices (as checkout charges it)",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 14400
+                                                },
+                                                "total": {
+                                                    "description": "subtotal + tax_amount (before delivery)",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 104400
+                                                },
                                                 "tenant_groups": {
                                                     "description": "Cart items grouped by merchant/tenant",
                                                     "type": "array",
@@ -16874,6 +16886,16 @@
                                                                             "type": "number",
                                                                             "format": "float",
                                                                             "example": 90000
+                                                                        },
+                                                                        "tax_rate": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 16
+                                                                        },
+                                                                        "tax_amount": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 14400
                                                                         },
                                                                         "seller": {
                                                                             "properties": {
@@ -16946,6 +16968,11 @@
                                                                 "type": "number",
                                                                 "format": "float",
                                                                 "example": 90000
+                                                            },
+                                                            "tax_amount": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 14400
                                                             }
                                                         },
                                                         "type": "object"
@@ -17174,6 +17201,16 @@
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 180000
+                                                },
+                                                "tax_rate": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 16
+                                                },
+                                                "tax_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 14400
                                                 },
                                                 "seller": {
                                                     "properties": {
@@ -17557,6 +17594,16 @@
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 90000
+                                                },
+                                                "tax_rate": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 16
+                                                },
+                                                "tax_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 14400
                                                 },
                                                 "seller": {
                                                     "properties": {

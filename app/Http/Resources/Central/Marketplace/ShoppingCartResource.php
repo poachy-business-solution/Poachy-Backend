@@ -20,11 +20,14 @@ class ShoppingCartResource extends JsonResource
             'status' => $this->status->value,
             'item_count' => $this->getItemCount(),
             'subtotal' => $this->getSubtotal(),
+            'tax_amount' => $this->getTaxAmount(),
+            'total' => round($this->getSubtotal() + $this->getTaxAmount(), 2),
             'tenant_groups' => $tenantGroups->map(function ($items, $tenantId) {
                 return [
                     'tenant_id' => $tenantId,
                     'items' => ShoppingCartItemResource::collection($items),
                     'subtotal' => $items->sum(fn ($item) => $item->getLineTotal()),
+                    'tax_amount' => round($items->sum(fn ($item) => $item->getLineTax()), 2),
                 ];
             })->values(),
             'created_at' => $this->created_at?->toIso8601String(),
