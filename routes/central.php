@@ -362,8 +362,8 @@ Route::prefix('v1/central')
 // Sync Routes
 Route::prefix('v1/central')->group(function () {
 
-    // Sync endpoints
-    Route::prefix('sync')->group(function () {
+    // Sync endpoints (server to server: CENTRAL_API_TOKEN)
+    Route::prefix('sync')->middleware('sync.token:central')->group(function () {
 
         // Inbound sync (from tenants)
         Route::post('inbound/product', [SyncController::class, 'receiveProductSync']);
@@ -388,5 +388,5 @@ Route::prefix('v1/central')->group(function () {
 
     // Marketplace delivery location pings (from tenants) — deliberately NOT under
     // sync/, not routed through SyncQueueOutbound/Inbound. See TODO.md §11b.
-    Route::post('marketplace-orders/{orderId}/delivery/location', [MarketplaceDeliveryLocationController::class, 'update']);
+    Route::post('marketplace-orders/{orderId}/delivery/location', [MarketplaceDeliveryLocationController::class, 'update'])->middleware('sync.token:central');
 });

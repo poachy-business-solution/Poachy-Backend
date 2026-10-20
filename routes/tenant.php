@@ -102,8 +102,8 @@ Route::prefix('v1/tenant')->group(function () {
         Route::post('/change-password', [TenantAuthController::class, 'changePassword'])->middleware('throttle:otp'); // First-time password change
     });
 
-    // Sync endpoints (from Central)
-    Route::prefix('sync/inbound')->group(function () {
+    // Sync endpoints (from Central: TENANT_API_TOKEN)
+    Route::prefix('sync/inbound')->middleware('sync.token:tenant')->group(function () {
         Route::post('/approved-review', [ApprovedReviewSyncController::class, 'store']);
         Route::post('/delivery-zone-ack', [TenantSyncAckController::class, 'receiveDeliveryZoneAck']);
         Route::post('/inventory-count-ack', [TenantSyncAckController::class, 'receiveInventoryCountAck']);

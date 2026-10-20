@@ -5,6 +5,7 @@ use App\Http\Middleware\AddRequestId;
 use App\Http\Middleware\CheckTenantAccess;
 use App\Http\Middleware\EnforceBillingLimits;
 use App\Http\Middleware\InternalAdmin;
+use App\Http\Middleware\VerifySyncToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -57,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.access' => CheckTenantAccess::class,
             'billing.limits' => EnforceBillingLimits::class,
             'internal.admin' => InternalAdmin::class,
+            'sync.token' => VerifySyncToken::class,
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {
