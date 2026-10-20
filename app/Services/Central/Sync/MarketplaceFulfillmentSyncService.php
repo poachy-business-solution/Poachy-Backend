@@ -50,8 +50,12 @@ class MarketplaceFulfillmentSyncService
             Log::info('Marketplace fulfillment sync: older step arrived late, ignored', [
                 'order_id' => $order->id, 'order_status' => $order->order_status->value, 'fulfillment_status' => $tenantStatus->value,
             ]);
+            // Still open the delivery record if this late step is the one that creates it.
+            if ($order->fulfillment_type === FulfillmentType::Delivery && $order->delivery === null) {
+                $this->applyDeliveryTracking($order, $tenantStatus, $dto);
+            }
 
-            return $order;
+            return $order->fresh();
         }
 
         $this->applyOrderStatus($order, $tenantStatus);
@@ -127,8 +131,8 @@ class MarketplaceFulfillmentSyncService
      */
     private function forwardPath(MarketplaceOrder $order): array
     {
+        // Starts at Confirmed: an unpaid (Pending) order is never walked forward by a shop step.
         return [
-            OrderStatus::Pending,
             OrderStatus::Confirmed,
             OrderStatus::Processing,
             $order->fulfillment_type === FulfillmentType::Pickup ? OrderStatus::ReadyForPickup : OrderStatus::OutForDelivery,
@@ -147,7 +151,7 @@ class MarketplaceFulfillmentSyncService
         $reported = array_search(match ($tenantStatus) {
             TenantFulfillmentStatus::CONFIRMED => OrderStatus::Confirmed,
             TenantFulfillmentStatus::PREPARING => OrderStatus::Processing,
-            TenantFulfillmentStatus::READY => $path[3],
+            TenantFulfillmentStatus::READY => $path[2],
             default => OrderStatus::Completed,
         }, $path, true);
 
