@@ -37,6 +37,9 @@ class MarketplacePayout extends Model
     /** Safaricom timed out: the money may or may not have moved — a person checks before any resend. */
     public const NEEDS_CHECK = 'needs_check';
 
+    /** No transfer: refunds were taken from the shop's Poachy balance instead. */
+    public const SETTLED = 'settled';
+
     /** Out of automatic retries. */
     public const FAILED_FINAL = 'failed_final';
 

@@ -6,6 +6,8 @@ use App\Enums\Central\OrderStatus;
 use App\Jobs\Central\UpdateTenantOrderMetricsJob;
 use App\Models\MarketplaceOrder;
 use App\Services\Central\Payouts\PayoutLedgerService;
+use App\Services\Central\Refunds\RefundService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MarketplaceOrderObserver
@@ -30,6 +32,14 @@ class MarketplaceOrderObserver
             // Handover (collected or delivered): the shop has earned this order's payout.
             if ($order->order_status === OrderStatus::Completed) {
                 app(PayoutLedgerService::class)->recordHandover($order);
+            }
+
+            // Cancelled before handover (by the buyer, the shop or a failed hold): money that was
+            // taken goes straight back through the gateway, once the cancellation is committed.
+            if ($order->order_status === OrderStatus::Cancelled) {
+                DB::connection('central')->afterCommit(fn () => app(RefundService::class)->start(
+                    $order, (float) $order->total_amount, 'cancellation', $order->cancellation_reason ?: 'Order cancelled',
+                ));
             }
         }
 

@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\Tenant\Inventory\StockTransferController;
 use App\Http\Controllers\Api\Tenant\Marketplace\MarketplaceSummaryController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ReservationController;
 use App\Http\Controllers\Api\Tenant\Marketplace\ShopPayoutController;
+use App\Http\Controllers\Api\Tenant\Marketplace\ShopReturnController;
 use App\Http\Controllers\Api\Tenant\Notifications\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\Offers\CouponController;
 use App\Http\Controllers\Api\Tenant\Offers\PromotionController;
@@ -755,6 +756,15 @@ Route::prefix('v1/tenant')
         // The app's Marketplace tab (owners/managers)
         Route::get('marketplace/summary', [MarketplaceSummaryController::class, 'show'])
             ->middleware(['permission:view-marketplace-sales,tenant']);
+        Route::prefix('marketplace/returns')->middleware(['permission:view-marketplace-sales,tenant'])->group(function () {
+            Route::get('/', [ShopReturnController::class, 'index']);
+            Route::get('/{reference}', [ShopReturnController::class, 'show'])->where('reference', 'RET-[A-Z0-9]{6}');
+            Route::get('/{reference}/photos/{index}', [ShopReturnController::class, 'photo'])->where(['reference' => 'RET-[A-Z0-9]{6}', 'index' => '[0-9]']);
+            Route::middleware(['permission:manage-marketplace-sales,tenant'])->group(function () {
+                Route::post('/{reference}/received', [ShopReturnController::class, 'received'])->where('reference', 'RET-[A-Z0-9]{6}');
+                Route::post('/{reference}/inspect', [ShopReturnController::class, 'inspect'])->where('reference', 'RET-[A-Z0-9]{6}');
+            });
+        });
         Route::prefix('marketplace/payouts')->middleware(['permission:view-financial-reports,tenant'])->group(function () {
             Route::get('/', [ShopPayoutController::class, 'index']);
             Route::get('/{id}', [ShopPayoutController::class, 'show'])->whereNumber('id');

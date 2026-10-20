@@ -2,10 +2,13 @@
 
 namespace App\Services\Central\Payouts;
 
+use App\Enums\Central\BillingLedgerType;
 use App\Helpers\PhoneNumber;
+use App\Models\BillingAccount;
 use App\Models\BusinessDetail;
 use App\Models\MarketplacePayout;
 use App\Models\MarketplacePayoutLine;
+use App\Services\Central\Billing\BillingLedgerService;
 use App\Services\Shared\Messaging\Messenger;
 use App\Services\Shared\Mpesa\MpesaService;
 use Illuminate\Support\Carbon;
@@ -38,6 +41,11 @@ class PayoutService
 
         $tenants = $retriesOnly ? collect() : MarketplacePayoutLine::query()->available($asOf)->distinct()->pluck('tenant_id');
         foreach ($tenants as $tenantId) {
+            if ($this->settleFromBalance((string) $tenantId, $asOf)) {
+                $summary['skipped'][(string) $tenantId] = 'refunds taken from the Poachy balance';
+
+                continue;
+            }
             $payout = $this->createPayout((string) $tenantId, $asOf, $reason);
             if ($payout === null) {
                 $summary['skipped'][(string) $tenantId] = $reason;
@@ -111,6 +119,40 @@ class PayoutService
 
             return $payout->fresh();
         });
+    }
+
+    /**
+     * Refunds clawed back from a shop whose payouts have not covered them for `settle_after_days`
+     * come off its Poachy (billing) balance instead; the lines close in a zero "settled" payout.
+     */
+    public function settleFromBalance(string $tenantId, Carbon $asOf): bool
+    {
+        $lines = MarketplacePayoutLine::query()->where('tenant_id', $tenantId)->available($asOf)->get();
+        $total = round((float) $lines->sum('net'), 2);
+        $oldestClawback = $lines->where('type', MarketplacePayoutLine::CLAWBACK)->min('eligible_at');
+        if ($total >= 0 || $oldestClawback === null || Carbon::parse($oldestClawback)->gt($asOf->copy()->subDays((int) config('payouts.settle_after_days', 7)))) {
+            return false;
+        }
+        $account = BillingAccount::query()->where('tenant_id', $tenantId)->first();
+        if ($account === null) {
+            return false;
+        }
+
+        DB::connection('central')->transaction(function () use ($tenantId, $asOf, $lines, $total, $account) {
+            $payout = MarketplacePayout::query()->create([
+                'tenant_id' => $tenantId, 'reference' => 'SET-'.$asOf->format('Ymd').'-'.Str::upper(Str::random(6)), 'amount' => 0,
+                'status' => MarketplacePayout::SETTLED, 'paid_at' => $asOf, 'failure_reason' => null,
+            ]);
+            MarketplacePayoutLine::query()->whereIn('id', $lines->pluck('id'))->update(['payout_id' => $payout->id]);
+            $this->adjustment($tenantId, $payout->id, 'Taken from your Poachy balance', abs($total));
+            $payout->update(['lines_count' => $payout->lines()->count()]);
+            app(BillingLedgerService::class)->post($account, BillingLedgerType::Adjustment, -abs($total),
+                'Marketplace refunds not covered by payouts ('.$payout->reference.')', 'marketplace_clawback', $payout->reference, 'clawback-settle:'.$payout->reference);
+        });
+        $this->messenger->toShop($tenantId, null, 'payout_clawback_balance',
+            'Refunds of KSh '.number_format(abs($total), 2).' to your online buyers were taken from your Poachy balance, as your payouts did not cover them.');
+
+        return true;
     }
 
     /** Send (or re-send) a payout through the B2C gateway. */

@@ -38,7 +38,7 @@ class MarketplacePayoutLine extends Model
     protected $connection = 'central';
 
     protected $fillable = [
-        'tenant_id', 'order_id', 'type', 'description', 'gross', 'processing_fee', 'commission_rate', 'commission_amount',
+        'tenant_id', 'order_id', 'refund_id', 'type', 'description', 'gross', 'processing_fee', 'commission_rate', 'commission_amount',
         'net', 'source', 'payment_method', 'handed_over_at', 'eligible_at', 'payout_id',
     ];
 

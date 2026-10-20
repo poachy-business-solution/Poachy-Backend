@@ -10,6 +10,7 @@ use App\Mail\Central\Marketplace\MarketplaceOrderLifecycleMail;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
+use App\Models\MarketplaceRefund;
 use App\Models\User;
 use App\Services\Central\Marketplace\MarketplaceOrderService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -269,13 +270,11 @@ class MarketplaceOrderServiceTest extends TestCase
         $this->assertSame(ReservationStatus::Released, $cancelled->reservation_status);
     }
 
-    public function test_cancel_order_marks_payment_refunded_once_order_has_been_paid_for(): void
+    public function test_cancel_order_starts_a_gateway_refund_once_order_has_been_paid_for(): void
     {
-        // order_status only ever reaches Confirmed via confirmPayment(), which
-        // runs after payment completes. cancelOrder() must flag the payment as
-        // refunded here (bookkeeping only) and still dispatch the cancellation
-        // sync — ProcessInboundCancellationSync is what actually reverses the
-        // tenant-side inventory/batch deductions once it detects the synced sale.
+        // A paid order's money goes back through the gateway (RefundService, started by the order
+        // observer after the cancellation commits); the payment is marked refunded only when the
+        // money has actually gone back. The cancellation sync still reverses the tenant's stock.
         $order = $this->createOrder([
             'order_status' => OrderStatus::Confirmed,
             'reservation_status' => ReservationStatus::Confirmed,
@@ -293,10 +292,11 @@ class MarketplaceOrderServiceTest extends TestCase
 
         $this->assertSame(OrderStatus::Cancelled, $cancelled->order_status);
 
-        $payment->refresh();
-        $this->assertTrue($payment->is_refunded);
-        $this->assertEquals((float) $order->total_amount, (float) $payment->refunded_amount);
-        $this->assertSame(MarketplacePaymentStatus::Refunded, $payment->payment_status);
+        $refund = MarketplaceRefund::query()->where('order_id', $order->id)->sole();
+        $this->assertSame('cancellation', $refund->kind);
+        $this->assertEquals((float) $order->total_amount, (float) $refund->amount);
+        $this->assertFalse($payment->fresh()->is_refunded); // not until the gateway confirms
+        MarketplaceRefund::query()->where('order_id', $order->id)->delete();
 
         Queue::assertPushed(ProcessOrderCancellation::class, fn ($job) => $job->orderId === $order->id);
     }

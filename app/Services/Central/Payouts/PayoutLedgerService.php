@@ -61,13 +61,19 @@ class PayoutLedgerService
     }
 
     /**
-     * Take money back from a shop's next payouts (a refund after the order was paid out).
-     * Payable at once, so the next batch nets it off.
+     * Take a refund back from the shop's next payouts. Only for orders that earned a payout line
+     * (handed over): before handover the shop was never owed the money. Payable at once, so the
+     * next batch nets it off; one clawback per refund.
      */
-    public function recordClawback(MarketplaceOrder $order, float $amount, string $reason): MarketplacePayoutLine
+    public function recordClawback(MarketplaceOrder $order, float $amount, string $reason, ?int $refundId = null): ?MarketplacePayoutLine
     {
+        $earned = MarketplacePayoutLine::query()->where('order_id', $order->id)->where('type', MarketplacePayoutLine::SALE)->exists();
+        if (! $earned || $amount <= 0) {
+            return null;
+        }
+
         return MarketplacePayoutLine::query()->firstOrCreate(
-            ['order_id' => $order->id, 'type' => MarketplacePayoutLine::CLAWBACK],
+            ['order_id' => $order->id, 'type' => MarketplacePayoutLine::CLAWBACK, 'refund_id' => $refundId],
             [
                 'tenant_id' => $order->tenant_id,
                 'description' => "Refund on order {$order->order_number}: {$reason}",

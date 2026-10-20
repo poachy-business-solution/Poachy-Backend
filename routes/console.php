@@ -54,6 +54,12 @@ Schedule::command('marketplace:payouts')
     ->onOneServer()
     ->description('Nightly marketplace payouts');
 
+Schedule::command('marketplace:return-timers')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Marketplace return clocks (inspection, dispute, bring-back)');
+
 Schedule::command('marketplace:payouts --retries-only')
     ->hourlyAt(20)
     ->withoutOverlapping()

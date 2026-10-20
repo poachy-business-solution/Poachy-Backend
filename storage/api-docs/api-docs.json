@@ -13215,6 +13215,208 @@
                 ]
             }
         },
+        "/api/v1/central/marketplace/orders/{id}/returns": {
+            "post": {
+                "tags": [
+                    "Central - Marketplace - Returns"
+                ],
+                "summary": "Ask to return items from a collected/delivered order (multipart; up to 4 photos)",
+                "description": "Within the shop's return window (0/3/7 days after handover); food, hygiene goods and airtime are never returnable. Shop at fault (faulty, wrong_item, not_as_described, damaged): items + delivery fee (if all returned). changed_mind: items less the buyer's share of the payment fee.",
+                "operationId": "marketplaceOpenReturn",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "items",
+                                    "reason_code"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "order_item_id": {
+                                                    "type": "integer"
+                                                },
+                                                "quantity": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "reason_code": {
+                                        "type": "string",
+                                        "enum": [
+                                            "changed_mind",
+                                            "faulty",
+                                            "wrong_item",
+                                            "not_as_described",
+                                            "damaged"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    },
+                                    "photos[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Return opened"
+                    },
+                    "404": {
+                        "description": "Not this buyer's order"
+                    },
+                    "422": {
+                        "description": "Not returnable (window, category, open case) or invalid items"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace/returns": {
+            "get": {
+                "tags": [
+                    "Central - Marketplace - Returns"
+                ],
+                "summary": "The buyer's returns, newest first",
+                "operationId": "marketplaceListReturns",
+                "responses": {
+                    "200": {
+                        "description": "Returns"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace/returns/{reference}": {
+            "get": {
+                "tags": [
+                    "Central - Marketplace - Returns"
+                ],
+                "summary": "One of the buyer's returns",
+                "operationId": "marketplaceShowReturn",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Return"
+                    },
+                    "404": {
+                        "description": "Not this buyer's return"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace/returns/{reference}/dispute": {
+            "post": {
+                "tags": [
+                    "Central - Marketplace - Returns"
+                ],
+                "summary": "Dispute the shop's rejection or partial refund (within 48 h; multipart, up to 4 photos)",
+                "operationId": "marketplaceDisputeReturn",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Disputed — Poachy decides"
+                    },
+                    "422": {
+                        "description": "Nothing to dispute or too late"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/central/marketplace/returns/{reference}/cancel": {
+            "post": {
+                "tags": [
+                    "Central - Marketplace - Returns"
+                ],
+                "summary": "Withdraw a return the shop has not received yet",
+                "operationId": "marketplaceCancelReturn",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    },
+                    "422": {
+                        "description": "Already received"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/central/marketplace/merchants/{tenant_id}/reviews": {
             "get": {
                 "tags": [
@@ -19936,6 +20138,60 @@
                 ],
                 "summary": "M-Pesa B2C queue timeout for a marketplace payout (never re-sent automatically)",
                 "operationId": "marketplacePayoutB2cTimeout",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Acknowledged"
+                    },
+                    "404": {
+                        "description": "Wrong token"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/mpesa/refund/result/{token}": {
+            "post": {
+                "tags": [
+                    "Central - Marketplace - Refunds"
+                ],
+                "summary": "M-Pesa reversal / B2C result for a buyer refund (Safaricom → Poachy)",
+                "operationId": "marketplaceRefundMpesaResult",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Acknowledged"
+                    },
+                    "404": {
+                        "description": "Wrong token"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/mpesa/refund/timeout/{token}": {
+            "post": {
+                "tags": [
+                    "Central - Marketplace - Refunds"
+                ],
+                "summary": "M-Pesa queue timeout for a buyer refund (never re-sent automatically)",
+                "operationId": "marketplaceRefundMpesaTimeout",
                 "parameters": [
                     {
                         "name": "token",
@@ -72898,6 +73154,219 @@
                     },
                     "404": {
                         "description": "Not this shop's payout"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/returns": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "This shop's returns (open first)",
+                "operationId": "tenantMarketplaceReturns",
+                "parameters": [
+                    {
+                        "name": "open",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns + counts"
+                    },
+                    "403": {
+                        "description": "No view-marketplace-sales"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/returns/{reference}": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "One of this shop's returns",
+                "operationId": "tenantMarketplaceReturn",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Return"
+                    },
+                    "404": {
+                        "description": "Not this shop's return"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/returns/{reference}/received": {
+            "post": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "The buyer brought the items back — the 48 h inspection starts",
+                "operationId": "tenantMarketplaceReturnReceived",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Received"
+                    },
+                    "422": {
+                        "description": "Not waiting for the items"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/returns/{reference}/inspect": {
+            "post": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "The shop's inspection: accept (refund now, items back in stock), partial or reject (buyer may dispute within 48 h)",
+                "operationId": "tenantMarketplaceReturnInspect",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "decision"
+                                ],
+                                "properties": {
+                                    "decision": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accept",
+                                            "partial",
+                                            "reject"
+                                        ]
+                                    },
+                                    "refund_amount": {
+                                        "description": "For partial",
+                                        "type": "number"
+                                    },
+                                    "reason": {
+                                        "description": "Required for partial and reject",
+                                        "type": "string"
+                                    },
+                                    "photos[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Inspected"
+                    },
+                    "403": {
+                        "description": "No manage-marketplace-sales"
+                    },
+                    "422": {
+                        "description": "Not received yet, already decided, or invalid amount"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/marketplace/returns/{reference}/photos/{index}": {
+            "get": {
+                "tags": [
+                    "Tenant - Marketplace"
+                ],
+                "summary": "One of the buyer's evidence photos (0-based)",
+                "operationId": "tenantMarketplaceReturnPhoto",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "index",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The image"
+                    },
+                    "404": {
+                        "description": "No such photo"
                     }
                 },
                 "security": [
@@ -137752,8 +138221,16 @@
             "description": "Central - Customer - Marketplace - Reservations"
         },
         {
+            "name": "Central - Marketplace - Returns",
+            "description": "Central - Marketplace - Returns"
+        },
+        {
             "name": "Central - Marketplace - Payouts",
             "description": "Central - Marketplace - Payouts"
+        },
+        {
+            "name": "Central - Marketplace - Refunds",
+            "description": "Central - Marketplace - Refunds"
         },
         {
             "name": "Central - Public Workspace",

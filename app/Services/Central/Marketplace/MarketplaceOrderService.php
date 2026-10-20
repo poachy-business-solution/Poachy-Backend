@@ -108,18 +108,10 @@ class MarketplaceOrderService
             throw new \RuntimeException('This order cannot be cancelled.');
         }
 
-        // order_status only ever advances past Pending via confirmPayment(), which
-        // runs after payment has completed — so anything beyond Pending means the
-        // tenant has (or is about to have) real inventory movements and possibly
-        // batch depletions against this order. Flag the payment as refunded here
-        // (bookkeeping only — no live payment-reversal API exists, matching the
-        // POS refund philosophy that cash/M-Pesa reversals are staff-handled);
-        // the tenant-side cancellation sync (ProcessInboundCancellationSync)
-        // detects the already-synced MarketplaceSale and reverses the real
-        // inventory/batch deductions.
-        $wasAlreadyPaid = $order->order_status !== OrderStatus::Pending;
-
-        DB::connection('central')->transaction(function () use ($order, $reason, $cancelledBy, $wasAlreadyPaid) {
+        // A paid order is refunded through its gateway (see the order observer); the
+        // tenant-side cancellation sync (ProcessInboundCancellationSync) detects the
+        // already-synced MarketplaceSale and reverses the real inventory/batch deductions.
+        DB::connection('central')->transaction(function () use ($order, $reason, $cancelledBy) {
             $order->cancel($reason, $cancelledBy);
 
             if ($order->reservation_status === ReservationStatus::Confirmed
@@ -127,14 +119,8 @@ class MarketplaceOrderService
                 $order->update(['reservation_status' => ReservationStatus::Released]);
             }
 
-            if ($wasAlreadyPaid) {
-                $payment = $order->payments()
-                    ->where('payment_status', MarketplacePaymentStatus::Completed)
-                    ->latest()
-                    ->first();
-
-                $payment?->markAsRefunded((float) $order->total_amount);
-            }
+            // A paid order's money goes back through the gateway: the order observer starts
+            // the refund (RefundService) once this transaction commits.
         });
 
         // Dispatch cancellation sync to release tenant reservation

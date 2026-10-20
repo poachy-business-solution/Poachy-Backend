@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Central\Marketplace\MarketplaceReturnController;
 use App\Http\Controllers\Api\Central\Payouts\PayoutCallbackController;
+use App\Http\Controllers\Api\Central\Payouts\RefundCallbackController;
 use App\Http\Controllers\Api\Central\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\BusinessReviewController;
 use App\Http\Controllers\Api\Central\Admin\Tenant\TenantController;
@@ -119,6 +121,9 @@ Route::prefix('v1/central')->group(function () {
         // Marketplace payout (B2C) results; the last segment is a secret derived from the app key.
         Route::post('/b2c/payout/result/{token}', [PayoutCallbackController::class, 'result'])->middleware('throttle:60,1');
         Route::post('/b2c/payout/timeout/{token}', [PayoutCallbackController::class, 'timeout'])->middleware('throttle:60,1');
+        // Buyer refunds (reversal or B2C) — same secret-path pattern.
+        Route::post('/refund/result/{token}', [RefundCallbackController::class, 'result'])->middleware('throttle:60,1');
+        Route::post('/refund/timeout/{token}', [RefundCallbackController::class, 'timeout'])->middleware('throttle:60,1');
     });
 
     // Marketplace routes
@@ -255,6 +260,13 @@ Route::prefix('v1/central')
 
             // Delivery
             Route::get('/orders/{id}/delivery', [MarketplaceDeliveryController::class, 'status']);
+
+            // Returns (after handover)
+            Route::post('/orders/{id}/returns', [MarketplaceReturnController::class, 'store'])->whereNumber('id')->middleware('throttle:10,1');
+            Route::get('/returns', [MarketplaceReturnController::class, 'index']);
+            Route::get('/returns/{reference}', [MarketplaceReturnController::class, 'show'])->where('reference', 'RET-[A-Z0-9]{6}');
+            Route::post('/returns/{reference}/dispute', [MarketplaceReturnController::class, 'dispute'])->where('reference', 'RET-[A-Z0-9]{6}')->middleware('throttle:10,1');
+            Route::post('/returns/{reference}/cancel', [MarketplaceReturnController::class, 'cancel'])->where('reference', 'RET-[A-Z0-9]{6}')->middleware('throttle:10,1');
 
             // Reserve & collect
             Route::post('/reservations', [MarketplaceReservationController::class, 'store'])->middleware('throttle:reservations');

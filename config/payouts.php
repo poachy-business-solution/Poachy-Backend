@@ -23,6 +23,9 @@ return [
     // Minutes to wait before re-sending a failed payout; after the last one it needs a person.
     'retry_delays' => [60, 360, 1440],
 
+    // Clawbacks payouts have not covered after this many days come off the shop's Poachy balance.
+    'settle_after_days' => 7,
+
     // Where failure alerts go (Poachy finance).
     'alert_email' => env('PAYOUT_ALERT_EMAIL', 'payments@poachy.test'),
 ];
