@@ -17,18 +17,19 @@ class MpesaRegisterC2BCommand extends Command
     public function handle(MpesaService $mpesa): int
     {
         $env = config('mpesa.environment', 'sandbox');
-        // The registered URLs end in the callback secret (App\Support\MpesaCallbacks); shown masked.
-        $validationUrl = config('mpesa.c2b_validation_url') ? MpesaCallbacks::url('c2b_validation') : '';
-        $confirmationUrl = config('mpesa.c2b_confirmation_url') ? MpesaCallbacks::url('c2b_confirmation') : '';
+        // Derived from APP_URL (or the MPESA_C2B_*_URL base when set), ending in the callback
+        // secret (App\Support\MpesaCallbacks); shown masked.
+        $validationUrl = MpesaCallbacks::url('c2b_validation');
+        $confirmationUrl = MpesaCallbacks::url('c2b_confirmation');
         $responseType = $this->option('response-type');
 
         $this->info("Registering C2B URLs ({$env})...");
-        $this->line('  Validation URL:   '.($validationUrl ? MpesaCallbacks::masked('c2b_validation') : ''));
-        $this->line('  Confirmation URL: '.($confirmationUrl ? MpesaCallbacks::masked('c2b_confirmation') : ''));
+        $this->line('  Validation URL:   '.MpesaCallbacks::masked('c2b_validation'));
+        $this->line('  Confirmation URL: '.MpesaCallbacks::masked('c2b_confirmation'));
         $this->line("  Response Type:    {$responseType}");
 
-        if (! $validationUrl || ! $confirmationUrl) {
-            $this->error('MPESA_C2B_VALIDATION_URL and MPESA_C2B_CONFIRMATION_URL must be set in your .env file.');
+        if (! str_starts_with($validationUrl, 'https://')) {
+            $this->error('Safaricom needs HTTPS callback URLs: set APP_URL to the public https:// address (or MPESA_C2B_*_URL).');
 
             return self::FAILURE;
         }
