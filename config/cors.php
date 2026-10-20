@@ -19,7 +19,9 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // Browsers never hold API tokens (the website calls the API from its server; the app is native).
+    // Production: set CORS_ALLOWED_ORIGINS to the website's origin(s), comma-separated.
+    'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', '*'))))),
 
     'allowed_origins_patterns' => [],
 

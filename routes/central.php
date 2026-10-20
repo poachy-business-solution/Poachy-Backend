@@ -151,7 +151,7 @@ Route::prefix('v1/central')->group(function () {
         });
 
         // Shopping cart (public — guests can use cart, auth required at checkout)
-        Route::prefix('cart')->group(function () {
+        Route::prefix('cart')->middleware('throttle:120,1')->group(function () {
             Route::get('/', [ShoppingCartController::class, 'show']);
             Route::post('/items', [ShoppingCartController::class, 'addItem']);
             Route::patch('/items/{id}', [ShoppingCartController::class, 'updateItem']);
@@ -161,11 +161,11 @@ Route::prefix('v1/central')->group(function () {
         });
 
         // Checkout (public route — auth checked in controller)
-        Route::post('/checkout/validate', [CheckoutController::class, 'validate']);
-        Route::post('/checkout', [CheckoutController::class, 'initiate']);
+        Route::post('/checkout/validate', [CheckoutController::class, 'validate'])->middleware('throttle:30,1');
+        Route::post('/checkout', [CheckoutController::class, 'initiate'])->middleware('throttle:10,1');
 
         // Delivery fee preview
-        Route::post('/delivery/preview', [DeliveryFeeController::class, 'preview']);
+        Route::post('/delivery/preview', [DeliveryFeeController::class, 'preview'])->middleware('throttle:60,1');
 
         // Analytics tracking (public — rate limited)
         Route::prefix('analytics')

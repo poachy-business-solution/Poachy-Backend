@@ -39,4 +39,13 @@ class SyncTokenTest extends TestCase
         Config::set('services.central_api.token', '');
         $this->postJson($url, [], ['Authorization' => 'Bearer '])->assertForbidden();
     }
+
+    public function test_guest_cart_checkout_and_delivery_preview_are_rate_limited(): void
+    {
+        $routes = collect(RouteFacade::getRoutes()->getRoutes())->filter(fn (Route $r) => preg_match('#^api/v1/central/marketplace/(cart|checkout|delivery/preview)#', $r->uri()));
+        $this->assertGreaterThanOrEqual(9, $routes->count());
+        foreach ($routes as $route) {
+            $this->assertNotEmpty(array_filter($route->gatherMiddleware(), fn ($m) => str_starts_with((string) $m, 'throttle:')), $route->uri());
+        }
+    }
 }
