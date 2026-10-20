@@ -10,6 +10,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Advert;
 use App\Models\AdvertType;
 use App\Models\BillingAccount;
+use App\Models\MarketplaceProduct;
 use App\Services\Central\Marketplace\AdvertService;
 use Illuminate\Http\JsonResponse;
 
@@ -29,7 +30,7 @@ class ShopAdvertController extends Controller
      *     tags={"Tenant - Marketplace"},
      *     security={{"sanctum": {}}},
      *
-     *     @OA\Response(response=200, description="types[] (key, name, description, price, days, needs_product), adverts[] (status, dates, views, clicks, orders), balance"),
+     *     @OA\Response(response=200, description="types[] (key, name, description, price, days, needs_product), adverts[] (status, dates, views, clicks, orders), balance, products[] (id, name: listed products an advert can point to)"),
      *     @OA\Response(response=403, description="No view-financial-reports")
      * )
      */
@@ -42,6 +43,8 @@ class ShopAdvertController extends Controller
                 ->map(fn (AdvertType $t) => ['key' => $t->key, 'name' => $t->name, 'description' => $t->description, 'price' => (float) $t->price, 'days' => $t->days, 'needs_product' => $t->needs_product]),
             'adverts' => AdvertResource::collection(Advert::query()->where('tenant_id', $tenantId)->with(['type', 'product'])->latest('id')->limit(50)->get()),
             'balance' => (float) (BillingAccount::query()->where('tenant_id', $tenantId)->value('balance') ?? 0),
+            'products' => MarketplaceProduct::on('central')->active()->where('tenant_id', $tenantId)->orderBy('name')->limit(300)->get(['id', 'name'])
+                ->map(fn (MarketplaceProduct $p) => ['id' => $p->id, 'name' => $p->name])->values(),
         ]);
     }
 

@@ -73573,7 +73573,7 @@
                 "operationId": "tenantAdverts",
                 "responses": {
                     "200": {
-                        "description": "types[] (key, name, description, price, days, needs_product), adverts[] (status, dates, views, clicks, orders), balance"
+                        "description": "types[] (key, name, description, price, days, needs_product), adverts[] (status, dates, views, clicks, orders), balance, products[] (id, name: listed products an advert can point to)"
                     },
                     "403": {
                         "description": "No view-financial-reports"
