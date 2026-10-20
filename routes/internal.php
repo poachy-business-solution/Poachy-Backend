@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Internal\Admin\BillingController;
 use App\Http\Controllers\Api\Internal\Admin\EmailTemplateController;
 use App\Http\Controllers\Api\Internal\Admin\MarketplaceAdminController;
+use App\Http\Controllers\Api\Internal\Admin\MarketplaceFeesAdminController;
 use App\Http\Controllers\Api\Internal\Admin\MarketplaceMappingController;
 use App\Http\Controllers\Api\Internal\Admin\ShopController;
 use App\Http\Controllers\Api\Internal\Admin\VerificationController;
@@ -42,6 +43,10 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::post('/shops/{shop}/payouts/release', [MarketplaceAdminController::class, 'releasePayouts'])->middleware('internal.admin:super,finance');
     Route::post('/marketplace/adverts/{id}/stop', [MarketplaceAdminController::class, 'stopAdvert'])->whereNumber('id')->middleware(['internal.admin:super,operations', 'throttle:internal-admin-money']);
     Route::patch('/marketplace/advert-types/{key}', [MarketplaceAdminController::class, 'updateAdvertType'])->where('key', '[a-z_]{3,30}')->middleware('internal.admin:super,finance');
+    // Payout fees and commission (item 49): everyone with marketplace access reads; finance changes.
+    Route::get('/marketplace/fees', [MarketplaceFeesAdminController::class, 'index'])->middleware('internal.admin:super,operations,finance,support');
+    Route::post('/marketplace/fees', [MarketplaceFeesAdminController::class, 'scheduleFees'])->middleware('internal.admin:super,finance');
+    Route::post('/marketplace/commission-rates', [MarketplaceFeesAdminController::class, 'scheduleCommission'])->middleware('internal.admin:super,finance');
     Route::post('/marketplace/reviews/{type}/{id}/moderate', [MarketplaceAdminController::class, 'moderateReview'])->where(['type' => 'product|merchant'])->whereNumber('id')->middleware('internal.admin:super,operations,support');
 
     // Billing

@@ -91,10 +91,11 @@ class PayoutService
         return DB::connection('central')->transaction(function () use ($tenantId, $asOf, $phone, &$reason) {
             $lines = MarketplacePayoutLine::query()->where('tenant_id', $tenantId)->available($asOf)->lockForUpdate()->get();
             $total = round((float) $lines->sum('net'), 2);
-            $transferFee = (float) config('payouts.fees.transfer_fee', 0);
+            $fees = app(MarketplaceFeeService::class)->on($asOf); // set by finance in the admin (item 49)
+            $transferFee = $fees['transfer_fee'];
             $whole = (int) floor($total - $transferFee);
 
-            if ($lines->isEmpty() || $whole < (int) config('payouts.min_amount', 10)) {
+            if ($lines->isEmpty() || $whole < $fees['min_payout']) {
                 $reason = $lines->isEmpty() ? 'nothing available' : 'below the minimum';
 
                 return null;

@@ -33,7 +33,8 @@ class PayoutLedgerService
 
         $gross = round((float) $payment->amount, 2);
         $method = $payment->payment_method->value;
-        $feePercent = $method === 'card' ? (float) config('payouts.fees.card_percent') : (float) config('payouts.fees.mpesa_percent');
+        $fees = app(MarketplaceFeeService::class)->on(now()); // set by finance in the admin (item 49)
+        $feePercent = $method === 'card' ? $fees['card_fee_percent'] : $fees['mpesa_fee_percent'];
         $fee = round($gross * $feePercent / 100, 2);
         $rate = $this->commission->rateFor($order);
         $commission = $this->commission->amountFor($order, $rate);
@@ -52,7 +53,7 @@ class PayoutLedgerService
             'source' => $order->source(),
             'payment_method' => $method,
             'handed_over_at' => $handedOver,
-            'eligible_at' => $handedOver->copy()->addHours((int) config('payouts.hold_hours', 24)),
+            'eligible_at' => $handedOver->copy()->addHours($fees['hold_hours']),
         ]);
 
         Log::info('Payout line recorded at handover', ['order_id' => $order->id, 'tenant_id' => $order->tenant_id, 'net' => $line->net]);

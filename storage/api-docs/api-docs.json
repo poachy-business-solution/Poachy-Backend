@@ -22503,6 +22503,152 @@
                 }
             }
         },
+        "/api/internal/admin/marketplace/fees": {
+            "get": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Payout fees and commission: in force today, scheduled, history, and the last 30 days' totals",
+                "operationId": "internalAdminMarketplaceFees",
+                "responses": {
+                    "200": {
+                        "description": "current{fees, commission_percent}, fee_history[], commission_history[], last_30_days{orders, gross, processing_fees, commission, net}"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Schedule payout fees, hold and minimum from a date (super, finance)",
+                "operationId": "internalAdminScheduleMarketplaceFees",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mpesa_fee_percent",
+                                    "card_fee_percent",
+                                    "transfer_fee",
+                                    "hold_hours",
+                                    "min_payout",
+                                    "effective_from",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "mpesa_fee_percent": {
+                                        "type": "number",
+                                        "example": 0.55
+                                    },
+                                    "card_fee_percent": {
+                                        "type": "number",
+                                        "example": 2.9
+                                    },
+                                    "transfer_fee": {
+                                        "type": "number",
+                                        "example": 0
+                                    },
+                                    "hold_hours": {
+                                        "type": "integer",
+                                        "example": 24
+                                    },
+                                    "min_payout": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Scheduled (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "422": {
+                        "description": "Out of range or back-dated"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
+        "/api/internal/admin/marketplace/commission-rates": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Schedule the marketplace commission rate from a date (super, finance); own-link orders stay at 0%",
+                "operationId": "internalAdminScheduleCommissionRate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rate_percent",
+                                    "effective_from",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "rate_percent": {
+                                        "type": "number",
+                                        "example": 5
+                                    },
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Scheduled (audited)"
+                    },
+                    "403": {
+                        "description": "Role not allowed"
+                    },
+                    "422": {
+                        "description": "Out of range or back-dated"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
         "/api/internal/admin/marketplace/products/{id}/item": {
             "post": {
                 "tags": [

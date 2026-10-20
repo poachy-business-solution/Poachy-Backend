@@ -3,9 +3,11 @@
 namespace Tests\Feature\Central\Marketplace;
 
 use App\Enums\Central\OrderStatus;
+use App\Models\AdminAuditLog;
 use App\Models\BusinessDetail;
 use App\Models\MarketplaceCommissionRate;
 use App\Models\MarketplaceCustomer;
+use App\Models\MarketplaceFeeSetting;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplacePayout;
 use App\Models\MarketplacePayoutLine;
@@ -267,5 +269,47 @@ class MarketplacePayoutTest extends TestCase
         $this->assertSame([994.5, 0.0, 1500.0], [$balance['held'], $balance['available'], $balance['owed']]);
         $this->assertSame(1500.0, app(PayoutStatementService::class)->earnings($this->tenantId)['owed']);
         $this->assertSame(0, $this->payouts()->runBatch(now())['created']);
+    }
+
+    public function test_fees_and_commission_set_in_the_admin_apply_from_their_date_and_are_audited(): void
+    {
+        Config::set('internal_admin.token', 'internal-test-token-0123456789abcdef0123456789');
+        Config::set('internal_admin.allowed_ips', ['127.0.0.1']);
+        $as = fn (string $role) => ['Authorization' => 'Bearer internal-test-token-0123456789abcdef0123456789', 'X-Admin-Id' => '7', 'X-Admin-Name' => 'Finance', 'X-Admin-Role' => $role, 'Accept' => 'application/json'];
+        $fees = ['mpesa_fee_percent' => 1, 'card_fee_percent' => 3, 'transfer_fee' => 15, 'hold_hours' => 12, 'min_payout' => 50, 'effective_from' => '2026-10-21', 'reason' => 'Real Daraja tariff'];
+
+        try {
+            $this->postJson('/api/internal/admin/marketplace/fees', $fees, $as('operations'))->assertForbidden();
+            $this->postJson('/api/internal/admin/marketplace/fees', ['effective_from' => '2026-10-19'] + $fees, $as('finance'))->assertUnprocessable()->assertJsonValidationErrors('effective_from');
+            $this->postJson('/api/internal/admin/marketplace/fees', $fees, $as('finance'))->assertCreated();
+            $this->postJson('/api/internal/admin/marketplace/commission-rates', ['rate_percent' => 5, 'effective_from' => '2026-10-21', 'reason' => 'Traffic is up'], $as('finance'))->assertCreated();
+            $this->assertSame(['marketplace.commission.schedule', 'marketplace.fees.schedule'], AdminAuditLog::on('central')->where('admin_id', 7)->latest('id')->limit(2)->pluck('action')->all());
+
+            // Today the launch fees (0.55%) and 0% commission still apply.
+            $today = $this->handedOver(1000);
+            $todayLine = MarketplacePayoutLine::query()->where('order_id', $today->id)->sole();
+            $this->assertSame(['5.50', '0.00'], [$todayLine->processing_fee, $todayLine->commission_amount]);
+
+            // From the 21st: 1% fee, 12 h hold, 5% commission (not on own links), 15 per transfer, KSh 50 minimum.
+            Carbon::setTestNow('2026-10-21 09:00:00');
+            $tomorrow = $this->handedOver(2000);
+            $line = MarketplacePayoutLine::query()->where('order_id', $tomorrow->id)->sole();
+            $this->assertSame(['20.00', '100.00', '1880.00'], [$line->processing_fee, $line->commission_amount, $line->net]);
+            $this->assertTrue($line->eligible_at->equalTo(now()->addHours(12)));
+            $ownLink = $this->handedOver(1000, 'mpesa', 'wa');
+            $this->assertSame('0.00', MarketplacePayoutLine::query()->where('order_id', $ownLink->id)->sole()->commission_amount);
+
+            $this->getJson('/api/internal/admin/marketplace/fees', $as('support'))->assertOk()
+                ->assertJsonPath('data.current.fees.mpesa_fee_percent', 1)->assertJsonPath('data.current.commission_percent', 5)
+                ->assertJsonPath('data.current.fees.transfer_fee', 15);
+
+            $this->payouts()->runBatch(now()->addHours(25));
+            $payout = MarketplacePayout::query()->where('tenant_id', $this->tenantId)->sole();
+            $this->assertSame((int) floor(994.5 + 1880 + 990 - 15), (int) $payout->amount);
+        } finally {
+            MarketplaceFeeSetting::query()->where('effective_from', '2026-10-21')->delete();
+            MarketplaceCommissionRate::query()->where('effective_from', '2026-10-21')->delete();
+            AdminAuditLog::on('central')->where('admin_id', 7)->delete();
+        }
     }
 }
