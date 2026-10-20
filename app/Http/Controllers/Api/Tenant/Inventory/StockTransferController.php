@@ -784,6 +784,8 @@ class StockTransferController extends Controller
                 'Transfer created successfully',
                 new StockTransferResource($transfer)
             );
+        } catch (\RuntimeException $e) { // a business rule refused it (stock, status…)
+            return ApiResponse::error('Failed to create transfer: '.$e->getMessage(), null, 422);
         } catch (\Exception $e) {
             return ApiResponse::error(
                 'Failed to create transfer: '.$e->getMessage(),
