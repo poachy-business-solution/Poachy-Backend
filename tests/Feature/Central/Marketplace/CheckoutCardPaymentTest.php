@@ -7,6 +7,7 @@ use App\Enums\Central\OrderStatus;
 use App\Jobs\Central\ProcessCheckoutReservation;
 use App\Jobs\Central\ProcessPaymentConfirmation;
 use App\Models\BusinessDetail;
+use App\Models\CustomerAddress;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceProduct;
@@ -194,6 +195,48 @@ class CheckoutCardPaymentTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('payment_method');
         $this->postJson('/api/v1/central/marketplace/checkout', ['fulfillment_type' => 'pickup', 'payment_method' => 'card', 'ref' => 'bad ref!'], ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => (string) Str::uuid()])
             ->assertUnprocessable()->assertJsonValidationErrors('ref');
+    }
+
+    public function test_checkout_keys_addresses_and_delivery_fees_are_scoped_to_the_buyer(): void
+    {
+        $address = CustomerAddress::on('central')->create(['customer_id' => $this->customer->id, 'recipient_name' => 'Card Buyer', 'recipient_phone' => '0722000111',
+            'address_line' => 'Moi Avenue 1', 'city' => 'Nairobi', 'county' => 'Nairobi']);
+        $otherUser = User::on('central')->create(['name' => 'Other Buyer', 'email' => "other-buyer-{$this->run}@example.com", 'password' => bcrypt('Password123'), 'user_type' => 'customer']);
+        $other = MarketplaceCustomer::on('central')->create(['user_id' => $otherUser->id, 'customer_number' => 'MKT-O-'.$this->run, 'phone' => '+2547'.random_int(10000000, 99999999), 'is_active' => true, 'phone_verified' => true]);
+
+        try {
+            $mine = $this->checkout('mpesa');
+            $key = $mine->checkout_idempotency_key;
+
+            // Another buyer replaying my key gets their own checkout, never my orders.
+            Sanctum::actingAs($otherUser, ['*'], 'central');
+            $session = (string) Str::uuid();
+            $this->postJson('/api/v1/central/marketplace/cart/items', ['marketplace_product_id' => $this->product->id, 'quantity' => 1], ['X-Cart-Session-Id' => $session])->assertSuccessful();
+            $theirs = $this->postJson('/api/v1/central/marketplace/checkout', ['fulfillment_type' => 'pickup', 'payment_method' => 'mpesa'], ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => $key])->assertCreated()->json('data');
+            $this->assertNotContains($mine->id, array_column($theirs, 'id'));
+            $this->assertSame(1, MarketplaceOrder::on('central')->where('checkout_idempotency_key', $key)->where('customer_id', $this->customer->id)->count());
+            $this->assertSame(1, MarketplaceOrder::on('central')->where('checkout_idempotency_key', $key)->where('customer_id', $other->id)->count());
+
+            // My address can't be used or priced by someone else.
+            $session = (string) Str::uuid(); // a converted cart's session id is spent
+            $this->postJson('/api/v1/central/marketplace/cart/items', ['marketplace_product_id' => $this->product->id, 'quantity' => 1], ['X-Cart-Session-Id' => $session])->assertSuccessful();
+            $this->postJson('/api/v1/central/marketplace/checkout', ['fulfillment_type' => 'delivery', 'delivery_method' => 'standard', 'delivery_address_id' => $address->id, 'payment_method' => 'mpesa'],
+                ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable()->assertJsonValidationErrors('delivery_address_id');
+            $this->postJson('/api/v1/central/marketplace/delivery/preview', ['tenant_id' => $this->tenantId, 'delivery_address_id' => $address->id])->assertNotFound();
+
+            // The owner may price it; signed out may not.
+            Sanctum::actingAs($this->user, ['*'], 'central');
+            $this->postJson('/api/v1/central/marketplace/delivery/preview', ['tenant_id' => $this->tenantId, 'delivery_address_id' => $address->id])->assertOk()->assertJsonPath('data.address.id', $address->id);
+            $this->app['auth']->forgetGuards();
+            $this->postJson('/api/v1/central/marketplace/delivery/preview', ['tenant_id' => $this->tenantId, 'delivery_address_id' => $address->id])->assertUnauthorized();
+        } finally {
+            $cartIds = ShoppingCart::on('central')->where('customer_id', $other->id)->pluck('id');
+            DB::connection('central')->table('shopping_cart_items')->whereIn('cart_id', $cartIds)->delete();
+            ShoppingCart::on('central')->whereIn('id', $cartIds)->delete();
+            $address->forceDelete();
+            $other->forceDelete();
+            $otherUser->forceDelete();
+        }
     }
 
     private function checkout(string $method, ?string $ref = null): MarketplaceOrder

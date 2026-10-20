@@ -144,7 +144,7 @@ class CheckoutServiceTest extends TestCase
     {
         $cart = $this->cartWithItem();
         $key = 'idem-locked-'.uniqid();
-        $lock = Cache::lock("checkout:lock:{$key}", 60);
+        $lock = Cache::lock("checkout:lock:{$cart->customer_id}:{$key}", 60);
         $lock->get();
 
         try {

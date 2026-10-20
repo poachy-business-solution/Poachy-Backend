@@ -38,14 +38,16 @@ class CheckoutService
     }
 
     /**
-     * The orders a checkout key already produced (empty when the key is new).
+     * The orders this buyer's checkout key already produced (empty when the key is new).
+     * Scoped to the buyer: someone else's key never returns their orders.
      *
      * @return Collection<int, MarketplaceOrder>
      */
-    public function ordersForIdempotencyKey(string $idempotencyKey): Collection
+    public function ordersForIdempotencyKey(string $idempotencyKey, ?int $customerId): Collection
     {
         return MarketplaceOrder::on('central')
             ->where('checkout_idempotency_key', $idempotencyKey)
+            ->where('customer_id', $customerId)
             ->with(['items', 'payments', 'delivery'])
             ->get();
     }
@@ -60,18 +62,13 @@ class CheckoutService
     public function initiateCheckout(ShoppingCart $cart, array $checkoutData): Collection
     {
         $idempotencyKey = $checkoutData['idempotency_key'];
-        $lockKey = "checkout:lock:{$idempotencyKey}";
+        $lockKey = "checkout:lock:{$cart->customer_id}:{$idempotencyKey}";
 
-        // Idempotency: return existing orders if key was already used
-        $existingOrder = MarketplaceOrder::on('central')
-            ->where('checkout_idempotency_key', $idempotencyKey)
-            ->first();
+        // Idempotency: return this buyer's existing orders if the key was already used
+        $existing = $this->ordersForIdempotencyKey($idempotencyKey, $cart->customer_id);
 
-        if ($existingOrder) {
-            return MarketplaceOrder::on('central')
-                ->where('checkout_idempotency_key', $idempotencyKey)
-                ->with(['items', 'payments', 'delivery'])
-                ->get();
+        if ($existing->isNotEmpty()) {
+            return $existing;
         }
 
         // Acquire lock to prevent concurrent checkouts with same key

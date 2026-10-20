@@ -9865,7 +9865,7 @@
                     "Central - Customer - Marketplace - Delivery"
                 ],
                 "summary": "Preview available delivery methods and fees",
-                "description": "Calculates the delivery methods available to a given customer address for a specific merchant (tenant), along with the fee for each (accounting for free-delivery thresholds). Public endpoint — no authentication required, used during cart/checkout to show delivery options before an order is placed.",
+                "description": "Calculates the delivery methods available to a given customer address for a specific merchant (tenant), along with the fee for each (accounting for free-delivery thresholds). Signed-in buyers only, and only for their own addresses (another buyer's address answers 404); used during checkout to show delivery options before an order is placed.",
                 "operationId": "previewDeliveryFees",
                 "requestBody": {
                     "required": true,
@@ -10040,7 +10040,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/central/marketplace/orders/{id}/delivery": {

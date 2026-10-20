@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Central\Marketplace;
 
+use App\Helpers\CustomerHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\CustomerAddress;
@@ -19,9 +20,10 @@ class DeliveryFeeController extends Controller
      * @OA\Post(
      *     path="/api/v1/central/marketplace/delivery/preview",
      *     summary="Preview available delivery methods and fees",
-     *     description="Calculates the delivery methods available to a given customer address for a specific merchant (tenant), along with the fee for each (accounting for free-delivery thresholds). Public endpoint — no authentication required, used during cart/checkout to show delivery options before an order is placed.",
+     *     description="Calculates the delivery methods available to a given customer address for a specific merchant (tenant), along with the fee for each (accounting for free-delivery thresholds). Signed-in buyers only, and only for their own addresses (another buyer's address answers 404); used during checkout to show delivery options before an order is placed.",
      *     operationId="previewDeliveryFees",
      *     tags={"Central - Customer - Marketplace - Delivery"},
+     *     security={{"sanctum": {}}},
      *
      *     @OA\RequestBody(
      *         required=true,
@@ -108,7 +110,20 @@ class DeliveryFeeController extends Controller
             'subtotal' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $address = CustomerAddress::on('central')->find($request->delivery_address_id);
+        // Addresses are personal: only their owner may price a delivery to one.
+        $customer = CustomerHelper::getAuthenticatedCustomer();
+
+        if (! $customer) {
+            return ApiResponse::unauthorized('Please sign in to see delivery fees.');
+        }
+
+        $address = CustomerAddress::on('central')
+            ->where('customer_id', $customer->id)
+            ->find($request->delivery_address_id);
+
+        if (! $address) {
+            return ApiResponse::notFound('Delivery address not found');
+        }
         $subtotal = (float) ($request->subtotal ?? 0);
 
         $availableMethods = $this->deliveryFeeService->getAvailableMethodsForAddress(

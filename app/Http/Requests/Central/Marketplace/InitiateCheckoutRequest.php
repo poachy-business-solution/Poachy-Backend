@@ -5,6 +5,7 @@ namespace App\Http\Requests\Central\Marketplace;
 use App\Enums\Central\DeliveryMethod;
 use App\Enums\Central\FulfillmentType;
 use App\Enums\Central\MarketplacePaymentMethod;
+use App\Helpers\CustomerHelper;
 use App\Models\CustomerAddress;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -49,6 +50,12 @@ class InitiateCheckoutRequest extends FormRequest
             }
 
             $address = CustomerAddress::on('central')->find($addressId);
+
+            if ($address && $address->customer_id !== CustomerHelper::getAuthenticatedCustomer()?->id) {
+                $validator->errors()->add('delivery_address_id', 'The selected delivery address is not one of yours.');
+
+                return;
+            }
 
             if ($address && ! $address->city && ! $address->county) {
                 $validator->errors()->add(
