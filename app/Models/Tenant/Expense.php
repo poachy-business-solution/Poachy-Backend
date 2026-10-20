@@ -267,7 +267,8 @@ class Expense extends Model
 
         // Use a database lock to prevent race conditions
         return DB::transaction(function () use ($prefix) {
-            $lastExpense = self::where('expense_number', 'like', $prefix.'%')
+            // Deleted expenses keep their numbers (the column is unique), so count them too.
+            $lastExpense = self::withTrashed()->where('expense_number', 'like', $prefix.'%')
                 ->lockForUpdate() // Lock the query to prevent race conditions
                 ->orderByRaw('CAST(SUBSTRING(expense_number, -6) AS UNSIGNED) DESC')
                 ->first();
@@ -289,7 +290,7 @@ class Expense extends Model
                 $expenseNumber = $prefix.str_pad($newNumber, 6, '0', STR_PAD_LEFT);
 
                 // Check if this number already exists
-                if (! self::where('expense_number', $expenseNumber)->exists()) {
+                if (! self::withTrashed()->where('expense_number', $expenseNumber)->exists()) {
                     return $expenseNumber;
                 }
 

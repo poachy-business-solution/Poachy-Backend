@@ -126,6 +126,21 @@ class ExpenseServiceTest extends TestCase
     // createExpense()
     // =========================================================================
 
+    public function test_a_deleted_latest_expense_does_not_block_the_next_number(): void
+    {
+        $service = $this->makeService();
+        $category = $this->createCategory();
+        $first = $service->createExpense($this->baseExpenseData(['category_id' => $category->id]));
+        $second = $service->createExpense($this->baseExpenseData(['category_id' => $category->id, 'amount' => 20]));
+        $second->delete(); // soft delete keeps EXP-…-000002 in the unique column
+
+        $third = $service->createExpense($this->baseExpenseData(['category_id' => $category->id, 'amount' => 30]));
+
+        $this->assertNotSame($second->expense_number, $third->expense_number);
+        $this->assertSame((int) substr($second->expense_number, -6) + 1, (int) substr($third->expense_number, -6));
+        $this->assertNotSame($first->expense_number, $third->expense_number);
+    }
+
     public function test_create_expense_auto_resolves_store_when_only_one_active(): void
     {
         $expense = $this->makeService()->createExpense($this->baseExpenseData(['store_id' => null]));

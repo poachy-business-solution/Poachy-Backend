@@ -94,7 +94,7 @@ class MarketplaceCustomer extends Model
 
     public static function generateCustomerNumber(): string
     {
-        $nextId = (static::on('central')->max('id') ?? 0) + 1;
+        $nextId = (static::on('central')->withTrashed()->max('id') ?? 0) + 1; // deleted rows keep their numbers
 
         return 'MKT-CUST-'.str_pad($nextId, 6, '0', STR_PAD_LEFT);
     }
