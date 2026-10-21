@@ -59,7 +59,7 @@ class ExceptionHandler extends Exception
             $e instanceof TenantCouldNotBeIdentifiedException => $this->handleTenantNotIdentified($e),
             $e instanceof QueryException => $this->handleQueryException($e),
             $e instanceof HttpException => $this->handleHttpException($e),
-            $e instanceof RuntimeException, $e instanceof InvalidArgumentException => $this->handleBusinessRuleException($e),
+            $this->isBusinessRule($e) => $this->handleBusinessRuleException($e),
             default => $this->handleGenericException($e),
         };
     }
@@ -154,6 +154,29 @@ class ExceptionHandler extends Exception
         return ApiResponse::error($e->getMessage(), null, 422);
     }
 
+    /**
+     * A business-rule rejection whose message was written for the API's users: one of Poachy's own
+     * exception classes, or a plain RuntimeException/InvalidArgumentException thrown by Poachy's code
+     * (the services' convention). The same classes thrown inside a library (a PDOException, a
+     * decryption failure, a date that would not parse) carry technical messages: those are real
+     * errors and get the generic 500. QueryException, ModelNotFoundException and HttpException are
+     * RuntimeException subtypes with their own handling.
+     */
+    protected function isBusinessRule(Throwable $e): bool
+    {
+        if (! ($e instanceof RuntimeException || $e instanceof InvalidArgumentException)
+            || $e instanceof QueryException || $e instanceof ModelNotFoundException || $e instanceof HttpException) {
+            return false;
+        }
+
+        if (str_starts_with($e::class, 'App\\')) {
+            return true;
+        }
+
+        return in_array($e::class, [RuntimeException::class, InvalidArgumentException::class], true)
+            && str_starts_with($e->getFile(), app_path().DIRECTORY_SEPARATOR);
+    }
+
     protected function handleGenericException(Throwable $e): JsonResponse
     {
         return ApiResponse::serverError(
@@ -198,16 +221,7 @@ class ExceptionHandler extends Exception
             return;
         }
 
-        // RuntimeException/InvalidArgumentException are expected business-rule
-        // rejections (see handleBusinessRuleException) — but QueryException,
-        // ModelNotFoundException, and the whole HttpException family are also
-        // RuntimeException subtypes and should keep logging as real errors.
-        $isBusinessRuleException = ($e instanceof RuntimeException || $e instanceof InvalidArgumentException)
-            && ! $e instanceof QueryException
-            && ! $e instanceof ModelNotFoundException
-            && ! $e instanceof HttpException;
-
-        if ($isBusinessRuleException) {
+        if ($this->isBusinessRule($e)) {
             logger()->info('Business rule violation', $context + [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
