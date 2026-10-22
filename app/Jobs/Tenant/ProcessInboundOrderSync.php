@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessInboundOrderSync implements ShouldQueue
 {
+    /**
+     * How long the shop holds the stock for an unpaid online order. It must outlast central's
+     * payment deadline (35 minutes from checkout, CheckoutService::PAYMENT_DEADLINE_MINUTES) with
+     * room for a slow queue, so a buyer who pays on time always finds the stock still held.
+     */
+    public const HOLD_MINUTES = 50;
+
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 180;
@@ -135,7 +142,7 @@ class ProcessInboundOrderSync implements ShouldQueue
                 'MarketplaceOrder',
                 $orderId,
                 $reservationItems,
-                30,
+                self::HOLD_MINUTES,
             );
 
             $this->respondToCentral($orderId, 'confirmed', null, $outboundSyncId);

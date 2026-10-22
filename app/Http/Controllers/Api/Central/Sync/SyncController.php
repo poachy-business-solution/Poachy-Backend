@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Central\Sync;
 
+use App\Enums\Central\OutboundSyncAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\Sync\InboundBundleSyncRequest;
 use App\Http\Requests\Central\Sync\InboundDeliveryZoneSyncRequest;
@@ -854,8 +855,32 @@ class SyncController extends Controller
 
         if ($status === 'completed') {
             $entry->markAsCompleted($tenantRecordId, $tenantTable);
-        } else {
-            $entry->markAsFailed($reason ?? 'Tenant reported failure');
+
+            return;
         }
+
+        // The shop already retried on its side before answering "failed": that is the outcome
+        // (no stock, a rule refused it), so central never sends it again.
+        $entry->markAsFailed($reason ?? 'Tenant reported failure');
+        $entry->update(['retry_count' => $entry->max_retries, 'next_retry_at' => null]);
+
+        if ($entry->action === OutboundSyncAction::PaymentConfirmed->value) {
+            $this->shopCouldNotTakePaidOrder($entry, $reason);
+        }
+    }
+
+    /**
+     * A paid order the shop could not record (its hold had lapsed and the stock is gone): the
+     * order is cancelled, which refunds the buyer, rather than sitting paid with no sale.
+     */
+    private function shopCouldNotTakePaidOrder(SyncQueueOutbound $entry, ?string $reason): void
+    {
+        $order = MarketplaceOrder::on('central')->find($entry->metadata['order_id'] ?? null);
+        if ($order === null || $order->order_status->isTerminal()) {
+            return;
+        }
+
+        $order->cancel('The shop could not take this paid order: '.mb_substr($reason ?? 'unknown reason', 0, 200));
+        Log::error('Paid order cancelled and refunded: the shop could not record it', ['order_id' => $order->id, 'tenant_id' => $order->tenant_id, 'reason' => $reason]);
     }
 }
