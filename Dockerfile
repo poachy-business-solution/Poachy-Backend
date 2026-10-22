@@ -22,6 +22,11 @@ RUN composer install \
 # =============================================================
 FROM php:8.4-fpm-alpine AS production
 
+# PHP 8.4.27 fixes CVE-2026-109618 / CVE-2026-109619 (unauthenticated RCE, Oct 2026). The tag above
+# floats to the latest 8.4 patch; this stops a stale cached base image from being built and shipped.
+RUN php -r 'exit(version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);' \
+    || (echo "PHP $(php -r 'echo PHP_VERSION;') is below 8.4.27 — rebuild with --pull" >&2 && exit 1)
+
 LABEL maintainer="Poachy"
 
 # ---- System packages ----
