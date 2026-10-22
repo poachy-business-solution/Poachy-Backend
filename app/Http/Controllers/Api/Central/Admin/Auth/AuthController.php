@@ -237,13 +237,13 @@ class AuthController extends Controller
     public function resendOtp(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:central.users,email'],
+            'email' => ['required', 'email'],
         ]);
 
-        $this->otpService->resend($request->email, 'login');
+        $this->authService->resendLoginOtp((string) $request->email);
 
         return ApiResponse::success(
-            'OTP resent successfully',
+            'If you have just signed in with your password, a new code is on its way.',
             ['email' => $request->email]
         );
     }

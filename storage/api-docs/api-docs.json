@@ -13118,9 +13118,15 @@
                                         "example": 1
                                     },
                                     "ref": {
-                                        "description": "Link source for the shop's attribution",
+                                        "description": "Link source for the shop's attribution (an own-link ref counts only with its ref_shop; ad{id} only for that advert's shop)",
                                         "type": "string",
                                         "example": "wa",
+                                        "nullable": true
+                                    },
+                                    "ref_shop": {
+                                        "description": "Slug of the shop whose link set ref",
+                                        "type": "string",
+                                        "example": "mama-duka",
                                         "nullable": true
                                     }
                                 },

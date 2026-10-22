@@ -55,6 +55,12 @@ class TenantOtpService
     {
         $user = User::where('email', $email)->first();
 
+        if ($user === null) {
+            throw ValidationException::withMessages([
+                'otp_code' => ['Invalid or expired OTP. Please request a new one.'],
+            ]);
+        }
+
         $otpRecord = TenantOtp::where('user_id', $user->id)
             ->where('type', $type)
             ->where('is_used', false)

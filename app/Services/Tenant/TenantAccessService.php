@@ -241,7 +241,13 @@ class TenantAccessService
      */
     public function clearTenantAccessCache(string $tenantId): void
     {
-        Cache::forget("tenant_access:{$tenantId}");
+        $key = "tenant_access:{$tenantId}";
+
+        // The check runs inside the shop, where tenancy tags every cache key with the shop's
+        // tag; forgetting the plain key from central (admin suspend, billing, payments) left
+        // that copy alive for up to 24 hours. Clear both.
+        Cache::forget($key);
+        Cache::tags([config('tenancy.cache.tag_base').$tenantId])->forget($key);
     }
 
     /**

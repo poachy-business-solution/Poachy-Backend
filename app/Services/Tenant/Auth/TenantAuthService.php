@@ -7,6 +7,7 @@ use App\Models\Tenant\TenantOtp;
 use App\Models\Tenant\TenantRefreshToken;
 use App\Models\Tenant\User as TenantUser;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -14,6 +15,9 @@ use Illuminate\Validation\ValidationException;
 
 class TenantAuthService
 {
+    /** How long after the password step the code can be resent. */
+    private const PASSWORD_PASSED_MINUTES = 15;
+
     private const ACCESS_TOKEN_TTL_DAYS = 7;
 
     private const REFRESH_TOKEN_TTL_DAYS = 30;
@@ -52,8 +56,9 @@ class TenantAuthService
         // owners who chose their own at sign-up (password_chosen_at) skip that.
         $requiresPasswordChange = is_null($user->last_login_at) && is_null($user->password_chosen_at);
 
-        // Generate and send OTP
+        // Generate and send OTP; only someone who just got the password right may ask for another.
         $this->otpService->generateAndSendOtp($user, 'login');
+        Cache::put($this->passwordPassedKey($user), true, now()->addMinutes(self::PASSWORD_PASSED_MINUTES));
 
         return [
             'user_id' => $user->id,
@@ -74,6 +79,7 @@ class TenantAuthService
     {
         // Verify OTP
         $user = $this->otpService->verify($email, $otp, 'login');
+        Cache::forget($this->passwordPassedKey($user));
 
         // One session per kind of client: a new app sign-in ends the previous app session, a new
         // web sign-in ends the previous web session; neither touches the other.
@@ -169,17 +175,23 @@ class TenantAuthService
      *
      * @throws ValidationException
      */
-    public function resendOtp(string $email, string $type = 'login'): TenantOtp
+    public function resendOtp(string $email, string $type = 'login'): ?TenantOtp
     {
-        $user = TenantUser::where('email', $email)->firstOrFail();
+        // A new code goes only to someone who got the password right in the last few minutes, so
+        // the code step can't be reached with an email address alone. Unknown or not-yet-signed-in
+        // addresses get the same answer, so nothing reveals which accounts exist.
+        $user = TenantUser::where('email', $email)->first();
 
-        if (! $user) {
-            throw ValidationException::withMessages([
-                'email' => ['User not found.'],
-            ]);
+        if ($user === null || ! Cache::has($this->passwordPassedKey($user))) {
+            return null;
         }
 
         return $this->otpService->generateAndSendOtp($user, $type);
+    }
+
+    private function passwordPassedKey(TenantUser $user): string
+    {
+        return 'tenant-login-password-passed:'.$user->id;
     }
 
     /**

@@ -20,6 +20,7 @@ class CreateReservationRequest extends FormRequest
             'product_id' => ['required_without:product_slug', 'nullable', 'integer'],
             'quantity' => ['required', 'numeric', 'min:1', 'max:'.ReservationService::MAX_QUANTITY],
             'ref' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'ref_shop' => ['nullable', 'string', 'max:60', 'regex:/^[a-z0-9-]+$/'],   // the shop whose link set ref
         ];
     }
 

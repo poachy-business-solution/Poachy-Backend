@@ -30,7 +30,8 @@ class CreateUserRequest extends FormRequest
                 Rule::unique('users', 'email'),
             ],
             'phone' => ['nullable', 'string', 'max:20'],
-            'role' => ['required', 'string', Rule::in(['owner', 'manager', 'cashier'])],
+            // Only the owner adds owners and managers; a manager adds cashiers.
+            'role' => ['required', 'string', Rule::in($this->user()->hasRole('owner') ? ['owner', 'manager', 'cashier'] : ['cashier'])],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -43,7 +44,7 @@ class CreateUserRequest extends FormRequest
         return [
             'email.unique' => 'This email is already registered.',
             'role.required' => 'Please select a role for the user.',
-            'role.in' => 'Invalid role selected.',
+            'role.in' => $this->user()->hasRole('owner') ? 'Invalid role selected.' : 'Managers can add cashiers only. Ask the owner to add an owner or manager.',
         ];
     }
 }

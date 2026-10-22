@@ -18,6 +18,7 @@ use App\Models\MarketplaceOrderItem;
 use App\Models\MarketplaceOrderPayment;
 use App\Models\ShoppingCart;
 use App\Models\ShoppingCartItem;
+use App\Support\OrderRef;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -284,13 +285,6 @@ class CheckoutService
     // Private helpers
     // =========================================================================
 
-    /** The `?ref=` a shop link carried (wa, ig, qr, poster…), kept for attribution; anything odd is dropped. */
-    private function cleanRef(?string $ref): ?string
-    {
-        $ref = strtolower(trim((string) $ref));
-
-        return preg_match('/^[a-z0-9_-]{1,20}$/', $ref) ? $ref : null;
-    }
 
     private function validateStockAvailability(ShoppingCart $cart): void
     {
@@ -366,7 +360,7 @@ class CheckoutService
             'reservation_expires_at' => now()->addMinutes(self::RESERVATION_EXPIRY_MINUTES),
             'payment_deadline_at' => now()->addMinutes(self::PAYMENT_DEADLINE_MINUTES),
             'customer_notes' => $checkoutData['customer_notes'] ?? null,
-            'ref' => $this->cleanRef($checkoutData['ref'] ?? null),
+            'ref' => OrderRef::for($checkoutData['ref'] ?? null, $checkoutData['ref_shop'] ?? null, $tenantId),
             'checkout_idempotency_key' => $idempotencyKey,
         ]);
 

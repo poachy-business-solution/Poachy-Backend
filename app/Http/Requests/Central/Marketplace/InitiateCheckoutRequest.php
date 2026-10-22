@@ -33,6 +33,7 @@ class InitiateCheckoutRequest extends FormRequest
             'payment_method' => ['required', 'string', 'in:'.implode(',', self::ONLINE_METHODS)],
             'customer_notes' => ['nullable', 'string', 'max:500'],
             'ref' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'ref_shop' => ['nullable', 'string', 'max:60', 'regex:/^[a-z0-9-]+$/'],   // the shop whose link set ref
         ];
     }
 

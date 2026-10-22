@@ -123,6 +123,14 @@ product's VAT rate on top of the price.
 | `INTERNAL_ADMIN_TOKEN`, `INTERNAL_ADMIN_ALLOWED_IPS` | backend; token also in poachy-admin as `POACHY_INTERNAL_TOKEN` | admin server's address only |
 | `SESSION_SECRET` (and the rest of `.env.example`) | poachy-web | random, ≥ 32 chars |
 
+## 8. Visitor IPs (before going live)
+
+Per-IP limits, the M-Pesa callback IP check and the admin allow-list all rely on the visitor's
+real IP. Run the server's front proxy from `docker/host-proxy/Caddyfile`: it believes the IP only
+when the request comes from Cloudflare (`CF-Connecting-IP`) and overwrites any `X-Real-IP` a
+visitor sends. Firewall ports 80/443 to Cloudflare's ranges, and keep the backend container's
+port bound to 127.0.0.1 (as in `docker-compose.prod.yaml`).
+
 ## Going back to fakes
 
 Set the drivers back (`MPESA_DRIVER=fake`, `PAYSTACK_DRIVER=fake`, `SMS_DRIVER=log`,

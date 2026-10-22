@@ -140,6 +140,15 @@ class CheckoutCardPaymentTest extends TestCase
         $this->getJson("/api/v1/central/marketplace/orders/{$order->id}/payment?verify=1")->assertOk()->assertJsonPath('data.payment_status', 'completed')->assertJsonPath('data.authorization_url', null);
     }
 
+    public function test_a_link_ref_counts_only_for_the_shop_whose_link_it_was(): void
+    {
+        // Another shop's WhatsApp link does not make this order commission-free (the right shop's
+        // own link still does: test_card_checkout_pays_only_through_a_signed_and_verified_webhook).
+        $this->assertNull($this->checkout('card', ref: 'wa', refShop: 'some-other-duka')->ref);
+        // An advert ref counts only for the shop that ran that advert.
+        $this->assertNull($this->checkout('mpesa', ref: 'ad999999999')->ref);
+    }
+
     public function test_a_buyer_still_on_the_card_page_is_not_marked_failed(): void
     {
         $order = $this->checkout('card');
@@ -278,18 +287,19 @@ class CheckoutCardPaymentTest extends TestCase
         }
     }
 
-    private function checkout(string $method, ?string $ref = null): MarketplaceOrder
+    private function checkout(string $method, ?string $ref = null, ?string $refShop = null): MarketplaceOrder
     {
+        $refShop ??= $ref !== null ? BusinessDetail::on('central')->where('tenant_id', $this->tenantId)->value('slug') : null;
         Sanctum::actingAs($this->user, ['*'], 'central');
         $session = (string) Str::uuid();
         $this->postJson('/api/v1/central/marketplace/cart/items', ['marketplace_product_id' => $this->product->id, 'quantity' => 1], ['X-Cart-Session-Id' => $session])->assertSuccessful();
         $key = (string) Str::uuid();
-        $response = $this->postJson('/api/v1/central/marketplace/checkout', array_filter(['fulfillment_type' => 'pickup', 'payment_method' => $method, 'ref' => $ref]), ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => $key])->assertSuccessful();
+        $response = $this->postJson('/api/v1/central/marketplace/checkout', array_filter(['fulfillment_type' => 'pickup', 'payment_method' => $method, 'ref' => $ref, 'ref_shop' => $refShop]), ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => $key])->assertSuccessful();
         $orders = $response->json('data.orders') ?? $response->json('data');
         $orderId = $orders[0]['id'] ?? $orders['id'];
 
         // Same key → same order.
-        $this->postJson('/api/v1/central/marketplace/checkout', array_filter(['fulfillment_type' => 'pickup', 'payment_method' => $method, 'ref' => $ref]), ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => $key])->assertSuccessful();
+        $this->postJson('/api/v1/central/marketplace/checkout', array_filter(['fulfillment_type' => 'pickup', 'payment_method' => $method, 'ref' => $ref, 'ref_shop' => $refShop]), ['X-Cart-Session-Id' => $session, 'Idempotency-Key' => $key])->assertSuccessful();
         $this->assertSame(1, MarketplaceOrder::on('central')->where('checkout_idempotency_key', $key)->count());
 
         return MarketplaceOrder::on('central')->findOrFail($orderId);

@@ -9,6 +9,7 @@ use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceProduct;
 use App\Models\MarketplaceReservation;
 use App\Services\Shared\Messaging\Messenger;
+use App\Support\OrderRef;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -80,7 +81,7 @@ class ReservationService
             'unit_price' => $product->online_price,
             'uom_code' => $product->base_uom_code,
             'status' => MarketplaceReservationStatus::Pending,
-            'ref' => $this->cleanRef($data['ref'] ?? null),
+            'ref' => OrderRef::for($data['ref'] ?? null, $data['ref_shop'] ?? null, (string) $product->tenant_id),
             'buyer_name' => $customer->user?->name,
             'buyer_phone' => $customer->phone,
             'expires_at' => now()->addHours(MarketplaceReservation::HOLD_HOURS),
@@ -227,12 +228,6 @@ class ReservationService
         return $product;
     }
 
-    private function cleanRef(?string $ref): ?string
-    {
-        $ref = strtolower(trim((string) $ref));
-
-        return preg_match('/^[a-z0-9_-]{1,20}$/', $ref) ? $ref : null;
-    }
 
     private function smsBuyer(MarketplaceReservation $reservation, string $message, string $template): void
     {

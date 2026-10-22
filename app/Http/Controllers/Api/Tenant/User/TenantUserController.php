@@ -220,8 +220,12 @@ class TenantUserController extends Controller
      *     @OA\Response(response=404, description="User not found")
      * )
      */
-    public function destroy(int $userId): JsonResponse
+    public function destroy(int $userId, Request $request): JsonResponse
     {
+        if (! $request->user()->canManageStaff(User::query()->find($userId))) {
+            return ApiResponse::forbidden('Only the owner can remove owners and managers.');
+        }
+
         $this->userService->deleteUser($userId);
 
         return ApiResponse::success('User deleted successfully');
@@ -312,6 +316,9 @@ class TenantUserController extends Controller
     public function updateStores(int $userId, UpdateUserStoresRequest $request): JsonResponse
     {
         $user = User::query()->findOrFail($userId);
+        if (! $request->user()->canManageStaff($user)) {
+            return ApiResponse::forbidden('Only the owner can change the branches of owners and managers.');
+        }
         $user->stores()->sync($request->validated('store_ids'));
 
         return ApiResponse::success('Branches saved', $this->storesPayload($user->fresh()));

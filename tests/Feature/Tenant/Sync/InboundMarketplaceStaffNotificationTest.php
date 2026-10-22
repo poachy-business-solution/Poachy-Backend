@@ -56,7 +56,7 @@ class InboundMarketplaceStaffNotificationTest extends TestCase
         $reservationService
             ->shouldReceive('reserveStock')
             ->once()
-            ->with('MarketplaceOrder', 123, [], 30);
+            ->with('MarketplaceOrder', 123, [], ProcessInboundOrderSync::HOLD_MINUTES);
 
         $notifications = Mockery::mock(MarketplaceOrderStaffNotificationService::class);
         $notifications

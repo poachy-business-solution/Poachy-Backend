@@ -4,6 +4,7 @@ namespace App\Services\Central\Admin\Auth;
 
 use App\Models\User;
 use App\Services\Central\Shared\Auth\OtpService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -42,8 +43,9 @@ class AuthService
             ]);
         }
 
-        // Generate and send OTP
+        // Generate and send OTP; only someone who just got the password right may ask for another.
         $this->otpService->generateAndSend($user, 'login');
+        Cache::put(self::passwordPassedKey($user->id), true, now()->addMinutes(15));
 
         return [
             'email' => $user->email,
@@ -60,8 +62,15 @@ class AuthService
     {
         config(['permission.connection' => 'central']);
 
-        // Verify OTP
+        // Verify OTP — then make sure it closes an admin's password step (the otps table is shared
+        // with buyers, and a code alone must never mint an admin token).
         $user = $this->otpService->verify($email, $otpCode, 'login');
+
+        if (! $user->hasRole(['admin', 'support']) || ! Cache::pull(self::passwordPassedKey($user->id))) {
+            throw ValidationException::withMessages([
+                'otp_code' => ['Invalid or expired OTP. Please sign in again.'],
+            ]);
+        }
 
         // Revoke old tokens (optional: keep only 1 active session)
         $user->tokens()->delete();
@@ -77,6 +86,24 @@ class AuthService
             'user' => $user,
             'token' => $token,
         ];
+    }
+
+    /**
+     * Resend the sign-in code — only after the password step, and the same answer for everyone.
+     */
+    public function resendLoginOtp(string $email): void
+    {
+        config(['permission.connection' => 'central']);
+        $user = User::on('central')->where('email', $email)->first();
+
+        if ($user !== null && $user->hasRole(['admin', 'support']) && Cache::has(self::passwordPassedKey($user->id))) {
+            $this->otpService->generateAndSend($user, 'login');
+        }
+    }
+
+    private static function passwordPassedKey(int $userId): string
+    {
+        return 'central-admin-login-password-passed:'.$userId;
     }
 
     /**

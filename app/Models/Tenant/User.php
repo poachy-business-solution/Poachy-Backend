@@ -174,4 +174,21 @@ class User extends Authenticatable
     {
         return in_array($storeId, $this->workableStoreIds(), true);
     }
+
+    /**
+     * Whether this person may add, edit, remove or move the given staff member. The owner may
+     * manage anyone; a manager only cashiers and themselves — never an owner or another manager,
+     * so a manager can't promote or take over an owner's account.
+     */
+    public function canManageStaff(?User $target): bool
+    {
+        if ($this->hasRole('owner')) {
+            return true;
+        }
+        if (! $this->hasRole('manager') || $target === null) {
+            return false;
+        }
+
+        return $target->id === $this->id || ! $target->hasAnyRole(['owner', 'manager']);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant\User;
 
+use App\Models\Tenant\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,8 +13,8 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Only owner and manager can update users
-        return $this->user()->hasAnyRole(['owner', 'manager']);
+        // Owners edit anyone; managers edit cashiers and themselves (never an owner or another manager).
+        return $this->user()->canManageStaff(User::query()->find((int) $this->route('userId')));
     }
 
     /**

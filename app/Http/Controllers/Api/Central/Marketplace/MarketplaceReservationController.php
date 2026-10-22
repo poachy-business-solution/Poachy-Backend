@@ -33,7 +33,8 @@ class MarketplaceReservationController extends Controller
      *         @OA\Property(property="product_slug", type="string", example="mango-juice-1l-da904b63"),
      *         @OA\Property(property="product_id", type="integer", description="Alternative to product_slug"),
      *         @OA\Property(property="quantity", type="number", example=1),
-     *         @OA\Property(property="ref", type="string", nullable=true, example="wa", description="Link source for the shop's attribution")
+     *         @OA\Property(property="ref", type="string", nullable=true, example="wa", description="Link source for the shop's attribution (an own-link ref counts only with its ref_shop; ad{id} only for that advert's shop)"),
+     *         @OA\Property(property="ref_shop", type="string", nullable=true, example="mama-duka", description="Slug of the shop whose link set ref")
      *     )),
      *
      *     @OA\Response(response=201, description="code, status (pending until the shop confirms), product, shop, expires_at"),

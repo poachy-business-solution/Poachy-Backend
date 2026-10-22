@@ -14,14 +14,23 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class TrustWebServerClientIp
 {
+    /** Request attribute holding the connection's own address. */
+    public const SOCKET_IP = 'poachy.socket_ip';
+
     public function handle(Request $request, Closure $next): Response
     {
         $key = (string) config('services.web.server_key');
         $given = (string) $request->headers->get('X-Poachy-Web-Key', '');
 
+        // The address the connection really came from, before any rewrite below: allow-lists
+        // (the private admin API) check this, never a forwarded one.
+        $request->attributes->set(self::SOCKET_IP, (string) $request->server('REMOTE_ADDR'));
+
         if ($key !== '' && $given !== '' && hash_equals($key, $given)) {
             $forwarded = trim(explode(',', (string) $request->headers->get('X-Forwarded-For', ''))[0]);
-            if (filter_var($forwarded, FILTER_VALIDATE_IP) !== false) {
+            // A visitor is somewhere on the internet: a private, loopback or reserved address
+            // here is a forgery (it could otherwise pass an internal allow-list).
+            if (filter_var($forwarded, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
                 $request->server->set('REMOTE_ADDR', $forwarded);
             }
         }

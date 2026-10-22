@@ -87,7 +87,7 @@ class MarketplaceReservationTest extends TestCase
         $this->postJson('/api/v1/central/marketplace/reservations', ['product_slug' => $product->slug, 'quantity' => 1])->assertStatus(400);
 
         $key = (string) Str::uuid();
-        $created = $this->postJson('/api/v1/central/marketplace/reservations', ['product_slug' => $product->slug, 'quantity' => 2, 'ref' => 'WA'], ['Idempotency-Key' => $key])
+        $created = $this->postJson('/api/v1/central/marketplace/reservations', ['product_slug' => $product->slug, 'quantity' => 2, 'ref' => 'WA', 'ref_shop' => BusinessDetail::on('central')->where('tenant_id', $product->tenant_id)->value('slug')], ['Idempotency-Key' => $key])
             ->assertCreated()->json('data');
         $this->assertMatchesRegularExpression('/^PCH-[A-HJ-NP-Z2-9]{4,5}$/', $created['code']);
         $this->assertSame('pending', $created['status']);

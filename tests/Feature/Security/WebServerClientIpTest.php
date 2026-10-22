@@ -31,4 +31,28 @@ class WebServerClientIpTest extends TestCase
         Config::set('services.web.server_key', '');
         $this->getJson('/api/_test/ip', ['X-Forwarded-For' => '41.90.1.2', 'X-Poachy-Web-Key' => ''])->assertJson(['ip' => '127.0.0.1']);
     }
+
+    public function test_a_forwarded_private_or_loopback_address_is_never_believed(): void
+    {
+        foreach (['127.0.0.1', '10.0.0.5', '172.17.0.1', '192.168.1.10', '::1'] as $forged) {
+            $this->withServerVariables(['REMOTE_ADDR' => '41.90.1.9'])
+                ->getJson('/api/_test/ip', ['X-Forwarded-For' => $forged, 'X-Poachy-Web-Key' => 'web-server-key-for-tests-0123456789'])
+                ->assertJson(['ip' => '41.90.1.9']);
+        }
+    }
+
+    public function test_the_private_admin_api_checks_the_connections_own_address(): void
+    {
+        Config::set('database.connections.central.database', env('CENTRAL_DB_DATABASE', 'poachy'));
+        \Illuminate\Support\Facades\DB::purge('central');
+        \Illuminate\Support\Facades\DB::setDefaultConnection('central');
+        Config::set('internal_admin.token', str_repeat('t', 40));
+        Config::set('internal_admin.allowed_ips', ['41.90.1.2']);
+        $headers = ['Authorization' => 'Bearer '.str_repeat('t', 40), 'X-Admin-Id' => '7', 'X-Admin-Role' => 'super'];
+
+        // A visitor IP forwarded by the website (even an allow-listed one) does not open the admin API.
+        $this->withServerVariables(['REMOTE_ADDR' => '41.90.1.9'])
+            ->getJson('/api/internal/admin/marketplace/fees', $headers + ['X-Forwarded-For' => '41.90.1.2', 'X-Poachy-Web-Key' => 'web-server-key-for-tests-0123456789'])
+            ->assertNotFound();
+    }
 }

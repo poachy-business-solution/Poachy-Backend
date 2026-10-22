@@ -22,7 +22,8 @@ class InternalAdmin
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $token = (string) config('internal_admin.token');
-        $ip = (string) $request->server('REMOTE_ADDR');
+        // The connection's own address (TrustWebServerClientIp keeps it before any rewrite).
+        $ip = (string) ($request->attributes->get(TrustWebServerClientIp::SOCKET_IP) ?? $request->server('REMOTE_ADDR'));
 
         if (strlen($token) < 32 || $ip === '' || ! IpUtils::checkIp($ip, config('internal_admin.allowed_ips', []))) {
             return ApiResponse::notFound('Not found.');
