@@ -112,6 +112,42 @@ class RefundService
         return $refund;
     }
 
+    /**
+     * Paystack's refund.processed / refund.failed webhook. A real card refund is "pending" when
+     * asked for and only settles later, so this is what completes it (and claws the shop back).
+     * Matched on the refund id, else on the charge reference and amount.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function handleCardRefundEvent(string $event, array $data): ?MarketplaceRefund
+    {
+        $refundId = (string) ($data['id'] ?? $data['refund_reference'] ?? '');
+        $chargeReference = (string) ($data['transaction_reference'] ?? $data['transaction']['reference'] ?? '');
+        $amount = isset($data['amount']) ? round(((float) $data['amount']) / 100, 2) : null;
+
+        $open = fn () => MarketplaceRefund::query()->where('method', 'card')->where('status', MarketplaceRefund::PROCESSING);
+        $refund = $refundId !== '' ? $open()->where('provider_reference', $refundId)->first() : null;
+
+        if ($refund === null && $chargeReference !== '') {
+            $paymentIds = MarketplaceOrderPayment::on('central')->where('transaction_reference', $chargeReference)->pluck('id');
+            $refund = $open()->whereIn('payment_id', $paymentIds)
+                ->when($amount !== null, fn ($q) => $q->where('amount', $amount))
+                ->oldest('id')->first();
+        }
+
+        if ($refund === null) {
+            Log::info('Paystack refund event for no refund in flight', ['event' => $event, 'refund_id' => $refundId, 'reference' => $chargeReference]);
+
+            return null;
+        }
+
+        $event === 'refund.processed'
+            ? $this->complete($refund, $refundId !== '' ? $refundId : $refund->provider_reference)
+            : $this->fail($refund, 'Paystack could not refund the card ('.($data['status'] ?? 'failed').').');
+
+        return $refund->fresh();
+    }
+
     /** A person re-sends a refund the gateway refused (a new refund row; the failed one stays as history). */
     public function retry(MarketplaceRefund $failed): MarketplaceRefund
     {

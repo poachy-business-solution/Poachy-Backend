@@ -16,6 +16,8 @@ use App\Models\CentralPaymentLog;
 use App\Models\MarketplaceCustomer;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
+use App\Models\MarketplaceRefund;
+use App\Models\UnmatchedMpesaPayment;
 use App\Models\User;
 use App\Services\Central\Marketplace\MarketplacePaymentService;
 use App\Services\Central\Marketplace\MarketplaceProductService;
@@ -85,6 +87,8 @@ class MarketplacePaymentServiceTest extends TestCase
         $paymentIds = MarketplaceOrderPayment::on('central')->whereIn('order_id', $orderIds)->pluck('id');
 
         CentralPaymentLog::on('central')->where('payable_type', 'marketplace_order_payment')->whereIn('payable_id', $paymentIds)->delete();
+        MarketplaceRefund::query()->whereIn('order_id', $orderIds)->delete();
+        UnmatchedMpesaPayment::query()->where('transaction_id', 'like', 'T-%')->delete();
         MarketplaceOrderPayment::on('central')->whereIn('order_id', $orderIds)->forceDelete();
         MarketplaceOrder::on('central')->where('tenant_id', $this->tenantId)->forceDelete();
         MarketplaceCustomer::on('central')->where('id', $this->customer->id)->forceDelete();
@@ -281,8 +285,12 @@ class MarketplacePaymentServiceTest extends TestCase
             'provider_reference' => 'MPESA-REC-2',
         ]);
 
+        // Recorded as received, and the money really goes back (an M-Pesa reversal of that receipt).
         $payment = $order->payments()->first()->fresh();
-        $this->assertSame('refunded', $payment->payment_status->value);
+        $this->assertSame(['completed', 'MPESA-REC-2'], [$payment->payment_status->value, $payment->provider_reference]);
+        $refund = MarketplaceRefund::query()->where('order_id', $order->id)->sole();
+        $this->assertSame(['late_payment', 'mpesa_reversal', 500.0], [$refund->kind, $refund->method, (float) $refund->amount]);
+        $this->assertNotNull($refund->conversation_id);
         $this->assertSame('cancelled', $order->fresh()->order_status->value);
         Queue::assertNotPushed(ProcessPaymentConfirmation::class);
     }
@@ -304,7 +312,6 @@ class MarketplacePaymentServiceTest extends TestCase
 
         $payment = $order->payments()->first()->fresh();
         $this->assertSame('completed', $payment->payment_status->value);
-        $this->assertSame('C2B-TXN-1', $payment->transaction_reference);
         $this->assertSame('C2B-TXN-1', $payment->provider_reference);
         $this->assertSame('confirmed', $order->fresh()->order_status->value);
     }
@@ -341,7 +348,8 @@ class MarketplacePaymentServiceTest extends TestCase
         ]);
 
         $payment = $order->payments()->first()->fresh();
-        $this->assertSame('refunded', $payment->payment_status->value);
+        $this->assertSame(['completed', 'C2B-TXN-TERMINAL'], [$payment->payment_status->value, $payment->provider_reference]);
+        $this->assertSame('late_payment', MarketplaceRefund::query()->where('order_id', $order->id)->sole()->kind);
     }
 
     // =========================================================================
@@ -384,16 +392,115 @@ class MarketplacePaymentServiceTest extends TestCase
         });
     }
 
-    public function test_initiate_refund_marks_payment_refunded(): void
+    public function test_a_payment_after_the_deadline_cancelled_the_order_is_sent_back(): void
+    {
+        $order = $this->createOrder(paymentOverrides: ['payment_status' => MarketplacePaymentStatus::Processing, 'transaction_reference' => 'CKO-LATE']);
+        $this->service()->handlePaymentTimeout($order);
+        $this->assertSame('failed', $order->payments()->first()->fresh()->payment_status->value);
+
+        $this->service()->processPaymentWebhook(['transaction_reference' => 'CKO-LATE', 'status' => 'success', 'provider_reference' => 'REC-LATE']);
+        $this->service()->processPaymentWebhook(['transaction_reference' => 'CKO-LATE', 'status' => 'success', 'provider_reference' => 'REC-LATE']); // Safaricom repeats
+
+        $this->assertSame('cancelled', $order->fresh()->order_status->value);
+        $this->assertSame(1, MarketplaceRefund::query()->where('order_id', $order->id)->where('kind', 'late_payment')->count());
+    }
+
+    // =========================================================================
+    // Money that matches no open order is held for finance, never lost
+    // =========================================================================
+
+    public function test_a_short_paybill_payment_does_not_confirm_the_order(): void
+    {
+        $order = $this->createOrder(paymentOverrides: ['payment_method' => 'mpesa_paybill']);
+
+        $result = $this->service()->processC2BConfirmation(['bill_ref_number' => $order->order_number, 'transaction_id' => 'T-SHORT', 'amount' => 1.0, 'phone' => '254712345678', 'first_name' => 'Wanjiku']);
+
+        $this->assertNull($result);
+        $this->assertSame('pending', $order->fresh()->order_status->value);
+        $this->assertSame('pending', $order->payments()->first()->fresh()->payment_status->value);
+        $held = UnmatchedMpesaPayment::query()->where('transaction_id', 'T-SHORT')->sole();
+        $this->assertSame(['marketplace', $order->order_number, 1.0, 'open'], [$held->source, $held->order_number, $held->amount, $held->status]);
+        $this->assertStringContainsString('less than the order total', $held->note);
+    }
+
+    public function test_an_overpaid_paybill_payment_confirms_and_holds_the_extra(): void
+    {
+        $order = $this->createOrder(paymentOverrides: ['payment_method' => 'mpesa_paybill']);
+
+        $this->service()->processC2BConfirmation(['bill_ref_number' => $order->order_number, 'transaction_id' => 'T-OVER', 'amount' => 650.0, 'phone' => '254712345678']);
+
+        $this->assertSame('confirmed', $order->fresh()->order_status->value);
+        $this->assertSame(150.0, UnmatchedMpesaPayment::query()->where('transaction_id', 'T-OVER-X')->sole()->amount);
+    }
+
+    public function test_an_order_with_cents_can_be_paid_in_whole_shillings(): void
+    {
+        $order = $this->createOrder(['total_amount' => 500.5], paymentOverrides: ['payment_method' => 'mpesa_paybill', 'amount' => 500.5]);
+
+        $this->service()->processC2BConfirmation(['bill_ref_number' => $order->order_number, 'transaction_id' => 'T-CENTS', 'amount' => 501.0, 'phone' => '254712345678']);
+
+        $this->assertSame('confirmed', $order->fresh()->order_status->value);
+        $this->assertFalse(UnmatchedMpesaPayment::query()->where('transaction_id', 'like', 'T-CENTS%')->exists());
+    }
+
+    public function test_a_second_paybill_payment_or_an_unknown_order_number_is_held(): void
+    {
+        $order = $this->createOrder(paymentOverrides: ['payment_method' => 'mpesa_paybill']);
+        $this->service()->processC2BConfirmation(['bill_ref_number' => $order->order_number, 'transaction_id' => 'T-FIRST', 'amount' => 500.0, 'phone' => '254712345678']);
+
+        $this->service()->processC2BConfirmation(['bill_ref_number' => $order->order_number, 'transaction_id' => 'T-AGAIN', 'amount' => 500.0, 'phone' => '254712345678']);
+        $this->service()->processC2BConfirmation(['bill_ref_number' => 'MKT-TYPO', 'transaction_id' => 'T-TYPO', 'amount' => 300.0, 'phone' => '254712345678']);
+        $this->service()->processC2BConfirmation(['bill_ref_number' => 'MKT-TYPO', 'transaction_id' => 'T-TYPO', 'amount' => 300.0, 'phone' => '254712345678']); // repeated
+
+        $this->assertSame('Order was already paid', UnmatchedMpesaPayment::query()->where('transaction_id', 'T-AGAIN')->sole()->note);
+        $this->assertSame(1, UnmatchedMpesaPayment::query()->where('transaction_id', 'T-TYPO')->count());
+        $this->assertSame('T-FIRST', $order->payments()->first()->fresh()->provider_reference);
+    }
+
+    public function test_approving_an_earlier_stk_prompt_still_pays_the_order(): void
     {
         $order = $this->createOrder();
-        $payment = $order->payments()->first();
+        $mpesa = Mockery::mock(MpesaService::class);
+        $mpesa->shouldReceive('initiateSTKPush')->twice()->andReturn(
+            ['checkout_request_id' => 'CKO-FIRST', 'merchant_request_id' => 'M1'],
+            ['checkout_request_id' => 'CKO-SECOND', 'merchant_request_id' => 'M2'],
+        );
+        $service = $this->service($mpesa);
+        $service->initiatePayment($order, ['phone_number' => '254712345678']);
+        $order->payments()->first()->update(['initiated_at' => now()->subMinutes(2)]);
+        $service->initiatePayment($order->fresh(), ['phone_number' => '254712345678']);
 
-        $this->service()->initiateRefund($payment, 250.0);
+        $service->processPaymentWebhook(['transaction_reference' => 'CKO-FIRST', 'status' => 'success', 'provider_reference' => 'T-REC-1']);
+        $this->assertSame('confirmed', $order->fresh()->order_status->value);
 
-        $fresh = $payment->fresh();
-        $this->assertSame('refunded', $fresh->payment_status->value);
-        $this->assertEquals(250.0, (float) $fresh->refunded_amount);
+        // The buyer approved the second prompt too: a second receipt is held to be sent back.
+        $service->processPaymentWebhook(['transaction_reference' => 'CKO-SECOND', 'status' => 'success', 'provider_reference' => 'T-REC-2', 'amount' => 500.0]);
+        $this->assertSame('Second payment for an order already paid', UnmatchedMpesaPayment::query()->where('transaction_id', 'T-REC-2')->sole()->note);
+        $this->assertSame('T-REC-1', $order->payments()->first()->fresh()->provider_reference);
+    }
+
+    public function test_an_stk_payment_for_an_unknown_request_is_held(): void
+    {
+        try {
+            $this->service()->processPaymentWebhook(['transaction_reference' => 'CKO-NOBODY', 'status' => 'success', 'provider_reference' => 'T-REC-NOBODY', 'amount' => 90.0]);
+            $this->fail('Expected ModelNotFoundException');
+        } catch (ModelNotFoundException) {
+        }
+
+        $this->assertSame(90.0, UnmatchedMpesaPayment::query()->where('transaction_id', 'T-REC-NOBODY')->sole()->amount);
+    }
+
+    public function test_the_deadline_timer_does_not_cancel_an_order_paid_while_it_ran(): void
+    {
+        $order = $this->createOrder(paymentOverrides: ['payment_status' => MarketplacePaymentStatus::Processing, 'transaction_reference' => 'CKO-RACE']);
+        $stale = $order->fresh(); // what MonitorPaymentDeadlines loaded before the callback landed
+        $this->service()->processPaymentWebhook(['transaction_reference' => 'CKO-RACE', 'status' => 'success', 'provider_reference' => 'REC-RACE']);
+
+        $this->service()->handlePaymentTimeout($stale);
+
+        $this->assertSame('confirmed', $order->fresh()->order_status->value);
+        $this->assertSame('completed', $order->payments()->first()->fresh()->payment_status->value);
+        Queue::assertNotPushed(ProcessOrderCancellation::class);
     }
 
     // =========================================================================

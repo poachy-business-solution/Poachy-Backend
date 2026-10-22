@@ -295,6 +295,21 @@ class InternalAdminApiTest extends TestCase
         $this->assertSame('Customer typed POA99999', $this->audit('billing.unmatched.assign')->reason);
     }
 
+    public function test_a_held_marketplace_payment_is_sent_back_never_credited_to_a_shop(): void
+    {
+        $payment = UnmatchedMpesaPayment::query()->create(['transaction_id' => 'FKM'.strtoupper(Str::random(7)), 'source' => 'marketplace', 'amount' => 500.0,
+            'order_number' => 'MKT-ORD-2026-000099', 'note' => 'Order was already paid']);
+
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/assign", ['shop' => $this->poa, 'reason' => 'Looks like theirs'], 'finance')->assertStatus(422);
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/returned", ['reason' => 'Reversed, receipt SKR123'], 'support')->assertForbidden();
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/returned", ['reason' => 'Reversed, receipt SKR123'], 'finance')->assertOk();
+        $this->admin('POST', "/billing/unmatched/{$payment->id}/returned", ['reason' => 'again'], 'finance')->assertStatus(409);
+
+        $this->assertSame(['returned', 'admin:42'], [$payment->fresh()->status, $payment->fresh()->returned_by]);
+        $this->assertSame(0, BillingLedgerEntry::query()->where('reference', $payment->transaction_id)->count());
+        $this->assertSame('Reversed, receipt SKR123', AdminAuditLog::query()->where('action', 'billing.unmatched.returned')->where('subject_id', $payment->id)->sole()->reason);
+    }
+
     public function test_prices_change_only_from_a_future_date(): void
     {
         $row = ['first_branch_day' => 120, 'extra_branch_day' => 60, 'first_branch_cap' => 3000, 'extra_branch_cap' => 1500,

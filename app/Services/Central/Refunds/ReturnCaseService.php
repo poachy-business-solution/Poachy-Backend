@@ -41,11 +41,15 @@ class ReturnCaseService
 
         $lines = [];
         $perishable = false;
+        $returned = $this->alreadyReturned($order);
         foreach ($items as $wanted) {
             $item = $order->items->firstWhere('id', (int) $wanted['order_item_id']);
             $quantity = (float) $wanted['quantity'];
             if ($item === null || $quantity <= 0 || $quantity > (float) $item->quantity) {
                 throw ValidationException::withMessages(['items' => 'Choose items and quantities from this order.']);
+            }
+            if ($quantity > (float) $item->quantity - ($returned[$item->id] ?? 0) + 0.0001) {
+                throw ValidationException::withMessages(['items' => "{$item->product_name} has already been returned and refunded."]);
             }
             if ($this->matches((int) $item->marketplace_product_id, 'non_returnable_keywords')) {
                 throw ValidationException::withMessages(['items' => "{$item->product_name} can't be returned (hygiene goods, cosmetics and airtime never are)."]);
@@ -242,6 +246,28 @@ class ReturnCaseService
         if (MarketplaceReturnCase::query()->where('order_id', $order->id)->whereIn('status', MarketplaceReturnCase::OPEN)->exists()) {
             throw ValidationException::withMessages(['order' => 'This order already has an open return.']);
         }
+    }
+
+    /**
+     * Quantities per order line already returned for money (refunding, refunded, or closed with a
+     * refund), so the same items can't be returned and refunded twice.
+     *
+     * @return array<int, float>
+     */
+    private function alreadyReturned(MarketplaceOrder $order): array
+    {
+        $returned = [];
+        $cases = MarketplaceReturnCase::query()->where('order_id', $order->id)
+            ->where(fn ($q) => $q->whereIn('status', [MarketplaceReturnCase::REFUNDING, MarketplaceReturnCase::REFUNDED])->orWhere('refund_amount', '>', 0))
+            ->get(['items']);
+        foreach ($cases as $case) {
+            foreach ((array) $case->items as $line) {
+                $id = (int) ($line['order_item_id'] ?? 0);
+                $returned[$id] = ($returned[$id] ?? 0) + (float) ($line['quantity'] ?? 0);
+            }
+        }
+
+        return $returned;
     }
 
     /**

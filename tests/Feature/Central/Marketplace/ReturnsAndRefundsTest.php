@@ -109,6 +109,7 @@ class ReturnsAndRefundsTest extends TestCase
         DB::connection('central')->table('tenants')->where('id', $this->tenantId)->delete();
         DB::connection('central')->statement('SET foreign_key_checks = 1');
         Carbon::setTestNow();
+        FakeCardGateway::$refundsSettleLater = false;
         parent::tearDown();
     }
 
@@ -185,6 +186,56 @@ class ReturnsAndRefundsTest extends TestCase
         $refund = MarketplaceRefund::query()->where('order_id', $order->id)->sole();
         $this->assertSame(['card', 'completed'], [$refund->method, $refund->status]);
         $this->assertCount(1, FakeCardGateway::find($order->payments()->value('transaction_reference'))['refunds']);
+    }
+
+    public function test_a_card_refund_paystack_settles_later_completes_on_its_webhook(): void
+    {
+        FakeCardGateway::$refundsSettleLater = true; // real Paystack: "pending" now, webhook later
+        $order = $this->order('card', handedOver: false);
+        $order->update(['order_status' => OrderStatus::Cancelled]);
+        $refund = MarketplaceRefund::query()->where('order_id', $order->id)->sole();
+        $this->assertSame(['card', 'processing'], [$refund->method, $refund->status]);
+
+        $body = json_encode(['event' => 'refund.processed', 'data' => [
+            'id' => $refund->provider_reference, 'status' => 'processed', 'amount' => 220000,
+            'transaction_reference' => $order->payments()->value('transaction_reference'),
+        ]]);
+        $this->call('POST', '/api/v1/central/marketplace/payments/paystack/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_PAYSTACK_SIGNATURE' => FakeCardGateway::sign($body)], $body)->assertOk();
+
+        $this->assertSame('completed', $refund->fresh()->status);
+        $this->assertTrue((bool) $order->payments()->first()->is_refunded);
+        $this->assertTrue(MessageLog::query()->where('template', 'refund_completed')->where('tenant_id', $this->tenantId)->exists());
+    }
+
+    public function test_a_card_refund_paystack_reports_failed_is_marked_failed(): void
+    {
+        FakeCardGateway::$refundsSettleLater = true;
+        $order = $this->order('card', handedOver: false);
+        $order->update(['order_status' => OrderStatus::Cancelled]);
+        $refund = MarketplaceRefund::query()->where('order_id', $order->id)->sole();
+
+        $body = json_encode(['event' => 'refund.failed', 'data' => ['status' => 'failed', 'amount' => 220000, 'transaction_reference' => $order->payments()->value('transaction_reference')]]);
+        $this->call('POST', '/api/v1/central/marketplace/payments/paystack/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_PAYSTACK_SIGNATURE' => FakeCardGateway::sign($body)], $body)->assertOk();
+
+        $this->assertSame('failed', $refund->fresh()->status);
+        $this->assertFalse((bool) $order->payments()->first()->is_refunded);
+    }
+
+    public function test_items_already_returned_and_refunded_cannot_be_returned_again(): void
+    {
+        $order = $this->order();
+        $case = $this->returns()->open($order, $this->itemsOf($order), 'faulty', 'Broken', [UploadedFile::fake()->image('a.jpg')]);
+        $this->returns()->inspect($this->returns()->received($case), 'accept', null, null);
+        $this->mpesaAnswer('reversal');
+        $this->assertSame('refunded', $case->fresh()->status);
+
+        try {
+            $this->returns()->open($order->fresh(), $this->itemsOf($order), 'faulty', 'Broken again', [UploadedFile::fake()->image('b.jpg')]);
+            $this->fail('The same items were returned twice');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('already been returned', $e->errors()['items'][0]);
+        }
+        $this->assertSame(1, MarketplaceReturnCase::query()->where('order_id', $order->id)->count());
     }
 
     public function test_a_faulty_item_returned_and_accepted_is_refunded_in_full_and_clawed_back_from_the_payout(): void

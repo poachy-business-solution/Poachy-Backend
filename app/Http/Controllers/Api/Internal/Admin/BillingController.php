@@ -8,6 +8,7 @@ use App\Exceptions\MpesaException;
 use App\Http\Controllers\Api\Internal\Admin\Concerns\ResolvesShop;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Internal\Admin\AssignPaymentRequest;
+use App\Http\Requests\Internal\Admin\ReturnUnmatchedPaymentRequest;
 use App\Http\Requests\Internal\Admin\BillingCreditRequest;
 use App\Http\Requests\Internal\Admin\BillingLinkRequest;
 use App\Http\Requests\Internal\Admin\BillingPriceRequest;
@@ -186,6 +187,9 @@ class BillingController extends Controller
             if ($payment->status !== 'open') {
                 return 'assigned';
             }
+            if ($payment->source === 'marketplace') {
+                return 'marketplace';
+            }
 
             $entry = $topups->creditFromMpesa((string) $tenant->id, $payment->amount, $payment->transaction_id, 'mpesa_c2b', payerName: $payment->payer_name);
             $payment->update(['status' => 'assigned', 'assigned_tenant_id' => $tenant->id, 'billing_ledger_id' => $entry->id, 'assigned_by' => $admin->tag(), 'assigned_at' => now()]);
@@ -199,12 +203,62 @@ class BillingController extends Controller
         if ($result === 'assigned') {
             return ApiResponse::conflict('This payment has already been assigned.');
         }
+        if ($result === 'marketplace') {
+            return ApiResponse::error('This is a buyer\'s marketplace payment: send it back to them, it is never a shop\'s credit.', null, 422);
+        }
 
         [$payment, $entry] = $result;
         $this->audit->record($request, 'billing.unmatched.assign', (string) $tenant->id, 'unmatched_mpesa_payment', $payment->id, ['status' => 'open'],
             ['status' => 'assigned', 'amount' => $payment->amount, 'receipt' => $payment->transaction_id, 'balance' => (float) $entry->balance_after], $request->validated('reason'));
 
         return ApiResponse::success('Payment credited to '.$tenant->mpesa_paybill_account, new BillingLedgerEntryResource($entry));
+    }
+
+    /**
+     * @OA\Post(path="/api/internal/admin/billing/unmatched/{id}/returned", summary="Mark a held marketplace payment as sent back to the buyer (after an M-Pesa reversal)",
+     *     operationId="internalAdminReturnUnmatchedPayment", tags={"Internal - Admin"}, security={{"internalAdmin": {}}},
+     *
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"reason"}, @OA\Property(property="reason", type="string", description="How it was returned, e.g. the reversal receipt"))),
+     *
+     *     @OA\Response(response=200, description="Marked returned"), @OA\Response(response=404, description="Unknown payment"), @OA\Response(response=409, description="Not open"), @OA\Response(response=422, description="A Paybill top-up, not a marketplace payment")
+     * )
+     */
+    public function returnPayment(ReturnUnmatchedPaymentRequest $request, int $id): JsonResponse
+    {
+        $admin = ActingAdmin::from($request);
+
+        $result = DB::connection('central')->transaction(function () use ($id, $admin) {
+            $payment = UnmatchedMpesaPayment::query()->lockForUpdate()->find($id);
+            if ($payment === null) {
+                return 'missing';
+            }
+            if ($payment->source !== 'marketplace') {
+                return 'paybill';
+            }
+            if ($payment->status !== 'open') {
+                return 'closed';
+            }
+            $payment->update(['status' => 'returned', 'returned_by' => $admin->tag(), 'returned_at' => now()]);
+
+            return $payment;
+        });
+
+        return match (true) {
+            $result === 'missing' => ApiResponse::notFound('Payment not found.'),
+            $result === 'paybill' => ApiResponse::error('This Paybill payment belongs to a shop: credit it instead.', null, 422),
+            $result === 'closed' => ApiResponse::conflict('This payment is already closed.'),
+            default => $this->returned($request, $result),
+        };
+    }
+
+    private function returned(ReturnUnmatchedPaymentRequest $request, UnmatchedMpesaPayment $payment): JsonResponse
+    {
+        $this->audit->record($request, 'billing.unmatched.returned', null, 'unmatched_mpesa_payment', $payment->id, ['status' => 'open'],
+            ['status' => 'returned', 'amount' => $payment->amount, 'receipt' => $payment->transaction_id, 'order' => $payment->order_number], $request->validated('reason'));
+
+        return ApiResponse::success('Marked as sent back to the buyer', ['id' => $payment->id, 'status' => $payment->status]);
     }
 
     /**

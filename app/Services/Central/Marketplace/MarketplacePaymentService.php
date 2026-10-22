@@ -17,6 +17,10 @@ use App\Jobs\Central\ProcessPaymentConfirmation;
 use App\Models\CentralPaymentLog;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplaceOrderPayment;
+use App\Models\UnmatchedMpesaPayment;
+use App\Helpers\PhoneNumber;
+use App\Services\Central\Refunds\RefundService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Services\Shared\Card\CardGateway;
 use App\Services\Shared\Mpesa\MpesaService;
 use App\Support\MpesaCallbacks;
@@ -130,10 +134,18 @@ class MarketplacePaymentService
             throw $e;
         }
 
+        // Every prompt sent stays matched to this payment: a buyer may approve an earlier one.
+        $prompts = array_values(array_unique(array_filter([
+            ...($payment->payment_metadata['stk_checkout_request_ids'] ?? []),
+            $payment->transaction_reference,
+            $stkResult['checkout_request_id'],
+        ])));
+
         $payment->update([
             'payment_status' => MarketplacePaymentStatus::Processing,
             'transaction_reference' => $stkResult['checkout_request_id'],
             'payment_metadata' => array_merge($payment->payment_metadata ?? [], [
+                'stk_checkout_request_ids' => $prompts,
                 'merchant_request_id' => $stkResult['merchant_request_id'],
                 'phone_number' => $phoneNumber,
                 'stk_initiated_at' => now()->toIso8601String(),
@@ -276,7 +288,8 @@ class MarketplacePaymentService
 
     /**
      * Paystack webhook: the signature must be ours, and the gateway's own record (not the webhook
-     * body) decides whether value is given. Idempotent through processPaymentWebhook().
+     * body) decides whether value is given. Idempotent through processPaymentWebhook(). Refund
+     * events settle card refunds (RefundService::handleCardRefundEvent).
      *
      * @throws InvalidWebhookSignatureException
      */
@@ -290,6 +303,12 @@ class MarketplacePaymentService
         $event = json_decode($rawBody, true);
         $reference = (string) ($event['data']['reference'] ?? '');
         $type = (string) ($event['event'] ?? '');
+
+        if (in_array($type, ['refund.processed', 'refund.failed'], true)) {
+            app(RefundService::class)->handleCardRefundEvent($type, (array) ($event['data'] ?? []));
+
+            return null;
+        }
 
         if ($reference === '' || ! in_array($type, ['charge.success', 'charge.failed'], true)) {
             Log::info('Paystack webhook ignored', ['event' => $type]);
@@ -353,7 +372,8 @@ class MarketplacePaymentService
             ]);
         }
 
-        if (in_array($tx['status'], ['failed', 'abandoned', 'reversed'], true)) {
+        // 'abandoned' and 'ongoing' mean the buyer is still on (or left) the card page: not final.
+        if (in_array($tx['status'], ['failed', 'reversed'], true)) {
             return $this->processPaymentWebhook([
                 'transaction_reference' => $payment->transaction_reference,
                 'status' => 'failed',
@@ -380,59 +400,96 @@ class MarketplacePaymentService
      *
      * @param  array<string, mixed>  $parsedPayload  Output of MpesaService::parseC2BPayload()
      */
-    public function processC2BConfirmation(array $parsedPayload): MarketplaceOrderPayment
+    public function processC2BConfirmation(array $parsedPayload): ?MarketplaceOrderPayment
     {
-        $orderNumber = $parsedPayload['bill_ref_number'];
-        $transactionId = $parsedPayload['transaction_id'];
+        $orderNumber = (string) $parsedPayload['bill_ref_number'];
+        $transactionId = (string) $parsedPayload['transaction_id'];
+        $paid = (float) $parsedPayload['amount'];
 
-        // Idempotency: TransID already completed
+        // Idempotency: TransID already applied to an order, or already held as unmatched
         $existing = MarketplaceOrderPayment::on('central')
             ->where('provider_reference', $transactionId)
-            ->where('payment_status', MarketplacePaymentStatus::Completed)
+            ->whereIn('payment_status', [MarketplacePaymentStatus::Completed->value, MarketplacePaymentStatus::Refunded->value])
             ->first();
 
-        if ($existing) {
-            Log::channel('mpesa')->info('C2B marketplace confirmation — duplicate ignored', [
-                'transaction_id' => $transactionId,
-                'payment_id' => $existing->id,
-            ]);
+        if ($existing || UnmatchedMpesaPayment::query()->where('transaction_id', $transactionId)->exists()) {
+            Log::channel('mpesa')->info('C2B marketplace confirmation — duplicate ignored', ['transaction_id' => $transactionId]);
 
             return $existing;
         }
 
-        $order = MarketplaceOrder::on('central')
-            ->where('order_number', $orderNumber)
-            ->firstOrFail();
+        $order = MarketplaceOrder::on('central')->where('order_number', strtoupper(trim($orderNumber)))->first();
 
-        $payment = $order->payments()
-            ->whereIn('payment_status', [
-                MarketplacePaymentStatus::Pending->value,
-                MarketplacePaymentStatus::Processing->value,
-            ])
-            ->latest()
-            ->firstOrFail();
+        if ($order === null) {
+            $this->holdUnmatched($parsedPayload, $transactionId, $paid, null, 'No order with this number');
 
-        CentralPaymentLog::record('marketplace_order_payment', $payment->id, 'c2b_confirmation_received', [
+            return null;
+        }
+
+        CentralPaymentLog::record('marketplace_order_payment', 0, 'c2b_confirmation_received', [
             'customer_id' => $order->customer_id,
-            'amount' => $parsedPayload['amount'],
+            'amount' => $paid,
             'customer_phone' => $parsedPayload['phone'],
             'transaction_reference' => $transactionId,
             'raw_payload' => $parsedPayload,
         ]);
 
-        return DB::connection('central')->transaction(function () use ($order, $payment, $transactionId) {
+        $refundLate = null;
+
+        $result = DB::connection('central')->transaction(function () use ($order, $parsedPayload, $transactionId, $paid, &$refundLate) {
             $order = MarketplaceOrder::on('central')->lockForUpdate()->find($order->id);
 
+            if ($order->payments()->whereIn('payment_status', [MarketplacePaymentStatus::Completed->value, MarketplacePaymentStatus::Refunded->value])->exists()) {
+                $this->holdUnmatched($parsedPayload, $transactionId, $paid, $order, 'Order was already paid');
+
+                return null;
+            }
+
+            $payment = $order->payments()
+                ->whereIn('payment_status', [
+                    MarketplacePaymentStatus::Pending->value,
+                    MarketplacePaymentStatus::Processing->value,
+                    MarketplacePaymentStatus::Failed->value,
+                ])
+                ->latest('id')
+                ->first();
+
+            if ($payment === null) {
+                $this->holdUnmatched($parsedPayload, $transactionId, $paid, $order, 'No payment was expected on this order');
+
+                return null;
+            }
+
+            // M-Pesa only moves whole shillings: the order is paid when the rounded-up total arrived.
+            $due = (float) ceil((float) $payment->amount);
+
+            if ($paid + 0.009 < $due) {
+                $this->holdUnmatched($parsedPayload, $transactionId, $paid, $order, 'Paid less than the order total of KSh '.number_format($due, 2));
+
+                return null;
+            }
+
+            if ($paid - 0.009 > $due) {
+                $this->holdUnmatched($parsedPayload, $transactionId.'-X', round($paid - $due, 2), $order, 'Paid more than the order total; the extra is to be returned');
+            }
+
             if ($order->order_status->isTerminal()) {
-                $this->initiateRefund($payment, (float) $payment->amount);
+                $payment->markAsCompleted(null, $transactionId);
+                $refundLate = $order;
 
                 return $payment->fresh();
             }
 
-            $this->confirmPayment($payment, $transactionId, $transactionId);
+            $this->confirmPayment($payment, null, $transactionId);
 
             return $payment->fresh();
         });
+
+        if ($refundLate !== null) {
+            $this->refundLatePayment($refundLate);
+        }
+
+        return $result;
     }
 
     /**
@@ -500,65 +557,116 @@ class MarketplacePaymentService
      */
     public function processPaymentWebhook(array $webhookData): MarketplaceOrderPayment
     {
-        $transactionReference = $webhookData['transaction_reference'];
-
-        // Idempotency: if already completed, return existing
-        $existingPayment = MarketplaceOrderPayment::on('central')
-            ->where('transaction_reference', $transactionReference)
-            ->where('payment_status', MarketplacePaymentStatus::Completed)
-            ->first();
-
-        if ($existingPayment) {
-            Log::info('Duplicate payment webhook ignored', [
-                'transaction_reference' => $transactionReference,
-                'payment_id' => $existingPayment->id,
-            ]);
-
-            return $existingPayment;
-        }
-
-        $payment = MarketplaceOrderPayment::on('central')
-            ->where('transaction_reference', $transactionReference)
-            ->firstOrFail();
-
+        $transactionReference = (string) $webhookData['transaction_reference'];
+        $receipt = $webhookData['provider_reference'] ?? null;
         $isSuccess = ($webhookData['status'] ?? '') === 'success';
 
+        $payment = MarketplaceOrderPayment::on('central')->where('transaction_reference', $transactionReference)->first()
+            // An earlier STK prompt for the same payment (the buyer approved the first one).
+            ?? MarketplaceOrderPayment::on('central')->whereJsonContains('payment_metadata->stk_checkout_request_ids', $transactionReference)->first();
+
+        if ($payment === null) {
+            if ($isSuccess && filled($receipt)) {
+                $this->holdUnmatched($webhookData, (string) $receipt, (float) ($webhookData['amount'] ?? 0), null, 'Payment for an unknown checkout request');
+            }
+
+            throw (new ModelNotFoundException)->setModel(MarketplaceOrderPayment::class, [$transactionReference]);
+        }
+
+        if (in_array($payment->payment_status, [MarketplacePaymentStatus::Completed, MarketplacePaymentStatus::Refunded], true)) {
+            // Same receipt again: a duplicate callback. A different receipt: the buyer paid twice.
+            if ($isSuccess && filled($receipt) && $payment->provider_reference !== $receipt && $payment->transaction_reference !== $receipt) {
+                $this->holdUnmatched($webhookData, (string) $receipt, (float) ($webhookData['amount'] ?? $payment->amount), $payment->order, 'Second payment for an order already paid');
+            } else {
+                Log::info('Duplicate payment webhook ignored', ['transaction_reference' => $transactionReference, 'payment_id' => $payment->id]);
+            }
+
+            return $payment;
+        }
+
         if (! $isSuccess) {
-            $this->handlePaymentFailure(
-                $payment,
-                $webhookData['failure_reason'] ?? 'Payment failed',
-                $webhookData['failure_code'] ?? null
-            );
+            // A failure for an older prompt must not undo a newer one still waiting.
+            if ($payment->transaction_reference === $transactionReference && $payment->payment_status !== MarketplacePaymentStatus::Failed) {
+                $this->handlePaymentFailure(
+                    $payment,
+                    $webhookData['failure_reason'] ?? 'Payment failed',
+                    $webhookData['failure_code'] ?? null
+                );
+            }
 
             return $payment->fresh();
         }
 
+        $refundLate = null;
+
         // Race condition guard: lock order row, check if already cancelled
-        return DB::connection('central')->transaction(function () use ($payment, $webhookData) {
+        $result = DB::connection('central')->transaction(function () use ($payment, $webhookData, $receipt, &$refundLate) {
             $order = MarketplaceOrder::on('central')
                 ->lockForUpdate()
                 ->findOrFail($payment->order_id);
+            $payment = MarketplaceOrderPayment::on('central')->lockForUpdate()->find($payment->id);
+
+            if ($payment->payment_status === MarketplacePaymentStatus::Completed) {
+                return $payment;
+            }
 
             if ($order->order_status->isTerminal()) {
-                Log::info('Payment arrived for cancelled/terminal order — initiating refund', [
+                Log::info('Payment arrived for cancelled/terminal order — refunding it', [
                     'order_id' => $order->id,
                     'order_status' => $order->order_status->value,
                     'payment_id' => $payment->id,
                 ]);
 
-                $this->initiateRefund($payment, (float) $payment->amount);
+                // Recorded as received (with its receipt) so the refund can go back the same way.
+                $payment->markAsCompleted(null, $receipt);
+                $refundLate = $order;
 
                 return $payment->fresh();
             }
 
-            $this->confirmPayment(
-                $payment,
-                $webhookData['transaction_reference'] ?? null,
-                $webhookData['provider_reference'] ?? null
-            );
+            $this->confirmPayment($payment, null, $receipt);
 
             return $payment->fresh();
         });
+
+        if ($refundLate !== null) {
+            $this->refundLatePayment($refundLate);
+        }
+
+        return $result;
+    }
+
+    /** Money that reached a cancelled order goes back the way it came (reversal, B2C or card). */
+    private function refundLatePayment(MarketplaceOrder $order): void
+    {
+        $payment = $order->payments()->where('payment_status', MarketplacePaymentStatus::Completed->value)->latest('id')->first();
+
+        if ($payment === null) {
+            return;
+        }
+
+        app(RefundService::class)->start($order, (float) $payment->amount, 'late_payment', 'Paid after the order was cancelled');
+    }
+
+    /**
+     * Marketplace money that matched no open order: held for finance to send back (never lost,
+     * never credited to a shop). Idempotent on the M-Pesa receipt.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function holdUnmatched(array $payload, string $receipt, float $amount, ?MarketplaceOrder $order, string $note): void
+    {
+        Log::channel('mpesa')->warning('Marketplace payment left unmatched', ['receipt' => $receipt, 'order_id' => $order?->id, 'note' => $note]);
+
+        UnmatchedMpesaPayment::query()->firstOrCreate(['transaction_id' => mb_substr($receipt, 0, 40)], [
+            'source' => 'marketplace',
+            'amount' => $amount,
+            'bill_ref_number' => isset($payload['bill_ref_number']) ? mb_substr((string) $payload['bill_ref_number'], 0, 40) : null,
+            'order_number' => $order?->order_number,
+            'phone_masked' => filled($payload['phone'] ?? null) ? PhoneNumber::mask((string) $payload['phone']) : null,
+            'payer_name' => isset($payload['first_name']) ? mb_substr((string) $payload['first_name'], 0, 120) : null,
+            'note' => mb_substr($note, 0, 255),
+        ]);
     }
 
     /**
@@ -635,19 +743,19 @@ class MarketplacePaymentService
      */
     public function handlePaymentTimeout(MarketplaceOrder $order): void
     {
-        if ($order->order_status->isTerminal()) {
-            return;
-        }
+        // Decided under the same order lock the payment callbacks take, so a payment that lands
+        // while this runs is either seen here (order kept) or arrives after (and is refunded).
+        $cancelled = DB::connection('central')->transaction(function () use ($order) {
+            $order = MarketplaceOrder::on('central')->lockForUpdate()->find($order->id);
 
-        $hasPaidPayment = $order->payments()
-            ->where('payment_status', MarketplacePaymentStatus::Completed)
-            ->exists();
+            if ($order === null || $order->order_status->isTerminal()) {
+                return false;
+            }
 
-        if ($hasPaidPayment) {
-            return;
-        }
+            if ($order->payments()->whereIn('payment_status', [MarketplacePaymentStatus::Completed->value, MarketplacePaymentStatus::Refunded->value])->exists()) {
+                return false;
+            }
 
-        DB::connection('central')->transaction(function () use ($order) {
             $order->payments()
                 ->whereIn('payment_status', [
                     MarketplacePaymentStatus::Pending,
@@ -664,7 +772,13 @@ class MarketplacePaymentService
             ]);
 
             $order->cancel('Payment deadline exceeded — reservation released.');
+
+            return true;
         });
+
+        if (! $cancelled) {
+            return;
+        }
 
         ProcessOrderCancellation::dispatch($order->id);
 
@@ -674,20 +788,6 @@ class MarketplacePaymentService
 
         $this->notifications->notifyCustomer($order->fresh(), 'payment_timeout', context: [
             'reason' => 'Payment deadline exceeded',
-        ]);
-    }
-
-    /**
-     * Initiate a refund for a payment.
-     */
-    public function initiateRefund(MarketplaceOrderPayment $payment, float $amount): void
-    {
-        $payment->markAsRefunded($amount);
-
-        Log::info('Refund initiated', [
-            'order_id' => $payment->order_id,
-            'payment_id' => $payment->id,
-            'refunded_amount' => $amount,
         ]);
     }
 

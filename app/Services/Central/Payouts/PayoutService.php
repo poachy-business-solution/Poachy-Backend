@@ -2,6 +2,7 @@
 
 namespace App\Services\Central\Payouts;
 
+use App\Exceptions\MpesaException;
 use App\Enums\Central\BillingLedgerType;
 use App\Helpers\PhoneNumber;
 use App\Models\BillingAccount;
@@ -162,10 +163,26 @@ class PayoutService
         return true;
     }
 
-    /** Send (or re-send) a payout through the B2C gateway. */
+    /**
+     * Send (or re-send) a payout through the B2C gateway. The payout is claimed first, so the
+     * nightly run, the hourly retries and an admin can never send the same one twice. A refusal
+     * from Safaricom is retried later; no answer at all (a timeout) may still have moved the
+     * money, so a person checks before anything is re-sent.
+     */
     public function send(MarketplacePayout $payout): bool
     {
-        $payout->increment('attempts');
+        $claimed = MarketplacePayout::query()->whereKey($payout->id)
+            ->where('status', $payout->status)
+            ->where('attempts', $payout->attempts)
+            ->when($payout->status === MarketplacePayout::PROCESSING, fn ($q) => $q->whereNull('conversation_id'))
+            ->update(['status' => MarketplacePayout::PROCESSING, 'attempts' => $payout->attempts + 1, 'conversation_id' => null, 'next_attempt_at' => null]);
+
+        if ($claimed === 0) {
+            Log::info('Payout already being sent elsewhere — skipped', ['payout' => $payout->reference]);
+
+            return false;
+        }
+        $payout->refresh();
 
         try {
             $result = $this->mpesa->gateway()->b2c(
@@ -176,8 +193,13 @@ class PayoutService
                 resultUrl: $this->callbackUrl('result'),
                 timeoutUrl: $this->callbackUrl('timeout'),
             );
-        } catch (Throwable $e) {
+        } catch (MpesaException $e) {
             $this->fail($payout, 'Could not start the transfer: '.$e->getMessage());
+
+            return false;
+        } catch (Throwable $e) {
+            $payout->update(['status' => MarketplacePayout::NEEDS_CHECK, 'failure_reason' => mb_substr('No answer from Safaricom ('.$e->getMessage().'); check the transfer before sending again.', 0, 500)]);
+            $this->alertFinance($payout, 'no answer');
 
             return false;
         }

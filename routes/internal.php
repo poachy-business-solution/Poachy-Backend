@@ -55,6 +55,7 @@ Route::middleware('throttle:internal-admin')->group(function () {
     Route::get('/shops/{shop}/billing/topups/{id}', [BillingController::class, 'topup'])->whereNumber('id')->middleware('internal.admin');
     Route::post('/shops/{shop}/billing/link', [BillingController::class, 'link'])->middleware('internal.admin');
     Route::post('/billing/unmatched/{id}/assign', [BillingController::class, 'assignPayment'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
+    Route::post('/billing/unmatched/{id}/returned', [BillingController::class, 'returnPayment'])->whereNumber('id')->middleware(['internal.admin:super,finance', 'throttle:internal-admin-money']);
     Route::get('/billing/prices', [BillingController::class, 'prices'])->middleware('internal.admin');
 
     // Housekeeping: the emails Poachy sends, rendered with sample data (read-only).

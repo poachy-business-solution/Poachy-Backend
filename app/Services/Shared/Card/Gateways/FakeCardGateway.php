@@ -19,6 +19,9 @@ class FakeCardGateway implements CardGateway
 {
     public const LOCAL_SECRET = 'sk_test_poachy_fake_local_only';
 
+    /** When true, refunds come back 'pending' like real Paystack (settled by a refund webhook). */
+    public static bool $refundsSettleLater = false;
+
     public function initialize(string $email, float $amount, string $reference, string $callbackUrl, array $metadata = []): array
     {
         if (str_starts_with($email, 'fail@')) {
@@ -92,7 +95,8 @@ class FakeCardGateway implements CardGateway
             throw new CardPaymentException('Refund amount is more than what is left on the transaction', 'PAYSTACK_ERROR');
         }
 
-        $refund = ['refund_id' => (string) random_int(100000, 999999), 'status' => 'processed', 'amount' => round($amount, 2)];
+        // Real Paystack answers 'pending' and settles by webhook; tests switch this on to cover that.
+        $refund = ['refund_id' => (string) random_int(100000, 999999), 'status' => self::$refundsSettleLater ? 'pending' : 'processed', 'amount' => round($amount, 2)];
         $tx['refunds'][] = $refund + ['reason' => $reason];
         self::put($reference, $tx);
 

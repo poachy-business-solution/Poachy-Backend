@@ -21839,6 +21839,63 @@
                 ]
             }
         },
+        "/api/internal/admin/billing/unmatched/{id}/returned": {
+            "post": {
+                "tags": [
+                    "Internal - Admin"
+                ],
+                "summary": "Mark a held marketplace payment as sent back to the buyer (after an M-Pesa reversal)",
+                "operationId": "internalAdminReturnUnmatchedPayment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "description": "How it was returned, e.g. the reversal receipt",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Marked returned"
+                    },
+                    "404": {
+                        "description": "Unknown payment"
+                    },
+                    "409": {
+                        "description": "Not open"
+                    },
+                    "422": {
+                        "description": "A Paybill top-up, not a marketplace payment"
+                    }
+                },
+                "security": [
+                    {
+                        "internalAdmin": []
+                    }
+                ]
+            }
+        },
         "/api/internal/admin/billing/prices": {
             "get": {
                 "tags": [

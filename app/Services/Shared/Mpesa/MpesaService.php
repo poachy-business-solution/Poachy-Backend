@@ -130,7 +130,7 @@ class MpesaService
     /**
      * Parse an STK Push callback payload from Safaricom into a normalised array.
      *
-     * @return array{transaction_reference: string|null, status: string, provider_reference: string|null, failure_reason: string|null, failure_code: string|null}
+     * @return array{transaction_reference: string|null, status: string, provider_reference: string|null, failure_reason: string|null, failure_code: string|null, amount: float|null, phone: string|null}
      */
     public function parseSTKCallbackPayload(array $payload): array
     {
@@ -141,13 +141,17 @@ class MpesaService
         $isSuccess = $resultCode === 0;
 
         $mpesaReceiptNumber = null;
+        $amount = null;
+        $phone = null;
 
         if ($isSuccess) {
             foreach ($callback['CallbackMetadata']['Item'] ?? [] as $item) {
-                if (($item['Name'] ?? null) === 'MpesaReceiptNumber') {
-                    $mpesaReceiptNumber = $item['Value'] ?? null;
-                    break;
-                }
+                match ($item['Name'] ?? null) {
+                    'MpesaReceiptNumber' => $mpesaReceiptNumber = $item['Value'] ?? null,
+                    'Amount' => $amount = isset($item['Value']) ? (float) $item['Value'] : null,
+                    'PhoneNumber' => $phone = isset($item['Value']) ? (string) $item['Value'] : null,
+                    default => null,
+                };
             }
         }
 
@@ -164,6 +168,8 @@ class MpesaService
             'provider_reference' => $mpesaReceiptNumber,
             'failure_reason' => $isSuccess ? null : $resultDesc,
             'failure_code' => $isSuccess ? null : (string) $resultCode,
+            'amount' => $amount,
+            'phone' => $phone,
         ];
     }
 

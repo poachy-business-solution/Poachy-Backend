@@ -17,6 +17,9 @@ use App\Services\Central\Payouts\PayoutLedgerService;
 use App\Services\Central\Payouts\PayoutService;
 use App\Services\Central\Payouts\PayoutStatementService;
 use App\Services\Shared\Mpesa\Gateways\FakeMpesaGateway;
+use App\Services\Shared\Mpesa\MpesaGateway;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Config;
@@ -234,6 +237,50 @@ class MarketplacePayoutTest extends TestCase
         $second = MarketplacePayout::query()->where('tenant_id', $this->tenantId)->latest('id')->first();
         $this->b2cCallback('result', $this->b2cResult(0, 5))->assertOk();
         $this->assertSame('needs_check', $second->fresh()->status);
+    }
+
+    public function test_a_payout_is_claimed_before_sending_so_two_runs_never_send_it_twice(): void
+    {
+        $this->handedOver(1000);
+        $this->payouts()->runBatch(now()->addHours(25));
+        $this->b2cCallback('result', $this->b2cResult(2001))->assertOk();
+        $payout = MarketplacePayout::query()->where('tenant_id', $this->tenantId)->sole();
+        $this->assertSame('failed', $payout->status);
+        $requests = FakeMpesaGateway::latestId('b2c');
+
+        // The nightly run and the hourly retry (or an admin) pick up the same failed payout.
+        $stale = $payout->fresh();
+        $this->assertTrue($this->payouts()->send($payout->fresh()));
+        $this->assertFalse($this->payouts()->send($stale));
+
+        $this->assertNotSame($requests, FakeMpesaGateway::latestId('b2c'));
+        $this->assertSame(2, $payout->fresh()->attempts);
+    }
+
+    public function test_no_answer_from_safaricom_waits_for_a_person_instead_of_resending(): void
+    {
+        $gateway = \Mockery::mock(MpesaGateway::class);
+        $gateway->shouldReceive('b2c')->once()->andThrow(new ConnectionException('cURL error 28: Operation timed out'));
+        $this->app->instance(MpesaGateway::class, $gateway);
+        $this->app->forgetInstance(\App\Services\Shared\Mpesa\MpesaService::class);
+        $this->app->forgetInstance(PayoutService::class);
+
+        $this->handedOver(1000);
+        $this->payouts()->runBatch(now()->addHours(25));
+
+        $payout = MarketplacePayout::query()->where('tenant_id', $this->tenantId)->sole();
+        $this->assertSame('needs_check', $payout->status);
+        $this->assertSame(0, $this->payouts()->runBatch(now()->addDays(3), retriesOnly: true)['retried']);
+    }
+
+    public function test_an_order_earns_only_one_sale_line_even_if_handed_over_twice(): void
+    {
+        $order = $this->handedOver(1000);
+        $line = MarketplacePayoutLine::query()->where('order_id', $order->id)->sole();
+
+        $this->assertSame($line->id, app(PayoutLedgerService::class)->recordHandover($order)->id);
+        $this->expectException(UniqueConstraintViolationException::class);
+        MarketplacePayoutLine::query()->create(array_merge($line->only(['tenant_id', 'order_id', 'type', 'description', 'gross', 'processing_fee', 'commission_rate', 'commission_amount', 'net', 'source', 'payment_method']), ['handed_over_at' => now(), 'eligible_at' => now()]));
     }
 
     public function test_no_payout_number_means_no_transfer_and_a_message_to_the_shop(): void

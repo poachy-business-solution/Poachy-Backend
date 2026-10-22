@@ -140,6 +140,20 @@ class CheckoutCardPaymentTest extends TestCase
         $this->getJson("/api/v1/central/marketplace/orders/{$order->id}/payment?verify=1")->assertOk()->assertJsonPath('data.payment_status', 'completed')->assertJsonPath('data.authorization_url', null);
     }
 
+    public function test_a_buyer_still_on_the_card_page_is_not_marked_failed(): void
+    {
+        $order = $this->checkout('card');
+        $this->shopConfirms($order);
+        $reference = $this->postJson("/api/v1/central/marketplace/orders/{$order->id}/payment", [])->assertOk()->json('data.instructions.reference');
+
+        // Paystack says "abandoned" for a transaction started but not paid yet: still waiting.
+        FakeCardGateway::put($reference, array_merge(FakeCardGateway::find($reference), ['status' => 'abandoned']));
+        $this->getJson("/api/v1/central/marketplace/orders/{$order->id}/payment?verify=1")->assertOk()->assertJsonPath('data.payment_status', 'processing');
+
+        Artisan::call('poachy:simulate-paystack', ['reference' => $reference]);
+        $this->assertSame(OrderStatus::Confirmed, $order->fresh()->order_status);
+    }
+
     public function test_declined_card_and_amount_tampering_never_confirm_the_order(): void
     {
         $order = $this->checkout('card');

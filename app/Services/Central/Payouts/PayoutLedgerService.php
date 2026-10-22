@@ -5,6 +5,8 @@ namespace App\Services\Central\Payouts;
 use App\Enums\Central\MarketplacePaymentStatus;
 use App\Models\MarketplaceOrder;
 use App\Models\MarketplacePayoutLine;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -40,7 +42,21 @@ class PayoutLedgerService
         $commission = $this->commission->amountFor($order, $rate);
         $handedOver = now();
 
-        $line = MarketplacePayoutLine::query()->create([
+        try {
+            $line = $this->createSaleLine($order, $gross, $fee, $rate, $commission, $method, $handedOver, (int) $fees['hold_hours']);
+        } catch (UniqueConstraintViolationException) {
+            // Two handovers at once (shop app and delivery): the other one recorded it.
+            return MarketplacePayoutLine::query()->where('order_id', $order->id)->where('type', MarketplacePayoutLine::SALE)->first();
+        }
+
+        Log::info('Payout line recorded at handover', ['order_id' => $order->id, 'tenant_id' => $order->tenant_id, 'net' => $line->net]);
+
+        return $line;
+    }
+
+    private function createSaleLine(MarketplaceOrder $order, float $gross, float $fee, float $rate, float $commission, string $method, Carbon $handedOver, int $holdHours): MarketplacePayoutLine
+    {
+        return MarketplacePayoutLine::query()->create([
             'tenant_id' => $order->tenant_id,
             'order_id' => $order->id,
             'type' => MarketplacePayoutLine::SALE,
@@ -53,12 +69,8 @@ class PayoutLedgerService
             'source' => $order->source(),
             'payment_method' => $method,
             'handed_over_at' => $handedOver,
-            'eligible_at' => $handedOver->copy()->addHours($fees['hold_hours']),
+            'eligible_at' => $handedOver->copy()->addHours($holdHours),
         ]);
-
-        Log::info('Payout line recorded at handover', ['order_id' => $order->id, 'tenant_id' => $order->tenant_id, 'net' => $line->net]);
-
-        return $line;
     }
 
     /**
